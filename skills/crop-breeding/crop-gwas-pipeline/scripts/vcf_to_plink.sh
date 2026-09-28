@@ -2,7 +2,7 @@
 set -euo pipefail
 usage(){ echo "Usage: vcf_to_plink.sh --vcf input.vcf.gz --phenotype phenotype.tsv --out outdir [--max-alleles 2]"; }
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-repo_root="$(cd -- "${script_dir}/../../../.." && pwd)"
+crop_dir="$(cd -- "${script_dir}/../.." && pwd)"
 vcf=""; phenotype=""; out=""; max_alleles=2
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -15,7 +15,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 [[ -n "$vcf" && -n "$phenotype" && -n "$out" ]] || { usage >&2; exit 2; }
-exec python "${repo_root}/skills/crop-breeding/crop-gwas-qc-plink2-vcftools/scripts/run_crop_gwas_qc.py" \
+exec python "${crop_dir}/crop-gwas-qc-plink2-vcftools/scripts/run_crop_gwas_qc.py" \
   --vcf "$vcf" \
   --phenotype "$phenotype" \
   --outdir "$out" \

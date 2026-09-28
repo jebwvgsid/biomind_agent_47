@@ -1,22 +1,27 @@
 ---
-name: modkit-open-chromatin-cpu
-description: >
-  Run Nanopore modkit open-chromatin prediction on 6mA modBAM files using CPU-only
-  execution. Use when the user asks for chromatin accessibility analysis,
-  open chromatin prediction, modkit open-chromatin, 6mA accessibility, A+a tag
-  checks, small-region CPU tests, include-bed region runs, or chromosome-by-
-  chromosome CPU workflows from nanopore modBAM data.
-version: "1.0.0"
-tags: [chromatin-accessibility, open-chromatin, modkit, nanopore, 6mA, modBAM, A+a, bedGraph, BED, CPU]
-legacy_ids: [chromatin_accessibility_cpu, open_chromatin_cpu, modkit_open_chromatin, 染色质可及性分析]
-runtime:
-  default_env: bio_modkit
-  env_runner: bash
-  language: bash
-  packages: [modkit, samtools, bedtools]
-  capabilities: [modkit-open-chromatin, cpu-prediction, modbam-preflight, bedgraph-thresholding]
-  healthcheck: bash skills/open-chromatin/modkit-cpu/scripts/run_modkit_open_chromatin_cpu.sh --help
+name: modkit-cpu
+description: 'Run Nanopore modkit open-chromatin prediction on 6mA modBAM files using CPU-only execution. Use when
+  the user asks for chromatin accessibility analysis, open chromatin prediction, modkit open-chromatin, 6mA accessibility,
+  A+a tag checks, small-region CPU tests, include-bed region runs, or chromosome-by- chromosome CPU workflows from
+  nanopore modBAM data.
+
+  '
+metadata:
+  version: 1.0.0
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # Modkit Open-Chromatin CPU Workflow
 
@@ -86,7 +91,7 @@ BAM=/path/to/sample.sorted.bam \
 OUTDIR=/path/to/open_chromatin_out \
 SAMPLE=sample_name \
 REGION=Chr01:100000-200000 \
-bash skills/open-chromatin/modkit-cpu/scripts/run_modkit_open_chromatin_cpu.sh
+bash "${SKILL_DIR}/scripts/run_modkit_open_chromatin_cpu.sh"
 ```
 
 Optional parameters:
@@ -108,7 +113,7 @@ OUTDIR=/path/to/open_chromatin_out \
 SAMPLE=sample_name \
 INCLUDE_BED=/path/to/regions.bed \
 RUN_LABEL=selected_regions \
-bash skills/open-chromatin/modkit-cpu/scripts/run_modkit_open_chromatin_cpu.sh
+bash "${SKILL_DIR}/scripts/run_modkit_open_chromatin_cpu.sh"
 ```
 
 ## Chromosome-By-Chromosome
@@ -122,7 +127,7 @@ BAM=/path/to/sample.sorted.bam \
 OUTDIR=/path/to/open_chromatin_out \
 SAMPLE=sample_name \
 CHROMOSOMES="Chr01 Chr02 Chr03" \
-bash skills/open-chromatin/modkit-cpu/scripts/run_modkit_open_chromatin_cpu.sh
+bash "${SKILL_DIR}/scripts/run_modkit_open_chromatin_cpu.sh"
 ```
 
 ## Whole-Genome CPU Run
@@ -137,7 +142,7 @@ OUTDIR=/path/to/open_chromatin_out \
 SAMPLE=sample_name \
 ALLOW_WHOLE_GENOME=1 \
 RUN_LABEL=whole_genome \
-bash skills/open-chromatin/modkit-cpu/scripts/run_modkit_open_chromatin_cpu.sh
+bash "${SKILL_DIR}/scripts/run_modkit_open_chromatin_cpu.sh"
 ```
 
 ## Troubleshooting

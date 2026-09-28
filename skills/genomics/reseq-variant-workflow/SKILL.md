@@ -1,14 +1,25 @@
 ---
 name: reseq-variant-workflow
-description: Route resequencing variant analysis across short-read WGS SNP/InDel, short-read SV, read-depth CNV, RNA-seq variant calling, long-read SV, and assembly-vs-assembly SyRI workflows. Use when the user asks for 重测序变异检测, SNP, InDel, SV, CNV, RNA-seq variants, long-read structural variants, or assembly-based variants and BioMind must choose the right primary downstream skill instead of running every method.
-version: "1.0.0"
-tags: [reseq, resequencing, variant-calling, SNP, InDel, SV, CNV, RNA-seq, long-read, SyRI, workflow-router]
-legacy_ids: [reseq_variant_calling, resequencing-variant-workflow, 重测序变异检测]
-task_types: [variant_calling_workflow]
-stage_tags: [workflow_routing, input_triage]
-inputs: [reference_fasta, sample_table, fastq, bam, assembly_fasta, analysis_goal]
-outputs: [stage_plan, selected_skills, output_contract, blocked_reason]
+description: Route resequencing variant analysis across short-read WGS SNP/InDel, short-read SV, read-depth CNV,
+  RNA-seq variant calling, long-read SV, and assembly-vs-assembly SyRI workflows. Use when the user asks for 重测序变异检测,
+  SNP, InDel, SV, CNV, RNA-seq variants, long-read structural variants, or assembly-based variants and BioMind must
+  choose the right primary downstream skill instead of running every method.
+metadata:
+  version: 1.0.0
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # Resequencing Variant Workflow
 
@@ -131,16 +142,11 @@ logs or exit status alone do not prove scientific success. A valid zero-record
 result is distinct from a corrupt or unexecuted result. Do not impose a nonempty
 file requirement on an observation-only input check.
 
-In the approved Plan, 00.input_check may deliver a scoped observation with
-outputs=[] through an existing inspect capability. 05.summary may use an existing
-file-producing capability with descriptive purpose=validation. 06.reporting must
-consume accepted predecessor observations plus actual available scientific results
-and stage facts; it must not invent an intermediate check file. Retain report.md,
-reproduce.sh and the stage status table when the user requests them. A descriptive
-record_failure purpose cannot decide terminal status. If real dependency evidence
-requires stopping, use the existing authorized stop/report path to record the
-unexecuted stages and exact blocker; producing that report is not scientific
-success and does not create missing VCF or statistics.
+An input-only check may report a bounded observation without creating result
+files. Reporting should consume those observations plus actual available results;
+never invent a check file or missing VCF/statistics. Retain report.md, reproduce.sh
+and a stage-status table when requested. A blocker report records unexecuted stages
+and the exact cause; it is not scientific completion.
 
 ## 相似的 skills
 

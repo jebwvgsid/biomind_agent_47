@@ -1,28 +1,24 @@
 ---
 name: crop-gwas-pav-sv-pangenome
-description: >
-  Execute crop PAV/SV/pangenome matrix GWAS from gene presence-absence,
-  structural-variant, or graph/pangenome marker matrices plus phenotype data.
-  Use when non-SNP pangenome markers are central; do not use for ordinary
-  SNP-only PLINK/GEMMA/rMVP analysis.
-metadata:
-  tags: [crop-breeding, GWAS, pangenome, PAV, SV, FarmCPU, MLM]
-  task_types: [crop_gwas]
-  stage_tags: [pav_sv_pangenome_gwas]
-  inputs: [marker_matrix, phenotype_table, trait, covariates, model]
-  outputs: [summary_stats, lead_snps, lambda_gc, candidate_genes, pangenome_gwas_report]
-  runtime:
-    default_env: crop_gwas_r
-    env_runner: conda run -n crop_gwas_r Rscript
-    language: R
-    packages: [GAPIT3, CMplot, data.table]
-    capabilities: [crop-gwas-pav-sv, pangenome-gwas, farmcpu, mlm]
-    healthcheck: conda run -n crop_gwas_r Rscript skills/crop-breeding/crop-gwas-pav-sv-pangenome/scripts/run_pav_sv_gwas.R --help
-    install_policy: prefer-declared
-    install_commands:
-      - mamba create -n crop_gwas_r -c conda-forge r-base r-data.table r-remotes r-cmplot -y
-      - conda run -n crop_gwas_r Rscript -e "remotes::install_github('jiabowang/GAPIT')"
+description: 'Execute crop PAV/SV/pangenome matrix GWAS from gene presence-absence, structural-variant, or graph/pangenome
+  marker matrices plus phenotype data. Use when non-SNP pangenome markers are central; do not use for ordinary SNP-only
+  PLINK/GEMMA/rMVP analysis.
+
+  '
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # Crop PAV/SV Pangenome GWAS
 
@@ -31,7 +27,7 @@ gene presence-absence, structural variants, graph-genome variants, or binary
 marker matrices.
 
 ```bash
-conda run -n crop_gwas_r Rscript skills/crop-breeding/crop-gwas-pav-sv-pangenome/scripts/run_pav_sv_gwas.R \
+Rscript "${SKILL_DIR}/scripts/run_pav_sv_gwas.R" \
   --marker-matrix pav_matrix.tsv \
   --phenotype phenotype.tsv \
   --trait flowering_time \

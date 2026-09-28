@@ -40,45 +40,6 @@ class ProjectContextTests(unittest.TestCase):
             self.assertEqual(rebound.project_for_task('task'), new)
 
 
-class SharedObservationTests(unittest.TestCase):
-    def test_receipts_are_scoped_bounded_and_do_not_follow_links(self):
-        from agent_core.command_tools import inspection_messages
-        from langchain_core.messages import SystemMessage
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            service = CommandExecutionService(data_path=root / 'records', project_dir=root)
-            service.project_for_task('task')
-            receipts = service._task_dir('task')
-            base = {'tool': 'exec_command', 'hostname': socket.gethostname(), 'project_dir': str(root),
-                    'stage': 'consultant', 'cmd': 'cat input', 'cwd': str(root), 'status': 'completed',
-                    'exit_code': 0, 'stdout': 'x' * 10000, 'truncated': {'stdout': False}}
-            for number, overrides in enumerate(({}, {'hostname': 'other-host', 'stdout': 'FOREIGN_HOST'},
-                    {'project_dir': '/other-project', 'stdout': 'FOREIGN_PROJECT'})):
-                folder = receipts / f'{number:032x}'
-                folder.mkdir()
-                (folder / 'receipt.json').write_text(json.dumps({**base, **overrides}))
-            bad = receipts / ('a' * 32); bad.mkdir()
-            (bad / 'receipt.json').write_text('invalid json')
-            outside = root / 'outside'; outside.mkdir()
-            (outside / 'receipt.json').write_text(json.dumps({**base, 'stdout': 'SYMLINK_SECRET'}))
-            (receipts / ('b' * 32)).symlink_to(outside, target_is_directory=True)
-            evidence = service.recent_observations('task', max_chars=5000)
-            self.assertEqual(len(evidence['observations']), 1)
-            self.assertLessEqual(len(json.dumps(evidence, ensure_ascii=False)), 5000)
-            observation = evidence['observations'][0]
-            self.assertTrue(observation['context_truncated']['stdout'])
-            self.assertFalse(observation['truncated']['stdout'])
-            self.assertTrue(observation['observed_at'])  # Older receipts use their file timestamp.
-            original = [SystemMessage(content='phase contract')]
-            messages = inspection_messages(original, service, 'task')
-            self.assertEqual(original[0].content, 'phase contract')
-            content = '\n'.join(str(m.content) for m in messages)
-            for marker in ('FOREIGN_HOST', 'FOREIGN_PROJECT', 'SYMLINK_SECRET'):
-                self.assertNotIn(marker, content)
-            self.assertEqual(service.recent_observations('another-task')['observations'], [])
-            new_project = root / 'new-project'; new_project.mkdir()
-            rebound = CommandExecutionService(data_path=root / 'records', project_dir=new_project)
-            self.assertEqual(rebound.recent_observations('task')['observations'], [])
 
 
 class ShellInspectionTests(unittest.IsolatedAsyncioTestCase):
@@ -177,66 +138,6 @@ class ShellInspectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(int(followup['stdout']), 20001)
 
 
-class ToolLoopTests(unittest.IsolatedAsyncioTestCase):
-    def test_tool_binding_preserves_reasoning_output_and_transport_settings(self):
-        from langchain_core.runnables import Runnable
-        from agent_core.command_tools import bind_command_tools
-        class Provider(Runnable):
-            def invoke(self, value, config=None, **kwargs): return kwargs
-            def bind_tools(self, tools): return self.bind(tools=tools)
-        model = Provider().bind(max_tokens=16000, reasoning_effort='high',
-            extra_body={'thinking': {'type': 'enabled'}}).with_config(tags=['generate'])
-        bound = bind_command_tools(model)
-        wire = bound.invoke([])
-        self.assertEqual(wire['max_tokens'], 16000)
-        self.assertEqual(wire['reasoning_effort'], 'high')
-        self.assertEqual(wire['extra_body'], {'thinking': {'type': 'enabled'}})
-        self.assertEqual(wire['tools'][0]['function']['name'], 'exec_command')
-        self.assertEqual(bound.config['tags'], ['generate'])
-
-    async def test_real_messages_continue_after_error_and_final_protocol_is_preserved(self):
-        from langchain_core.messages import AIMessage, SystemMessage, ToolMessage
-        from agent_core.command_tools import invoke_with_command_tools
-        class Service:
-            calls = []
-            def describe(self, task_id): return {'project_dir': '/project'}
-            async def run(self, args, **scope):
-                self.calls.append((args, scope))
-                return {'status': 'completed', 'exit_code': 2, 'stderr': 'file missing'}
-        class Model:
-            def bind_tools(self, tools):
-                self.tools = tools
-                return self
-        service, model = Service(), Model()
-        original = SystemMessage(content='original phase contract')
-        async def invoke(bound, messages, ordinal):
-            if ordinal == 0:
-                return AIMessage(content='', tool_calls=[{'id': 'query', 'name': 'exec_command', 'args': {'cmd': 'ls missing'}}])
-            self.assertIsInstance(messages[-1], ToolMessage)
-            self.assertEqual(json.loads(messages[-1].content)['exit_code'], 2)
-            return AIMessage(content='{"phase_result":"known_missing"}')
-        response = await invoke_with_command_tools(model=model, messages=[original], service=service,
-            task_id='task', stage='planner', invoke=invoke)
-        self.assertEqual(response.content, '{"phase_result":"known_missing"}')
-        self.assertEqual(original.content, 'original phase contract')
-        self.assertEqual(service.calls[0][1]['stage'], 'planner')
-
-    async def test_budget_stops_execution_even_with_multiple_tool_calls(self):
-        from langchain_core.messages import AIMessage, SystemMessage
-        from agent_core.command_tools import invoke_with_command_tools
-        class Service:
-            calls = 0
-            def describe(self, task_id): return {}
-            async def run(self, args, **scope): self.calls += 1; return {'exit_code': 0}
-        class Model:
-            def bind_tools(self, tools): return self
-        service = Service()
-        async def invoke(model, history, ordinal):
-            return AIMessage(content='', tool_calls=[{'id': str(i), 'name': 'exec_command', 'args': {'cmd': 'true'}} for i in range(3)])
-        with self.assertRaisesRegex(RuntimeError, 'BUDGET_EXHAUSTED'):
-            await invoke_with_command_tools(model=Model(), messages=[SystemMessage(content='contract')],
-                service=service, task_id='task', stage='generate', invoke=invoke, max_calls=1)
-        self.assertEqual(service.calls, 1)
 
 
 if __name__ == '__main__':

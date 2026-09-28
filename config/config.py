@@ -4,7 +4,30 @@ from pathlib import Path
 from dotenv import dotenv_values
 
 
+_OFFLINE_TEST_ISOLATION = os.getenv(
+    "BIOMIND_DISABLE_DOTENV", ""
+).strip().lower() in {"1", "true", "yes", "on"}
+_CREDENTIAL_ENV_NAMES = {
+    "RAGFLOW_API_KEY",
+    "DEEPSEEK_API_KEY",
+    "QWEN_API_KEY",
+    "DASHSCOPE_API_KEY",
+    "OPENAI_API_KEY",
+    "WIKI_EMBEDDING_API_KEY",
+}
+
+
+def _config_env(name: str, default: str = "") -> str:
+    """Avoid even consulting credential variables in isolated offline tests."""
+
+    if _OFFLINE_TEST_ISOLATION and name in _CREDENTIAL_ENV_NAMES:
+        return default
+    return os.getenv(name, default)
+
+
 def _load_local_env_defaults() -> None:
+    if _OFFLINE_TEST_ISOLATION:
+        return
     env_path = Path(__file__).resolve().parents[1] / ".env"
     if not env_path.exists():
         return
@@ -23,7 +46,7 @@ def _split_env_list(name: str) -> list[str]:
 
 # --- RAGFlow 服务配置 ---
 RAGFLOW_ADDRESS = os.getenv("RAGFLOW_ADDRESS", "")
-RAGFLOW_API_KEY = os.getenv("RAGFLOW_API_KEY", "")
+RAGFLOW_API_KEY = _config_env("RAGFLOW_API_KEY", "")
 
 # 软件与环境路径。真实路径放在 .env 中，不要硬编码到仓库。
 BIO_SOFTWARE_ROOT = os.getenv("BIO_SOFTWARE_ROOT", "")
@@ -116,10 +139,10 @@ ENABLE_PLAN_IMPACT_ANALYSIS = _env_bool("ENABLE_PLAN_IMPACT_ANALYSIS", True)
 ENABLE_PLAN_OSCILLATION_GUARD = _env_bool("ENABLE_PLAN_OSCILLATION_GUARD", True)
 
 LLM_API_KEY = (
-    os.getenv("DEEPSEEK_API_KEY")
-    or os.getenv("QWEN_API_KEY")
-    or os.getenv("DASHSCOPE_API_KEY")
-    or os.getenv("OPENAI_API_KEY")
+    _config_env("DEEPSEEK_API_KEY")
+    or _config_env("QWEN_API_KEY")
+    or _config_env("DASHSCOPE_API_KEY")
+    or _config_env("OPENAI_API_KEY")
     or ""
 )
 LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
@@ -218,29 +241,21 @@ LLM_STEP_EPHEMERAL_CHARS = _env_int(
     200_000,
     minimum=8_000,
 )
-# Input soft target is separate from the legacy total-window ceiling.
+# Schema-2 model-working-context policy.  These values account one provider
+# request (cached input included); they are not cumulative task-usage limits.
+# Content selection remains the versioned LLM compactor's responsibility.
 SCHEMA2_CONTEXT_COMPACTION_ENABLED = _env_bool(
     "BIOMIND_SCHEMA2_CONTEXT_COMPACTION_ENABLED", True
 )
+# Product input target and application total budget; neither asserts provider capability.
 SCHEMA2_INPUT_SOFT_LIMIT_TOKENS = _env_int(
     "BIOMIND_INPUT_SOFT_LIMIT_TOKENS", 256_000, minimum=1_000,
 )
 SCHEMA2_APPLICATION_CONTEXT_LIMIT_TOKENS = _env_int(
     "BIOMIND_SCHEMA2_APPLICATION_CONTEXT_LIMIT_TOKENS",
-    200_000,
+    312_144,  # 256000 input + 50000 output + 4096 margin + 2048 headroom
     minimum=1_000,
 )
-SCHEMA2_CONTEXT_ESTIMATION_MARGIN_TOKENS = _env_int(
-    "BIOMIND_SCHEMA2_CONTEXT_ESTIMATION_MARGIN_TOKENS",
-    4_096,
-    minimum=0,
-)
-SCHEMA2_CONTEXT_SAFETY_HEADROOM_TOKENS = _env_int(
-    "BIOMIND_SCHEMA2_CONTEXT_SAFETY_HEADROOM_TOKENS",
-    2_048,
-    minimum=0,
-)
-
 # One application maximum for generation and its context reservation. A legacy
 # reserve environment variable must not under-reserve the actual wire limit.
 from agent_core.llm_safety import MODEL_OUTPUT_LIMIT_TOKENS
@@ -254,12 +269,23 @@ RECOVERY_PROVIDER_OUTPUT_LIMIT_TOKENS = (
 RECOVERY_MAX_OUTPUT_RESUBMISSIONS = _env_int(
     "BIOMIND_RECOVERY_MAX_OUTPUT_RESUBMISSIONS", 2, minimum=0,
 )
+SCHEMA2_CONTEXT_ESTIMATION_MARGIN_TOKENS = _env_int(
+    "BIOMIND_SCHEMA2_CONTEXT_ESTIMATION_MARGIN_TOKENS",
+    4_096,
+    minimum=0,
+)
+SCHEMA2_CONTEXT_SAFETY_HEADROOM_TOKENS = _env_int(
+    "BIOMIND_SCHEMA2_CONTEXT_SAFETY_HEADROOM_TOKENS",
+    2_048,
+    minimum=0,
+)
 # Consultant compiles natural-language intent and may need both a substantial
 # conversation/audit history and complete documentation for several candidate
 # skills.  Keep these limits in tokens (rather than reusing the older character
 # caps) so they can be compared directly with the provider context window.
 # Each pool may grow to 100k tokens, while the assembled request is still
-# constrained by ``BioAnalystAgent.llm_context_limit_tokens`` (200k by default).
+# constrained by the historical application context budget (312144 tokens).
+# These compatibility values do not configure Pi or describe provider capacity.
 CONSULTANT_HISTORY_TOKEN_BUDGET = _env_int(
     "BIOMIND_CONSULTANT_HISTORY_TOKEN_BUDGET",
     100_000,
@@ -386,10 +412,10 @@ PLANNER_RESERVED_HEADROOM_TOKENS = _env_int(
 WIKI_EMBEDDING_ENABLED = BIOMIND_WIKI_ENABLED and os.getenv("WIKI_EMBEDDING_ENABLED", "false").strip().lower() in {"1", "true", "yes", "on"}
 WIKI_EMBEDDING_BASE_URL = os.getenv("WIKI_EMBEDDING_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
 WIKI_EMBEDDING_API_KEY = (
-    os.getenv("WIKI_EMBEDDING_API_KEY")
-    or os.getenv("DASHSCOPE_API_KEY")
-    or os.getenv("QWEN_API_KEY")
-    or os.getenv("OPENAI_API_KEY")
+    _config_env("WIKI_EMBEDDING_API_KEY")
+    or _config_env("DASHSCOPE_API_KEY")
+    or _config_env("QWEN_API_KEY")
+    or _config_env("OPENAI_API_KEY")
     or ""
 )
 WIKI_EMBEDDING_MODEL = os.getenv("WIKI_EMBEDDING_MODEL", "text-embedding-v4")

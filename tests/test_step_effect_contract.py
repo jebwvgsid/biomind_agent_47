@@ -16,7 +16,7 @@ from agent_core.plan_tracker import (
     record_planning_failure,
     save_plan_state,
 )
-from agent_core.planner_loop import new_planner_loop_state, record_planner_observation
+from agent_core.planning_state_facts import new_planner_loop_state
 from agent_core.skill_manager import SkillManager
 from agent_core.step_effects import (
     compile_plan_step_effects,
@@ -407,23 +407,6 @@ def test_nested_candidate_route_poison_does_not_fake_semantic_progress():
     assert "contigs_compatible" in str(failure["previous_candidate"])
 
 
-def test_submission_and_observation_ids_are_not_semantic_progress():
-    loop = new_planner_loop_state("effect-task")
-    first = record_planner_observation(
-        loop,
-        action_type="plan_review",
-        action={"submission_id": "submission-a"},
-        observation={"accepted": False, "observation_id": "observation-a"},
-        candidate_fingerprint="same-plan",
-    )
-    second = record_planner_observation(
-        first,
-        action_type="plan_review",
-        action={"submission_id": "submission-b"},
-        observation={"accepted": False, "observation_id": "observation-b"},
-        candidate_fingerprint="same-plan",
-    )
-    assert second["progress"]["identical_no_progress_count"] == 1
 
 
 def test_protocol_invalid_dag_candidates_remain_route_free_planner_repairs():

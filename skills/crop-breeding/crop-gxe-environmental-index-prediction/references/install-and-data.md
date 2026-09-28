@@ -17,13 +17,13 @@ Create an R environment, clone the repository, and install packages required by 
 git clone https://github.com/jmyu/CERIS_JGRA.git external/CERIS_JGRA
 cd external/CERIS_JGRA
 mamba create -n ceris_jgra -c conda-forge r-base r-data.table r-tidyverse r-ggplot2 r-lme4 r-mgcv r-readxl r-caret -y
-conda run -n ceris_jgra Rscript -e "source('Sub_functions.r'); sessionInfo()"
+Rscript -e "source('Sub_functions.r'); sessionInfo()"
 ```
 
 Run the crop-specific folder or main `CERIS-JGRA.r` only after paths and crop example inputs are set:
 
 ```bash
-conda run -n ceris_jgra Rscript CERIS-JGRA.r
+Rscript CERIS-JGRA.r
 ```
 
 Record repository commit, crop folder used (`0Maize`, `Wheat`, `Oat`, or custom), environmental variables, growth windows, reaction-norm model, and validation split.

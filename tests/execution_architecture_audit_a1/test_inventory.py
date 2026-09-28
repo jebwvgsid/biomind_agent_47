@@ -8,7 +8,7 @@ import sys
 
 def test_current_registry_and_loaded_bytes():
     from agent_core.skill_manager import SkillManager
-    from agent_core.workflow import runtime_graph, outcomes
+    from agent_core.workflow import outcomes
     from agent_core import step_effects, plan_contract, candidate_repair_policy
     from prompts import manager
     root = Path(__file__).resolve().parents[2]

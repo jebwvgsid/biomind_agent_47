@@ -240,7 +240,7 @@ plt.savefig("condition_comparison.png", dpi=300)
 Just append another `--sample` argument — no script changes needed:
 
 ```bash
-python scripts/plot_methylation.py \
+python "${SKILL_DIR}/scripts/plot_methylation.py" \
     [existing args] \
     --sample new_sample /path/CG.bw /path/CHG.bw /path/CHH.bw /path/comp.bed
 ```
@@ -275,7 +275,7 @@ gs = fig.add_gridspec(4, 3, height_ratios=[1.1, 0.9, 0.9, 0.9])
 ax10, ax11, ax12 = [fig.add_subplot(gs[3, i]) for i in range(3)]
 
 # Example: violin plot of body methylation per context
-import seaborn as sns   # if missing, delegate: <install_tool env="bio_methylation_plot">seaborn</install_tool>
+import seaborn as sns   # if missing, delegate: 确认目标环境后请求用户授权安装 seaborn
 for ctx, ax in zip(contexts, [ax10, ax11, ax12]):
     body_vals = {s: region_means[ctx][s]["body"] for s in sample_keys}
     ax.violinplot(list(body_vals.values()), positions=range(len(sample_keys)))
@@ -379,7 +379,7 @@ split -l 20 gene_list.txt batch_
 
 for f in batch_*; do
     GENES=$(cat "$f" | tr '\n' ' ')
-    python scripts/plot_methylation.py \
+    python "${SKILL_DIR}/scripts/plot_methylation.py" \
         --gff genome.gff3 --tpm tpm.csv \
         --outdir ./out \
         --genes $GENES \

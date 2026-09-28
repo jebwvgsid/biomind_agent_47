@@ -255,6 +255,8 @@ def capability_workspace_roles(capability: Mapping[str, Any]) -> Dict[str, Dict[
 
 def resource_bindings_for_step(bindings: Mapping[str, Any], step: Mapping[str, Any]) -> Dict[str, Any]:
     """Ephemeral exact role lookup. Never add role aliases to the Plan registry."""
+    if step.get('step_protocol_version') == 3:
+        return {}
     result = dict(bindings)
     matches: Dict[str, Mapping[str, Any]] = {}
     if "resource_uses" in step:
@@ -330,6 +332,9 @@ def compile_plan_resource_bindings(
     for one resource carries the same canonical record.
     """
 
+    from agent_core.plan_contract import is_simple_plan
+    if is_simple_plan(candidate):
+        return {}  # This optional legacy resource compiler has no authority in v3.
     origins = {
         str(key): str(value or "")
         for key, value in dict(availability_origins or {}).items()
@@ -804,6 +809,8 @@ class PlanBinding:
     revision: int = 1
     value_hash: str = ""
     accepted_at: str = ""
+    origin: str = "legacy_model_candidate"
+    producer_input_signature: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -882,6 +889,13 @@ def accept_action_binding_candidates(
 ) -> Sequence[PlanBinding]:
     """Promote explicit candidates only after process and output validation."""
     candidates = _candidate_map(action)
+    # A prefilled scientific value is a model statement. Only a separately
+    # recorded runtime observation may promote it to observed evidence.
+    raw_values = action.get('produced_bindings') or {}
+    observed = execution_record.get('observed_bindings') or {}
+    candidates = {name: row for name, row in candidates.items()
+        if (raw_values.get(name) if isinstance(raw_values.get(name), Mapping) else {}).get('origin') in {'model_parameter', 'user_confirmed'}
+        or (name in observed and observed[name].get('value') == row['value'] and observed[name].get('evidence_ref'))}
     if not candidates:
         return ()
     returncode = execution_record.get("returncode", execution_record.get("exit_code"))
@@ -912,8 +926,7 @@ def accept_action_binding_candidates(
         if prior and str(prior.get("status") or "") == "accepted":
             if (
                 str(prior.get("value_hash") or "") != candidate_hash
-                or int(prior.get("producer_plan_revision") or 0)
-                != int(state.get("plan_revision") or 0)
+                or (prior.get('producer_input_signature') and prior['producer_input_signature'] != binding_producer_signature(state, prior.get('producer_step_id')))
             ):
                 raise PlanBindingError(
                     "PLAN_BINDING_IMMUTABLE",
@@ -961,6 +974,8 @@ def accept_action_binding_candidates(
             value_hash=candidate_hash,
             accepted_at=_now(),
         )
+        binding = PlanBinding(**{**binding.to_dict(), 'origin': 'runtime_observation' if name in (execution_record.get('observed_bindings') or {}) else 'model_parameter',
+            'producer_input_signature': binding_producer_signature(state, identity['step_id'])})
         history.append(binding.to_dict())
         accepted[name] = binding_id
         result.append(binding)
@@ -981,12 +996,13 @@ def accepted_plan_binding(
         binding = PlanBinding.from_mapping(raw)
         if binding.status != "accepted":
             return None
-        if (
-            binding.producer_plan_id != str(state.get("plan_id") or "")
-            or binding.producer_plan_version != str(state.get("plan_version") or "")
-            or binding.producer_plan_revision != int(state.get("plan_revision") or 0)
-        ):
+        if binding.producer_plan_id != str(state.get('plan_id') or ''):
             return None
+        if binding.producer_input_signature:
+            if binding.producer_input_signature != binding_producer_signature(state, binding.producer_step_id):
+                return None
+        elif (binding.producer_plan_version != str(state.get('plan_version') or '') or binding.producer_plan_revision != int(state.get('plan_revision') or 0)):
+            return None  # Legacy record lacks enough evidence to prove independence.
         return binding
     return None
 
@@ -998,6 +1014,8 @@ def resolve_action_binding_environment(
     binding_rule: Optional[Mapping[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Resolve declared refs to exact values without examining executable text."""
+    if action.get('execution_protocol_version') == 3:
+        return {'env': deepcopy(dict(action.get('env') or {})), 'origin': 'frozen_run_intent'}
     consumed = action.get("consumed_bindings") or {}
     binding_env = action.get("binding_env") or {}
     if not isinstance(consumed, Mapping) or not isinstance(binding_env, Mapping):
@@ -1423,6 +1441,8 @@ def validate_declared_binding_operation(
     binding table means that this local validator has no rule to apply; callers
     must first authorize the operation against its canonical capability.
     """
+    if action.get('execution_protocol_version') == 3:
+        return ()
     operation = str(action.get("operation") or "")
     operations = dict(contract.get("operations") or {})
     if not operation or operation not in operations:
@@ -1505,6 +1525,8 @@ def validate_operation_binding_admission(
     a new operation merely by naming it.
     """
 
+    if action.get('execution_protocol_version') == 3:
+        return OperationBindingAdmission('not_applicable', '', '', False, 'current_user_request', '', '')
     capability = deepcopy(dict(capability_contract or {}))
     capability_id = str(capability.get("capability_id") or "").strip()
     selected_skill_id = str(capability.get("selected_skill_id") or "").strip()
@@ -1899,6 +1921,8 @@ PUBLIC_BINDING_PROTOCOL = "public_handle_v2"
 
 def public_binding_requirements(frozen, *, operation, workspace_bindings):
     """Provider description of the one frozen input contract; no authority."""
+    if frozen.get('protocol') == 'actual_values_v3':
+        return {'protocol': 'actual_values_v3', 'instruction': 'Supply actual argv/env values; no operation binding contract.'}
     contract = dict(frozen.get("binding_contract") or {})
     rule = dict((contract.get("operations") or {}).get(operation) or {})
     types = dict(rule.get("binding_types") or {})
@@ -1926,6 +1950,8 @@ def normalize_public_action_bindings(action, *, frozen, scope, workspace_binding
     env, approval and prelaunch validators must still run on the result.
     """
     raw = deepcopy(dict(action))
+    if action.get('execution_protocol_version') == 3:
+        return raw, None  # No normalization receipt exists in the actual-value protocol.
     if not frozen:
         if raw.get("binding_input_protocol") not in (None, "legacy_full_v1"):
             raise PlanBindingError("BINDING_INPUT_PROTOCOL_UNSUPPORTED", field_path="binding_input_protocol")
@@ -2079,3 +2105,41 @@ def public_binding_shape_violations(candidate, requirements):
             issue("BINDING_PUBLIC_VALUE_SHAPE_INVALID", path + ".value", row.get("value"),
                   "Select an allowed handle using the public value object; a path/string is not a reference.")
     return issues
+
+
+def binding_producer_signature(state, step_id):
+    steps = {r.get('step_id'): r for r in state.get('steps') or []}
+    step = steps.get(step_id) or {}
+    dependencies = {}
+    def collect(row):
+        for dep in row.get('dependencies') or row.get('depends_on') or []:
+            if dep in dependencies:
+                continue
+            upstream = steps.get(dep) or {}
+            dependencies[dep] = {k: upstream.get(k) for k in ('inputs', 'parameters', 'dependencies', 'evidence')}
+            collect(upstream)
+    collect(step)
+    from pathlib import Path
+    files = {}
+    def input_versions(value):
+        if isinstance(value, Mapping):
+            path = value.get('canonical_path') or value.get('path')
+            if isinstance(path, str) and Path(path).is_absolute():
+                input_versions(path)
+            for key, child in value.items():
+                if key not in {'canonical_path', 'path'}:
+                    input_versions(child)
+        elif isinstance(value, (list, tuple)):
+            for child in value:
+                input_versions(child)
+        elif isinstance(value, str) and Path(value).is_absolute():
+            try:
+                stat = Path(value).stat()
+                files[value] = {'exists': True, 'size': stat.st_size, 'mtime_ns': stat.st_mtime_ns, 'inode': stat.st_ino}
+            except OSError:
+                files[value] = {'exists': False}
+    input_versions(step.get('inputs'))
+    for row in dependencies.values():
+        input_versions(row.get('inputs'))
+    source = {'inputs': step.get('inputs'), 'parameters': step.get('parameters'), 'dependencies': dependencies, 'input_versions': files}
+    return hashlib.sha256(_canonical(source).encode()).hexdigest()

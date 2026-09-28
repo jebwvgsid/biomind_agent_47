@@ -88,7 +88,7 @@ def provider_correction_feedback(feedback: Mapping[str, Any]) -> dict[str, Any]:
                         public_step_paths.update(prefix + container + (index, "step_id")
                                                  for index in range(len(value)))
         result["validation_issues"].append(row)
-    for key in ("requirements", "correction_budget", "response_completion", "length_recovery"):
+    for key in ("requirements", "correction_budget", "response_completion", "length_recovery", "draft_file"):
         if key in feedback:
             result[key] = deepcopy(feedback[key])
     for index, requirement in enumerate(result.get("requirements") or []):
@@ -138,6 +138,12 @@ def correction_feedback(state: Mapping[str, Any]) -> dict[str, Any]:
             "repeat_count": int(failure.get("repeat_count") or 0),
         },
     }
+    draft = (task.get("planner_loop") or {}).get("draft_file") or {}
+    if draft.get("path"):
+        result["draft_file"] = {
+            "path": str(draft["path"]), "status": str(draft.get("status") or "editing"),
+            "instruction": "Read only the relevant draft lines, patch the saved file, then submit_draft_file. Do not resend the complete Plan.",
+        }
     integrity = dict(failure.get("response_integrity") or {})
     if integrity:
         from agent_core.planner_recovery import length_feedback
@@ -169,9 +175,25 @@ def save_correction_context(data_path: str, task_id: str, state: dict[str, Any],
             "planner_response_evidence", {"schema_version": 1, "raw_candidate": raw,
                                           "response_integrity": deepcopy(integrity)})
         attach_rejection_facts(state, integrity, call_claim or {}, remediation)
+    owning_task = state.get("task_state") or {}
+    current_draft = (owning_task.get("planner_loop") or {}).get("draft_file") or {}
+    if current_draft.get("path"):
+        # Full outer admission can reject after the file tool's syntax/schema
+        # pass. Preserve that rejection on the same resumable draft identity.
+        current_draft.update(status="rejected", validation_issues=deepcopy(
+            (owning_task.get("planning_failure") or {}).get("validation_issues") or []))
+        current_draft["record_ref"] = StateContractStore(data_path, task_id).put_object(
+            "draft_file_state", {key: value for key, value in current_draft.items() if key != "record_ref"})
     feedback = correction_feedback(state)
     provider_feedback = provider_correction_feedback(feedback)
-    complete = [*provider_messages, AIMessage(content=raw), SystemMessage(content=json.dumps(provider_feedback, ensure_ascii=False, sort_keys=True))]
+    draft = integrity.get("draft_file") or ((state.get("task_state") or {}).get("planner_loop") or {}).get("draft_file") or {}
+    candidate_message = raw
+    if draft.get("path"):
+        # The complete candidate remains in this immutable correction record.
+        # Host-materialized file content is not a new full model response.
+        candidate_message = json.dumps({"draft_submission": {"path": draft["path"],
+            "status": "rejected", "next_action": "patch_draft_file_then_submit_draft_file"}}, ensure_ascii=False)
+    complete = [*provider_messages, AIMessage(content=candidate_message), SystemMessage(content=json.dumps(provider_feedback, ensure_ascii=False, sort_keys=True))]
     record = {
         "schema_version": 2 if integrity else 1, "task_id": task_id,
         "planning_epoch_id": (state.get("task_state") or {}).get("planning_epoch", {}).get("planning_epoch_id", ""),

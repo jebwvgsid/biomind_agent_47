@@ -1,10 +1,9 @@
-"""Fail-closed Wiki eligibility decisions and a durable ingestion outbox.
+"""Optional-memory lifecycle decisions and the existing durable ingestion outbox.
 
-Wiki is a post-task side effect.  It must never be used as evidence that the
-task completed, and a UI-local ``END`` observation is not sufficient to offer
-or perform ingestion.  This module keeps the decision and side-effect journal
-outside LangGraph checkpoints so a blocked FINALIZE cannot be mistaken for a
-completed task after a restart.
+Wiki capture does not require scientific completion. Legacy snapshot fields remain readable.
+The journal describes optional memory IO, not scientific success. request_ended
+is a request boundary, never a completed experiment. Old completion metadata is
+kept for compatibility and does not authorize or block current maintenance.
 """
 
 from __future__ import annotations
@@ -140,24 +139,10 @@ def evaluate_wiki_eligibility(
     terminal = str(snapshot.get("terminal_status") or "").lower()
     reason = "eligible"
     eligible = True
-    if status != "completed":
-        eligible, reason = False, f"task_status_{status or 'missing'}"
-    elif terminal != "completed":
-        eligible, reason = False, f"terminal_status_{terminal or 'missing'}"
-    elif not str(snapshot.get("compiled_contract_ref") or "") or not str(
-        snapshot.get("compiled_contract_hash") or ""
-    ):
-        eligible, reason = False, "compiled_contract_missing"
-    elif bool(snapshot.get("managed_task", True)) and not bool(snapshot.get("planner_committed")):
-        eligible, reason = False, "planner_not_committed"
-    elif str(snapshot.get("active_finalize_error") or ""):
-        eligible, reason = False, "active_finalize_error"
-    elif bool(snapshot.get("waiting_business_question")):
-        eligible, reason = False, "waiting_business_question"
-    elif str(snapshot.get("finalize_status") or "") != "compiled":
-        eligible, reason = False, "finalize_not_compiled"
-    elif not bool(snapshot.get("compiled_contract_verified")):
-        eligible, reason = False, "compiled_contract_unverified"
+    # Optional knowledge capture is independent of scientific completion.
+    # Cancellation is a lifecycle fence, not a semantic eligibility Gate.
+    if status == 'cancelled' or terminal == 'cancelled':
+        eligible, reason = False, 'request_cancelled'
     decision = {
         "schema_version": 1,
         "record_type": f"wiki_{kind}_decision",
@@ -265,7 +250,7 @@ class WikiLifecycleStore:
         destination_result: Optional[Mapping[str, Any]] = None,
     ) -> Dict[str, Any]:
         target = str(status or "")
-        if target not in {"dispatched", "succeeded", "failed", "outcome_unknown"}:
+        if target not in {"dispatched", "succeeded", "failed", "partial", "outcome_unknown"}:
             raise ValueError("unsupported Wiki outbox transition")
         path = self.root / "outbox" / f"{str(outbox_id or '')}.json"
         if not path.is_file():
@@ -274,10 +259,11 @@ class WikiLifecycleStore:
         current = str(row.get("status") or "prepared")
         legal = {
             "prepared": {"dispatched", "failed"},
-            "dispatched": {"succeeded", "failed", "outcome_unknown"},
+            "dispatched": {"dispatched", "succeeded", "failed", "partial", "outcome_unknown"},
             "succeeded": {"succeeded"},
-            "failed": {"failed"},
-            "outcome_unknown": {"outcome_unknown"},
+            "failed": {"failed", "dispatched"},
+            "partial": {"partial", "dispatched"},
+            "outcome_unknown": {"outcome_unknown", "dispatched"},
         }
         if target not in legal.get(current, set()):
             raise ValueError(f"illegal Wiki outbox transition: {current}->{target}")

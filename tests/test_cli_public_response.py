@@ -317,26 +317,3 @@ def test_generate_duplicate_business_transport_is_rejected(raw):
     assert projected.error and projected.payload == raw
 
 
-def test_original_consultant_and_planner_parsers_keep_business_rejection():
-    from bio_agents import BioAnalystAgent
-    from agent_core.plan_contract import parse_planner_outcome_envelope, PlannerEnvelopeError
-    valid = '{"action_type":"inspect_resource","resource":"/tmp/synthetic.txt"}'
-    invalid = '{"action_type":"unknown_business_action","unknown_business_key":7}'
-    for business in (valid, invalid):
-        for public in (None, "", 17, [], "准备读取"):
-            wire = '{"public_message":' + json.dumps(public) + ',' + business[1:]
-            projected = project_public_json(wire)
-            assert BioAnalystAgent._consultant_json_payload(projected.payload) == json.loads(business)
-            assert BioAnalystAgent._consultant_command_from_json(projected.payload) == BioAnalystAgent._consultant_command_from_json(business)
-    for business in ('{"outcome_type":"UNKNOWN","steps":[]}', '{"steps":[]}'):
-        projected = project_public_json('{"public_message":"候选仍待校验",' + business[1:])
-        errors = []
-        for raw in (business, projected.payload):
-            with pytest.raises(PlannerEnvelopeError) as caught:
-                parse_planner_outcome_envelope(raw, allow_legacy_plan=False)
-            errors.append(caught.value.to_diagnostic())
-        assert errors[0] == errors[1]
-    broken = '{"public_message":"不会公开","outcome_type":'
-    with pytest.raises(PlannerEnvelopeError) as caught:
-        parse_planner_outcome_envelope(project_public_json(broken).payload)
-    assert caught.value.to_diagnostic()['code'] == 'PLANNER_ENVELOPE_JSON_INVALID'

@@ -26,11 +26,12 @@ import threading
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from contextlib import contextmanager
+from contextlib import contextmanager, ExitStack
 from pathlib import Path
 from typing import Any, Mapping
 
 from agent_core.process_registry import ACTIVE_PROCESS_GROUPS
+from agent_core.command_inspection_owner import InspectionOwnerMixin
 
 
 class CommandInspectionError(ValueError):
@@ -79,18 +80,30 @@ def command_message_for_model(message):
         sort_keys=True, separators=(",", ":"))}) if changed else message
 
 
+def _signal_owned_group(process):
+    from execution.executor import _process_identity
+    expected = getattr(process, '_biomind_creation_identity', {})
+    current = _process_identity(process.pid)
+    if (expected.get('process_start_ticks') is None or current != expected):
+        return False
+    try:
+        os.killpg(process.pid, signal.SIGKILL)
+    except ProcessLookupError:
+        return False
+    return True
+
+
 @contextmanager
 def _tracked_process(process):
+    from execution.executor import _process_identity
+    process._biomind_creation_identity = _process_identity(process.pid)
     ACTIVE_PROCESS_GROUPS.add(process.pid)
     try:
         yield
     finally:
         try:
             if process.poll() is None:
-                try:
-                    os.killpg(process.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
+                _signal_owned_group(process)
                 process.wait()
         finally:
             ACTIVE_PROCESS_GROUPS.discard(process.pid)
@@ -251,11 +264,13 @@ def _runtime_locations():
     return prefixes, conda, bins
 
 
-class CommandExecutionService:
+class CommandExecutionService(InspectionOwnerMixin):
     """One service shared by all phases; every observation has a durable receipt."""
 
     def __init__(self, *, data_path, project_dir=None, startup_dir=None,
-                 read_roots=(), deny_paths=(), bwrap_path=None):
+                 read_roots=(), deny_paths=(), bwrap_path=None,
+                 first_yield_ms=20000, cleanup_timeout_seconds=5., runtime_locations=None):
+        self._init_owners(first_yield_ms, cleanup_timeout_seconds)
         self.context = ProjectContext.discover(project_dir, startup_dir=startup_dir)
         Path(data_path).expanduser().mkdir(parents=True, exist_ok=True)
         self.data_path = _directory(data_path)
@@ -265,10 +280,11 @@ class CommandExecutionService:
         configured_denies = os.environ.get('BIOMIND_COMMAND_DENY_PATHS', '').split(os.pathsep)
         self.deny_paths = tuple(Path(p).expanduser().absolute() for p in (*deny_paths, *configured_denies) if p)
         self.bwrap = bwrap_path or shutil.which('bwrap', path='/usr/bin:/bin') or ''
-        self.prefixes, self.conda, self.path = _runtime_locations()
+        self._explicit_runtime_locations = runtime_locations is not None
+        self.prefixes, self.conda, self.path = runtime_locations if self._explicit_runtime_locations else _runtime_locations()
         self._static_key = None
         self._static_argv = ()
-        self._runtime_signature = self._environment_signature()
+        self._runtime_signature = None if self._explicit_runtime_locations else self._environment_signature()
         active = os.environ.get('CONDA_PREFIX', '')
         self.active_conda_prefix = str(Path(active).resolve()) if active and Path(active).is_dir() else ''
 
@@ -284,6 +300,8 @@ class CommandExecutionService:
                       ('PATH', 'CONDA_EXE', 'CONDA_PREFIX', 'JAVA_HOME')), identity)
 
     def _refresh_runtime(self):
+        if self._explicit_runtime_locations:
+            return
         signature = self._environment_signature()
         if signature != self._runtime_signature:
             self.prefixes, self.conda, self.path = _runtime_locations()
@@ -549,7 +567,7 @@ class CommandExecutionService:
         return argv + ['--', '/bin/bash', '--noprofile', '--norc', '-c', cmd]
 
     @staticmethod
-    def _execute(argv, fds, timeout_seconds, cancelled, metrics=None):
+    def _execute(argv, fds, timeout_seconds, cancelled, metrics=None, log_paths=None):
         """Drain both pipes without unlimited buffering, including startup/exit.
 
         The worker owns Popen and its cleanup even if the async caller cancels.
@@ -557,28 +575,58 @@ class CommandExecutionService:
         """
         retained = {'stdout': bytearray(), 'stderr': bytearray()}
         sizes = {'stdout': 0, 'stderr': 0}
-        deadline = time.monotonic() + timeout_seconds
+        tails = {'stdout': bytearray(), 'stderr': bytearray()}
+        storage_errors = {}
+        metrics = metrics if metrics is not None else {}
+        deadline = metrics.get('deadline_monotonic',
+                               time.monotonic() + timeout_seconds if timeout_seconds is not None else None)
         timed_out = False
         spawn_started = time.monotonic()
-        with subprocess.Popen(argv, env={}, cwd='/', stdin=subprocess.DEVNULL,
+        with ExitStack() as files, subprocess.Popen(argv, env={}, cwd='/', stdin=subprocess.DEVNULL,
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                               start_new_session=True, close_fds=True, pass_fds=fds) as process, _tracked_process(process):
+            streams = {}
+            for name, path in (log_paths or {}).items():
+                try:
+                    streams[name] = files.enter_context(open(path, 'xb', buffering=0))
+                except OSError as exc:
+                    storage_errors[name] = type(exc).__name__ + ': ' + str(exc)
             if metrics is not None:
                 metrics['spawn_seconds'] = time.monotonic() - spawn_started
                 metrics['process_started_at'] = datetime.now(timezone.utc).isoformat()
+                metrics['process_alive'] = True
+                metrics['phase'] = 'running'
             with selectors.DefaultSelector() as selector:
                 for name, stream in (('stdout', process.stdout), ('stderr', process.stderr)):
                     os.set_blocking(stream.fileno(), False)
                     selector.register(stream, selectors.EVENT_READ, name)
                 killed = False
+                exit_seen_at = None
                 while selector.get_map() or process.poll() is None:
-                    if not killed and (cancelled.is_set() or time.monotonic() >= deadline):
-                        timed_out = not cancelled.is_set()
-                        try:
-                            os.killpg(process.pid, signal.SIGKILL)
-                        except ProcessLookupError:
-                            pass
-                        killed = True
+                    now = time.monotonic()
+                    if process.poll() is not None:
+                        metrics['process_alive'] = False
+                        metrics['process_exit_code'] = process.returncode
+                        metrics['phase'] = 'finalizing'
+                        if exit_seen_at is None:
+                            exit_seen_at = now
+                        if selector.get_map() and now - exit_seen_at >= metrics.get('cleanup_timeout_seconds', 5.):
+                            # The owner stays alive and drains. Only waiting is bounded;
+                            # no detached task/FD release is implied by this observation.
+                            metrics['cleanup_unconfirmed'] = True
+                            metrics['cleanup_reason'] = 'inherited_pipes_not_closed'
+                    if not killed and (cancelled.is_set() or (deadline is not None and time.monotonic() >= deadline)):
+                        if process.poll() is not None:
+                            # Preserve natural exit, including nonzero exit; an
+                            # old/reaped PID cannot authorize a group signal.
+                            killed = True
+                        elif _signal_owned_group(process):
+                            timed_out = not cancelled.is_set()
+                            metrics['termination_signal_sent'] = True
+                            killed = True
+                        else:
+                            metrics['cleanup_unconfirmed'] = True
+                            metrics['cleanup_reason'] = 'process_creation_identity_unconfirmed'
                     for key, _events in selector.select(timeout=0.05):
                         chunk = os.read(key.fileobj.fileno(), 16384)
                         if not chunk:
@@ -586,9 +634,36 @@ class CommandExecutionService:
                             continue
                         name = key.data
                         sizes[name] += len(chunk)
-                        remaining = max(0, 1048576 - len(retained[name]))
+                        metrics['last_output_monotonic'] = time.monotonic()
+                        metrics['stream_bytes_live'] = dict(sizes)
+                        if name in streams and name not in storage_errors:
+                            try:
+                                if streams[name].write(chunk) != len(chunk):
+                                    raise OSError("incomplete raw stream write")
+                            except OSError as exc:
+                                storage_errors[name] = type(exc).__name__ + ': ' + str(exc)
+                        remaining = max(0, 65536 - len(retained[name]))
                         retained[name].extend(chunk[:remaining])
+                        tails[name].extend(chunk)
+                        del tails[name][:-65536]
                 process.wait()
+                metrics['process_alive'] = False
+                metrics['process_exit_code'] = process.returncode
+                metrics['cleanup_unconfirmed'] = False
+                metrics['phase'] = 'finalizing'
+            for name, stream in streams.items():
+                try:
+                    os.fsync(stream.fileno())
+                except OSError as exc:
+                    storage_errors[name] = type(exc).__name__ + ': ' + str(exc)
+        for name in retained:
+            extra = min(len(tails[name]), max(0, sizes[name] - len(retained[name])))
+            if extra:
+                retained[name].extend(tails[name][-extra:])
+        metrics['stream_storage_errors'] = storage_errors
+        metrics['stream_storage_complete'] = {
+            name: bool(log_paths and name in log_paths and name not in storage_errors)
+            for name in sizes}
         return process.returncode, retained, sizes, timed_out
 
     @staticmethod
@@ -690,13 +765,13 @@ class CommandExecutionService:
             raise cancellation
         return result
 
-    async def run(self, arguments: Mapping[str, Any], *, task_id='', stage='') -> dict[str, Any]:
-        started = time.monotonic()
-        cancelled = threading.Event()
+    async def _run_owned(self, owner) -> dict[str, Any]:
+        arguments, task_id, stage = owner.arguments, owner.task_id, owner.stage
+        started = owner.started
+        cancelled = owner.cancelled
         cancellation = None
-        activity_id = 'inspection-' + uuid.uuid4().hex
-        metrics = {'scans': [], 'scan_seconds': 0., 'directories': 0, 'entries': 0,
-                   'prepare_seconds': 0., 'command_seconds': 0., 'spawn_seconds': 0.}
+        activity_id = owner.run_ref
+        metrics = owner.metrics
         result = {'tool': 'exec_command', 'observation_only': True,
                   'hostname': socket.gethostname(), 'stage': stage,
                   'observed_at': datetime.now(timezone.utc).isoformat(),
@@ -704,15 +779,15 @@ class CommandExecutionService:
                   'exit_code': None, 'stdout': '', 'stderr': '', 'timed_out': False,
                   'timing': metrics, 'activity_id': activity_id,
                   'scope_note': 'Only cwd immediate entries, typed files and read_paths are mounted. An unmounted subtree is not evidence of absence.'}
+        observation = owner.directory
+        log_paths = {name: observation / f'{name}.log' for name in ('stdout', 'stderr')}
         limit = 12000
+        retained = {}
         phase = 'preparing'
         phase_start = started
 
         def display(event, text):
-            from agent_core.cli_display import emit
-            emit('activity', f'{stage or "本地"} · {text} · {time.monotonic()-phase_start:.1f}s',
-                 purpose='status', task_id=task_id, node=stage, call_id=activity_id,
-                 event=event, progress_phase=event, source='runtime_fact')
+            self._emit_owner(owner, event, text)
 
         async def wait_worker(worker):
             # Timed observation also works when outer sandboxes suppress the
@@ -724,7 +799,8 @@ class CommandExecutionService:
         async def heartbeat():
             while True:
                 await asyncio.sleep(1)
-                display(phase, '准备检查环境' if phase == 'preparing' else '执行本地检查')
+                current = metrics.get('phase', phase)
+                display(current, '准备检查环境' if current == 'preparing' else '检查进程收尾' if current == 'finalizing' else '执行本地检查')
 
         display('preparing', '准备检查环境')
         ticker = asyncio.create_task(heartbeat())
@@ -734,20 +810,20 @@ class CommandExecutionService:
             cmd = arguments.get('cmd')
             if not isinstance(cmd, str) or not cmd.strip() or len(cmd) > 32768 or '\x00' in cmd:
                 raise CommandInspectionError('cmd must be a nonempty shell script of at most 32768 characters')
-            timeout_ms = arguments.get('timeout_ms', 30000)
+            timeout_ms = arguments.get('timeout_ms')
             limit = arguments.get('max_output_chars', 12000)
             paths = arguments.get('read_paths', [])
             if not isinstance(paths, list) or len(paths) > 64 or any(not isinstance(p, str) or not p.strip() or '\x00' in p for p in paths):
                 raise CommandInspectionError('read_paths must contain at most 64 explicit paths')
-            if type(timeout_ms) is not int or not 100 <= timeout_ms <= 120000:
-                raise CommandInspectionError('timeout_ms must be an integer in [100, 120000]')
+            if timeout_ms is not None and (type(timeout_ms) is not int or timeout_ms <= 0):
+                raise CommandInspectionError('timeout_ms must be a positive integer or null')
             if type(limit) is not int or not 256 <= limit <= 64000:
                 raise CommandInspectionError('max_output_chars must be an integer in [256, 64000]')
-            deadline = started + timeout_ms / 1000
+            deadline = owner.deadline
             def check():
                 if cancelled.is_set():
                     raise CommandInspectionError('COMMAND_PREPARATION_CANCELLED')
-                if time.monotonic() >= deadline:
+                if deadline is not None and time.monotonic() >= deadline:
                     raise TimeoutError('COMMAND_PREPARATION_TIMEOUT')
             self._refresh_runtime()
             project = self.project_for_task(task_id)
@@ -782,10 +858,11 @@ class CommandExecutionService:
                     metrics['prepare_seconds'] = time.monotonic() - started
                     metrics['prepared_at'] = datetime.now(timezone.utc).isoformat()
                 check()
-                phase, phase_start = 'executing', time.monotonic()
+                phase, phase_start = 'running', time.monotonic()
+                metrics['phase'] = phase
                 display(phase, '执行本地检查')
                 completion = asyncio.create_task(asyncio.to_thread(self._execute, argv,
-                    (seccomp.fileno(), registry.fileno()), max(0, deadline-time.monotonic()), cancelled, metrics))
+                    (seccomp.fileno(), registry.fileno()), max(0, deadline-time.monotonic()) if deadline is not None else None, cancelled, metrics, log_paths))
                 try:
                     returncode, retained, sizes, timed_out = await wait_worker(completion)
                 except asyncio.CancelledError as exc:
@@ -796,41 +873,70 @@ class CommandExecutionService:
                 metrics['command_ended_at'] = datetime.now(timezone.utc).isoformat()
             result['exit_code'] = returncode
             result['timed_out'] = timed_out
-            result['status'] = 'cancelled' if cancellation else 'timed_out' if timed_out else 'completed'
+            result['status'] = ('stopped' if metrics.get('stop_requested') else 'cancelled') if cancelled.is_set() and metrics.get('termination_signal_sent') else 'timed_out' if timed_out else 'completed'
             output = {name: bytes(data).decode('utf-8', errors='replace') for name, data in retained.items()}
             if returncode and output['stderr'].startswith('bwrap:'):
                 result.update(status='sandbox_error', error='COMMAND_SANDBOX_FAILED; observations do not establish file/tool absence')
             result['stream_bytes'] = sizes
-            result['truncated'] = {n: len(v) > limit or sizes[n] > len(retained[n]) for n, v in output.items()}
-            result['log_truncated'] = {n: sizes[n] > len(retained[n]) for n in sizes}
+            result['truncated'] = {n: sizes[n] > limit or sizes[n] > len(retained[n]) for n, v in output.items()}
+            result['log_truncated'] = {n: not metrics['stream_storage_complete'].get(n, False) for n in sizes}
+            result['log_integrity'] = {'complete': dict(metrics['stream_storage_complete']), 'errors': dict(metrics['stream_storage_errors'])}
         except asyncio.CancelledError as exc:
             cancellation = exc
             result['status'] = 'cancelled'
             output = {'stdout': '', 'stderr': ''}
         except (OSError, ValueError, TypeError) as exc:
-            result.update(status='timed_out' if isinstance(exc, TimeoutError) else 'not_run',
+            result.update(status='cancelled' if cancelled.is_set() else 'timed_out' if isinstance(exc, TimeoutError) else 'not_run',
                           error=str(exc), timed_out=isinstance(exc, TimeoutError))
             output = {'stdout': '', 'stderr': ''}
         finally:
             ticker.cancel()
-        observation = self._task_dir(task_id) / activity_id.removeprefix('inspection-')
-        observation.mkdir(parents=True, exist_ok=False)
+            await asyncio.gather(ticker, return_exceptions=True)
         result['log_refs'] = {}
+        result['output_projection'] = {}
         for name, content in output.items():
-            path = observation / f'{name}.log'
-            path.write_text(content, encoding='utf-8')
-            result['log_refs'][name] = str(path)
-            result[name] = content[:limit]
+            path = log_paths[name]
+            # No process was launched: publish the empty stream explicitly.
+            if not path.exists() and not metrics.get('process_started_at'):
+                try:
+                    path.write_text(content, encoding='utf-8')
+                except OSError as exc:
+                    result.setdefault('log_integrity', {}).setdefault('errors', {})[name] = str(exc)
+            if path.exists():
+                result['log_refs'][name] = str(path)
+            raw_preview = bytes(retained.get(name, content.encode('utf-8')))
+            total_bytes = result.get('stream_bytes', {}).get(name, len(raw_preview))
+            if len(raw_preview) > limit:
+                head = limit // 2
+                tail = limit - head
+                result[name] = (raw_preview[:head].decode('utf-8', errors='replace')
+                                + raw_preview[-tail:].decode('utf-8', errors='replace'))
+                result['output_projection'][name] = {
+                    'kind': 'head_and_tail', 'head_bytes': head, 'tail_bytes': tail,
+                    'omitted_middle': True, 'full_source_ref': str(path),
+                    'stream_bytes': total_bytes,
+                    'included_byte_ranges': [[0, head], [total_bytes - tail, total_bytes]],
+                    'omitted_byte_range': [head, total_bytes - tail],
+                    'range_convention': 'zero_based_half_open',
+                }
+            else:
+                result[name] = content
+                result['output_projection'][name] = {'kind': 'complete', 'full_source_ref': str(path)}
+        integrity = result.setdefault('log_integrity', {'complete': {}, 'errors': {}})
+        for name, path in log_paths.items():
+            integrity.setdefault('complete', {}).setdefault(name,
+                not bool(metrics.get('process_started_at')) and path.exists())
+            result.setdefault('log_truncated', {}).setdefault(name, not integrity['complete'][name])
         result['duration_seconds'] = time.monotonic() - started
         metrics['returned_at'] = datetime.now(timezone.utc).isoformat()
         result['receipt_ref'] = str(observation / 'receipt.json')
         self._record_metrics(task_id, result)
-        (observation / 'receipt.json').write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding='utf-8')
+        # Publication is performed once by the service owner after this worker returns.
         from agent_core.cli_display import emit
         emit('details', json.dumps(result, ensure_ascii=False), task_id=task_id, node=stage,
              call_id=activity_id, purpose='telemetry')
         phase_start = started
-        display(result['status'], '本地检查' + {'completed': '结束', 'cancelled': '已取消', 'timed_out': '超时'}.get(result['status'], '未执行'))
+        # Terminal activity is emitted only after the immutable receipt is published.
         if cancellation:
             raise cancellation
         return result

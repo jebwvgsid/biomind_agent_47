@@ -1,14 +1,25 @@
 ---
 name: loop-classification
-description: >
-  Classify chromatin loop anchors by overlap with histone marks, regulatory
-  annotations, or other BED tracks. Use after loop calling when the user asks
-  for loop classification, enhancer-promoter loops, promoter-promoter loops,
-  H3K27ac/H3K4me1/H3K4me3 loop annotation, or BED-based loop anchor categories.
-  Do not use for detecting loops from contact matrices; use loop-calling first.
-legacy_ids: [loops-classification, loop-anchor-annotation, enhancer-promoter-loops, Loop分类]
-compatibility: Pure Python classification is built in; bedtools is optional for large BED intersections.
+description: 'Classify chromatin loop anchors by overlap with histone marks, regulatory annotations, or other BED
+  tracks. Use after loop calling when the user asks for loop classification, enhancer-promoter loops, promoter-promoter
+  loops, H3K27ac/H3K4me1/H3K4me3 loop annotation, or BED-based loop anchor categories. Do not use for detecting
+  loops from contact matrices; use loop-calling first.
+
+  '
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # Loop Classification By Anchor Marks
 
@@ -35,7 +46,7 @@ Do not use this for the original loop detection step. Use `skills/3d-dna/loop-ca
 Repeated `--mark` arguments:
 
 ```bash
-python skills/3d-dna/loop-classification/scripts/classify_loops_by_marks.py \
+python "${SKILL_DIR}/scripts/classify_loops_by_marks.py" \
   --loops Loops/Mustache/10000/leaf.tsv \
   --mark H3K27ac LoopsClassification/H3K27ac.bed \
   --mark H3K4me1 LoopsClassification/H3K4me1.bed \
@@ -48,9 +59,9 @@ python skills/3d-dna/loop-classification/scripts/classify_loops_by_marks.py \
 Mark sheet:
 
 ```bash
-python skills/3d-dna/loop-classification/scripts/classify_loops_by_marks.py \
+python "${SKILL_DIR}/scripts/classify_loops_by_marks.py" \
   --loops Loops/Mustache/10000/leaf.tsv \
-  --mark-sheet skills/3d-dna/loop-classification/examples/marks.tsv \
+  --mark-sheet "${SKILL_DIR}/examples/marks.tsv" \
   --out-dir Loops/Classification/10000/leaf
 ```
 

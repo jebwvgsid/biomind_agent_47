@@ -1357,7 +1357,7 @@ def record_planning_failure(
     task_state["planning_failure"] = capsule
     # Keep prior Plan/submission/approval records, but publish this producer's
     # current rejection. Omitted success fields must not select an old receipt.
-    from agent_core.planner_loop import new_planner_loop_state
+    from agent_core.planning_state_facts import new_planner_loop_state
     loop = dict(task_state.get("planner_loop") or new_planner_loop_state(str(result.get("task_id") or "default")))
     loop.update({"phase": "candidate_rejected", "status": "active",
                  "agent_disposition": "continue", "updated_at": _now()})
@@ -1994,22 +1994,23 @@ def _stage_for_action(provenance: Dict[str, Any], action: Dict[str, Any]) -> str
     return ""
 
 
-def _pid_is_alive(pid_value: Any) -> bool:
+def _pid_is_alive(pid_value: Any, *, hostname=None, process_start_ticks=None) -> bool | None:
+    """True only for a locally verified creation identity; legacy is unknown."""
+    import socket
+    if not hostname or hostname != socket.gethostname() or process_start_ticks is None:
+        return None
     try:
         pid = int(pid_value)
-    except (TypeError, ValueError):
+        if pid <= 0:
+            return None
+        fields = (Path('/proc') / str(pid) / 'stat').read_text().rsplit(')', 1)[1].split()
+        if int(fields[19]) != int(process_start_ticks):
+            return False
+        return fields[0] != 'Z'
+    except FileNotFoundError:
         return False
-    if pid <= 0:
-        return False
-    try:
-        os.kill(pid, 0)
-    except ProcessLookupError:
-        return False
-    except PermissionError:
-        return True
-    except OSError:
-        return False
-    return True
+    except (OSError, ValueError, IndexError):
+        return None
 
 
 def _attempt_matches_identity(
@@ -2069,6 +2070,26 @@ def active_attempt(
     return rows[0] if rows else {}
 
 
+def _definite_attempt_exit_record(attempt: Mapping[str, Any]) -> Dict[str, Any]:
+    path = attempt.get('exit_status_path')
+    if not path:
+        return {}
+    try:
+        record = json.loads(Path(str(path)).read_text(encoding='utf-8'))
+    except (OSError, ValueError):
+        return {}
+    if not isinstance(record, dict) or record.get('terminal') is False:
+        return {}
+    if record.get('attempt_id') and str(record['attempt_id']) != str(attempt.get('attempt_id')):
+        return {}
+    if str(record.get('status', '')).lower() in {'running', 'preparing', 'reconciliation_unknown', 'reconciliation_required'}:
+        return {}
+    rc = record.get('exit_code', record.get('returncode', record.get('process_returncode')))
+    if type(rc) is int or (record.get('terminal') is True and record.get('execution_started') is False):
+        return record
+    return {}
+
+
 def classify_attempt_resume(
     state: PlanState,
     *,
@@ -2122,20 +2143,16 @@ def classify_attempt_resume(
     if not attempt:
         return {"route": "none", "attempt": {}, "create_new_attempt": True, "reason": "no_active_attempt"}
     status = str(attempt.get("status") or "").upper()
-    exit_status_path = Path(str(attempt.get("exit_status_path") or "")) if attempt.get("exit_status_path") else None
-    exit_record = {}
-    if exit_status_path and exit_status_path.is_file():
-        try:
-            exit_record = json.loads(exit_status_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            exit_record = {}
+    exit_record = _definite_attempt_exit_record(attempt)
     if status in {ATTEMPT_STARTING, ATTEMPT_RUNNING}:
-        if _pid_is_alive(attempt.get("pid")):
-            route, reason = "monitor_running_attempt", "running_process_is_alive"
-        elif exit_record:
+        alive = _pid_is_alive(attempt.get("pid"), hostname=attempt.get("hostname"),
+                              process_start_ticks=attempt.get("process_start_ticks"))
+        if exit_record:
             route, reason = "supervisor", "durable_exit_status_found"
+        elif alive is True:
+            route, reason = "monitor_running_attempt", "process_creation_identity_verified"
         else:
-            route, reason = "reconcile_attempt", "process_missing_without_exit_status"
+            route, reason = "reconcile_attempt", ("process_identity_unconfirmed" if alive is None else "process_missing_or_identity_changed_without_exit_status")
     elif status in {ATTEMPT_PROCESS_EXITED, ATTEMPT_EVIDENCE_COMMITTED}:
         route, reason = "supervisor", "execution_finished_validation_pending"
     elif status in {ATTEMPT_VALIDATED, ATTEMPT_VALIDATION_PASSED}:
@@ -2143,7 +2160,8 @@ def classify_attempt_resume(
     elif status == ATTEMPT_VALIDATION_FAILED:
         route, reason = "supervisor", "failed_validation_requires_recovery"
     elif status == ATTEMPT_UNKNOWN_AFTER_CRASH:
-        route, reason = "reconcile_attempt", "unknown_after_crash"
+        route, reason = (("supervisor", "durable_exit_status_found") if exit_record
+                         else ("reconcile_attempt", "unknown_after_crash"))
     elif status in {ATTEMPT_CREATED, ATTEMPT_SCRIPT_READY, ATTEMPT_APPROVED}:
         route, reason = "reconcile_attempt", "prepared_attempt_interrupted_before_start"
     else:
@@ -2277,18 +2295,19 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
                     f"Step {step_id or '<unknown>'} already has active attempt "
                     f"{existing_active.get('attempt_id')}"
                 )
-            if (
-                str(existing_active.get("status") or "").upper()
-                in {ATTEMPT_STARTING, ATTEMPT_RUNNING}
-                and _pid_is_alive(existing_active.get("pid"))
-            ):
-                raise ValueError(
-                    "Cannot supersede a different action while its process is alive"
-                )
+            if str(existing_active.get("status") or "").upper() in {
+                ATTEMPT_STARTING, ATTEMPT_RUNNING, ATTEMPT_UNKNOWN_AFTER_CRASH,
+            } and not _definite_attempt_exit_record(existing_active):
+                alive = _pid_is_alive(existing_active.get("pid"),
+                    hostname=existing_active.get("hostname"),
+                    process_start_ticks=existing_active.get("process_start_ticks"))
+                if alive is True:
+                    raise ValueError("Cannot supersede a different action while its process is alive")
+                raise ValueError("PRIOR_ATTEMPT_REQUIRES_RECONCILIATION: process identity/exit evidence is unconfirmed")
             stale_attempt = provenance["attempts"].get(
                 str(existing_active.get("attempt_id") or "")
             )
-            if isinstance(stale_attempt, dict):
+            if isinstance(stale_attempt, dict) and (action.get("normalized_action") or {}).get("execution_protocol_version") != 3:
                 stale_attempt["status"] = ATTEMPT_FAILED
                 stale_attempt["termination_reason"] = "superseded_by_new_action"
                 stale_attempt["superseded_by_action_id"] = action_id
@@ -2715,11 +2734,14 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
             ATTEMPT_COMPLETED: {ATTEMPT_COMPLETED},
             ATTEMPT_FAILED: {ATTEMPT_FAILED},
         }
+        action = provenance['actions'].get(attempt.get('action_id'), {})
+        if (action.get('normalized_action') or {}).get('execution_protocol_version') == 3:
+            transitions[ATTEMPT_CREATED].add(ATTEMPT_STARTING)
         if status != current_status and status not in transitions.get(current_status, set()):
             raise ValueError(f"Invalid attempt transition: {current_status} -> {status}")
         for key in (
             "generated_script", "approved_script", "executed_script", "executed_script_path",
-            "pid", "pgid", "started_at", "heartbeat_at", "finished_at", "stdout_path",
+            "pid", "pgid", "hostname", "process_start_ticks", "original_deadline_at", "started_at", "heartbeat_at", "finished_at", "stdout_path",
             "stderr_path", "exit_status_path", "returncode", "validation_evidence_ref", "incident_ref",
         ):
             if key in value:
@@ -2792,7 +2814,8 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
         if str(state.get("execution_cursor_step_id") or "") == str(attempt.get("step_id") or ""):
             state["execution_cursor_step_id"] = ""
         state["execution_status"] = "in_progress" if attempt.get("returncode") == 0 else "failed"
-        if attempt.get("returncode") == 0 and not is_probe:
+        explicit_work = execution.get('execution_protocol_version') == 3
+        if attempt.get("returncode") == 0 and not is_probe and not explicit_work:
             mark_step_verification_pending(
                 state,
                 step_id=str(attempt.get("step_id") or ""),
@@ -2804,7 +2827,7 @@ def record_provenance_event(state: PlanState, event_type: str, payload: Dict[str
             stage["current_attempt_id"] = attempt_id
             stage["status"] = (
                 STATUS_VERIFICATION_PENDING
-                if attempt.get("returncode") == 0 and not is_probe
+                if attempt.get("returncode") == 0 and not is_probe and not explicit_work
                 else "recorded"
                 if attempt.get("returncode") == 0
                 else "failed"
@@ -5807,6 +5830,21 @@ def normalize_plan_step(
     """Normalize one step in place while retaining unknown legacy fields."""
     if not isinstance(step, dict):
         step = {}
+    if step.get('step_protocol_version') == 3:
+        step.setdefault('step_id', f'step_{index}')
+        step.setdefault('title', step.get('description') or f'Step {index}')
+        step.setdefault('description', step['title'])
+        step.setdefault('status', STATUS_PENDING)
+        for key in ('inputs', 'outputs', 'skill_ids', 'workflow_stage_ids', 'success_criteria', 'evidence'):
+            step.setdefault(key, [])
+        step.setdefault('depends_on', list(step.get('dependencies') or []))
+        step.setdefault('dependencies', list(step['depends_on']))
+        step.setdefault('action', 'EXECUTE')
+        step.setdefault('purpose', '')
+        step.setdefault('tool', '')
+        step.setdefault('batch_id', '')
+        step.setdefault('risk_level', '')
+        return step
     raw_title = str(step.get("title") or step.get("name") or f"Step {index}")
     parsed = _structured_step_fields(raw_title)
     title = _clean_step_title(raw_title)
@@ -7970,6 +8008,14 @@ def _migrate_recovery_transition_lifecycle(state: PlanState) -> bool:
 def migrate_plan_state(state: PlanState, task_id: str, data_path: str | Path | None = None) -> Tuple[PlanState, List[str]]:
     """Apply idempotent, non-destructive lifecycle/schema migrations."""
     data = state if isinstance(state, dict) else {}
+    from agent_core.plan_contract import is_simple_plan
+    if is_simple_plan(data):
+        for key, value in _plan_defaults(task_id, data_path).items():
+            data.setdefault(key, deepcopy(value))
+        data['steps'] = [normalize_plan_step(row, index) for index, row in enumerate(data.get('steps') or [], 1)]
+        ensure_provenance_state(data)
+        refresh_state_contract_v2(data)
+        return data, []
     try:
         source_schema_version = int(data.get("schema_version") or 1)
     except (TypeError, ValueError):
@@ -9288,6 +9334,9 @@ def validate_output_contracts(
     defer_workspace_coverage: bool = False,
 ) -> List[Dict[str, Any]]:
     """Validate exact required coverage and single materializable ownership."""
+    from agent_core.plan_contract import is_simple_plan
+    if is_simple_plan(state):
+        return []  # Result checking occurs against actual attempt files, not declaration coverage.
     from .plan_contract import plan_result_contracts, plan_uses_explicit_results
     explicit_results = plan_uses_explicit_results(state)
     if explicit_results:
@@ -9419,6 +9468,9 @@ def validate_output_contracts(
 
 def validate_required_workspace_coverage(state: Mapping[str, Any]) -> List[Dict[str, Any]]:
     """Require a sealed valid state chain, not merely the presence of MUTATE."""
+    from agent_core.plan_contract import is_simple_plan
+    if is_simple_plan(state):
+        return []  # Formal runner captures actual paths and changes independently of roles.
     from .plan_contract import plan_result_contracts
     from .step_effects import validate_plan_dataflow_receipt
     required = {ref: row for ref, row in plan_result_contracts(state).items()
@@ -9452,6 +9504,9 @@ def normalize_task_output_materializations(
     task_spec: Mapping[str, Any] | None,
 ) -> Tuple[PlanState, List[Dict[str, Any]]]:
     """Validate Planner-owned filenames without creating another output identity."""
+    from agent_core.plan_contract import is_simple_plan
+    if is_simple_plan(state):
+        return deepcopy(state), []
     candidate = deepcopy(state)
     from .plan_contract import plan_uses_explicit_results
     from .plan_bindings import plan_uses_resource_uses
@@ -10335,6 +10390,13 @@ def normalize_plan_contracts(
 
 def validate_plan_for_generate(state: PlanState, task_revision: int) -> Dict[str, Any]:
     """Return one structured decision for every deterministic Generate plan guard."""
+    from agent_core.plan_contract import is_simple_plan, simple_plan_diagnostics
+    if is_simple_plan(state):
+        issues = simple_plan_diagnostics({'steps': state.get('steps') or []})
+        stale = int(state.get('generated_from_task_revision') or 0) != int(task_revision)
+        return {'valid': not issues and not stale, 'reason_code': 'stale_task_revision' if stale else 'invalid_dependencies' if issues else 'valid',
+            'validation_issues': issues, 'missing_fields': [], 'recoverable': True,
+            'validation_function': 'validate_plan_for_generate'}
     steps = [step for step in state.get("steps", []) or [] if isinstance(step, dict)]
     base = {
         "valid": False,
@@ -11395,6 +11457,10 @@ def commit_consultant_candidate_state(
     task_state["resolved_bindings"] = deepcopy(dict(proposed.get("resolved_bindings") or {}))
     pending = proposed.get("pending_question")
     task_state["pending_question"] = deepcopy(dict(pending or {}))
+    if "report_preservation_authorization" in proposed:
+        task_state["report_preservation_authorization"] = deepcopy(proposed["report_preservation_authorization"])
+    if "output_write_authorization" in proposed:
+        task_state["output_write_authorization"] = deepcopy(proposed["output_write_authorization"])
     accepted_handoff = proposed.get("accepted_consultant_handoff")
     if accepted_handoff is not None:
         if not isinstance(accepted_handoff, Mapping):
@@ -11538,11 +11604,9 @@ def _rewrite_plan_resource_bindings_after_allocation(
 ) -> Dict[str, Dict[str, Any]]:
     """Extend one compiled resource registry with allocated exact aliases.
 
-    Allocation changes only the controller-owned handle used by persisted Plan
-    steps.  It must not infer a new resource identity or silently recompile the
-    Planner's explicit alias contract from filenames.  Every allocated handle
-    is therefore added mechanically to the same canonical record that already
-    contained its candidate-local handle.
+    Controller-owned candidate identities are promoted with their handles;
+    explicit resource identities retain their canonical identity and gain the
+    allocated handle as an alias. Neither case infers identity from filenames.
     """
 
     source = {
@@ -11568,7 +11632,7 @@ def _rewrite_plan_resource_bindings_after_allocation(
             if str(value)
         }
         aliases.update({alias, identity})
-        if (row.get("role_associations") or row.get("resource_use_projection_version") == 3) and row.get("binding_source") == "candidate_local_artifact":
+        if row.get("binding_source") == "candidate_local_artifact":
             allocated = {str(value) for local, value in allocation_mapping.items() if str(local) in aliases}
             if len(allocated) != 1:
                 raise ValueError("PLAN_RESOURCE_ROLE_ALLOCATION_AMBIGUOUS")
@@ -11630,6 +11694,24 @@ def _prepare_atomic_plan_objects(
     step_effect_capability_registry: Any = None,
 ) -> Dict[str, str]:
     """Prewrite one unreachable snapshot/approval pair under the state lock."""
+    from agent_core.plan_contract import is_simple_plan
+    if is_simple_plan(state):
+        if state.pop('plan_commit_requested', False):
+            snapshot = {'schema_version': 1, 'plan_contract_version': PLAN_CONTRACT_VERSION,
+                'minimum_reader_version': MINIMUM_PLAN_READER_VERSION,
+                'plan_snapshot_id': 'plan-snapshot-' + _stable_payload_hash(_plan_spec_v2_record(state))[:24],
+                'plan_document': deepcopy(state['plan_document']), 'steps': deepcopy(state['steps']),
+                'plan_id': state['plan_id'], 'plan_version': state['plan_version'],
+                'plan_revision': state['plan_revision'], 'created_at': _now()}
+            reference = store.put_object('plan_snapshot_v121', snapshot)
+            state['plan_snapshot_ref'] = reference
+            state.setdefault('current_plan', {}).update(plan_snapshot_id=snapshot['plan_snapshot_id'], plan_snapshot_ref=reference)
+        approval = state.get('approval_record') or {}
+        if approval and approval.get('plan_snapshot_ref') == state.get('plan_snapshot_ref'):
+            approval_ref = store.put_object('plan_approval_record_v121', approval)
+            state['approval_record_ref'] = approval_ref
+            state.setdefault('current_approval', {}).update(approval_record_ref=approval_ref)
+        return {'plan_snapshot_ref': str(state.get('plan_snapshot_ref') or ''), 'approval_record_ref': str(state.get('approval_record_ref') or '')}
     if state.get("allocation_intent") or state.get("plan_commit_requested"):
         reason = planner_admission_closed_reason(current_value)
         if reason:
@@ -11651,7 +11733,11 @@ def _prepare_atomic_plan_objects(
         effect_mapping = dict(allocation_mapping)
         for local, allocated in allocation_mapping.items():
             resource = dict((state.get("plan_resource_bindings") or {}).get(local) or {})
-            if (resource.get("role_associations") or resource.get("resource_use_projection_version") == 3) and resource.get("binding_source") == "candidate_local_artifact":
+            if resource.get("binding_source") == "candidate_local_artifact":
+                # StepEffect compilation has already replaced the public
+                # local_ref with its scoped candidate identity. Promote that
+                # identity even when this v2 resource has no Skill role and
+                # appears only in workspace_mutations (outputs=[]).
                 effect_mapping[str(resource["canonical_resource_id"])] = allocated
         rewritten = rewrite_candidate_local_refs(
             {"steps": state.get("steps", []) or []},
@@ -13004,6 +13090,11 @@ def next_action_title(state: PlanState) -> str:
 
 
 def render_plan_progress(state: PlanState) -> str:
+    work = (state.get('task_state') or {}).get('work_plan')
+    if work is not None:
+        return '\n'.join(['Model plan (not execution approval):', str(work.get('notes') or ''),
+            *['- [' + {'pending':' ', 'in_progress':'~', 'completed':'x'}.get(r.get('status'),' ') + '] ' + r['text']
+              for r in work.get('todos', [])]])
     steps = [step for step in state.get("steps", []) or [] if isinstance(step, dict)]
     if not steps:
         return "No tracked plan steps."
@@ -13064,3 +13155,197 @@ def update_plan_markdown_status(plan_file: str | Path, state: PlanState) -> None
 
     if changed:
         path.write_text("\n".join(updated_lines) + ("\n" if text.endswith("\n") else ""), encoding="utf-8")
+
+
+def save_execution_plan(data_path, task_id, payload, *, dry_run=False):
+    """Materialize the current Plan before execution; invalidate only changed work."""
+    import hashlib
+    from agent_core.plan_contract import prepare_simple_plan, PlannerCandidateError, plan_exception_issues, raise_plan_diagnostics, plan_admission_policy_enabled
+    from agent_core.work_outputs import materialize_outputs, materialize_plan_outputs, WorkOutputError
+    from agent_core.work_validation import expected_inputs
+    diagnostic_issues = []
+    try:
+        candidate = prepare_simple_plan(payload)
+    except PlannerCandidateError as exc:
+        candidate = getattr(exc, 'partial_candidate', None)
+        if candidate is None:
+            raise
+        diagnostic_issues.extend(plan_exception_issues(exc))
+    current = load_plan_state(data_path, task_id)
+    prior = deepcopy(current)
+    document = {key: deepcopy(value) for key, value in candidate.items() if key != 'steps'}
+    bindings = document.get('path_bindings')
+    project = (bindings.get('project_dir') if isinstance(bindings, dict) else None) or data_path
+    proposed = {**current, 'plan_document': document}
+    # Each output is independent once its shared declarations are well-formed.
+    # Collect precise failures before normal materialization/fingerprinting;
+    # never write a partial Plan or infer paths from an invalid mapping.
+    shared_valid = all(name not in document or isinstance(document[name], kind)
+        for name, kind in (('path_bindings', dict), ('output_contracts', list), ('parameters', dict)))
+    policy_enabled = plan_admission_policy_enabled()
+    if shared_valid and policy_enabled:
+        for step_index, row in enumerate(candidate['steps']):
+            outputs = row.get('outputs', [])
+            if not isinstance(outputs, list):
+                continue  # Already diagnosed by the structural reader.
+            for output_index, output in enumerate(outputs):
+                location = f'$.steps[{step_index}].outputs[{output_index}]'
+                try:
+                    materialize_outputs(proposed, [output], project)
+                except (ValueError, TypeError) as exc:
+                    problems = plan_exception_issues(exc, field_path=location, value=output)
+                    for problem in problems:
+                        problem.setdefault('alternative', 'Use the confirmed absolute output path or one exact declared reference; arbitrary root placeholders are not expanded.')
+                    diagnostic_issues.extend(problems)
+    if diagnostic_issues:
+        raise_plan_diagnostics(diagnostic_issues)
+    admission_diagnostics = []
+    def input_projection(state, *, record=False):
+        try:
+            return expected_inputs(state)
+        except WorkOutputError as exc:
+            # Content may remain unresolved until it is actually consumed.
+            # Path authority and unsafe output components never become advice.
+            if policy_enabled or exc.issue.get('code') not in {
+                    'INPUT_MAPPING_CONFLICT','INPUT_SAMPLE_SET_CONFLICT','OUTPUT_SAMPLE_SET_INVALID',
+                    'INPUT_DECLARATIONS_INVALID','INPUT_PATH_REQUIRED','INPUT_MANIFEST_INVALID',
+                    'INPUT_MANIFEST_PATH_REQUIRED'}:
+                raise
+            doc = state.get('plan_document') or {}
+            if record:
+                admission_diagnostics.append({**deepcopy(exc.issue), 'blocking':False,
+                    'scope':'plan_admission_only', 'resolution':'retained_unresolved; execution remains strict'})
+            return {'unresolved_input_declaration':True,
+                'inputs':deepcopy(doc.get('inputs')), 'input_manifest':deepcopy(doc.get('input_manifest')),
+                'path_bindings':deepcopy(doc.get('path_bindings')), 'samples':deepcopy(doc.get('samples')),
+                'parameters':deepcopy(doc.get('parameters'))}
+    old = {row['step_id']: row for row in current.get('steps') or []}
+    def contract(row, state):
+        value = {k: row.get(k) for k in ('dependencies','inputs','parameters','runtime','validation')}
+        doc = state.get('plan_document') or {}
+        source_project = (doc.get('path_bindings') or {}).get('project_dir') or data_path
+        value['outputs'] = materialize_plan_outputs(state, row.get('outputs') or [], source_project)
+        value['runtime_binding'] = doc.get('runtime_binding')
+        value['plan_parameters'] = doc.get('parameters')
+        # Samples/balance outputs consume these formal matrix bindings even
+        # when a legacy step omitted its explicit input references.
+        from agent_core.work_validation import expected_inputs
+        roles={r.get('role') or r.get('original_reference') for r in value['outputs'] if isinstance(r,dict)}
+        if roles & {'samples_tsv','sample_sheet','samples','matrix_balance_report','balance'} or row.get('validation'):
+            value['formal_inputs']=input_projection(state)
+        # Declared inputs participate even when the prose/step ID did not change.
+        value['input_bindings'] = {k:v for k,v in (doc.get('path_bindings') or {}).items()
+            if k in {str(r.get('artifact_ref') or r.get('original_reference') or '') if isinstance(r,dict) else str(r) for r in row.get('inputs') or []}}
+        return hashlib.sha256(json.dumps(value, sort_keys=True, default=str).encode()).hexdigest()
+    steps, changed = [], set()
+    for ordinal, row in enumerate(candidate['steps'], 1):
+        row['step_protocol_version'] = 3
+        row['outputs'] = materialize_plan_outputs(proposed, row.get('outputs') or [], project,
+            diagnostics=admission_diagnostics, field_path=f'$.steps[{ordinal-1}].outputs')
+        step = normalize_plan_step(row, ordinal)
+        step['work_contract_fingerprint'] = contract(step, proposed)
+        former = old.get(step['step_id']) or {}
+        try:
+            identical = bool(former) and contract(former, prior) == step['work_contract_fingerprint']
+        except ValueError:
+            identical = False
+        if identical:
+            for key in ('status', 'evidence', 'attempts', 'execution_history'):
+                if key in former: step[key] = deepcopy(former[key])
+        else: changed.add(step['step_id'])
+        steps.append(step)
+    # Contract progress ignores prose and revision wrappers, while retaining exact bindings.
+    from agent_core.request_state import request_scope, current_finish
+    from agent_core.work_outputs import plan_identity
+    task = current.setdefault('task_state', {})
+    if task.get('status') == 'cancelled' or current_finish(current):
+        raise ValueError('PLAN_REQUEST_ENDED')
+    effective = {'steps':[(r['step_id'],r['work_contract_fingerprint']) for r in steps],
+        'path_bindings':document.get('path_bindings') or {}, 'output_contracts':document.get('output_contracts') or [],
+        'parameters':document.get('parameters') or {}, 'runtime_binding':document.get('runtime_binding')}
+    fingerprint = hashlib.sha256(json.dumps(effective,sort_keys=True,default=str).encode()).hexdigest()
+    loop = task.setdefault('planner_loop', {})
+    history = loop.get('contract_history') or []
+    commits = sorted((task.get('step_commit_receipts') or {}).keys())
+    marker = {'request_scope':request_scope(current), 'commits':commits}
+    previous = [r for r in history if r.get('progress_scope') == marker]
+    same = bool(old) and not changed and set(old)=={r['step_id'] for r in steps} and all(
+        (prior.get('plan_document') or {}).get(k) == document.get(k) for k in ('path_bindings','parameters','runtime_binding','output_contracts'))
+    revision_request = task.get('plan_revision_request') or {}
+    if same:
+        if revision_request.get('request_scope') == request_scope(current) and revision_request.get('plan_identity') == plan_identity(current):
+            raise ValueError('PLAN_REVISION_NO_CONTRACT_PROGRESS: change the relevant formal obligations or finish truthfully')
+        return current
+    if any(r['fingerprint']==fingerprint for r in previous):
+        raise ValueError('PLAN_REVISION_CYCLE_NO_PROGRESS: this effective contract was already used without a new Commit')
+    # Record the unresolved input relation once, independently of which steps
+    # currently consume it. This is not a second editable input contract.
+    input_projection(proposed, record=True)
+    if dry_run: return {**current, 'steps':steps, 'plan_document':document,
+        'plan_admission_diagnostics':admission_diagnostics,
+        'plan_admission_policy':'enabled' if policy_enabled else 'detached'}
+    loop.setdefault('contract_history', []).append({'fingerprint':fingerprint,'progress_scope':marker})
+    # Dependency invalidation is transitive; unrelated accepted work is retained.
+    while True:
+        affected = {r['step_id'] for r in steps if set(r.get('dependencies') or []) & changed}
+        if affected <= changed: break
+        changed.update(affected)
+    for step in steps:
+        if step['step_id'] in changed:
+            if old.get(step['step_id']):
+                step.setdefault('execution_history', []).append({'reason':'plan_contract_changed',
+                    'plan_version':prior.get('plan_version'), 'prior_step':deepcopy(old[step['step_id']])})
+            step['status'] = 'pending'; step['evidence'] = []
+    current.update(steps=steps, plan_document=document,
+        plan_revision=int(current.get('plan_revision') or 0)+1,
+        plan_version='plan_v'+str(int(current.get('plan_revision') or 0)+1),
+        plan_status='ready', approval_status='not_required', can_generate=True,
+        validation_issues=[], validation_recompute_required=False, plan_commit_requested=True)
+    current['plan_admission_diagnostics'] = admission_diagnostics
+    current['plan_admission_policy'] = 'enabled' if policy_enabled else 'detached'
+    current.setdefault('revision_history', []).append({'plan_version': prior.get('plan_version'),
+        'plan_snapshot_ref': prior.get('plan_snapshot_ref'), 'reason': 'explicit_work_plan_submission',
+        'plan_identity': plan_identity(prior), 'request_scope':request_scope(prior),
+        'invalidated_steps': sorted(changed), 'plan_parameters':(prior.get('plan_document') or {}).get('parameters') or {},
+        'plan_runtime_binding':(prior.get('plan_document') or {}).get('runtime_binding') or {},
+        'plan_input_bindings':input_projection(prior)})
+    task = current.setdefault('task_state', {})
+    if task.get('pending_work_result'):
+        task.setdefault('work_result_history', []).append(task.pop('pending_work_result'))
+    invalidated_receipts={k:r for k,r in task.get('step_commit_receipts',{}).items()
+        if r.get('step_id') in changed or r.get('step_id') not in {s['step_id'] for s in steps}}
+    if invalidated_receipts:
+        task.setdefault('step_commit_history', []).append({'reason':'plan_contract_changed','receipts':invalidated_receipts})
+        task['step_commit_receipts']={k:r for k,r in task['step_commit_receipts'].items() if k not in invalidated_receipts}
+    invalid_paths = {str(r.get('canonical_path') or r.get('path') or '')
+        for step_id in changed for r in old.get(step_id, {}).get('outputs', []) if isinstance(r, dict)}
+    task['accepted_work_files'] = [r for r in task.get('accepted_work_files') or []
+        if r.get('step_id') not in changed and r.get('step_id') in {s['step_id'] for s in steps}
+        and str(r.get('path')) not in invalid_paths]
+    current['generated_from_task_revision'] = task_spec_revision(canonical_task_spec_for_state(current))
+    done = {r['step_id'] for r in steps if r['status'] in {'done', 'skipped'}}
+    current['current_step_id'] = next((r['step_id'] for r in steps if r['status'] not in {'done', 'skipped'} and all(d in done for d in r.get('dependencies') or [])), '')
+    for key in ('current_approval', 'approval_record', 'approval_snapshot'):
+        if current.get(key): current.setdefault('historical_approvals', []).append(deepcopy(current[key]))
+        current[key] = {}
+    current['approval_record_ref'] = ''
+    consultation = task.get('plan_revision_request') or {}
+    if consultation.get('status') == 'pending' and consultation.get('request_scope') == request_scope(prior) and consultation.get('plan_identity') == plan_identity(prior):
+        consultation['status'] = 'revision_pending_snapshot'
+        consultation['accepted_plan_version'] = current['plan_version']
+    save_plan_state(data_path, task_id, current)
+    # Use the admitted snapshot identity, never a candidate identity.
+    current = load_plan_state(data_path, task_id)
+    consultation = (current.get('task_state') or {}).get('plan_revision_request') or {}
+    if consultation.get('status') == 'revision_pending_snapshot':
+        from agent_core.planner_consultation import source_locators
+        consultation.update(status='revision_ready', accepted_plan_identity=plan_identity(current),
+            activated_sources=source_locators(data_path, task_id, current))
+        save_plan_state(data_path, task_id, current)
+    return current
+
+
+def resolve_work_output(state, raw, project_dir):
+    """The shared current-Plan resolver used by execution and acceptance."""
+    from agent_core.work_outputs import resolve_output
+    return resolve_output(state, raw, project_dir)

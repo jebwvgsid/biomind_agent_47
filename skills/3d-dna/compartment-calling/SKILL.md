@@ -1,42 +1,30 @@
 ---
-name: compartment-analysis
-description: >
-  Call A/B compartments from Hi-C, Micro-C, Pore-C, or other .cool/.mcool
-  chromatin contact matrices using PC1/eigenvector analysis by default. This
-  is the default BioMind skill for ordinary 区室鉴定 / A/B区室鉴定 /
-  compartment calling. Use when the user asks to identify/call compartments,
-  calculate A/B compartments, run PC1/eigenvector compartment interpretation,
-  orient compartments with gene density, or produce per-sample A/B compartment
-  tracks from .cool/.mcool matrices, unless the user explicitly asks for
-  CALDER2, hierarchical compartments, sub-compartments, or A.1/A.2/B.1/B.2
-  labels. For those explicit CALDER2/sub-compartment requests, use
-  3d-dna/calder2-subcompartment instead.
+name: compartment-calling
+description: 'Call A/B compartments from Hi-C, Micro-C, Pore-C, or other .cool/.mcool chromatin contact matrices
+  using PC1/eigenvector analysis by default. This is the default BioMind skill for ordinary 区室鉴定 / A/B区室鉴定 / compartment
+  calling. Use when the user asks to identify/call compartments, calculate A/B compartments, run PC1/eigenvector
+  compartment interpretation, orient compartments with gene density, or produce per-sample A/B compartment tracks
+  from .cool/.mcool matrices, unless the user explicitly asks for CALDER2, hierarchical compartments, sub-compartments,
+  or A.1/A.2/B.1/B.2 labels. For those explicit CALDER2/sub-compartment requests, use 3d-dna/calder2-subcompartment
+  instead.
+
+  '
 metadata:
-  version: "1.1.0"
-  tags: [compartment, A/B-compartment, PC1, eigenvector, Hi-C, Micro-C, Pore-C, mcool, cool, gene-density, 区室分析, AB区室]
-  task_types: [chromatin_contact_compartment]
-  stage_tags: [compartment_calling]
-  inputs: [cool_matrix, mcool_matrix, resolution, feature_track]
-  outputs: [ab_compartment_tracks, eigenvector_tracks, compartment_summary]
-  when_to_use:
-    - Workflow stage is compartment_calling.
-    - User needs A/B compartment calls from contact matrices.
-    - User does not explicitly require CALDER2 hierarchical sub-compartments.
-  when_not_to_use:
-    - CALDER2 hierarchical sub-compartment calling.
-    - Differential compartment summary from existing compartment files only.
-  legacy_ids: [ab-compartment, compartment-calling, AB区室鉴定, 区室鉴定, 普通区室鉴定, 默认区室鉴定, A/B区室]
-  runtime:
-    default_env: compartment
-    env_runner: conda run -n compartment python
-    language: python
-    packages: [cooler, cooltools, pandas, numpy, scipy, h5py, bedtools]
-    install_tool: compartment_pc1_runtime
-    install_policy: declared-only
-    install_command: conda create -n compartment -c conda-forge -c bioconda python=3.10 cooler cooltools pandas numpy scipy h5py bedtools -y
-    capabilities: [ab-compartment, pc1-eigenvector, cooler-preflight, feature-track-orientation]
-    healthcheck: conda run -n compartment python skills/3d-dna/compartment-calling/scripts/call_ab_compartments_pc1.py --help
+  version: 1.1.0
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # A/B Compartment Analysis With PC1/Eigenvector
 
@@ -71,7 +59,7 @@ When inspecting `.cool/.mcool` chromosome names or sizes, do not invent cooler
 CLI subcommands. Prefer the Python API inside the declared runtime:
 
 ```bash
-conda run -n compartment python -c '
+python -c '
 import cooler
 uri = "Matrix/Final/leaf.mcool::/resolutions/40000"
 clr = cooler.Cooler(uri)
@@ -162,14 +150,14 @@ Do not call a gene interval BED or a BED with gene lengths in column 4
 Verify the PC1 runtime before execution:
 
 ```bash
-conda run -n compartment python -c "import cooler, cooltools, pandas, numpy, h5py; print('PC1_OK')"
-conda run -n compartment python skills/3d-dna/compartment-calling/scripts/call_ab_compartments_pc1.py --help
+python -c "import cooler, cooltools, pandas, numpy, h5py; print('PC1_OK')"
+python "${SKILL_DIR}/scripts/call_ab_compartments_pc1.py" --help
 ```
 
 `bedtools` is a CLI dependency, not a required Python module for this skill.
 Do not use `import pybedtools` as a healthcheck unless the user explicitly asks
 for a pybedtools-based implementation. If the CLI needs to be checked directly,
-use `conda run -n compartment bedtools --version` or the wrapper healthcheck
+use `bedtools --version` or the wrapper healthcheck
 above.
 
 If the `compartment` environment is missing, repair it with the declared runtime
@@ -188,7 +176,7 @@ Call A/B compartments for two samples from `.mcool` matrices with an oriented
 gene-density feature track:
 
 ```bash
-conda run -n compartment python skills/3d-dna/compartment-calling/scripts/call_ab_compartments_pc1.py \
+python "${SKILL_DIR}/scripts/call_ab_compartments_pc1.py" \
   --sample leaf Matrix/Final/leaf.mcool \
   --sample bud Matrix/Final/bud.mcool \
   --resolution-bp 40000 \

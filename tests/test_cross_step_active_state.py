@@ -16,7 +16,6 @@ from agent_core.active_state import (
     generation_provenance_for_dispatch,
     scoped_execution_evidence,
 )
-from bio_agents import BioAnalystAgent, recovery_generation_contract_failure
 from agent_core.controller_audit import (
     adapt_script_block_to_action,
     parse_executable_script_block,
@@ -110,10 +109,6 @@ def _finalize_for_state(
     )
 
 
-def _agent(root: Path) -> BioAnalystAgent:
-    agent = BioAnalystAgent.__new__(BioAnalystAgent)
-    agent.data_path = root
-    return agent
 
 
 def test_historical_execution_isolation_and_atomic_advance() -> None:
@@ -216,61 +211,6 @@ def test_historical_recovery_does_not_select_recovery_generate() -> None:
     assert action["action_type"] == "execute"
 
 
-def test_production_dispatch_drops_prior_step_evidence_and_recovery(
-    tmp_path: Path,
-) -> None:
-    task_id = "production-dispatch-isolation"
-    state = _two_step_plan(task_id)
-    first = _record(
-        state,
-        step_id="validate-inputs",
-        attempt_id="attempt-step-1",
-        action_id="action-step-1",
-    )
-    advance_plan_after_verified_step(
-        state,
-        expected_step_id="validate-inputs",
-        transition_id="complete-step-1",
-    )
-    historical = {
-        "decision_id": "historical-step-1",
-        "step_id": "validate-inputs",
-        "status": "consumed",
-        "target_route": "generate",
-    }
-    state["task_state"]["recovery_state"]["decision_history"] = [historical]
-    state["recovery_decision"] = historical
-    save_plan_state(tmp_path, task_id, state)
-    persisted = load_plan_state(tmp_path, task_id)
-
-    resolved = _agent(tmp_path)._resolve_and_commit_effective_transition(
-        "supervisor",
-        {
-            "task_id": task_id,
-            "state_generation": persisted["state_generation"],
-            "execution_evidence": first,
-        },
-        {
-            "proposed_route": "generate",
-            "next_step": "generate",
-            "execution_evidence": first,
-        },
-        task_id,
-    )
-
-    assert resolved["dispatch_route"] == "generate"
-    assert resolved["current_step_id"] == "check-contig-compatibility"
-    assert resolved["generation_mode"] == GenerationMode.NORMAL.value
-    assert resolved["recovery_generated"] is False
-    assert resolved["generation_provenance"]["recovery_id"] is None
-    assert resolved["execution_evidence"] == {}
-    assert resolved["pending_recovery_action"] == {}
-    assert resolved["recovery_execution_envelope"] == {}
-    durable = load_plan_state(tmp_path, task_id)
-    assert durable["task_state"]["generation_provenance"]["mode"] == "NORMAL"
-    assert durable["task_state"]["recovery_state"]["decision_history"] == [
-        historical
-    ]
 
 
 def test_matching_recovery_generation_requires_and_accepts_matching_envelope(
@@ -341,25 +281,6 @@ def test_matching_recovery_generation_requires_and_accepts_matching_envelope(
     assert action["recovery_decision_id"] == decision.decision_id
 
 
-def test_true_recovery_without_envelope_is_pre_provider_internal_protocol() -> None:
-    state = _two_step_plan("missing-recovery-envelope")
-    state["task_state"]["recovery_state"]["active_recovery"] = {
-        "recovery_id": "recovery-missing-envelope",
-        "plan_revision": state["plan_revision"],
-        "step_id": "validate-inputs",
-        "source_attempt_id": "attempt-failed",
-        "status": "dispatched",
-        "target_route": "generate",
-        "envelope_id": "",
-    }
-    with pytest.raises(ActiveStateInvariantError) as caught:
-        generation_provenance_for_dispatch(state, source_route="execute")
-    failure = recovery_generation_contract_failure(caught.value)
-    assert caught.value.code == "RECOVERY_EXECUTION_ENVELOPE_MISSING"
-    assert failure["failure_class"] == "internal_protocol"
-    assert failure["stage"] == "generate.recovery_contract"
-    assert failure["llm_invoked"] is False
-    assert failure["execute_started"] is False
 
 
 def test_plan_revision_change_closes_old_active_recovery() -> None:

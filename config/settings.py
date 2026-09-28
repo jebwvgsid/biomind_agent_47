@@ -72,6 +72,10 @@ class EnvironmentManager:
     @staticmethod
     def load_environment():
         """加载环境变量 (.env)"""
+        if os.getenv("BIOMIND_DISABLE_DOTENV", "").strip().lower() in {
+            "1", "true", "yes", "on",
+        }:
+            return
         # 这一步非常关键：它保证了后续 config.py 能读到 .env 里的值
         env_paths = [
             PathManager.SYSTEM_ROOT / ".env",   # 软件目录默认配置

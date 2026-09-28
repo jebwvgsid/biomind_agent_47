@@ -1,29 +1,24 @@
 ---
 name: long-read-sv-cutesv
-description: Optional long-read structural variant calling with cuteSV for ONT, PacBio CLR, or PacBio HiFi BAMs. Use for multi-caller validation, benchmarking, or Sniffles2 failure follow-up, not as the default long-read SV route.
-version: "1.0.0"
-tags: [long-read, ONT, PacBio, HiFi, SV, cuteSV, optional-caller]
-legacy_ids: [cutesv, cuteSV, longread-cutesv]
-task_types: [long_read_sv_calling]
-stage_tags: [cutesv_sv, optional_long_read_sv]
-inputs: [reference_fasta, sorted_bam, platform]
-outputs: [cutesv_vcf, sv_summary]
-when_to_use:
-  - User explicitly requests cuteSV.
-  - User requests multi-caller validation or benchmarking for long-read SV.
-  - Sniffles2 is unavailable or failed and the user accepts an alternate caller.
-when_not_to_use:
-  - Vague long-read SV requests; use genomics/long-read-sv-sniffles2 first.
-  - Short-read WGS; use genomics/wgs-manta-sv.
-runtime:
-  default_env: bio_cutesv
-  env_runner: bash
-  language: bash
-  packages: [cutesv, samtools, bcftools]
-  capabilities: [long-read-sv, cutesv-calling]
-  healthcheck: bash -lc "cuteSV --help >/dev/null 2>&1 && samtools --version >/dev/null && bcftools --version >/dev/null"
-  install_command: mamba create -n bio_cutesv -c conda-forge -c bioconda -y cutesv samtools bcftools
+description: Optional long-read structural variant calling with cuteSV for ONT, PacBio CLR, or PacBio HiFi BAMs.
+  Use for multi-caller validation, benchmarking, or Sniffles2 failure follow-up, not as the default long-read SV
+  route.
+metadata:
+  version: 1.0.0
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # Optional Long-Read SV with cuteSV
 

@@ -17,7 +17,6 @@ from agent_core.task_spec import (
     resolve_effective_user_facts,
     validate_compiled_constraints,
 )
-from bio_agents import BioAnalystAgent
 from prompts.manager import PromptManager
 from supervisor import _effective_declared_requirements
 
@@ -127,35 +126,6 @@ class EffectiveContextProjectionTests(unittest.TestCase):
         self.assertIn("correct_previous_plan", repair)
         self.assertNotIn("PlanPatch", repair)
 
-    def test_generate_projection_uses_current_step_and_effective_values(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            agent = BioAnalystAgent.__new__(BioAnalystAgent)
-            agent.data_path = tmpdir
-            plan = build_plan_state(
-                "task-a",
-                "- [>] Step 1: use B | Action: EXECUTE | Skills: [] | Inputs: [/data/b.mcool] "
-                "| Outputs: [result.tsv] | Done: result.tsv exists",
-            )
-            save_plan_state(tmpdir, "task-a", plan)
-            spec = create_task_spec(
-                "输入 /data/a.vcf 和 /data/b.mcool；输出目录: /out；不得覆盖输入",
-                task_id="task-a",
-            )
-            spec = _with_input_overwrite_constraint(spec)
-            projection = json.loads(agent._generate_task_spec_projection(
-                {"task_id": "task-a", "task_spec": spec},
-                [],
-            ))
-
-        paths = {item["locator"] for item in projection["active_artifacts"]}
-        self.assertIn("/data/b.mcool", paths)
-        self.assertIn("/out", paths)
-        self.assertNotIn("/data/a.vcf", paths)
-        self.assertIn(
-            "forbidden_behavior.input_overwrite",
-            {item["semantic_key"] for item in projection["semantic_constraints"]},
-        )
-        self.assertNotIn("user_directives", projection)
 
     def test_recovery_level_one_contains_same_effective_fact_revision(self):
         spec = _seven_fact_spec()

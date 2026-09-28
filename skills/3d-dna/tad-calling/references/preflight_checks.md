@@ -13,15 +13,15 @@ Read this before running real data when resolution, matrix correction, or sample
 Use the shared environment `hicexplore` for TAD calling, differential TAD, boundary statistics, and Hi-C heatmap-related skills. Verify it before any install attempt:
 
 ```bash
-conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/call_tads.py --help
+python "${SKILL_DIR}/scripts/call_tads.py" --help
 ```
 
 If the check passes, do not install anything. If the environment or a software dependency is missing, do not install directly from the execution step. Delegate to the installer for the same shared environment:
 
 ```text
-<install_tool env="hicexplore">hicexplorer</install_tool>
-<install_tool env="hicexplore">cooler</install_tool>
-<install_tool env="hicexplore">matplotlib</install_tool>
+确认目标环境后请求用户授权安装 hicexplorer
+确认目标环境后请求用户授权安装 cooler
+确认目标环境后请求用户授权安装 matplotlib
 ```
 
 Re-run the healthcheck after installer delegation.
@@ -29,10 +29,10 @@ Re-run the healthcheck after installer delegation.
 ## Check Available Resolutions
 
 ```bash
-conda run -n hicexplore python -c "import cooler; print(cooler.fileops.list_coolers('sample.mcool'))"
+python -c "import cooler; print(cooler.fileops.list_coolers('sample.mcool'))"
 ```
 
-Avoid bare `cooler ...` commands in managed runs unless `which cooler` confirms the command is not a stale `bin_shims/cooler`. Prefer `conda run -n hicexplore cooler ...` when a CLI call is needed.
+Avoid bare `cooler ...` commands in managed runs unless `which cooler` confirms the command is not a stale `bin_shims/cooler`. Prefer `cooler ...` when a CLI call is needed.
 
 Typical output:
 
@@ -67,7 +67,7 @@ attribute.
 Compact shell check for multiple matrices:
 
 ```bash
-conda run -n hicexplore python - <<'PY'
+python - <<'PY'
 import cooler
 
 paths = [
@@ -89,7 +89,7 @@ PY
 If the `weight` column is missing during normal TAD calling, use the wrapper's default auto-balance behavior:
 
 ```bash
-conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/call_tads.py --sample SAMPLE sample.mcool --resolution-bp 40000 --out-root TADs/HiCExplorer
+python "${SKILL_DIR}/scripts/call_tads.py" --sample SAMPLE sample.mcool --resolution-bp 40000 --out-root TADs/HiCExplorer
 ```
 
 For `.mcool`, balance must be applied to the relevant resolution or generated upstream during matrix creation.

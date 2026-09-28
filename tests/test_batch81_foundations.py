@@ -9,7 +9,6 @@ from pathlib import Path
 
 from agent_core.context_lineage import redact_payload
 from agent_core.recovery import recovery_action_route
-from agent_core.middleware import error_recovery_middleware
 from agent_core.plan_tracker import (
     apply_recovery_decision,
     build_plan_state,
@@ -17,7 +16,6 @@ from agent_core.plan_tracker import (
     record_provenance_event,
 )
 from execution.executor import run_script_path
-from bio_agents import BioAnalystAgent
 
 
 class ScriptSourceOfTruthTests(unittest.TestCase):
@@ -49,27 +47,6 @@ class ScriptSourceOfTruthTests(unittest.TestCase):
             self.assertEqual(returncode, 126)
             self.assertIn("SCRIPT_HASH_MISMATCH", stderr)
 
-    def test_script_versions_are_immutable_and_parented(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            agent = BioAnalystAgent.__new__(BioAnalystAgent)
-            agent.data_path = tmp
-            state = DurableAttemptTests._state()
-            generated = agent._persist_script_version(
-                "task-a", state, "step-1", "action-1", "generated", "printf ok\n",
-                extension=".sh", mutation_reason="model_generation",
-            )
-            approved = agent._persist_script_version(
-                "task-a", state, "step-1", "action-1", "approved", "printf ok\n",
-                extension=".sh", parent_script_ref=generated, mutation_reason="approved",
-            )
-            self.assertEqual(approved["parent_script_ref"]["sha256"], generated["sha256"])
-            self.assertEqual(generated["producer"], "controller")
-            self.assertEqual(approved["producer"], "controller")
-            with self.assertRaisesRegex(ValueError, "Immutable script version"):
-                agent._persist_script_version(
-                    "task-a", state, "step-1", "action-1", "approved", "printf changed\n",
-                    extension=".sh", parent_script_ref=generated, mutation_reason="edited",
-                )
 
 
 class DurableAttemptTests(unittest.TestCase):
@@ -218,15 +195,7 @@ class RecoverySingleWriterTests(unittest.TestCase):
         self.assertEqual(json.dumps(state, sort_keys=True), before)
         self.assertEqual(state["task_state"]["budgets"]["execution_retry_count"], 0)
 
-    def test_active_middleware_does_not_apply_plan_decisions(self):
-        source = inspect.getsource(error_recovery_middleware)
-        self.assertNotIn("apply_recovery_decision(", source)
 
-    def test_transition_guard_is_the_only_runtime_commit_callsite(self):
-        source = inspect.getsource(BioAnalystAgent)
-        self.assertEqual(source.count("apply_recovery_decision("), 1)
-        guard = inspect.getsource(BioAnalystAgent._apply_transition_guard)
-        self.assertIn("apply_recovery_decision(", guard)
 
     def test_reconsult_and_revalidate_have_explicit_routes(self):
         self.assertEqual(recovery_action_route("RECONSULT")["next_step"], "consultant")

@@ -1,28 +1,28 @@
 ---
-name: nanopore-dorado-modbase-prep
-description: >
-  Prepare Oxford Nanopore 5mC/5hmC modBAM inputs for modkit by running Dorado
-  modified-base basecalling from POD5/FAST5 data or aligning existing modified
-  basecalls while preserving MM/ML tags. Use when the user has POD5, FAST5,
-  unaligned modBAM, or ordinary basecalling outputs and asks for 5mC methylation
-  detection before modkit pileup. Produces aligned, coordinate-sorted, indexed
-  modBAM suitable for nanopore-modkit-pileup. Do not use for DMR once bedMethyl
-  already exists.
-version: "1.0.0"
-tags: [nanopore, dorado, modified-basecalling, modBAM, MM, ML, 5mC, 5hmC, POD5, FAST5, alignment]
-legacy_ids: [dorado-modbase-prep, dorado-5mc-prep, nanopore-modbase-prep, 甲基化上游准备]
-task_types: [nanopore_modbase_prep]
-stage_tags: [dorado_basecalling, modbam_alignment, modbam_preflight]
-inputs: [pod5_or_unaligned_modbam, reference_fasta, dorado_model, sample_name, output_directory]
-outputs: [aligned_sorted_indexed_modbam, dorado_summary_tsv, modbam_check_tags]
-runtime:
-  default_env: dorado
-  env_runner: bash
-  language: bash
-  packages: [dorado, samtools, modkit]
-  capabilities: [modified-basecalling, alignment, samtools-sort-index, modbam-tag-check]
-  healthcheck: bash -lc "dorado --version && samtools --version >/dev/null && modkit --version"
+name: dorado-modbase-prep
+description: 'Prepare Oxford Nanopore 5mC/5hmC modBAM inputs for modkit by running Dorado modified-base basecalling
+  from POD5/FAST5 data or aligning existing modified basecalls while preserving MM/ML tags. Use when the user has
+  POD5, FAST5, unaligned modBAM, or ordinary basecalling outputs and asks for 5mC methylation detection before modkit
+  pileup. Produces aligned, coordinate-sorted, indexed modBAM suitable for nanopore-modkit-pileup. Do not use for
+  DMR once bedMethyl already exists.
+
+  '
+metadata:
+  version: 1.0.0
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # Dorado Modified-Base Prep For Modkit
 

@@ -298,6 +298,8 @@ def render_haplotypecaller(args: argparse.Namespace, samples: list[dict[str, str
                     "--java-options",
                     java,
                     "HaplotypeCaller",
+                    "--sample-ploidy",
+                    str(args.sample_ploidy),
                     "-R",
                     args.ref,
                     "-I",
@@ -612,6 +614,9 @@ def render_annotation_template(args: argparse.Namespace) -> list[str]:
         buildver_setup = f"ANNOVAR_BUILDVER={q(args.annovar_buildver)}"
     else:
         buildver_setup = ': "${ANNOVAR_BUILDVER:?set ANNOVAR_BUILDVER or pass --annovar-buildver for this project/database}"'
+    gff_command = tool('gff3ToGenePred', [Raw('\"$ANNOTATION_GFF3\"'), Raw('\"$ANNOVAR_DBDIR/${ANNOVAR_BUILDVER}_${ANNOVAR_DBTYPE}.txt\"')])
+    retrieve_command = tool('retrieve_seq_from_fasta.pl', ['--format', 'refGene', '--seqfile', Raw('\"$ANNOTATION_FASTA\"'), '--out', Raw('\"$ANNOVAR_DBDIR/${ANNOVAR_BUILDVER}_${ANNOVAR_DBTYPE}Mrna.fa\"'), Raw('\"$ANNOVAR_DBDIR/${ANNOVAR_BUILDVER}_${ANNOVAR_DBTYPE}.txt\"')])
+    annotate_command = tool('annotate_variation.pl', ['-geneanno', '--neargene', '2000', '-buildver', Raw('\"$ANNOVAR_BUILDVER\"'), '-dbtype', Raw('\"$ANNOVAR_DBTYPE\"'), '-outfile', Raw('\"$ANNOVAR_DBDIR/all.anno\"'), '-exonsort', Raw('\"$ANNOVAR_DBDIR/all.snp.vcf.annovar.input\"'), Raw('\"$ANNOVAR_DBDIR\"')])
     lines.extend(
         [
             "mkdir -p logs",
@@ -621,10 +626,10 @@ def render_annotation_template(args: argparse.Namespace) -> list[str]:
             f"ANNOVAR_DBTYPE={q(dbtype)}",
             f"ANNOVAR_DBDIR={q(dbdir)}",
             'mkdir -p "$ANNOVAR_DBDIR"',
-            f"{tool('gff3ToGenePred', [Raw('\"$ANNOTATION_GFF3\"'), Raw('\"$ANNOVAR_DBDIR/${ANNOVAR_BUILDVER}_${ANNOVAR_DBTYPE}.txt\"')])} > logs/annovar.gff3ToGenePred.log 2>&1",
-            f"{tool('retrieve_seq_from_fasta.pl', ['--format', 'refGene', '--seqfile', Raw('\"$ANNOTATION_FASTA\"'), '--out', Raw('\"$ANNOVAR_DBDIR/${ANNOVAR_BUILDVER}_${ANNOVAR_DBTYPE}Mrna.fa\"'), Raw('\"$ANNOVAR_DBDIR/${ANNOVAR_BUILDVER}_${ANNOVAR_DBTYPE}.txt\"')])} > logs/annovar.retrieve_seq.log 2>&1",
+            f"{gff_command} > logs/annovar.gff3ToGenePred.log 2>&1",
+            f"{retrieve_command} > logs/annovar.retrieve_seq.log 2>&1",
             f"{tool('convert2annovar.pl', ['-format', 'vcf4', '-allsample', '-withfreq', vcf])} > \"$ANNOVAR_DBDIR/all.snp.vcf.annovar.input\" 2> logs/annovar.convert2annovar.log",
-            f"{tool('annotate_variation.pl', ['-geneanno', '--neargene', '2000', '-buildver', Raw('\"$ANNOVAR_BUILDVER\"'), '-dbtype', Raw('\"$ANNOVAR_DBTYPE\"'), '-outfile', Raw('\"$ANNOVAR_DBDIR/all.anno\"'), '-exonsort', Raw('\"$ANNOVAR_DBDIR/all.snp.vcf.annovar.input\"'), Raw('\"$ANNOVAR_DBDIR\"')])} > logs/annovar.annotate_variation.log 2>&1",
+            f"{annotate_command} > logs/annovar.annotate_variation.log 2>&1",
         ]
     )
     return lines
@@ -632,6 +637,9 @@ def render_annotation_template(args: argparse.Namespace) -> list[str]:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Render WGS GATK shell scripts")
+    parser.add_argument("--task-label", default="", help="Optional portable project label in the receipt")
+    parser.add_argument("--producer-label", default="", help="Optional invocation label in the receipt")
+    parser.add_argument("--sample-ploidy", type=int, required=True, help="Explicitly confirmed positive sample ploidy; no inferred default")
     parser.add_argument("--sample-bam-list", required=True, help="Two-column sample/BAM list, or one BAM path per line")
     parser.add_argument("--intervals-tsv", required=True, help="Output from make_gatk_interval_plan.py")
     parser.add_argument("--ref", required=True, help="Reference FASTA path visible where scripts will run")
@@ -662,7 +670,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--annovar-dbtype", default="refGene", help="ANNOVAR database type; use refGene for gff3ToGenePred-derived databases")
     parser.add_argument("--annovar-dbdir", default="annotation", help="ANNOVAR database/output directory")
     parser.add_argument("--producer-step-id", default="", help="Optional composite plan step recorded in manifest provenance")
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args.sample_ploidy < 1:
+        parser.error("--sample-ploidy must be a positive integer confirmed for this task")
+    return args
 
 
 def main() -> int:
@@ -700,14 +711,14 @@ def main() -> int:
         "manifest_type": "renderer_artifact_contract",
         "producer": Path(__file__).name,
         "producer_step_id": str(args.producer_step_id or ""),
-        "producer_action_id": str(os.environ.get("BIOMIND_ACTION_ID") or ""),
-        "task_id": str(os.environ.get("BIOMIND_TASK_ID") or ""),
+        "producer_action_id": str(getattr(args, "producer_label", "") or ""),
+        "task_id": str(getattr(args, "task_label", "") or ""),
         "generated_at": generated_at,
         "renderer": {"id": "genomics.gatk_wgs", "version": 3},
         "provenance": {
-            "task_id": str(os.environ.get("BIOMIND_TASK_ID") or ""),
+            "task_id": str(getattr(args, "task_label", "") or ""),
             "step_id": str(args.producer_step_id or ""),
-            "producer_action_id": str(os.environ.get("BIOMIND_ACTION_ID") or ""),
+            "producer_action_id": str(getattr(args, "producer_label", "") or ""),
             "input_fingerprint": _fingerprint([
                 _path_fingerprint(args.sample_bam_list),
                 _path_fingerprint(args.intervals_tsv),
@@ -721,6 +732,7 @@ def main() -> int:
                 "db_root": args.db_root,
                 "raw_vcf_root": args.raw_vcf_root,
                 "annovar_buildver": args.annovar_buildver,
+                "sample_ploidy": args.sample_ploidy,
             }),
         },
         "samples": len(samples),

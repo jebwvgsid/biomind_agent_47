@@ -20,7 +20,6 @@ from agent_core.consultation_state import (
     record_execution_observation,
     seed_structured_evidence,
 )
-from bio_agents import BioAnalystAgent
 from execution.profiling import RunProfiler
 
 
@@ -199,61 +198,8 @@ class ConsultationStateTests(unittest.TestCase):
         state = begin_finalize(state)
         self.assertEqual(state["unresolved_requirement_ids"], [])
 
-    def test_i2_finish_enters_versioned_finalize_before_planner(self):
-        source = inspect.getsource(BioAnalystAgent._build_graph)
-        consultant_source = source[source.index("async def consultant"):source.index("async def ask_user")]
-        self.assertNotIn("semantic_contract_ready", consultant_source)
-        finish_source = consultant_source[consultant_source.index("# FINISH") :]
-        self.assertLess(
-            finish_source.index("merge_compiled_constraints("),
-            finish_source.index(
-                '"contract_status": "semantic_contract_finalize_pending"'
-            ),
-        )
-        self.assertIn('"next_step": "consultant"', finish_source)
-        self.assertIn(
-            '"completion_reason": "formal_contract_ready_for_versioned_finalize"',
-            finish_source,
-        )
-        self.assertNotIn('"final_contract": {', finish_source)
 
-    def test_i3_real_consultant_node_enters_versioned_finalize_dispatcher(self):
-        source = inspect.getsource(BioAnalystAgent._build_graph)
-        consultant_source = source[
-            source.index("async def consultant"):source.index("async def ask_user")
-        ]
-        finalize_branch = consultant_source[
-            consultant_source.index("if finalize_mode:"):
-            consultant_source.index("deterministic_base_constraints =")
-        ]
-        self.assertIn(
-            "return await self._run_consultant_finalize(",
-            finalize_branch,
-        )
-        self.assertNotIn(
-            "return await self._run_consultant_finalize_v2(",
-            finalize_branch,
-        )
 
-    def test_j_consultant_memory_projection_omits_raw_prompt_and_command(self):
-        hit = SimpleNamespace(
-            id=7,
-            evidence_ref="session_archive:7",
-            task_id="older-task",
-            event_type="root_cause_analysis",
-            summary="Durable conclusion: environment identity drift caused failure.",
-            content="RAW USER PROMPT; command: secret-tool --all",
-            metadata={"root_cause": "environment identity drift", "status": "confirmed"},
-            paths=["/safe/artifact"],
-        )
-        agent = BioAnalystAgent.__new__(BioAnalystAgent)
-        agent.session_archive = SimpleNamespace(search=lambda *args, **kwargs: [hit])
-        text = agent._consultant_archive_facts_context(
-            query="related task", project_id="project", exclude_task_id="current", limit=4,
-        )
-        self.assertIn("environment identity drift", text)
-        self.assertNotIn("RAW USER PROMPT", text)
-        self.assertNotIn("secret-tool --all", text)
 
     def test_k_orphaned_running_snapshot_is_reconciled(self):
         with tempfile.TemporaryDirectory() as tmp:

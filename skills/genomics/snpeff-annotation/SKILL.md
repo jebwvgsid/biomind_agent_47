@@ -1,584 +1,131 @@
 ---
 name: snpeff-annotation
-description: Build or use snpEff databases and annotate VCF variants with ANN effects. Use when the user asks for SNP/indel functional annotation with snpEff, including existing pre-built databases, custom GFF3/GTF/GenBank database builds, ANN interpretation, summary HTML, and safe database/version selection. Do not guess species databases, genome-version names, chromosome names, codon tables, or unchecked-build options from taxonomy labels alone.
-metadata:
-  domain: genomics
-  summary: >-
-    Annotate variants from an existing VCF against a reference genome and gene
-    annotation to predict affected genes and variant effects.
-  aliases:
-    - variant annotation
-    - variant functional annotation
-    - variant effect annotation
-    - SNP annotation
-    - 突变功能注释
-    - 变异功能注释
-  task_types:
-    - variant_annotation
-    - variant_effect_annotation
-  inputs:
-    - variant_vcf
-    - reference_fasta
-    - annotation_gtf
-    - annotation_gff3
-    - annotation_genbank
-  when_to_use:
-    - An existing VCF needs gene and functional effect annotation.
-    - A VCF must be annotated against a matching custom FASTA and GTF or GFF3.
-  when_not_to_use:
-    - Raw reads still require variant calling before an annotation-ready VCF exists.
-  renderer:
-    legacy_only: true
-    execution_contract: legacy_renderer_v1
-    renderer_id: genomics.snpeff_annotation
-    entrypoint: scripts/render_snpeff_annotation_scripts.py
-    runner: controller_python
-    manifest_filename: manifest.json
-    manifest_type: renderer_artifact_contract
-    schema_version: 3
-    composite_step: true
-    task_spec_rules:
-      - rule_id: snpeff.custom_database.typed_inputs.v1
-        semantic_key: required_behavior.database_source
-        role: database_source
-        operator: eq
-        value: custom_genome
-        strength: hard
-        level: required
-        when_all_input_roles: [variant_vcf, reference_fasta]
-        when_any_input_roles: [annotation_gtf, annotation_gff3, annotation_genbank]
-    owned_outputs:
-      - annotated.vcf
-      - snpEff_summary.html
-      - ann_effect_summary.tsv
-      - ann_gene_summary.tsv
-      - report.md
-      - reproduce.sh
-      - stage_status.tsv
-    output_bindings:
-      annotated_vcf: {mode: argument, argument: output_vcf, filename: annotated.vcf}
-      snpeff_summary_html: {mode: fixed, filename: snpEff_summary.html}
-      ann_effect_summary_tsv: {mode: fixed, filename: ann_effect_summary.tsv}
-      ann_gene_summary_tsv: {mode: fixed, filename: ann_gene_summary.tsv}
-      report_md: {mode: fixed, filename: report.md}
-      reproduce_sh: {mode: fixed, filename: reproduce.sh}
-      stage_status_tsv: {mode: fixed, filename: stage_status.tsv}
-    invocation:
-      binding_rules:
-        genome_version:
-          owner: generate
-          repair_target: generated_action.produced_bindings.genome_version
-          sources:
-            - {kind: explicit_produced_binding, role: genome_version, rule_id: snpeff.genome_version.generated.v2}
-      arguments:
-        vcf: {flag: --vcf, required: true, aliases: [variant_file]}
-        genome_version: {flag: --genome-version, required: true}
-        outdir: {flag: --outdir, aliases: [output_dir], top_level: true}
-        output_vcf: {flag: --output-vcf}
-        snpeff_jar: {flag: --snpeff-jar, runtime_binding: SNPEFF_JAR}
-        snpeff_command: {flag: --snpeff-command}
-        java_options: {flag: --java-options}
-        config: {flag: --config}
-        data_dir: {flag: --data-dir}
-        reference_fasta: {flag: --reference-fasta}
-        annotation_gff3: {flag: --annotation-gff3}
-        annotation_gtf: {flag: --annotation-gtf}
-        annotation_genbank: {flag: --annotation-genbank}
-        genome_name: {flag: --genome-name}
-        cds_fasta: {flag: --cds-fasta}
-        protein_fasta: {flag: --protein-fasta}
-        config_line: {flag: --config-line, repeatable: true}
-        allow_unchecked_build: {flag: --allow-unchecked-build, boolean: true}
-        compress_output: {flag: --compress-output, boolean: true}
-      routed_arguments:
-        annotation_file:
-          selector: annotation_format
-          routes:
-            "-gtf22": annotation_gtf
-            gtf22: annotation_gtf
-            "-gff3": annotation_gff3
-            gff3: annotation_gff3
-            "-genbank": annotation_genbank
-            genbank: annotation_genbank
-      runtime_only_arguments: [java_home]
-      controller_owned_arguments: [producer_step_id]
-  outputs:
-    - {output_id: annotated_vcf, default_filename: annotated.vcf, format: vcf}
-    - {output_id: ann_summary, default_filename: ann_summary.tsv, format: tsv}
-    - {output_id: report, default_filename: report.md, format: markdown}
-    - {output_id: reproduce_script, default_filename: reproduce.sh, format: bash}
-    - {output_id: stage_status, default_filename: stage_status.tsv, format: tsv}
-  generate:
-    binding_contract:
-      schema_version: 1
-      public_input_protocol: public_handle_v2
-      operations:
-        prepare_database:
-          binding_value_roles: {genome_version: concrete_path_segment}
-          produces_bindings: [genome_version, snpeff_db]
-          consumes_bindings: []
-          binding_types:
-            genome_version: string
-            snpeff_db: artifact_ref
-          artifact_binding_requirements:
-            snpeff_db:
-              canonical_resource_id: artifact.snpeff_data_dir
-              resource_kind: mutable_workspace
-          required_binding_env:
-            GENOME_VERSION: {source: produced_binding, name: genome_version}
-            SNPEFF_DB: {source: produced_binding, name: snpeff_db}
-        build_database:
-          binding_value_roles: {genome_version: concrete_path_segment}
-          produces_bindings: []
-          consumes_bindings: [genome_version, snpeff_db]
-          binding_types:
-            genome_version: string
-            snpeff_db: artifact_ref
-          artifact_binding_requirements:
-            snpeff_db:
-              canonical_resource_id: artifact.snpeff_data_dir
-              resource_kind: mutable_workspace
-          required_binding_env:
-            GENOME_VERSION: {source: accepted_binding, name: genome_version}
-            SNPEFF_DB: {source: accepted_binding, name: snpeff_db}
-        annotate_variants:
-          binding_value_roles: {genome_version: concrete_path_segment}
-          produces_bindings: []
-          consumes_bindings: [genome_version, snpeff_db]
-          binding_types:
-            genome_version: string
-            snpeff_db: artifact_ref
-          artifact_binding_requirements:
-            snpeff_db:
-              canonical_resource_id: artifact.snpeff_data_dir
-              resource_kind: mutable_workspace
-              required_state: snpeff_database_ready
-          required_binding_env:
-            GENOME_VERSION: {source: accepted_binding, name: genome_version}
-            SNPEFF_DB: {source: accepted_binding, name: snpeff_db}
-      derived_artifact_layout:
-        data_root: "<snpeff_db artifact>/data"
-        genome_fasta: "<data_root>/genomes/<genome_version>.fa"
-        annotation_gtf: "<data_root>/<genome_version>/genes.gtf"
-        predictor: "<data_root>/<genome_version>/snpEffectPredictor.bin"
-    execution_capabilities:
-      - capability_id: genomics.snpeff_annotation.check_contig_compatibility
-        operation: check_contig_compatibility
-        required_runtime_binding_ids: []
-        optional_runtime_binding_ids: []
-        required_artifact_binding_ids: [artifact.variant_vcf, artifact.reference_fasta, artifact.annotation_gtf]
-        consumes_artifacts: [artifact.variant_vcf, artifact.reference_fasta, artifact.annotation_gtf]
-        produces_artifacts: []
-        produces_bindings: []
-        produces_observations:
-          - observation_id: contigs_compatible
-            predicate:
-              predicate_id: genomics.snpeff.contigs_compatible.v1
-              operator: boolean_equals
-              expected: true
-              parser_id: biomind.genomics.contig_compatibility.v1
-              parser_entrypoint: agent_core.genomics_contig_parser:build_contig_compatibility_receipt
-              failure_disposition: correction_required
-              missing_disposition: inspection_required
-              applicability:
-                schema_version: 1
-                kind: plan_contains_any_execution_capability
-                execution_capability_ids:
-                  - genomics.snpeff_annotation.prepare_database
-                  - genomics.snpeff_annotation.build_database
-                  - genomics.snpeff_annotation.annotate_variants
-                  - genomics.snpeff_annotation.summarize_ann
-                  - genomics.snpeff_annotation.finalize_outputs
-            evidence_contract:
-              required_fields: [value]
-        workspace_mutations: []
-        explicit_side_effects: []
-        execution_guidance:
-          - Emit contigs_compatible as a typed boolean claim. The independent structured parser belongs to the verification layer and checks the exact approved TaskSpec input paths.
-          - "Do not parse VCF ##contig records with free-form grep or awk; comma-delimited metadata such as length and assembly is not part of the contig ID."
-          - Review method concerns against the specific approved requirement, execution record, and independent parser receipt. Distinguish an observed violation from uncertainty; an action need not call an internal parser entrypoint unless the approved contract explicitly requires it.
-          - Use the supplied concrete artifact paths explicitly; this capability has no runtime resources.
-      - capability_id: genomics.snpeff_annotation.prepare_database
-        operation: prepare_database
-        required_runtime_binding_ids: []
-        optional_runtime_binding_ids: []
-        required_artifact_binding_ids: [artifact.reference_fasta, artifact.annotation_gtf]
-        consumes_artifacts: [artifact.reference_fasta, artifact.annotation_gtf]
-        produces_artifacts: [artifact.snpeff_config]
-        produces_bindings: [genome_version, snpeff_db]
-        produces_observations: [database_layout_prepared]
-        workspace_mutations:
-          - workspace_ref: artifact.snpeff_data_dir
-            mutation: prepare_database
-            requires_available: false
-            available_after_success: true
-            establishes_state: database_layout_prepared
-            contract_source: genomics.snpeff_annotation.prepare_database.workspace_mutations
-            contract_revision: snpeff-workspace-transition-v1
-            evidence_contract:
-              schema_version: 1
-              collector: bounded_filesystem_snapshot_v1
-              allow_idempotent_revalidation: true
-              postconditions:
-                - {kind: directory_exists, relative_path: data}
-                - {kind: file_nonempty, relative_path: "data/genomes/{binding:genome_version}.fa"}
-                - {kind: file_nonempty, relative_path: "data/{binding:genome_version}/genes.gtf"}
-        explicit_side_effects: []
-        execution_guidance:
-          - Choose one stable task-local genome version and declare the genome_version and snpeff_db bindings.
-          - Prepare the approved task-local config and database layout without discovering or selecting another reference.
-          - This selected capability produces a separate immutable snpEff config artifact consumed by build and annotation. Declare its output handle; describing a config inside the mutable workspace does not supply that cross-step interface. This does not restrict the explicit generic execution capability.
-      - capability_id: genomics.snpeff_annotation.build_database
-        operation: build_database
-        required_runtime_binding_ids: [runtime.java.bin, runtime.snpeff.jar]
-        optional_runtime_binding_ids: []
-        required_artifact_binding_ids: [artifact.snpeff_config, artifact.snpeff_data_dir]
-        consumes_artifacts: [artifact.snpeff_config, artifact.snpeff_data_dir]
-        produces_artifacts: []
-        produces_bindings: []
-        produces_observations: [snpeff_database_ready]
-        workspace_mutations:
-          - workspace_ref: artifact.snpeff_data_dir
-            mutation: build_database
-            requires_available: true
-            requires_state: database_layout_prepared
-            available_after_success: true
-            establishes_state: snpeff_database_ready
-            contract_source: genomics.snpeff_annotation.build_database.workspace_mutations
-            contract_revision: snpeff-workspace-transition-v1
-            evidence_contract:
-              schema_version: 1
-              collector: bounded_filesystem_snapshot_v1
-              allow_idempotent_revalidation: true
-              postconditions:
-                - {kind: file_nonempty, relative_path: "data/{binding:genome_version}/snpEffectPredictor.bin"}
-        explicit_side_effects: []
-        execution_guidance:
-          - Build only the approved task-local custom database.
-          - Build reads the prepared workspace and separate config. Raw FASTA/GTF belong to the prepare step's lineage; do not add dummy reads to this step.
-          - For this capability's declared layout, snpeff_db is the workspace root, dataDir is snpeff_db/data, and predictor is dataDir/genome_version/snpEffectPredictor.bin. Use the same config, dataDir and genome_version for build, dump, ann and filesystem checks; do not append data twice or infer config inside snpeff_db.
-          - Invoke snpEff using the supplied concrete Java and JAR paths; do not discover alternative runtime paths.
-          - Preserve the actual command argv and inner returncode. Write build.log beside the approved predictor target (data/<genome_version>/build.log); the runtime can publish its attester-matched snapshot for Recovery evidence.read. An outer Python rc0 is not inner build success.
-          - A Total Errors statistics row is a scientific quality observation, not a nonzero exit or fatal signal. Preserve its count/percentage and CDS/START/STOP warnings and skipped checks separately. Do not sum overlapping categories or call their complement accuracy. Apply only quality thresholds actually approved in the Plan. The optional pure scripts/snpeff_checks.py build_facts helper keeps process, predictor size, load receipt, fatal lines and quality lines separate; it does not decide scientific acceptance.
-      - capability_id: genomics.snpeff_annotation.annotate_variants
-        operation: annotate_variants
-        required_runtime_binding_ids: [runtime.java.bin, runtime.snpeff.jar]
-        optional_runtime_binding_ids: []
-        required_artifact_binding_ids: [artifact.variant_vcf, artifact.snpeff_config, artifact.snpeff_data_dir]
-        consumes_artifacts: [artifact.variant_vcf, artifact.snpeff_config, artifact.snpeff_data_dir]
-        produces_artifacts: [artifact.annotated_vcf]
-        produces_bindings: []
-        produces_observations: []
-        workspace_mutations: []
-        explicit_side_effects: []
-        execution_guidance:
-          - Annotate the approved VCF with the approved database identity.
-          - Use the same recorded workspace/data directory, standalone config and genome_version for dump preflight, predictor self-check and ann. Put the operation immediately after the launcher/JAR, before its options. A failed load preflight must prevent ann; it is not itself proof that build must be rerun.
-          - Invoke snpEff using the supplied concrete Java and JAR paths; do not discover alternative runtime paths.
-      - capability_id: genomics.snpeff_annotation.summarize_ann
-        operation: summarize_ann
-        required_runtime_binding_ids: []
-        optional_runtime_binding_ids: []
-        required_artifact_binding_ids: [artifact.annotated_vcf]
-        consumes_artifacts: [artifact.annotated_vcf]
-        produces_artifacts: [artifact.ann_summary]
-        produces_bindings: []
-        produces_observations: [ann_summary_completed]
-        workspace_mutations: []
-        explicit_side_effects: []
-        execution_guidance:
-          - Summarize ANN records without invoking the annotation runtime.
-          - For a new Plan using this operation, use snpeff-ann-marginals-v1 as documented below; if an approved Plan specifies another format, honor it or request the existing revision process.
-      - capability_id: genomics.snpeff_annotation.finalize_outputs
-        operation: finalize_outputs
-        required_runtime_binding_ids: []
-        optional_runtime_binding_ids: []
-        required_artifact_binding_ids: [artifact.annotated_vcf, artifact.ann_summary]
-        consumes_artifacts: [artifact.annotated_vcf, artifact.ann_summary]
-        produces_artifacts: [artifact.report, artifact.reproduce_script, artifact.stage_status]
-        produces_bindings: []
-        produces_observations: [final_outputs_recorded]
-        workspace_mutations: []
-        explicit_side_effects: []
-        execution_guidance:
-          - Write the requested report, reproduction script, and stage-status table from verified task evidence.
-          - Do not claim scientific completion for outputs that were not actually produced and verified.
-          - Read and structurally validate the actual summary sections and counts. A string search for Annotation_Impact cannot establish the table contract. If only the checker is wrong, recheck the same unchanged artifact before proposing another scientific run. Finalize receives accepted_execution_sources from current Commit and attempt records. Preserve approved and executed script bodies separately, exact argv/cwd and nonsecret parameters; include prepare/config/helper dependencies or explicitly declared prerequisites. Never label source/grammar checks as independent replay.
-          - Build reproduction from the supplied accepted execution sources, preserving successful original code, argv, cwd, config, helper bodies and non-sensitive environment dependencies. Do not rewrite commands from memory or copy a failed attempt. Include prepare/config/build/ann/statistics when independent reconstruction is required; label workspace-only replay explicitly.
-          - A stage-status table written before this step's Commit is a pre-Commit snapshot. Preserve upstream Commit facts and mark this step pending; never self-certify completed. Late terminal receipts belong to the existing report lifecycle, not edits to accepted artifacts.
-    required_bindings:
-      - {name: variant_vcf, required: true, required_for_execution: true, owner: user, user_input_required: true, aliases: [vcf, variant_file]}
-      - {name: database_source, required: true, required_for_execution: true, owner: user, user_input_required: true}
-      - {name: genome_version, required: true, required_for_execution: true, owner: generate, user_input_required: false, resolution: produced_binding}
-      - {name: snpeff_db, required: true, required_for_execution: true, owner: generate, user_input_required: false, resolution: produced_binding_to_managed_artifact}
-      - {name: snpeff_jar, required: true, required_for_execution: true, owner: runtime, user_input_required: false, resolution: runtime_discovery}
-    execution_guidance:
-      - Resolve and verify the pinned snpEff JAR and Java runtime before annotation.
-      - For a custom reference, create a task-local snpEff config/data directory, stage the FASTA and matching GTF/GFF3, build the database, then annotate the VCF.
-      - Generate one structured executable action for the approved step and write every approved output_id at its managed path.
-      - The prepare_database action chooses one stable genome_version and explicitly declares genome_version and snpeff_db under produced_bindings; the model chooses semantic genome_version and a legal catalog handle; the binder supplies formal machine fields.
-      - For public_handle_v2 the system derives binding_env from required_binding_env; legacy_full_v1 must supply that exact mapping. Shell source must consume the injected environment values rather than copying the literal identifier again.
-      - Declare operation metadata and consumed_bindings using exact plan_binding refs so the deterministic Skill contract can reject mismatches before Execute.
-      - Validate contig-name compatibility and the ANN header; summarize ANN effects without inventing annotations.
-      - Do not invoke the legacy render_snpeff_annotation_scripts.py Renderer or use its manifest as output authority.
-  runtime:
-    default_env: bio_gatk
-    env_runner: bash
-    language: bash
-    tools: [snpEff, java]
-    packages: [snpeff, openjdk, gatk4, samtools, bcftools]
-    capabilities: [snpeff-annotation, snpeff-custom-db, ann-effect-summary]
-    install_tool: genomics_snpeff_annotation_runtime
-    healthcheck: >-
-      bash -lc 'SNPEFF_JAVA_HOME="${SNPEFF_JAVA_HOME:-}"; if [ -z "$SNPEFF_JAVA_HOME" ] &&
-      [ -n "${BIO_SOURCE_INSTALL_DIR:-}" ] && [ -x "${BIO_SOURCE_INSTALL_DIR}/temurin-21/bin/java" ]; then
-      SNPEFF_JAVA_HOME="${BIO_SOURCE_INSTALL_DIR}/temurin-21"; fi;
-      SNPEFF_JAR=$(find "$CONDA_PREFIX/share" -maxdepth 4 -type f -name snpEff.jar -print -quit);
-      test -s "$SNPEFF_JAR" || exit 1; if [ -n "$SNPEFF_JAVA_HOME" ]; then
-      test -x "$SNPEFF_JAVA_HOME/bin/java" || exit 1;
-      "$SNPEFF_JAVA_HOME/bin/java" -jar "$SNPEFF_JAR" -version >/dev/null || exit 1;
-      else command -v snpEff >/dev/null || exit 1; snpEff -version >/dev/null || exit 1;
-      java -version >/dev/null || exit 1;
-      SNPEFF_JAVA_HOME=$(dirname "$(dirname "$(command -v java)")"); fi;
-      printf "RESOLVED_ENV_PREFIX=%s\nRESOLVED_SNPEFF_JAR=%s\nRESOLVED_JAVA_HOME=%s\n"
-      "$CONDA_PREFIX" "$SNPEFF_JAR" "$SNPEFF_JAVA_HOME"'
-    install_policy: prefer-declared
-    install_command: conda install -n bio_gatk -c conda-forge -c bioconda -y snpeff openjdk
+description: Annotate VCF SNPs and indels with snpEff using an existing database or a custom FASTA and GTF/GFF3/GenBank
+  reference. Use for database building, variant effects and ANN summaries; variant calling must already be complete.
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # snpEff Annotation
 
-Use this skill for VCF functional annotation with snpEff.
+Annotate an existing VCF, choosing a matching pre-built database or building a
+custom one. Organize the steps around the actual inputs and requested outputs.
 
-Aliases and trigger phrases: snpEff, SnpEff, ANN, variant effect annotation, functional annotation, build snpEff database, `genes.gff`, `genes.gtf`, `snpEff.config`.
+## Reference and runtime
 
-## Core Rules
+- Match the exact assembly, annotation release and contig names across VCF,
+  FASTA and GTF/GFF3. Species names alone do not establish compatibility.
+  Parse VCF contig IDs separately from comma-delimited length/assembly metadata.
+- `genome-version` is a database key: it must agree with the config entry and
+  database directory. Choose it from the actual reference, then record and
+  reuse it. Do not infer an official key or codon table from taxonomy alone.
+- Reuse the verified `bio_gatk` environment and supplied Java/JAR paths.
+  The declared healthcheck resolves the installed JAR and checks Java.
+  If it fails, use the declared runtime installer when permitted; report a
+  blocked dependency if it cannot be resolved. Avoid whole-filesystem searches
+  and guessed Conda prefixes.
+- Keep database name, config, data directory and output paths explicit in the
+  plan. If steps are split, publish prepared files or a completed database as
+  outputs and refer to them as downstream inputs. Shell-local variables do
+  not persist across steps.
 
-- Treat `genome-version` as the snpEff database key. It must match the `snpEff.config` entry and the data directory name, for example `data/<genome-version>/`.
-- Do not infer `genome-version` from species, taxonomy, chromosome count, chromosome prefix, or a previous project.
-- Prefer an official pre-built snpEff database when the exact reference build and annotation release match the user's VCF.
-- Build a custom database only when the user provides the reference FASTA plus a matching annotation source such as GTF, GFF3, or GenBank.
-- Require chromosome/contig names to match between VCF, FASTA, and annotation. Inspect headers before annotation when uncertain.
-- Use paths visible in the shell environment where the generated Bash action will run; do not pass local desktop paths to cluster commands unless they are mounted there.
-- Prefer GTF 2.2 for large eukaryotic genomes when available. Use GFF3 when that is the provided authoritative annotation. Use GenBank mainly for small genomes or when GenBank is the authoritative source.
-- Treat CDS/protein consistency files as `optional_validation` for custom GTF/GFF builds. When absent, skip only the corresponding validation, record `skipped_optional_missing`, and continue; this is not an unchecked build because no required validation was skipped.
-- Do not hard-code codon tables. If organellar, bacterial, plastid, mitochondrial, or other non-standard codon usage may apply, ask for or inspect the required snpEff config lines.
+## Existing database
 
-## Planning Contract
+1. Verify that the database matches the VCF assembly and annotation release.
+   List or download a database only when network access is allowed and its
+   identity is established: `java -jar snpEff.jar databases` or
+   `java -jar snpEff.jar download -v <genome-version>`.
+2. Check that the selected database can be loaded using the intended Java/JAR,
+   config and data directory. A failed load check prevents annotation; inspect
+   its cause before deciding whether rebuilding is needed.
+3. Annotate using the verified concrete paths. Command shape:
 
-When custom database construction and annotation are separate plan steps, the
-database directory must be declared as the capability-owned mutable workspace
-`artifact.snpeff_data_dir`, not fabricated as a new immutable output artifact.
-If a plan-local handle is used for allocation, its explicit resource binding
-must set `canonical_resource_id: artifact.snpeff_data_dir`,
-`resource_kind: mutable_workspace`, and
-`contract_revision: snpeff-workspace-transition-v1`; spelling similarity is not
-an alias contract. The prepare step establishes `database_layout_prepared`.
-The build step requires that state, depends on prepare, and establishes
-`snpeff_database_ready`. Both are ordered mutations of the same workspace, not
-immutable outputs. Downstream annotation consumes that matching approved
-workspace/binding identity. Do not use `mktemp` or a shell-local variable as a
-cross-step carrier.
-If the database is not reused across steps, build and annotate may be combined
-inside one managed action.
+   ```bash
+   java -Xmx8g -jar snpEff.jar ann -c snpEff.config -dataDir data -v genome_version input.vcf > annotated.vcf
+   ```
 
-Use the concrete Java and snpEff JAR paths supplied in the current-action
-runtime context. Do not emit `$SNPEFF_JAR`, `{runtime:snpeff_jar}`, or discover
-an alternative runtime inside the generated scientific action. Cross-step
-semantic values are different: Generate must declare them as produced or
-consumed bindings and use the exact `binding_env` variables in executable
-source.
+   Replace example names with the recorded values. Preserve logs and the
+   actual snpEff exit code. Check the output as described below.
 
-## Official Documentation Anchors
+## Custom database
 
-- Running and annotation command pattern: `https://pcingola.github.io/SnpEff/snpeff/running/`
-- Input/output and ANN field: `https://pcingola.github.io/SnpEff/snpeff/inputoutput/`
-- Database building: `https://pcingola.github.io/SnpEff/snpeff/build_db/`
+Read [config templates](references/snpeff_config_templates.md) for layouts and
+codon-table configuration, and [snpEff notes](references/snpeff_notes.md) for
+format-specific details.
 
-## Runtime and Dependency Discovery
+1. Use a matching reference FASTA and GTF/GFF3, or an authoritative GenBank
+   source. Add `<genome-version>.genome : <name>` to a task-local config.
+2. Stage the files under the chosen data directory:
+   - FASTA: `genomes/<genome-version>.fa` or `<genome-version>/sequences.fa`.
+   - Annotation: `<genome-version>/genes.gtf`, `genes.gff` or `genes.gbk`.
+3. Build with the corresponding `-gtf22`, `-gff3` or `-genbank` flag. Put the
+   subcommand immediately after the JAR, before its options:
 
-- Reuse `bio_gatk` for this skill. It is the shared short-read variant environment and should contain GATK/Picard plus `snpEff`; do not create a one-off `bio_snpeff` environment by default.
-- Verify the declared runtime first. The skill uses `${BIO_SOURCE_INSTALL_DIR}/temurin-21` when that executable exists; it verifies the packaged `snpEff.jar` directly in the bounded `$CONDA_PREFIX/share` area. This avoids treating a broken Java launcher wrapper as proof that the installed snpEff package is absent.
-- Never construct a Conda prefix by appending `anaconda3` or an environment name to the project/benchmark root. Resolve the JAR inside the verified environment, for example `SNPEFF_JAR=$(conda run -n bio_gatk bash -c 'find "$CONDA_PREFIX/share" -maxdepth 4 -type f -name snpEff.jar -print -quit')`, verify it is non-empty, and use that exact path in the Generate-owned action.
-- `SNPEFF_JAVA_HOME` may override that location for one command/session, but it is not a required `.env` setting. Do not globally replace the Java used by unrelated tools.
-- If the command wrapper is absent but the environment exists, search only the environment package area with a depth bound: `conda run -n bio_gatk bash -c 'find "$CONDA_PREFIX/share" -maxdepth 4 -name snpEff.jar -type f -print -quit'`.
-- Never recursively scan `/`, a whole home directory, or a benchmark tree to discover `snpEff.jar` or `snpEff.config`. Never download a “latest” archive as a discovery fallback.
-- If the declared check fails, delegate exactly once through `<install_tool env="bio_gatk">genomics_snpeff_annotation_runtime</install_tool>`. The installer must use the declared package contract, re-run the healthcheck, and then register the same environment. If installation is forbidden or still fails, write a truthful stage-blocked status instead of searching elsewhere.
+   ```bash
+   java -Xmx8g -jar snpEff.jar build -c snpEff.config -dataDir data -gtf22 -v genome_version
+   ```
 
-## Generate-Owned Execution (V2)
+4. Supply CDS/protein validation files when available. For missing optional
+   files, disable only the unavailable check with `-noCheckCds` and/or
+   `-noCheckProtein`; record the skipped checks and limitations in the report.
+   Do not silently skip a validation explicitly required by the task.
+5. Require a successful inner build exit, a nonempty
+   `data/<genome-version>/snpEffectPredictor.bin`, no fatal build result such as
+   `Database check failed`, and a successful database-load preflight before
+   annotation. Config files, copied inputs or a wrapper exit of zero alone
+   do not establish build success.
+6. Preserve build logs, CDS/START/STOP warnings and Total Errors statistics.
+   Quality warnings are distinct from process failure. Do not sum overlapping
+   error categories or describe their complement as accuracy. Apply only the
+   task's approved quality thresholds. Then annotate using the same database.
 
-For a V2 managed task, Generate is the sole executable action/script producer.
-Use the verified runtime, TaskSpec inputs, approved Plan materializations, and
-the command patterns below to create the action directly. Put every supplied
-concrete input path, expected output path, Java executable path, and JAR path
-directly in the action. Cross-step semantic values must use structured
-`produced_bindings`, `consumed_bindings`, and `binding_env`; reuse an accepted
-value exactly. Do not emit artifact placeholders or BIOMIND_INPUT/OUTPUT
-variables. Do not invoke the legacy renderer and do not create or consume a
-renderer manifest as V2 output authority.
+## Results and validation
 
-## Legacy Renderer Reference (`legacy_renderer_v1` only)
+- Verify the VCF header contains `##SnpEffVersion` and `##INFO=<ID=ANN`;
+  inspect ANN records and chromosome-not-found warnings. Unexpectedly many
+  intergenic calls can indicate a reference mismatch. Do not blindly add or
+  remove `chr` prefixes.
+- A variant can have multiple ANN entries. Report variant counts separately
+  from transcript/allele annotation counts, effects, impact and warnings.
+- For `snpeff-ann-marginals-v1`, use three TSV sections separated by blank lines:
+  `metric/value`, `annotation_impact/count`, `sequence_ontology_effect/count`.
+  Metrics are `variants_total`, `variants_with_ann`, `ann_records_total`,
+  `header_has_snpeff_version` and `header_has_ann_info`. Counts are nonnegative
+  integers; flags are true/false. Count variants as VCF records, not ALT alleles.
+  Each marginal sums to ANN entries; keep a compound SO effect as one category.
+  Reject missing sections, duplicate keys and inconsistent counts. A valid
+  table does not independently validate the original VCF or biological quality.
+- Optional helpers: `scripts/ann_summary.py` summarizes/validates this TSV;
+  `scripts/snpeff_checks.py` separates build process, predictor, load and
+  quality facts. Use their supplied resource paths and inspect their CLI
+  before invocation. Honor a different summary format if the plan specifies it.
+- Write the requested report, reproduction script and stage status from
+  verified results. Preserve the actual successful code, argv, working
+  directory, config and nonsecret dependencies; identify whether reproduction
+  requires the existing workspace. Do not claim an independent replay unless
+  it ran. Report completion only to the extent supported by the actual tool receipts.
+- Produce summary HTML when requested. Compress/index VCF only when requested
+  and the needed bgzip/tabix tools are available.
 
-The following helper examples are retained only for explicit legacy sessions
-and maintainer reference. They are not active V2 routing instructions.
+## Legacy and references
 
-Render scripts for annotating with an existing database. Resolve the JAR inside the verified `bio_gatk` environment first; the renderer itself is a standard-library Python utility and should use the BioMind/current Python rather than `bio_gatk`'s Python:
+The renderer metadata is retained for existing legacy sessions. For an
+explicit `legacy_renderer_v1` task, use the declared renderer and its CLI help;
+normal execution follows the command patterns above.
 
-```bash
-SNPEFF_JAR=$(conda run -n bio_gatk bash -c 'find "$CONDA_PREFIX/share" -maxdepth 4 -type f -name snpEff.jar -print -quit')
-test -s "$SNPEFF_JAR"
-python skills/genomics/snpeff-annotation/scripts/render_snpeff_annotation_scripts.py \
-  --vcf variants.vcf.gz \
-  --genome-version project_or_official_database_key \
-  --snpeff-jar "$SNPEFF_JAR" \
-  --config /abs/path/snpEff.config \
-  --outdir snpeff_annotation
-```
-
-Render scripts for building a custom GFF3 database and then annotating:
-
-```bash
-SNPEFF_JAR=$(conda run -n bio_gatk bash -c 'find "$CONDA_PREFIX/share" -maxdepth 4 -type f -name snpEff.jar -print -quit')
-test -s "$SNPEFF_JAR"
-python skills/genomics/snpeff-annotation/scripts/render_snpeff_annotation_scripts.py \
-  --vcf variants.vcf.gz \
-  --genome-version project_reference_release \
-  --snpeff-jar "$SNPEFF_JAR" \
-  --reference-fasta /abs/path/reference.fa \
-  --annotation-gff3 /abs/path/annotation.gff3 \
-  --outdir snpeff_annotation
-```
-
-For a custom GTF 2.2 database, use the renderer's real GTF interface. The
-renderer adds `build -gtf22` to `02.build_database.sh`; `--gtf22`, `--gtf`,
-`--fasta`, and `--output-dir` are not renderer CLI flags:
-
-```bash
-SNPEFF_JAR=$(conda run -n bio_gatk bash -c 'find "$CONDA_PREFIX/share" -maxdepth 4 -type f -name snpEff.jar -print -quit')
-test -s "$SNPEFF_JAR"
-/path/to/current/biomind/python skills/genomics/snpeff-annotation/scripts/render_snpeff_annotation_scripts.py \
-  --vcf variants.vcf \
-  --reference-fasta reference.fa \
-  --annotation-gtf annotation.gtf \
-  --genome-version project_reference_release \
-  --snpeff-jar "$SNPEFF_JAR" \
-  --outdir snpeff_annotation
-```
-
-Use the `controller_python` reported in the runtime context for
-`/path/to/current/biomind/python`. Do not run this standard-library renderer
-with `conda run -n bio_gatk python`; `bio_gatk` supplies snpEff and Java, not
-the renderer interpreter.
-
-Run each rendered script with the declared Bash runner, in manifest order. Do not derive or guess an environment prefix from the project root.
-
-The renderer writes scripts in manifest order: `00.preflight.sh`,
-`01.prepare_custom_database.sh` when custom inputs are provided,
-`02.build_database.sh` for custom builds or `02.download_database.sh` for an
-existing database, `03.annotate_vcf.sh`, `04.summarize_ann.sh`, and
-`05.finalize.sh`. The final two scripts create the ANN effect summary and the
-declared status/report/reproduction artifacts; Planner must consume these
-manifest paths instead of inventing equivalent filenames.
-
-Only an explicit `legacy_renderer_v1` session may treat the renderer's
-`manifest.json` as a compatibility artifact contract. In V2, the approved Plan
-and canonical output IDs remain authoritative; no manifest may rename, add, or
-replace `step.outputs`.
-
-`02.download_database.sh` requires network access and should be run only when the user has confirmed a matching official snpEff database. For offline clusters or custom references, build or point to a local database instead.
-
-## Existing Database Workflow
-
-1. Confirm that the VCF reference build equals the snpEff database build. Do not use a database just because species names match.
-2. List or download databases only when network access is allowed:
-   `java -jar snpEff.jar databases` or `java -jar snpEff.jar download -v <genome-version>`.
-3. Annotate:
-   `java -Xmx8g -jar snpEff.jar -v <genome-version> input.vcf.gz > output.snpeff.ann.vcf`.
-4. Check output:
-   - VCF header contains `##SnpEffVersion` and `##INFO=<ID=ANN`.
-   - `snpEff_summary.html` and `snpEff_genes.txt` are produced when enabled.
-   - Variants have plausible ANN fields and no systematic chromosome-not-found warnings.
-
-## Custom Database Workflow
-
-The optional pure `snpeff_argv(prefix, operation=..., global_options=..., operation_args=...)`
-constructor in `scripts/render_snpeff_annotation_scripts.py` is used by that renderer.
-For example, with explicitly selected values, construct
-`snpeff_argv([java_bin, '-jar', jar_path], operation='build', global_options=['-c', config_path, '-dataDir', data_dir], operation_args=['-gtf22', '-v', genome_version])`.
-Select `operation='ann'` for annotation. This helper does not inspect or repair arbitrary generated Python/Bash.
-Free generated code remains responsible for the same command shape and needs a new approval after correction.
-When recovering, read the published `failure_log` evidence ref with `evidence.read`, then continue on that
-same ref at `cursor.next_start_line` if truncated. `Command: 'ann'` together with `Unknown option '-gtf22'`
-is evidence to inspect subcommand placement, not proof of a damaged GTF or unavailable installation.
-Retain the inner returncode, missing predictor and log facts separately from the wrapper's exit code.
-
-1. Choose a project-specific `genome-version` from the exact reference and annotation release, such as `species_ref_release`, not a broad species or taxonomy label.
-2. Create a project config with:
-   `<genome-version>.genome : <human-readable name>`
-   plus any required codon table lines.
-3. Place files in snpEff's expected layout:
-   - GTF: `data/<genome-version>/genes.gtf` or `.gz`; reference FASTA as `data/genomes/<genome-version>.fa` or `data/<genome-version>/sequences.fa`.
-   - GFF3: `data/<genome-version>/genes.gff` or `.gz`; reference FASTA as above unless embedded after `##FASTA`.
-   - GenBank: `data/<genome-version>/genes.gbk`; concatenate multiple GenBank records only when they belong to the same reference build.
-4. Build with the matching format flag: `build -gtf22`, `build -gff3`, or `build -genbank`.
-5. Provide `cds.fa` and/or `protein.fa` when available. Their requirement level is `optional_validation`: when absent, the generated action disables only the unavailable check (`-noCheckCds`, `-noCheckProtein`, or both) and records `optional_validation_skipped`, the reason, and scientific limitation in approved status/report outputs, then continues. Do not ask repeatedly or promote these optional files to required. Only skipping a contract-declared required validator may be called unchecked.
-6. The build subcommand must immediately follow the snpEff launcher/JAR prefix, before build-specific flags such as `-gtf22`; an `Unknown option` message that reports `Command: 'ann'` is evidence to inspect launcher/subcommand ordering, not to remove `-gtf22`.
-7. Annotate the VCF only after the database build succeeds. Treat a config,
-   database directory, copied `genes.gtf`/`sequences.fa`, and build log as
-   partial artifacts only. The build acceptance check must verify the declared
-   core predictor file `data/<genome-version>/snpEffectPredictor.bin` exists and
-   is non-empty, the final build-log section has no fatal result such as
-   `Database check failed`, and the database can be loaded by the same launcher
-   during the annotation preflight. If any condition fails, keep the database
-   stage failed/partial and do not run annotation.
-
-Read `references/snpeff_config_templates.md` before creating a custom database config or adding any `--config-line`. It gives the supported layouts, a minimal project config, and the cases that require user confirmation.
-
-## ANN Interpretation
-
-### Marginal summary contract for new Plans
-
-The optional standalone `scripts/ann_summary.py` reads or validates small text
-without routing work. Resolve it through the existing selected Skill resource
-binding; do not guess its installation path. Generate still owns its program.
-The TSV has exactly three ordered sections, separated by blank lines:
-`metric/value`, `annotation_impact/count`, `sequence_ontology_effect/count`.
-The first section records `variants_total`, `variants_with_ann`,
-`ann_records_total`, `header_has_snpeff_version`, and `header_has_ann_info`.
-Counts are nonnegative integers; header flags are literal true/false.
-Variants count VCF data records, not ALT alleles. Each ANN entry contributes
-once to each marginal; a compound SO field such as `splice_region_variant&intron_variant`
-stays one category. Each marginal sums to ANN entries, not VCF records.
-Missing sections, duplicate keys, malformed numbers or contradictory totals
-fail this format check. A valid summary only establishes its internal
-consistency; it does not independently rescan the VCF or establish biological
-quality. Header flags and quality limitations must still reach the reviewer.
-
-- snpEff writes functional annotations to the VCF INFO `ANN` field by default.
-- A single variant may have multiple ANN records because it can affect multiple transcripts, genes, or ALT alleles.
-- Key ANN subfields to report: allele, effect, impact, gene name, gene ID, feature type, transcript/feature ID, biotype, exon/intron rank, HGVS.c, HGVS.p, CDS/protein positions, distance, and warnings.
-- For high-impact summaries, count by `Annotation_Impact` and by Sequence Ontology effect, but keep transcript multiplicity explicit.
-
-## Gotchas
-
-- A matching species name is not enough; reference sequence names and coordinates must match.
-- GFF3 parsing quality varies by provider. If a GTF from the same annotation release is available, prefer it for large genomes.
-- If chromosome names differ only by prefixes such as `chr`, do not patch blindly. Normalize only after proving FASTA, GFF/GTF, and VCF refer to the same assembly.
-- If many variants are intergenic or chromosome-not-found warnings appear, suspect a reference/annotation/VCF mismatch.
-- For compressed VCF output, pipe through `bgzip` and index with `tabix` only when those tools are present.
-
-## Extended Reference
-
-Read `references/snpeff_notes.md` when deciding between pre-built and custom databases, explaining `genome-version`, or handling GFF/GTF/GenBank build details. Read `references/snpeff_config_templates.md` for custom config and directory-layout details.
-
-
-### Versioned binding input
-
-For newly approved `public_handle_v2` invocations, keep semantic values typed,
-and choose an exact handle from `binding_input_requirements` for artifact_ref:
-`{"type":"artifact_ref","value":{"handle":"<allowed plan_handle>"}}`.
-The system fills the formal identity/kind/revision and this Skill's declared
-binding_env mapping. Ordinary env values still obey collision checks. Consumers
-use `{"ref":"plan_binding:<name>"}`; only committed bindings are available.
-Old approved snapshots retain their full-object protocol and required mapping.
-Full-object compatibility never rewrites stale revisions. Do not mix protocols.
+- [snpEff notes](references/snpeff_notes.md): database choice, formats and failures.
+- [Config templates](references/snpeff_config_templates.md): custom config and layout.
+- Official documentation: [running](https://pcingola.github.io/SnpEff/snpeff/running/),
+  [building](https://pcingola.github.io/SnpEff/snpeff/build_db/),
+  [ANN format](https://pcingola.github.io/SnpEff/snpeff/inputoutput/).

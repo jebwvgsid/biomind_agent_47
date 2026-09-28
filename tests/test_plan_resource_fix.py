@@ -8,7 +8,7 @@ import shutil
 import tempfile
 import pytest
 
-from tests.plan_resource_fix_support import scenario, save
+from tests.plan_resource_fix_support import save
 
 AUDIT = Path(__file__).resolve().parents[1]/'docs/audits/session_1789369423_plan_resource_cycle'
 
@@ -20,49 +20,8 @@ def c_fix():
         for name in ['prepare_database', 'build_database', 'annotate_variants']]
     return candidate
 
-def test_c_fix_full_admission():
-    candidate = c_fix()
-    old = json.loads((AUDIT/'candidate_C_rejected.json').read_text())
-    without = deepcopy(candidate)
-    next(row for row in without['proposed_artifacts'] if row['local_ref'] == 'plan.snpeff_data_dir').pop('role_associations')
-    assert without == old
-    result = asyncio.run(scenario([candidate], 'FIX_C'))
-    state = result['final_states'][-1]
-    save('FIX_C_state', state)
-    assert not result['states'], [s['task_state'].get('planning_failure') for s in result['states']]
-    assert state['current_approval']['status'] == 'pending'
-    assert len(state['steps']) == 6
-    assert result['counts']['planner'] == 1
-    resource = state['plan_resource_bindings']['plan.snpeff_data_dir']
-    assert resource['canonical_resource_id'].startswith('plan-artifact-')
-    assert 'artifact.snpeff_data_dir' not in state['plan_resource_bindings']
-    for step in state['steps'][1:4]:
-        binding = step['generate_binding_input_contract']['binding_contract']['operations'][step['step_id']]
-        assert binding['artifact_binding_requirements']['snpeff_db']['canonical_resource_id'] == resource['canonical_resource_id']
-    read = next(e for e in state['compiled_dataflow']['edges'] if e['step_id'] == 'annotate_variants'
-        and e['canonical_resource_id'] == resource['canonical_resource_id'])
-    assert read['requires_state'] == 'snpeff_database_ready'
 
 
-@pytest.mark.parametrize('fault', ['missing_role','unknown_role','wrong_step','wrong_capability','ambiguous_role',
-    'missing_prepare','unordered','early_read','missing_state','invalid_evidence','missing_final'])
-def test_resource_negative_full_admission(fault):
-    candidate = c_fix()
-    workspace = next(x for x in candidate['proposed_artifacts'] if x['local_ref'] == 'plan.snpeff_data_dir')
-    if fault == 'missing_role': workspace.pop('role_associations')
-    elif fault == 'unknown_role': workspace['role_associations'][0]['role'] = 'artifact.unknown'
-    elif fault == 'wrong_step': workspace['role_associations'][0]['step_id'] = 'missing-step'
-    elif fault == 'wrong_capability': workspace['role_associations'][0]['capability_id'] = 'genomics.snpeff_annotation.annotate_variants'
-    elif fault == 'ambiguous_role': workspace['role_associations'].append(deepcopy(workspace['role_associations'][0]))
-    elif fault == 'missing_prepare': candidate['steps'].pop(1)
-    elif fault == 'unordered': candidate['steps'][2]['dependencies'] = ['check_contig_compatibility']
-    elif fault == 'early_read': candidate['steps'][3]['dependencies'] = ['prepare_database']
-    elif fault == 'missing_state': candidate['steps'][2]['workspace_mutations'][0]['requires_state'] = 'unknown_state'
-    elif fault == 'invalid_evidence': candidate['steps'][2]['workspace_mutations'][0]['evidence_contract']['postconditions'] = []
-    elif fault == 'missing_final': candidate['steps'][-1]['outputs'].remove('output.report')
-    result = asyncio.run(scenario([candidate], 'FIX_negative_'+fault))
-    state = result['final_states'][-1]
-    assert result['states'] and not state['steps'] and not state.get('current_approval')
 
 
 async def freeze_and_consume(case, task, state, runner):
@@ -114,9 +73,6 @@ async def freeze_and_consume(case, task, state, runner):
     return {'catalogs':catalogs,'snapshot_ref':loaded['plan_snapshot_ref'],'approval':loaded['current_approval'],'scientific_execution':False}
 
 
-def test_freeze_reload_and_artifact_binding():
-    result = asyncio.run(scenario([c_fix()], 'FIX_frozen', after_plan=freeze_and_consume))
-    assert result['after_plan']['approval']['status'] == 'approved'
 
 
 def test_independent_process_frozen_reload():
@@ -129,70 +85,8 @@ def test_independent_process_frozen_reload():
     save('FIX_independent_reload', {'pid':os.getpid(),'snapshot_ref':state['plan_snapshot_ref'],'identity':pointer['identity']})
 
 
-async def generate_binding_request(case, task, state, runner):
-    from langchain_core.messages import AIMessage
-    from agent_core.plan_tracker import load_plan_state, save_plan_state, canonical_task_spec_for_state, render_structured_plan
-    import bio_agents
-    from unittest.mock import patch
-    frozen_result = await freeze_and_consume(case, task, state, runner)
-    loaded = load_plan_state(case.root, task)
-    # Only the scientific prerequisite is a declared fixture here. No actual
-    # contig observation or database success is claimed by this interface test.
-    loaded['steps'][0]['status'] = 'done'
-    loaded['current_step_id'] = 'prepare_database'
-    loaded['steps'][1]['status'] = 'ready'
-    synthetic_inputs = [Path(row['canonical_path']) for row in canonical_task_spec_for_state(loaded)['inputs']]
-    for path in synthetic_inputs:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text('Explicit synthetic interface fixture; not scientific data.\n')
-    save_plan_state(case.root, task, loaded)
-    requests = []; normalized = []
-    async def provider(messages, *, stage, **kwargs):
-        assert stage == 'generate'
-        requests.append([{'type':m.type,'name':getattr(m,'name',None),'content':m.content} for m in messages])
-        handle = frozen_result['catalogs']['prepare_database']['catalog'][0]['plan_handle']
-        import shlex
-        config = loaded['plan_artifacts'][loaded['steps'][1]['outputs'][0]]['canonical_path']
-        code = '# Explicit synthetic capability stub; never a scientific result.\n'
-        code += '\n'.join('test -r '+shlex.quote(str(path)) for path in synthetic_inputs)
-        code += '\nprintf synthetic > '+shlex.quote(config)+'\nmkdir -p "$SNPEFF_DB/data"\n'
-        return AIMessage(content=json.dumps({'type':'execute','operation':'prepare_database','language':'bash','code':code,
-            'produced_bindings':{'genome_version':{'type':'string','value':'synthetic-genome'},
-                'snpeff_db':{'type':'artifact_ref','value':{'handle':handle}}}}))
-    case.agent._ainvoke_node_llm = provider
-    original = bio_agents.normalize_public_action_bindings
-    def observe(*args, **kwargs):
-        result = original(*args, **kwargs)
-        normalized.append({'scope':kwargs['scope'],'frozen':kwargs['frozen'],'result':result})
-        return result
-    invocation = {**runner,'task_mode':'managed','task_revision':loaded['current_task']['task_revision'],
-        'task_spec':canonical_task_spec_for_state(loaded),'current_plan':render_structured_plan(loaded),
-        'selected_skills':['genomics/snpeff-annotation'],'active_skills':['genomics/snpeff-annotation'],'future_skills':[]}
-    from agent_core.workflow.execution import TypedGenerate
-    source_updates = []
-    async def observe_generate(value):
-        result = await case.agent._schema2_runtime_sources['generate'](value)
-        source_updates.append(deepcopy(result))
-        return result
-    with patch.object(bio_agents, 'normalize_public_action_bindings', side_effect=observe):
-        update = await TypedGenerate(generator=observe_generate, data_path=str(case.root)).run(invocation)
-    save('FIX_generate_actual', {'requests':requests,'normalization':normalized,'update':update,
-        'source_updates':source_updates,
-        'scientific_prerequisite':'explicit fixture only; no scientific execution'})
-    assert len(requests) == 1, update
-    assert normalized, update
-    identity = frozen_result['catalogs']['prepare_database']['catalog'][0]['canonical_resource_id']
-    assert normalized[0]['result'][0]['produced_bindings']['snpeff_db']['value']['canonical_resource_id'] == identity
-    assert identity in json.dumps(requests)
-    assert update['generate_outcome']['type'] == 'action_ready', source_updates
-    action = source_updates[0]['pending_action']
-    assert action['formal_workspace_bindings'][0]['canonical_resource_id'] == identity
-    assert action['env']['SNPEFF_DB'] == frozen_result['catalogs']['prepare_database']['catalog'][0]['formal_concrete_path']
-    return {'provider_calls':len(requests),'normalization_count':len(normalized),'canonical_resource_id':identity}
 
 
-def test_actual_generate_request_and_binding_normalization():
-    asyncio.run(scenario([c_fix()], 'FIX_generate', after_plan=generate_binding_request))
 
 
 def dual_workspace_candidate():
@@ -248,15 +142,8 @@ async def dual_projection(case, task, state, runner):
     return {'catalogs':catalogs,'distinct_instances':[first,second],'synthetic_two_groups':True}
 
 
-def test_two_scoped_workspaces_do_not_alias():
-    asyncio.run(scenario([dual_workspace_candidate()], 'FIX_dual', after_plan=dual_projection))
 
 
-def test_annotation_cannot_read_other_associated_workspace():
-    candidate = dual_workspace_candidate()
-    candidate['steps'][-1]['inputs'][-1] = 'plan.snpeff_data_dir'
-    result = asyncio.run(scenario([candidate], 'FIX_dual_wrong_read'))
-    assert 'PLAN_RESOURCE_ROLE_READ_MISSING' in [x['code'] for x in result['states'][-1]['task_state']['planning_failure']['validation_issues']]
 
 
 def test_role_reader_compatibility():

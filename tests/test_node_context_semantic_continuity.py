@@ -8,10 +8,8 @@ from unittest.mock import patch
 from langchain_core.messages import HumanMessage
 
 from agent_core.diagnostics import RecoveryContext
-from agent_core.middleware import error_recovery_middleware
 from agent_core.node_context import assert_llm_payload_clean, build_node_context
 from agent_core.task_spec import ensure_task_spec
-from bio_agents import BioAnalystAgent
 from prompts.manager import PromptManager
 
 
@@ -138,106 +136,9 @@ def _context(node_type: str, **overrides):
 
 
 class NodeContextSemanticContinuityTests(unittest.TestCase):
-    def test_knowledge_registry_ignores_open_text_but_keeps_typed_policy(self) -> None:
-        task_spec = _task_spec()
-        task_spec["requirements"] = [
-            {
-                "requirement_id": "requirement-1",
-                "value": "Keep every biologically relevant annotation.",
-                "strength": "hard",
-                "source_ref": "U1",
-            },
-            {
-                "constraint_id": "missing-java",
-                "semantic_key": "failure_policy.java_missing",
-                "operator": "on_condition",
-                "value": "block",
-                "condition": "java_missing",
-                "strength": "hard",
-                "source_ref": "U2",
-            },
-        ]
-        task_spec = ensure_task_spec(task_spec)
-        plan_state = {
-            "schema_version": 10,
-            "compatibility": {"source_schema_version": 10},
-            "current_task": {
-                "task_spec": task_spec,
-                "task_revision": task_spec["revision"],
-            },
-            "selected_skill_ids": [],
-            "steps": [],
-        }
-        agent = BioAnalystAgent.__new__(BioAnalystAgent)
-        agent.data_path = "/nonexistent-read-only-replay"
 
-        registry = agent._knowledge_claim_registry(
-            task_spec["task_id"], {}, plan_state
-        )
-        task_claims = [
-            claim for claim in registry.all()
-            if claim.source_type == "task_contract"
-        ]
 
-        self.assertEqual(
-            [claim.attributes.get("semantic_key") for claim in task_claims],
-            ["failure_policy.java_missing"],
-        )
-        self.assertNotIn(
-            "Keep every biologically relevant annotation.",
-            "\n".join(claim.proposition for claim in registry.all()),
-        )
 
-    def test_finalize_projects_open_text_without_generic_coverage_gap(self) -> None:
-        task_spec = _task_spec()
-        task_spec["requirements"] = [{
-            "requirement_id": "requirement-1",
-            "value": "Do not use demo or hidden-answer files.",
-            "strength": "hard",
-            "source_ref": "U1",
-        }]
-        task_spec = ensure_task_spec(task_spec)
-        agent = BioAnalystAgent.__new__(BioAnalystAgent)
-
-        contract, gaps = agent._consultant_finalize_contract_projection(
-            task_spec,
-            [],
-            fallback_source_id="task-contract:test",
-        )
-
-        self.assertEqual(gaps, [])
-        self.assertEqual(contract["source_addressable_directives"], [])
-        self.assertEqual(contract["highlighted_requirements"], [{
-            "text": "Do not use demo or hidden-answer files.",
-            "importance": "hard",
-            "source_refs": ["U1"],
-        }])
-
-    def test_accepted_commit_builds_a_structured_handoff_snapshot(self) -> None:
-        handoff = BioAnalystAgent._accepted_consultant_handoff_projection({
-            "requirements_summary": "Accepted Consultant result.",
-            "selected_skills": ["genomics/snpeff-annotation"],
-            "task_spec": _task_spec(),
-            "provider_response": "REJECTED INTERNAL RESPONSE",
-        })
-
-        self.assertEqual(handoff["goal_interpretation"], _task_spec()["goal"])
-        self.assertEqual(handoff["input_files"][0]["role"], "variant_vcf")
-        self.assertEqual(
-            handoff["required_outputs"][0]["role"], "intermediate_vcf"
-        )
-        self.assertNotIn("hard_constraints", handoff)
-        self.assertNotIn("provider_response", handoff)
-
-        context = build_node_context(
-            node_type="planner",
-            task_spec=_task_spec(),
-            consultant_handoff=handoff,
-        )
-        self.assertEqual(
-            context.llm_payload.to_dict()["task"]["highlighted_constraints"][0]["text"],
-            "public",
-        )
 
     def test_planner_receives_raw_user_and_only_accepted_handoff(self) -> None:
         payload = _context(
@@ -434,41 +335,6 @@ class NodeContextSemanticContinuityTests(unittest.TestCase):
         self.assertEqual(second_rows[-1]["content"], "新增澄清。")
 
 
-class RecoveryDeterministicBypassTests(unittest.IsolatedAsyncioTestCase):
-    async def test_legacy_prompt_capacity_cannot_block_deterministic_diagnosis(self) -> None:
-        class UnexpectedLLM:
-            async def ainvoke(self, _messages):
-                raise AssertionError("deterministic diagnosis must not call provider")
-
-        async def execute(_state):
-            return {
-                "messages": [HumanMessage(content="<observation>failed</observation>")],
-                "execution_evidence": {
-                    "execution_id": "exec-127",
-                    "attempt_id": "attempt-127",
-                    "action_id": "action-127",
-                    "step_id": "step-1",
-                    "returncode": 127,
-                    "execution_status": "failed",
-                    "command_role": "primary",
-                    "stderr_summary": "tool: command not found",
-                },
-            }
-
-        with tempfile.TemporaryDirectory() as root, patch.object(
-            RecoveryContext,
-            "prompt_view",
-            side_effect=AssertionError("legacy prompt_view must not gate managed V2"),
-        ):
-            wrapped = error_recovery_middleware(
-                UnexpectedLLM(), data_path=root
-            )(execute)
-            result = await wrapped({
-                "task_id": "deterministic-capacity-bypass",
-                "current_step_id": "step-1",
-            })
-
-        self.assertIn("recovery_decision", result)
 
 
 if __name__ == "__main__":

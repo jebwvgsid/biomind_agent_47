@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
+SKILL_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 
-python skills/3d-dna/loop-calling/scripts/run_mustache_loops.py \
-  --sample-sheet skills/3d-dna/loop-calling/examples/samples.tsv \
-  --pair-sheet skills/3d-dna/loop-calling/examples/pairs.tsv \
+python "${SKILL_DIR}/scripts/run_mustache_loops.py" \
+  --sample-sheet "${SKILL_DIR}/examples/samples.tsv" \
+  --pair-sheet "${SKILL_DIR}/examples/pairs.tsv" \
   --resolution-bp 10000 \
   --out-root Loops/Mustache \
   --processes 6 \

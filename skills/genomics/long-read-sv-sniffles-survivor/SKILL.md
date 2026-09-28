@@ -1,23 +1,24 @@
 ---
 name: long-read-sv-sniffles-survivor
-description: Legacy compatibility workflow for long-read SV calling and optional SURVIVOR merge. Prefer genomics/long-read-sv-sniffles2 as the default primary long-read SV skill; use this skill mainly when legacy Sniffles/SURVIVOR merging is explicitly requested.
-version: "1.0.0"
-tags: [long-read, ONT, PacBio, HiFi, SV, minimap2, Sniffles, SURVIVOR, structural-variant]
-legacy_ids: [longread-sv, sniffles-sv, survivor-merge, nanopore-sv, pacbio-sv]
-task_types: [long_read_sv_calling]
-stage_tags: [long_read_mapping, sniffles, survivor_merge]
-inputs: [reference_fasta, long_read_fastq, long_read_bam, platform]
-outputs: [long_read_bam, sample_sv_vcf, merged_sv_vcf, sv_summary]
-runtime:
-  default_env: bio_longread_sv
-  env_runner: bash
-  language: bash
-  packages: [minimap2, samtools, sniffles, survivor, bcftools]
-  capabilities: [long-read-alignment, sv-calling, sv-merging]
-  healthcheck: bash -lc "minimap2 --version >/dev/null && samtools --version >/dev/null && sniffles --version >/dev/null"
-  install_policy: prefer-declared
-  install_command: mamba create -n bio_longread_sv -c conda-forge -c bioconda -y minimap2 samtools sniffles survivor bcftools
+description: Legacy compatibility workflow for long-read SV calling and optional SURVIVOR merge. Prefer genomics/long-read-sv-sniffles2
+  as the default primary long-read SV skill; use this skill mainly when legacy Sniffles/SURVIVOR merging is explicitly
+  requested.
+metadata:
+  version: 1.0.0
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # Legacy Long-Read SV with Sniffles and SURVIVOR
 

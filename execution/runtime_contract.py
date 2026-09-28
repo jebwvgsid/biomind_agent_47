@@ -29,6 +29,8 @@ class ExecutionRuntimePolicy:
     stall_timeout_default_seconds: float = 600.0
     wall_timeout_env: str = "BIOMIND_EXEC_WALL_TIMEOUT_SECONDS"
     wall_timeout_default_seconds: float = 0.0
+    cleanup_timeout_env: str = "BIOMIND_EXEC_CLEANUP_OBSERVATION_SECONDS"
+    cleanup_timeout_default_seconds: float = 5.0
 
 
 EXECUTION_RUNTIME_POLICY = ExecutionRuntimePolicy()
@@ -88,6 +90,8 @@ def execution_runtime_contract() -> Dict[str, Any]:
                 f"{policy.wall_timeout_env}; zero disables the wall timeout"
             ),
             "stall_timeout": policy.stall_timeout_env,
+            "unknown_activity_policy": "unknown is not zero; existing no-observable-progress timeout remains a policy, not proof of deadlock",
+            "cleanup_observation_bound": policy.cleanup_timeout_env,
         },
         "failure_semantics": {
             "unguarded_nonzero": "terminates_the_action",

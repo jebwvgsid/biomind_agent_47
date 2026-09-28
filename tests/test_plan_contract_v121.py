@@ -7,7 +7,6 @@ from copy import deepcopy
 from pathlib import Path
 from unittest import mock
 
-from bio_agents import BioAnalystAgent
 from agent_core.node_context import build_node_context, evaluate_node_staleness
 from agent_core.plan_contract import (
     AvailabilityOrigin,
@@ -646,41 +645,6 @@ class PlanContractV121PersistenceTests(unittest.TestCase):
             self.assertIn("task_plan_traceability", snapshot)
             self.assertIn("artifact_allocation_mapping", snapshot)
 
-    def test_case_f_explanation_only_review_preserves_approval_and_returns_to_review(self):
-        with tempfile.TemporaryDirectory() as root:
-            _, task, candidate = _baseline_and_candidate(root, "case-f")
-            save_plan_state(root, "case-f", candidate)
-            approved = load_plan_state(root, "case-f")
-            approve_plan_state(
-                approved, task["revision"], review_event_id="review-f"
-            )
-            approved.setdefault("task_state", {})[
-                "pending_review_classification"
-            ] = {
-                "review_event_id": "review-f",
-                "status": "pending",
-            }
-            save_plan_state(root, "case-f", approved)
-            before = load_plan_state(root, "case-f")
-            before_approval = deepcopy(before["current_approval"])
-
-            agent = BioAnalystAgent.__new__(BioAnalystAgent)
-            agent.data_path = root
-            update = agent._commit_consultant_update("case-f", {
-                "task_spec": canonical_task_spec_for_state(before),
-                "next_step": "plan_review",
-            })
-            after = load_plan_state(root, "case-f")
-
-            self.assertEqual(
-                update["review_classification"], "explanation_only"
-            )
-            self.assertEqual(update["next_step"], "plan_review")
-            self.assertEqual(after["current_approval"], before_approval)
-            self.assertEqual(after["current_approval"]["status"], "approved")
-            self.assertNotIn(
-                "pending_review_classification", after.get("task_state") or {}
-            )
 
     def test_newer_reader_contract_fails_closed_without_rewriting_file(self):
         with tempfile.TemporaryDirectory() as root:

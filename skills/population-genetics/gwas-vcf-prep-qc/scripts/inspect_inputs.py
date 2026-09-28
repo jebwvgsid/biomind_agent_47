@@ -69,15 +69,14 @@ def main():
     parser.add_argument("--sample-column")
     parser.add_argument("--q-row-map", type=Path)
     parser.add_argument("--tfam", type=Path)
-    parser.add_argument("--observation-id", required=True)
+    parser.add_argument("--observation-id", help="Optional result label")
     args = parser.parse_args()
     try:
         if args.q_row_map and not args.q_matrix:
             fail("Q_ROW_MAP_INPUT_REQUIRED", "A row map requires the corresponding Q matrix")
         value = inspect_inputs(args.vcf, args.phenotype, args.q_matrix, gff3=args.gff3,
             header_mode=args.phenotype_header, sample_column=args.sample_column, row_map=args.q_row_map, tfam_path=args.tfam)
-        print("BIOMIND_EFFECT_EVIDENCE_JSON=" + json.dumps({"produces_observations": [
-            {"observation_id": args.observation_id, "value": value}]}, ensure_ascii=False))
+        print(json.dumps(value, ensure_ascii=False))
     except (InputError, OSError, UnicodeError) as exc:
         error = exc.facts if isinstance(exc, InputError) else {"code": "INPUT_OBSERVATION_FAILED", "message": str(exc)}
         print(json.dumps({"status": "blocked", "error": error}, ensure_ascii=False), file=sys.stderr)

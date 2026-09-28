@@ -191,6 +191,105 @@ def _binding_for_identity(
     return deepcopy(next(iter(matches.values()))) if matches else {}
 
 
+def _step_workspace_mutations(step: Mapping[str, Any]) -> list[Dict[str, Any]]:
+    effect = dict(step.get("step_effect") or {})
+    # An explicit empty canonical declaration must not revive stale wire fields.
+    return _mutation_rows(
+        effect["workspace_mutations"] if "workspace_mutations" in effect
+        else step.get("workspace_mutations") or []
+    )
+
+
+def resolve_action_workspace_mutations(
+    *,
+    capability_contract: Mapping[str, Any],
+    approved_step: Optional[Mapping[str, Any]] = None,
+    resource_bindings: Optional[Mapping[str, Any]] = None,
+) -> list[Dict[str, Any]]:
+    """Resolve capability and approved Plan effects without changing the capability.
+
+    An omitted capability field allows an explicitly declared Plan contract;
+    an explicit field (including []) remains closed. Generated action fields
+    never participate in this authority projection.
+    """
+    capability_rows = _mutation_rows(capability_contract.get("workspace_mutations") or [])
+    if approved_step is None:
+        return capability_rows
+    bindings = resource_bindings or {}
+
+    def identity(row: Mapping[str, Any]) -> str:
+        ref = _workspace_identity(row)
+        return str(_binding_for_identity(bindings, ref).get("canonical_resource_id") or ref)
+
+    step_rows = _step_workspace_mutations(approved_step)
+    by_identity = {identity(row): row for row in step_rows}
+    if len(by_identity) != len(step_rows):
+        raise WorkspaceAttestationError("WORKSPACE_MUTATION_SCOPE_AMBIGUOUS")
+    resolved: list[Dict[str, Any]] = []
+    capability_ids = set()
+    for mutation in capability_rows:
+        canonical_id = identity(mutation)
+        capability_ids.add(canonical_id)
+        approved = by_identity.get(canonical_id)
+        if approved is None:
+            raise WorkspaceAttestationError(
+                "WORKSPACE_EFFECT_NOT_APPROVED_FOR_STEP",
+                workspace_ref=_workspace_identity(mutation),
+                canonical_resource_id=canonical_id,
+                step_id=str(approved_step.get("step_id") or ""),
+            )
+        if str(approved.get("mutation") or "readwrite") != str(mutation.get("mutation") or "readwrite"):
+            raise WorkspaceAttestationError(
+                "WORKSPACE_MUTATION_SCOPE_MISMATCH", canonical_resource_id=canonical_id,
+                capability_mutation=str(mutation.get("mutation") or "readwrite"),
+                approved_step_mutation=str(approved.get("mutation") or "readwrite"),
+            )
+        if (approved.get("evidence_contract") is not None
+                and approved.get("evidence_contract") != mutation.get("evidence_contract")):
+            raise WorkspaceAttestationError(
+                "WORKSPACE_EVIDENCE_CONTRACT_SCOPE_MISMATCH",
+                canonical_resource_id=canonical_id,
+            )
+        resolved.append(mutation)
+    for mutation in step_rows:
+        canonical_id = identity(mutation)
+        if canonical_id in capability_ids:
+            continue
+        if "workspace_mutations" in capability_contract:
+            raise WorkspaceAttestationError(
+                "WORKSPACE_MUTATION_CAPABILITY_MISMATCH",
+                canonical_resource_id=canonical_id,
+                capability_id=str(capability_contract.get("capability_id") or ""),
+            )
+        resolved.append(mutation)
+    return resolved
+
+
+def workspace_evidence_contract_supported(value: Any) -> bool:
+    """Whether the runtime collector can evaluate this declared contract."""
+    if not isinstance(value, Mapping):
+        return False
+    try:
+        version = int(value.get("schema_version") or 0)
+    except (TypeError, ValueError):
+        return False
+    conditions = value.get("postconditions")
+    if (version != 1 or value.get("collector") != BOUNDED_SNAPSHOT_COLLECTOR
+            or not isinstance(conditions, list) or not conditions):
+        return False
+    for condition in conditions:
+        if not isinstance(condition, Mapping) or condition.get("kind") not in {
+            "directory_exists", "file_exists", "file_nonempty",
+        }:
+            return False
+        relative = condition.get("relative_path", "")
+        if not isinstance(relative, str) or "\x00" in relative:
+            return False
+        if Path(relative).is_absolute() or ".." in Path(relative).parts:
+            return False
+    return True
+
+
 def _resolved_layout(layout: Mapping[str, Any], root: str) -> Dict[str, Any]:
     """Resolve only explicit layout references; leave dynamic binding tokens intact."""
 
@@ -254,24 +353,28 @@ def project_current_action_workspace_bindings(
     Mutation declarations authorize read/write effects.  Artifact-backed
     binding requirements can additionally project a read-only mutable resource
     (for example an already built database used by an annotation action).
-    Both sources are explicit capability/Skill contracts; neither is inferred
-    from source text or a path basename.
+    Mutation declarations come from the selected capability and approved Plan;
+    neither is inferred from source text or a path basename.
     """
 
     from agent_core.plan_bindings import resource_bindings_for_step
     if approved_plan_snapshot.get("resource_role_protocol_version") not in (None, 1):
         raise WorkspaceAttestationError("WORKSPACE_ROLE_PROTOCOL_UNSUPPORTED")
-    if approved_plan_snapshot.get("resource_role_protocol_version") == 1:
+    if approved_plan_snapshot.get("steps") or approved_plan_snapshot.get("resource_role_protocol_version") == 1:
         approved_step = next((row for row in approved_plan_snapshot.get("steps", [])
             if row.get("step_id") == current_step.get("step_id")), {})
         if not approved_step or approved_step.get("execution_capability_id") != capability_contract.get("capability_id"):
             raise WorkspaceAttestationError("WORKSPACE_ROLE_APPROVAL_SCOPE_MISMATCH")
         current_step = approved_step
+    if approved_plan_snapshot.get("resource_role_protocol_version") == 1:
         resource_bindings = resource_bindings_for_step(approved_plan_snapshot.get("plan_resource_bindings") or {}, current_step)
     else:
-        resource_bindings = dict(plan_state.get("plan_resource_bindings") or {})
-    capability_mutations = _mutation_rows(
-        capability_contract.get("workspace_mutations") or []
+        resource_bindings = dict(approved_plan_snapshot.get("plan_resource_bindings")
+                                 or plan_state.get("plan_resource_bindings") or {})
+    capability_mutations = resolve_action_workspace_mutations(
+        capability_contract=capability_contract,
+        approved_step=current_step,
+        resource_bindings=resource_bindings,
     )
     projection_requirements = list(capability_mutations)
     projected_identities = {
@@ -316,12 +419,7 @@ def project_current_action_workspace_bindings(
         projected_identities.add(canonical_id)
     if not projection_requirements:
         return []
-    step_effect = dict(current_step.get("step_effect") or {})
-    step_mutations = _mutation_rows(
-        step_effect.get("workspace_mutations")
-        or current_step.get("workspace_mutations")
-        or []
-    )
+    step_mutations = _step_workspace_mutations(current_step)
     ledger = {
         str(key): dict(value)
         for key, value in dict(
@@ -417,7 +515,11 @@ def project_current_action_workspace_bindings(
             code="FORMAL_WORKSPACE_BINDING_REVISION_MISSING",
             field="binding_revision",
         )
-        evidence_contract = deepcopy(dict(mutation.get("evidence_contract") or {}))
+        raw_evidence_contract = mutation.get("evidence_contract")
+        evidence_contract = (
+            deepcopy(dict(raw_evidence_contract))
+            if isinstance(raw_evidence_contract, Mapping) else {}
+        )
         row = {
             "schema_version": WORKSPACE_BINDING_SCHEMA_VERSION,
             "workspace_ref": raw_ref,
@@ -493,10 +595,25 @@ def validate_workspace_action_admission(
     *,
     capability_contract: Mapping[str, Any],
     workspace_bindings: Sequence[Mapping[str, Any]],
+    approved_step: Optional[Mapping[str, Any]] = None,
 ) -> WorkspaceAdmission:
     """Validate intent/evidence capability without asking for a future receipt."""
 
-    mutations = _mutation_rows(capability_contract.get("workspace_mutations") or [])
+    resource_bindings = {
+        str(row.get(field)): row
+        for row in workspace_bindings if isinstance(row, Mapping)
+        for field in ("workspace_ref", "canonical_resource_id", "plan_handle")
+        if row.get(field)
+    }
+    try:
+        mutations = resolve_action_workspace_mutations(
+            capability_contract=capability_contract, approved_step=approved_step,
+            resource_bindings=resource_bindings,
+        )
+    except WorkspaceAttestationError as exc:
+        return WorkspaceAdmission("contract_error", violations=({
+            **exc.to_dict(), "owner": "INTERNAL_PROTOCOL",
+        },))
     if not mutations:
         if action.get("formal_workspace_bindings") not in (None, [], {}):
             return WorkspaceAdmission(
@@ -547,26 +664,25 @@ def validate_workspace_action_admission(
                 "resource_kind": str(binding.get("resource_kind") or ""),
             })
             continue
-        evidence_contract = dict(binding.get("evidence_contract") or {})
-        postconditions = evidence_contract.get("postconditions") or []
-        try:
-            evidence_schema_version = int(
-                evidence_contract.get("schema_version") or 0
-            )
-        except (TypeError, ValueError):
-            evidence_schema_version = 0
-        if (
-            evidence_schema_version != 1
-            or str(evidence_contract.get("collector") or "")
-            != BOUNDED_SNAPSHOT_COLLECTOR
-            or not isinstance(postconditions, list)
-            or not postconditions
-        ):
+        raw_evidence_contract = binding.get("evidence_contract")
+        evidence_contract = (
+            dict(raw_evidence_contract)
+            if isinstance(raw_evidence_contract, Mapping) else {}
+        )
+        if not workspace_evidence_contract_supported(evidence_contract):
             violations.append({
                 "code": "WORKSPACE_EVIDENCE_CAPABILITY_MISSING",
                 "owner": "INTERNAL_PROTOCOL",
                 "canonical_resource_id": str(binding.get("canonical_resource_id") or ""),
                 "contract_source": str(binding.get("contract_source") or ""),
+            })
+            continue
+        if (approved_step is not None
+                and evidence_contract != mutation.get("evidence_contract")):
+            violations.append({
+                "code": "WORKSPACE_EVIDENCE_CONTRACT_SCOPE_MISMATCH",
+                "owner": "INTERNAL_PROTOCOL",
+                "canonical_resource_id": str(binding.get("canonical_resource_id") or ""),
             })
             continue
         intent = {
@@ -1191,7 +1307,10 @@ def finalize_mutation_attestation(
     journal: Mapping[str, Any], *, process_exit_code: Optional[int],
     interruption_reason: str = "",
     runtime_access_evidence: Sequence[Mapping[str, Any]] = (),
+    controller_revalidation_evidence: Sequence[Mapping[str, Any]] = (),
 ) -> Dict[str, Any]:
+    from agent_core.workspace_revalidation import validate_controller_workspace_revalidation
+
     result = deepcopy(dict(journal))
     receipts: list[Dict[str, Any]] = []
     finalized_intents: list[Dict[str, Any]] = []
@@ -1218,6 +1337,11 @@ def finalize_mutation_attestation(
             runtime_access_evidence,
             intent=intent,
         )
+        revalidation = validate_controller_workspace_revalidation(
+            controller_revalidation_evidence,
+            intent=intent,
+            after_snapshot=after,
+        )
         attested_effect = ""
         if process_exit_code is None:
             status = "unknown"
@@ -1231,11 +1355,27 @@ def finalize_mutation_attestation(
         elif not postconditions_satisfied:
             status = "postcondition_unsatisfied"
             attested = False
+        elif (
+            revalidation.get("code") != "WORKSPACE_REVALIDATION_EVIDENCE_MISSING"
+            and revalidation.get("valid") is not True
+        ):
+            # An observed change after Controller verification cannot be
+            # relabelled as a successful mutation by the already exited script.
+            status = {
+                "WORKSPACE_REVALIDATION_CONTRACT_MISSING": "idempotent_revalidation_contract_missing",
+                "WORKSPACE_REVALIDATION_CONTRACT_INVALID": "idempotent_revalidation_contract_invalid",
+                "WORKSPACE_REVALIDATION_FAILED": "idempotent_revalidation_failed",
+                "WORKSPACE_REVALIDATION_LIMIT_EXCEEDED": "idempotent_revalidation_failed",
+            }.get(str(revalidation.get("code") or ""), "idempotent_revalidation_evidence_invalid")
+            attested = False
         elif changed:
             status = "mutated_and_validated"
             attested = True
             attested_effect = "mutation"
-        elif idempotent and access_validation.get("valid") is True:
+        elif idempotent and (
+            access_validation.get("valid") is True
+            or revalidation.get("valid") is True
+        ):
             status = "revalidated_unchanged"
             attested = True
             attested_effect = "revalidation/adoption"
@@ -1293,6 +1433,14 @@ def finalize_mutation_attestation(
             "runtime_access_evidence_validation": {
                 key: deepcopy(value)
                 for key, value in access_validation.items()
+                if key != "evidence"
+            },
+            "controller_revalidation_evidence": deepcopy(
+                revalidation.get("evidence") or {}
+            ),
+            "controller_revalidation_evidence_validation": {
+                key: deepcopy(value)
+                for key, value in revalidation.items()
                 if key != "evidence"
             },
             "finished_at": _now(),
@@ -2122,6 +2270,9 @@ def load_verified_mutation_journal_reference(
             "revalidated_unchanged",
             "idempotent_revalidation_evidence_missing",
             "idempotent_revalidation_evidence_invalid",
+            "idempotent_revalidation_contract_missing",
+            "idempotent_revalidation_contract_invalid",
+            "idempotent_revalidation_failed",
             "unchanged_not_attributable",
         }
         verified_receipts: list[Dict[str, Any]] = []

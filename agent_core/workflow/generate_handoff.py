@@ -501,7 +501,13 @@ class GenerateReasoningEpisode:
             "system_message", "seed_message", "inherited_materials",
             "local_events", "previous_reasoning_episode_id",
             "previous_context_archive_ref",
+            "draft_file",
         }
+        # The durable owner also stores its editable-file reference here. It is
+        # CAS-managed mutable state, not part of the frozen provider prefix or
+        # episode identity; the owner preserves it when appending events.
+        if "draft_file" in value and not isinstance(value["draft_file"], Mapping):
+            raise GenerateEpisodeError("GENERATE_EPISODE_INVALID", "draft_file must be an object")
         unknown = set(value) - allowed
         if unknown:
             raise GenerateEpisodeError(
@@ -1074,6 +1080,12 @@ def project_corrective_generate_seed(
         raise StageContractError(
             "STAGE_SCOPE_MISMATCH", "corrective Generate task identity"
         )
+    if str(durable.get('task_id') or '') != packet.task_id:
+        raise StageContractError('GENERATE_RECOVERY_PACKET_STALE', 'task identity')
+    if packet.plan_spec_ref is not None and (
+            packet.plan_spec_ref.plan_id != str(durable.get('plan_id') or '') or
+            packet.plan_spec_ref.plan_version != str(durable.get('plan_version') or '')):
+        raise StageContractError('GENERATE_RECOVERY_PACKET_STALE', 'plan identity')
     if str(durable.get("current_step_id") or "") != packet.step_id:
         raise StageContractError(
             "GENERATE_RECOVERY_PACKET_STALE", packet.step_id
@@ -1124,3 +1136,13 @@ __all__ = [
     "start_generate_reasoning_episode",
     "start_next_generate_step",
 ]
+
+
+class VerifiedWorkCorrection(dict):
+    """Ephemeral validated caller projection; deserialized plain dicts confer no authority."""
+    def __init__(self, *, seed=None, format_repair=None):
+        super().__init__(seed=seed, format_repair=format_repair)
+    @property
+    def seed(self): return self['seed']
+    @property
+    def format_repair(self): return self['format_repair']

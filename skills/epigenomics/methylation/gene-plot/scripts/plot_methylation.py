@@ -26,13 +26,54 @@ import re
 import sys
 from pathlib import Path
 
+def parse_arguments():
+    parser = argparse.ArgumentParser(
+        description="Plot per-gene methylation profiles from bigWig files",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Example:
+  python plot_methylation.py \\
+    --gff genome.gff3 \\
+    --tpm gene_tpm.csv \\
+    --outdir ./plots \\
+    --genes GT21.04g7G0018420 GT21.07g3G0008680 \\
+    --sample 175l CG.bw CHG.bw CHH.bw comp.bed \\
+    --sample 18l  CG.bw CHG.bw CHH.bw comp.bed
+        """,
+    )
+
+    parser.add_argument("--gff",     required=True, help="GFF3 annotation file")
+    parser.add_argument("--tpm",     required=True, help="TPM CSV (first col = gene ID)")
+    parser.add_argument("--outdir",  required=True, help="Output directory")
+    parser.add_argument("--genes",   nargs="+", required=True, help="Gene IDs to plot")
+
+    parser.add_argument(
+        "--sample", nargs=5, action="append", metavar=("LABEL", "CG_BW", "CHG_BW", "CHH_BW", "COMP_BED"),
+        required=True,
+        help="Add a sample: LABEL CG.bw CHG.bw CHH.bw compartment.bed (repeat for each sample)",
+    )
+
+    # AGENT-EDITABLE: window / binning parameters
+    parser.add_argument("--upstream",    type=int, default=2000)
+    parser.add_argument("--downstream",  type=int, default=2000)
+    parser.add_argument("--nbins-up",    type=int, default=20)
+    parser.add_argument("--nbins-body",  type=int, default=40)
+    parser.add_argument("--nbins-down",  type=int, default=20)
+    parser.add_argument("--dpi",         type=int, default=300)
+
+    return parser.parse_args()
+
+# Help describes the real CLI without importing plotting dependencies.
+if __name__ == "__main__" and any(flag in sys.argv[1:] for flag in ("--help", "-h")):
+    parse_arguments()
+
 import numpy as np
 import pandas as pd
 
 try:
     import pyBigWig
 except ImportError:
-    print('Error: pyBigWig not installed. Delegate installation with: <install_tool env="bio_methylation_plot">methylation-gene-plot_python_deps</install_tool>')
+    print('Error: pyBigWig not installed. Delegate installation with: ask the user before installing the required dependency: methylation-gene-plot_python_deps')
     sys.exit(1)
 
 try:
@@ -40,7 +81,7 @@ try:
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 except ImportError:
-    print('Error: matplotlib not installed. Delegate installation with: <install_tool env="bio_methylation_plot">methylation-gene-plot_python_deps</install_tool>')
+    print('Error: matplotlib not installed. Delegate installation with: ask the user before installing the required dependency: methylation-gene-plot_python_deps')
     sys.exit(1)
 
 
@@ -239,41 +280,7 @@ def make_figure(gene, chrom, row, strand, plot_start, plot_end,
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Plot per-gene methylation profiles from bigWig files",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Example:
-  python plot_methylation.py \\
-    --gff genome.gff3 \\
-    --tpm gene_tpm.csv \\
-    --outdir ./plots \\
-    --genes GT21.04g7G0018420 GT21.07g3G0008680 \\
-    --sample 175l CG.bw CHG.bw CHH.bw comp.bed \\
-    --sample 18l  CG.bw CHG.bw CHH.bw comp.bed
-        """,
-    )
-
-    parser.add_argument("--gff",     required=True, help="GFF3 annotation file")
-    parser.add_argument("--tpm",     required=True, help="TPM CSV (first col = gene ID)")
-    parser.add_argument("--outdir",  required=True, help="Output directory")
-    parser.add_argument("--genes",   nargs="+", required=True, help="Gene IDs to plot")
-
-    parser.add_argument(
-        "--sample", nargs=5, action="append", metavar=("LABEL", "CG_BW", "CHG_BW", "CHH_BW", "COMP_BED"),
-        required=True,
-        help="Add a sample: LABEL CG.bw CHG.bw CHH.bw compartment.bed (repeat for each sample)",
-    )
-
-    # AGENT-EDITABLE: window / binning parameters
-    parser.add_argument("--upstream",    type=int, default=2000)
-    parser.add_argument("--downstream",  type=int, default=2000)
-    parser.add_argument("--nbins-up",    type=int, default=20)
-    parser.add_argument("--nbins-body",  type=int, default=40)
-    parser.add_argument("--nbins-down",  type=int, default=20)
-    parser.add_argument("--dpi",         type=int, default=300)
-
-    args = parser.parse_args()
+    args = parse_arguments()
 
     os.makedirs(args.outdir, exist_ok=True)
     contexts = ["CG", "CHG", "CHH"]

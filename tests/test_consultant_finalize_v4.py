@@ -336,44 +336,6 @@ class ConsultantFinalizeV4CoverageTests(unittest.TestCase):
             for item in synthetic_constraints
         ))
 
-    def test_real_session_1786266235_plan_state_replays_deterministically(self):
-        run_state_path = (
-            Path(__file__).resolve().parents[2]
-            / "task_outputs"
-            / "session_1786266235"
-            / "plan_state.json"
-        )
-        if not run_state_path.is_file():
-            self.skipTest("real session_1786266235 plan_state fixture is unavailable")
-
-        # Import lazily so the pure-protocol tests do not otherwise depend on
-        # the application bootstrap.  The replay invokes only context builders;
-        # it cannot execute the historical healthcheck or call a provider.
-        from bio_agents import BioAnalystAgent
-
-        persisted = json.loads(run_state_path.read_text(encoding="utf-8"))
-        task_state = persisted["task_state"]
-        consultation = task_state["consultation_state"]
-        selected_skills = list(
-            consultation.get("resolved_selected_skill_ids") or []
-        )
-        agent = object.__new__(BioAnalystAgent)
-        finalize_context = agent._build_consultant_finalize_context(
-            task_id="session_1786266235",
-            task_spec=task_state["task_spec"],
-            consultation_state=consultation,
-            resolved_selected_skill_ids=selected_skills,
-            input_audit=task_state["input_audit"],
-        )
-
-        coverage = classify_directive_coverage(finalize_context)
-        compiled = compile_deterministic_coverage(finalize_context, coverage)
-        self.assertEqual(coverage["directive_count"], 57)
-        self.assertEqual(len(finalize_context["coverage_gaps"]), 44)
-        self.assertEqual(coverage["counts"]["model_resolution_required"], 0)
-        self.assertEqual(compiled["compile_mode"], "controller_deterministic")
-        self.assertEqual(compiled["provider_status"], "not_called")
-        self.assertEqual(compiled["next_step"], "planner")
 
     def test_heading_alias_and_duplicate_are_explicit_dispositions(self):
         context = {

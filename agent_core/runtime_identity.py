@@ -17,21 +17,38 @@ from typing import Any
 
 from agent_core.state_contract_store import StateContractStore
 
-SOURCE_PATHS = (
-    'bio_agents.py', 'supervisor.py', 'prompts/manager.py',
-    'agent_core/runtime_identity.py', 'agent_core/plan_contract.py',
-    'agent_core/plan_tracker.py', 'agent_core/plan_bindings.py', 'agent_core/skill_access.py',
-    'agent_core/state_contract_store.py', 'agent_core/approved_resource_locator.py', 'agent_core/recovery.py',
-    'agent_core/workflow/commit_step.py',
-    'agent_core/step_effects.py', 'agent_core/inspection_readers.py',
-    'agent_core/workflow/stage_contracts.py', 'agent_core/workflow/outcomes.py',
-    'agent_core/workflow/runtime_graph.py', 'agent_core/workflow/recovery_node.py',
-    'agent_core/workflow/recovery_runtime.py', 'agent_core/workflow/recovery_agent.py',
-    'agent_core/workflow/recovery_projection.py', 'agent_core/workflow/recovery_tools.py',
-    'agent_core/workflow/inspection_evidence.py', 'agent_core/workflow/diagnostic_admission.py',
-    'agent_core/workflow/managed_stop.py', 'agent_core/workflow/execution.py',
-    'agent_core/workflow/verifier.py', 'execution/executor.py',
-)
+SOURCE_PATHS = ('bio_agents.py',
+ 'supervisor.py',
+ 'prompts/manager.py',
+ 'agent_core/runtime_identity.py',
+ 'agent_core/plan_contract.py',
+ 'agent_core/plan_tracker.py',
+ 'agent_core/plan_bindings.py',
+ 'agent_core/skill_access.py',
+ 'agent_core/state_contract_store.py',
+ 'agent_core/approved_resource_locator.py',
+ 'agent_core/recovery.py',
+ 'agent_core/step_effects.py',
+ 'agent_core/inspection_readers.py',
+ 'skills/genomics/wgs-short-read-mapping/scripts/inspection_readers.py',
+ 'agent_core/workflow/stage_contracts.py',
+ 'agent_core/workflow/outcomes.py',
+ 'agent_core/workflow/recovery_runtime.py',
+ 'agent_core/workflow/recovery_projection.py',
+ 'agent_core/workflow/recovery_tools.py',
+ 'agent_core/workflow/inspection_evidence.py',
+ 'agent_core/workflow/diagnostic_admission.py',
+ 'execution/executor.py',
+ 'agent_core/pi_entry.py',
+ 'agent_core/request_state.py',
+ 'agent_core/terminal_facts.py',
+ 'agent_core/planning_state_facts.py',
+ 'agent_core/execution_permissions.py',
+ 'agent_core/action_runtime.py',
+ 'integrations/pi_runtime/host.ts',
+ 'integrations/pi_runtime/extensions/biomind.ts',
+ 'integrations/pi_runtime/python_service.py',
+ 'integrations/pi_runtime/domain_adapter/service.py')
 DEPENDENCIES = ('langgraph', 'langchain-core', 'pydantic', 'PyYAML')
 MAX_SOURCE_BYTES = 8 * 1024 * 1024
 

@@ -18,6 +18,24 @@ from typing import Callable, Dict, Iterable, List, Optional, Sequence
 CompressFn = Callable[[str, int], str]
 
 
+def skill_read_char_budget(messages, schemas, *, safe_input_tokens, estimator):
+    """Conservative allowance for the next exact Skill reply, not a read receipt.
+
+    Include native call arguments, restored history and schemas. Output reserves
+    are already excluded by the caller's context policy. Four tokens per new
+    Unicode character bounds even multi-byte source text conservatively; the
+    existing provider admission remains authoritative.
+    """
+    wire = json.dumps({
+        'messages': [{'role': getattr(m, 'type', ''), 'content': getattr(m, 'content', ''),
+                      'tool_calls': getattr(m, 'tool_calls', None)} for m in messages],
+        'tools': schemas,
+    }, ensure_ascii=False, default=str)
+    estimate = estimator.estimate(wire)
+    remaining = int(safe_input_tokens) - estimate.tokens - estimate.uncertainty_tokens - 2048
+    return min(64000, max(0, remaining // 4))
+
+
 class RequiredContextOverflow(RuntimeError):
     """Raised when required context cannot fit without silent information loss."""
 

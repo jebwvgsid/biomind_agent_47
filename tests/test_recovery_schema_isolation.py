@@ -5,7 +5,6 @@ from pathlib import Path
 import unittest
 
 from agent_core.workflow.outcomes import RecoveryOutcome, TriageOutcome
-from agent_core.workflow.runtime_graph import build_schema2_production_graph
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -43,31 +42,6 @@ def _call_name(node: ast.Call) -> str:
 
 
 class RecoverySchemaIsolationTests(unittest.IsolatedAsyncioTestCase):
-    def test_production_schema2_handler_is_schema2_recovery_node(self) -> None:
-        tree = ast.parse((REPO_ROOT / "bio_agents.py").read_text(encoding="utf-8"))
-        schema2_constructors = [
-            node for node in ast.walk(tree)
-            if isinstance(node, ast.Call) and _call_name(node) == "Schema2RecoveryNode"
-        ]
-        typed_recovery_constructors = [
-            node for node in ast.walk(tree)
-            if isinstance(node, ast.Call) and _call_name(node) == "TypedRecovery"
-        ]
-        handler_assignments = [
-            node for node in ast.walk(tree)
-            if isinstance(node, ast.Assign)
-            and any(
-                isinstance(target, ast.Attribute)
-                and target.attr == "_schema2_runtime_node_handlers"
-                for target in node.targets
-            )
-        ]
-        self.assertEqual(len(schema2_constructors), 1)
-        self.assertEqual(typed_recovery_constructors, [])
-        self.assertEqual(len(handler_assignments), 1)
-        handler_source = ast.unparse(handler_assignments[0].value)
-        self.assertIn("'recovery': profile_typed_node", handler_source)
-        self.assertIn("typed_recovery.run", handler_source)
 
     def test_modern_recovery_chain_has_no_legacy_or_controller_calls(self) -> None:
         observed_calls: set[str] = set()
@@ -100,55 +74,6 @@ class RecoverySchemaIsolationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(definitions), 1)
         self.assertGreaterEqual(len(callers), 2)
 
-    async def test_schema2_recovery_edge_executes_only_supplied_typed_handler(self) -> None:
-        calls: list[str] = []
-
-        async def triage(_state):
-            calls.append("triage")
-            return {"triage_outcome": TriageOutcome(
-                schema_version=1,
-                type="resume_classified",
-                summary="Resume requires Recovery.",
-                scope={"task_id": "task-isolation"},
-                payload={
-                    "semantic_state": "recovery_pending",
-                    "reason_code": "fixture",
-                },
-            ).to_dict()}
-
-        async def recovery(_state):
-            calls.append("schema2_recovery")
-            return {"recovery_outcome": RecoveryOutcome(
-                schema_version=1,
-                type="internal_protocol_error",
-                summary="Fixture closes after proving handler selection.",
-                scope={"task_id": "task-isolation"},
-                payload={
-                    "error_code": "FIXTURE_COMPLETE",
-                    "source_scope": {"task_id": "task-isolation"},
-                    "identity_conflict": {},
-                },
-            ).to_dict()}
-
-        async def forbidden(_state):
-            calls.append("unexpected")
-            raise AssertionError("an unrelated schema-2 handler was invoked")
-
-        handlers = {
-            name: forbidden
-            for name in {
-                "direct_response", "consultant", "planner", "plan_review",
-                "ask_user", "install_subagent", "generate", "step_worker",
-                "execute", "supervisor", "commit_step", "final_audit",
-            }
-        }
-        handlers.update({"triage": triage, "recovery": recovery})
-        graph = build_schema2_production_graph(handlers).compile()
-        await graph.ainvoke({
-            "task_id": "task-isolation",
-            "workflow_routing_schema_version": 2,
-        })
-        self.assertEqual(calls, ["triage", "schema2_recovery"])
 
 
 if __name__ == "__main__":

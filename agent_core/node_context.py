@@ -68,6 +68,7 @@ _CONTROL_KEY_EXACT = {
     "approval_ref",
     "approval_scope_hash",
     "projection_semantic_hash",
+    "output_policy_hash",
     "node_context_hash",
     "cas_token",
     "content_ref",
@@ -86,7 +87,6 @@ _CONTROL_KEY_EXACT = {
     "validation_id",
 }
 _CONTROL_KEY_SUFFIXES = (
-    "_hash",
     "_generation",
     "_cas",
     "_cas_token",
@@ -95,16 +95,11 @@ _CONTROL_KEY_SUFFIXES = (
 )
 # Content digests for immutable Skill source/excerpts are model-visible
 # provenance, not task/plan concurrency tokens.  Keep this allowlist exact;
-# all other ``*_hash`` fields remain control-plane only.
+# Business digest fields are not classified by their ``*_hash`` suffix.
 _SEMANTIC_CONTENT_HASH_KEYS = {
     "content_hash",
     "resource_content_hash",
 }
-_CONTROL_VALUE_PATTERNS = (
-    re.compile(r"^sha256:[0-9a-f]{32,}$", re.IGNORECASE),
-    re.compile(r"^(?:object|audit|evidence):sha256:[0-9a-f]{16,}$", re.IGNORECASE),
-    re.compile(r"^cas:[A-Za-z0-9._:-]+$"),
-)
 _HANDLE_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_.-]{0,127}$")
 _PLACEHOLDER_RE = re.compile(r"^\{(input|output):([A-Za-z][A-Za-z0-9_.-]*)\}$")
 
@@ -281,16 +276,8 @@ def control_metadata_leaks(value: Any, path: str = "$LLMPayload") -> List[str]:
     elif isinstance(value, (list, tuple)):
         for index, item in enumerate(value):
             leaks.extend(control_metadata_leaks(item, f"{path}[{index}]"))
-    elif isinstance(value, str):
-        stripped = value.strip()
-        exact_user_turn = (
-            ".semantic_history.conversation[" in path
-            and path.endswith(".content")
-        )
-        if not exact_user_turn and any(
-            pattern.match(stripped) for pattern in _CONTROL_VALUE_PATTERNS
-        ):
-            leaks.append(path)
+    # String values, including file digests, are business data. Only explicit
+    # structural control fields above can establish a metadata leak.
     return sorted(set(leaks) - public_step_paths)
 
 
@@ -1553,7 +1540,8 @@ def _accepted_consultant_handoff_view(
         "summary", "requirements_summary", "goal_interpretation", "input_files",
         "required_outputs", "selected_skills",
         "capability_decisions", "runtime_requirements", "resolved_ambiguities",
-        "unresolved_questions", "database_strategy",
+        "unresolved_questions", "database_strategy", "model_claims", "summary_source",
+        "parameters", "parameter_sources", "inspection_facts", "report_preservation_prerequisites",
     )
     result = OrderedDict()
     for key in allowed:

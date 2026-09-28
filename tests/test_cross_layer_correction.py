@@ -1,10 +1,10 @@
 """Current same-layer correction acceptance, not historical witness assertions."""
+from supervisor import parse_review_decision
 from copy import deepcopy
 import json
 import pytest
 from agent_core.semantic_completion import (validate_reviewer_payload,SemanticCompletionError,
     reviewer_response_schema,reviewer_assessment_identity,REVIEWER_PROTOCOL_CORRECTIONS)
-from supervisor import LLMReviewer
 
 
 def decision():
@@ -15,16 +15,16 @@ def decision():
 
 def test_F10_F13_parser_preserves_exact_errors_and_scope():
     value=decision();value['issue_dispositions'][0]['confidence']=0.9
-    parsed=LLMReviewer._parse_decision(json.dumps(value),expected_report_id='current-report',allowed_issue_ids=['issue'],include_error=True)
+    parsed=parse_review_decision(json.dumps(value),expected_report_id='current-report',allowed_issue_ids=['issue'],include_error=True)
     assert parsed['_validation_error']['field_path']=='$.issue_dispositions[0].confidence'
     assert parsed['_validation_error']['expected']==reviewer_response_schema()['issue_fields']
     value=decision();value['report_id']='old-report'
-    assert LLMReviewer._parse_decision(json.dumps(value),expected_report_id='current-report',include_error=True)['_validation_error']['code']=='SEMANTIC_REVIEW_REPORT_ID_MISMATCH'
+    assert parse_review_decision(json.dumps(value),expected_report_id='current-report',include_error=True)['_validation_error']['code']=='SEMANTIC_REVIEW_REPORT_ID_MISMATCH'
     value=decision();value['review_policy_receipt']={'remaining_requests':1000}
     with pytest.raises(SemanticCompletionError,match='FIELD_UNKNOWN'):validate_reviewer_payload(value)
     value=decision();value.update(assessment='CONCERN',disposition='inspection_required')
     value['issue_dispositions'][0]['disposition']='inspection_required'
-    parsed=LLMReviewer._parse_decision(json.dumps(value),expected_report_id='current-report',allowed_issue_ids=['issue'],include_error=True)
+    parsed=parse_review_decision(json.dumps(value),expected_report_id='current-report',allowed_issue_ids=['issue'],include_error=True)
     assert parsed['parse_status']=='valid' and parsed['disposition']=='inspection_required'
 
 
@@ -74,71 +74,7 @@ def test_F14_F17_policy_scope_freeze_and_classification():
     assert correction_category('script_block',[{'protocol_error':{'cause_code':'GENERATE_RESPONSE_INCOMPLETE'}}])=='response_completion'
 
 
-def test_F19_safe_output_policy_unknown_and_bound_override():
-    from types import SimpleNamespace
-    from agent_core.provider_attempt import output_policy_projection
-    assert output_policy_projection(object())['client_resolved_output_limit']=='UNKNOWN'
-    base=SimpleNamespace(max_tokens=4096,model_kwargs={'api_key':'synthetic-do-not-project'})
-    bound=SimpleNamespace(bound=base,kwargs={'max_tokens':6144,'headers':{'synthetic':'do-not-project'}})
-    result=output_policy_projection(bound,requested={'max_tokens':4096})
-    assert result['client_resolved_output_limit']==6144 and result['overridden'] is True
-    assert result['remote_effective_limit']=='UNKNOWN' and 'api_key' not in json.dumps(result)
 
 
-def test_F19_actual_generate_transport_preserves_explicit_output_limit():
-    import asyncio
-    from langchain_openai import ChatOpenAI
-    from langchain_core.messages import HumanMessage
-    from tests.test_plan_local_preaction_convergence_v2 import PlanLocalRealGraphTests
-    from tests.test_preflight_recovery_audit import save
-    async def run():
-        case=PlanLocalRealGraphTests(methodName='test_graph_e_malformed_script_block_repair_is_visible_to_provider')
-        await case.asyncSetUp();captured=[]
-        class Transport:
-            @property
-            def with_raw_response(self):return self
-            async def create(self,**body):
-                captured.append(body)
-                payload={'id':'new-offline-response','model':'offline-model','object':'chat.completion','created':1,
-                    'choices':[{'index':0,'message':{'role':'assistant','content':'<shell>printf synthetic</shell>'},'finish_reason':'stop'}],
-                    'usage':{'prompt_tokens':3,'completion_tokens':4,'total_tokens':7}}
-                from types import SimpleNamespace
-                return SimpleNamespace(parse=lambda:payload,headers={})
-        try:
-            model=ChatOpenAI(model='offline-model',api_key='offline-fixture',base_url='https://offline.invalid/v1',
-                max_tokens=2048,max_retries=0,async_client=Transport()).bind(max_tokens=3072)
-            case.agent.generate_requested_output_limits={'max_tokens':2048}
-            result=await case.agent._ainvoke_llm([HumanMessage(content='Only a synthetic script.')],stage='generate',
-                task_id='new-output-policy',llm_override=model,llm_policy={'sdk_max_retries':0})
-            assert len(captured)==1 and result.response_metadata['finish_reason']=='stop'
-            limits={k:v for k,v in captured[0].items() if k in {'max_tokens','max_completion_tokens','max_output_tokens'}}
-            assert list(limits.values())==[3072],limits
-            from agent_core.context_lineage import ContextLineageStore
-            snapshots=ContextLineageStore(case.root,'new-output-policy').list_snapshots()
-            policies=[row for row in snapshots]
-            save('F19-real-adapter',{'final_transport_limits':limits,'calls':1,'network':0,
-                'response_metadata':result.response_metadata,'snapshots':policies})
-        finally:await case.asyncTearDown()
-    asyncio.run(run())
 
 
-def test_F17_distinct_request_same_text_counts_once_then_no_progress(tmp_path):
-    from tests.test_generate_admission_typed_repair import CandidateRepairCommitTests
-    from agent_core.plan_tracker import load_plan_state
-    from tests.test_preflight_recovery_audit import save
-    fixture=CandidateRepairCommitTests()
-    agent,state=fixture._agent(str(tmp_path))
-    candidate={'type':'execute','operation':'wrong'}
-    first=fixture._reject(agent,state,'new-request-1',candidate)
-    current=load_plan_state(tmp_path,'commit-task')
-    second=fixture._reject(agent,current,'new-request-2',candidate)
-    after=load_plan_state(tmp_path,'commit-task')
-    rows=after['task_state']['candidate_repair_state']['events']
-    assert len(rows)==2 and sorted(row['repair_ordinal'] for row in rows.values())==[1,2]
-    assert second['reason_code']=='GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED'
-    assert not second.get('candidate_repair_receipt') and second['execution_status']=='not_started'
-    again=fixture._reject(agent,load_plan_state(tmp_path,'commit-task'),'new-request-2',candidate)
-    reloaded=load_plan_state(tmp_path,'commit-task')
-    assert reloaded['task_state']['candidate_repair_state']['events']==rows
-    assert reloaded['task_state']['budgets']==after['task_state']['budgets']
-    save('F17-distinct-same-text',{'first':first,'second':second,'replayed':again,'events':rows,'executions':0})

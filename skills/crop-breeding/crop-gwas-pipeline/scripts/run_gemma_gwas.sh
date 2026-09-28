@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+crop_dir="$(cd -- "${script_dir}/../.." && pwd)"
 usage(){ echo "Usage: run_gemma_gwas.sh --bfile plink_prefix --phenotype phenotype.txt --out out_prefix [--trait trait] [--covariates cov.txt]"; }
 bfile=""; phenotype=""; out=""; trait=""; covariates=""
 while [[ $# -gt 0 ]]; do
@@ -16,6 +18,6 @@ done
 [[ -n "$bfile" && -n "$phenotype" && -n "$out" ]] || { usage >&2; exit 2; }
 [[ -n "$trait" ]] || trait="$(basename "$out")"
 outdir="$(dirname "$out")"
-cmd=(python skills/crop-breeding/crop-gwas-gemma-lmm/scripts/run_gemma_lmm.py --bfile "$bfile" --phenotype "$phenotype" --trait "$trait" --outdir "$outdir")
+cmd=(python "${crop_dir}/crop-gwas-gemma-lmm/scripts/run_gemma_lmm.py" --bfile "$bfile" --phenotype "$phenotype" --trait "$trait" --outdir "$outdir")
 [[ -n "$covariates" ]] && cmd+=(--covariates "$covariates")
 exec "${cmd[@]}"

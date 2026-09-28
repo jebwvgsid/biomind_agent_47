@@ -9,6 +9,11 @@ from typing import Dict, List, Optional, Any
 from .settings import PathManager, EnvironmentManager
 from . import config as sys_config
 
+
+_OFFLINE_TEST_ISOLATION = os.getenv(
+    "BIOMIND_DISABLE_DOTENV", ""
+).strip().lower() in {"1", "true", "yes", "on"}
+
 try:
     import readline
 except ImportError:
@@ -32,6 +37,10 @@ class EnvironmentManager:
     @staticmethod
     def load_environment():
         """加载环境变量 (.env)"""
+        if os.getenv("BIOMIND_DISABLE_DOTENV", "").strip().lower() in {
+            "1", "true", "yes", "on",
+        }:
+            return
         # 优先级：
         # 1. 用户当前目录下的 .env (针对特定项目的配置)
         # 2. 软件安装目录下的 .env (全局默认配置)
@@ -53,6 +62,18 @@ class EnvironmentManager:
     @staticmethod
     def get_required_vars() -> Dict[str, str]:
         """获取关键环境变量"""
+        if _OFFLINE_TEST_ISOLATION:
+            return {
+                'RAGFLOW_ADDRESS': '',
+                'RAGFLOW_API_KEY': '',
+                'RAGFLOW_DATASET_IDS': '',
+                'RERANK_MODEL_ID': '',
+                'DEEPSEEK_API_KEY': '',
+                'DASHSCOPE_API_KEY': '',
+                'QWEN_API_KEY': '',
+                'OPENAI_API_KEY': '',
+                'LOG_LEVEL': 'INFO',
+            }
         return {
             'RAGFLOW_ADDRESS': os.getenv('RAGFLOW_ADDRESS', ''),
             'RAGFLOW_API_KEY': os.getenv('RAGFLOW_API_KEY', ''),
@@ -85,7 +106,9 @@ except ImportError:
 
 # 导出核心变量
 RAGFLOW_ADDRESS = os.getenv('RAGFLOW_ADDRESS')
-RAGFLOW_API_KEY = os.getenv('RAGFLOW_API_KEY')
+RAGFLOW_API_KEY = (
+    None if _OFFLINE_TEST_ISOLATION else os.getenv('RAGFLOW_API_KEY')
+)
 RERANK_MODEL_ID = os.getenv('RERANK_MODEL_ID')
 
 
@@ -105,6 +128,9 @@ class StartupCheck:
         logger.info("="*60)
         logger.info("🧬 BioAnalyst Agent - System Check")
         logger.info("="*60)
+        from agent_core.candidate_validation import candidate_validation_enabled
+        logger.info("候选表达校验：%s（BIOMIND_CANDIDATE_VALIDATION_ENABLED）",
+                    "开启" if candidate_validation_enabled() else "关闭：宽松脚本解析，跳过 helper 调用契约")
         
         checks = []
         
@@ -176,7 +202,10 @@ class StartupCheck:
         return all(checks)
 
 # 运行启动检查 (可选)
-if os.getenv('SKIP_STARTUP_CHECK', 'false').lower() != 'true':
+if (
+    not _OFFLINE_TEST_ISOLATION
+    and os.getenv('SKIP_STARTUP_CHECK', 'false').lower() != 'true'
+):
     startup_ok = StartupCheck.run_checks()
     if not startup_ok:
         logger.error("⚠️ Startup checks failed. Some features may not work.")

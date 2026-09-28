@@ -85,9 +85,10 @@ class TaskSummaryRenderer:
             else self.session_archive.events_for_task(
                 task_id,
                 limit=300,
-                ascending=True,
+                ascending=False,
             )
         )
+        if not authoritative_new_task: events = list(reversed(events))
         if not self.task_path(task_id).exists():
             self.write_task_summary(
                 task_id,
@@ -125,9 +126,10 @@ class TaskSummaryRenderer:
             self.session_archive.events_for_task(
                 task_id,
                 limit=300,
-                ascending=True,
+                ascending=False,
             )
         )
+        if events_snapshot is None: events.reverse()
         status = self._task_status(events, fallback_status)
         goal = self._task_goal(events, fallback_goal)
         updated = events[-1].timestamp if events else now_iso()
@@ -135,7 +137,7 @@ class TaskSummaryRenderer:
         lines = [
             f"# Task Summary: {task_id}",
             "",
-            "Derived from SessionArchive events and optional curated claims. This file is a report/cache, not the memory source of truth.",
+            "Snapshot of committed SessionArchive events (latest 300) and optional curated claims. Pending observer writes may not yet appear; this report is not the memory source of truth.",
             "",
             f"- Updated: {updated}",
             f"- Status: {status}",
@@ -184,9 +186,10 @@ class TaskSummaryRenderer:
             self.session_archive.events_for_task(
                 task_id,
                 limit=300,
-                ascending=True,
+                ascending=False,
             )
         )
+        if events_snapshot is None: events.reverse()
         text = self.render_task_summary(
             task_id,
             fallback_goal=fallback_goal,

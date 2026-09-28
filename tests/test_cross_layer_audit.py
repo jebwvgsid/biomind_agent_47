@@ -1,4 +1,5 @@
 """Baseline witnesses, NOT fix acceptance. All inputs are new and synthetic."""
+from supervisor import parse_review_decision
 import asyncio
 from copy import deepcopy
 import hashlib
@@ -91,11 +92,10 @@ def test_T01_review_extra_issue_confidence_is_schema_error():
         'issue_dispositions':[{'issue_id':'synthetic-issue','disposition':'completion_accepted','explanation':'Actual bounded observation','confidence':0.9}],
         'confidence':0.9,'concerns':[],'suggestions':[]}
     with pytest.raises(SemanticCompletionError,match='SEMANTIC_DECISION_ISSUE_DISPOSITION_INVALID'):validate_reviewer_payload(payload)
-    from supervisor import LLMReviewer
-    rejected=LLMReviewer._parse_decision(json.dumps(payload),expected_report_id='synthetic-report',allowed_issue_ids=['synthetic-issue'])
+    rejected=parse_review_decision(json.dumps(payload),expected_report_id='synthetic-report',allowed_issue_ids=['synthetic-issue'])
     assert not rejected
     payload['issue_dispositions'][0].pop('confidence')
-    accepted=LLMReviewer._parse_decision(json.dumps(payload),expected_report_id='synthetic-report',allowed_issue_ids=['synthetic-issue'])
+    accepted=parse_review_decision(json.dumps(payload),expected_report_id='synthetic-report',allowed_issue_ids=['synthetic-issue'])
     assert accepted['parse_status']=='valid'
     save('T01-review-schema',{'initial_json_valid':True,'error':'SEMANTIC_DECISION_ISSUE_DISPOSITION_INVALID','corrected_parse_status':accepted['parse_status'],'network':0})
 
@@ -171,36 +171,3 @@ def test_T15_directory_is_unsupported_not_corrupt_text(tmp_path):
     save('T15-reader',{'directory_error':'ARTIFACT_FORMAT_UNSUPPORTED','file_inspection':inspected,'file_read':read,'scientific_corruption_claimed':False})
 
 
-@pytest.mark.parametrize('sid,operation',[
-    ('genomics/wgs-short-read-mapping','prepare_reference'),
-    ('genomics/wgs-gatk-snp-indel','inspect'),
-    ('genomics/snpeff-annotation','check_contig_compatibility')])
-def test_T18_actual_skill_registry_shared_publisher(tmp_path,sid,operation):
-    import asyncio
-    async def scenario():
-        from tests.test_plan_local_preaction_convergence_v2 import PlanLocalRealGraphTests
-        case=PlanLocalRealGraphTests(methodName='test_graph_e_malformed_script_block_repair_is_visible_to_provider')
-        await case.asyncSetUp()
-        try:
-            registry=case.agent.skill_manager.get_execution_capability_registry([sid])
-            rows=[r for r in registry.values() if r['operation']==operation]
-            assert len(rows)==1,(sid,list(registry))
-            row=rows[0]; facts={};output=tmp_path/'中文 改名.txt';output.write_text('new synthetic result\n')
-            template=declared_effect_emission_contract({'steps':[{'step_id':'renamed-step',**row}]},'renamed-step')
-            for field,decls in template['declarations'].items():
-                facts[field]={}
-                for decl in decls:
-                    facts[field][decl['identity']]={key:({'known':False,'sample_count':3} if key=='value' else [] if key=='index_artifacts' else 'synthetic-ref') for key in decl['required_fields']}
-                    if field=='produces_artifacts':facts[field][decl['identity']]['path']=str(output)
-            line=emit_declared_effects(row,facts)
-            assert line and structured_effect_parse_receipt(line,row)['status']=='parsed'
-            assert match_step_effect_evidence(row,[extract_structured_effect_evidence(line)])['complete']
-            negative=deepcopy(facts)
-            for values in negative.values():
-                for value in values.values():value['status']='blocked'
-            line2=emit_declared_effects(row,negative)
-            assert structured_effect_parse_receipt(line2,row)['status']=='parsed'
-            assert not match_step_effect_evidence(row,[extract_structured_effect_evidence(line2)])['complete']
-            save('T18-'+sid.split('/')[-1],{'capability':row,'declarations':template['declarations'],'actual_facts':facts,'negative_not_complete':True,'scope':'registry/template/parser/matcher only; no scientific validity or full skill execution'})
-        finally:await case.asyncTearDown()
-    asyncio.run(scenario())

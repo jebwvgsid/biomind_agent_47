@@ -45,6 +45,33 @@ def get_current_node() -> Optional[str]:
     return _CURRENT_NODE.get()
 
 
+def _emit_timing(event: str, task_id: str, **data: Any) -> None:
+    """Best-effort display observation; never create business state or output."""
+    try:
+        from agent_core.cli_display import emit
+        emit("timing", source="runtime_fact", task_id=task_id, event=event, **data)
+    except Exception:
+        pass
+
+
+def _emit_step_timing(task_id: str, node: str, durable: Mapping[str, Any]) -> None:
+    """Project a caller's already-read formal cursor, never a model proposal."""
+    try:
+        step_id = str(durable.get("current_step_id") or "")
+        if not step_id:
+            return
+        step = next((row for row in durable.get("steps") or []
+                     if isinstance(row, Mapping) and str(row.get("step_id") or "") == step_id), {})
+        if not step or str(step.get("status") or "").lower() in {"done", "completed", "skipped", "cancelled"}:
+            return
+        _emit_timing("step_scope", task_id, node=node, step_id=step_id,
+                     plan_id=str(durable.get("plan_id") or ""),
+                     plan_version=str(durable.get("plan_version") or ""),
+                     plan_revision=str(durable.get("plan_revision") or ""))
+    except Exception:
+        pass
+
+
 def _now_iso() -> str:
     return datetime.now().astimezone().isoformat(timespec="seconds")
 
@@ -290,6 +317,8 @@ def _response_text(response: Any) -> str:
 
 
 def _response_usage(response: Any) -> Dict[str, Any]:
+    from agent_core.provider_usage import raw_usage
+    raw = raw_usage(response)
     candidates: List[Any] = [
         getattr(response, "usage", None),
         getattr(response, "usage_metadata", None),
@@ -315,6 +344,7 @@ def _response_usage(response: Any) -> Dict[str, Any]:
         "prompt_cache_miss_tokens": None,
         "cache_metric_status": "not_reported",
     }
+    candidates = [*(raw['events'][-1:] if raw['reported'] else []), *candidates]
     for candidate in candidates:
         found = _find_usage_dict(candidate)
         normalized = _normalize_usage(found)
@@ -325,6 +355,8 @@ def _response_usage(response: Any) -> Dict[str, Any]:
                 continue
             if merged[key] is None and value is not None:
                 merged[key] = value
+
+    merged['raw_provider_usage'] = raw
 
     # Some LangChain adapters split standard token totals into usage_metadata
     # and provider-specific cache counters into response_metadata. Merge those
@@ -757,6 +789,9 @@ class RunProfiler:
                         "acquired_at": now,
                         "last_heartbeat_at": now,
                     })
+                # An input pause can end the observed interval without changing
+                # the business run lease. Repeated starts are idempotent in UI.
+                _emit_timing("run_start", task_id, interval_id=lease["run_uuid"])
             task["last_updated_at"] = _now_iso()
             return
         reconciled = self.reconcile_stale_run(task_id)
@@ -800,6 +835,9 @@ class RunProfiler:
                 "last_heartbeat_at": now,
             },
         }
+        if status == "running":
+            _emit_timing("run_start", task_id,
+                         interval_id=self._tasks[task_id]["run_lease"]["run_uuid"])
 
     def finish_task(
         self,
@@ -820,6 +858,7 @@ class RunProfiler:
         lease = task.setdefault("run_lease", {})
         lease.update({"state": "released", "released_at": task["ended_at"], "last_heartbeat_at": task["ended_at"]})
         task["_ended_wall_seconds"] = round(time.perf_counter() - task["_started_monotonic"], 3)
+        _emit_timing("run_stop", task_id, interval_id=lease.get("run_uuid", ""), status=status)
         self.flush(task_id)
 
     def finish_for_exception(self, task_id: str, exc: BaseException) -> str:
@@ -885,12 +924,15 @@ class RunProfiler:
         started_at = _now_iso()
         event_id = self._new_event_id("node")
         error = None
+        _emit_timing("phase_start", task_id, node=node_name, interval_id=event_id)
         try:
             yield
         except BaseException as exc:
             error = type(exc).__name__
             raise
         finally:
+            _emit_timing("phase_end", task_id, node=node_name, interval_id=event_id,
+                         status="failed" if error else "completed")
             self._append_event(
                 task_id,
                 {
@@ -928,7 +970,13 @@ class RunProfiler:
         prompt_cache_hit_tokens: Optional[int] = None,
         prompt_cache_miss_tokens: Optional[int] = None,
         cache_metric_status: str = "not_reported",
+        reported_usage: Optional[Mapping[str, Any]] = None,
+        correlation: Optional[Mapping[str, Any]] = None,
     ) -> None:
+        values = {"prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens, "total_tokens": total_tokens}
+        origins = {key: ("actual" if reported_usage is not None and reported_usage.get(key) is not None
+                   else "missing" if value is None or (usage_source == "prompt_estimate_after_error" and key == "completion_tokens")
+                   else "estimated" if estimated else "actual") for key, value in values.items()}
         self._append_event(
             task_id,
             {
@@ -955,6 +1003,8 @@ class RunProfiler:
                 "protocol_status": str(protocol_status or ""),
                 "response_artifact_ref": str(response_artifact_ref or ""),
                 "usage_source": str(usage_source or ""),
+                "usage_origins": origins,
+                "correlation": dict(correlation or {}),
             },
         )
 
@@ -1044,7 +1094,6 @@ class RunProfiler:
             'duration_seconds': result.get('duration_seconds', 0),
             'timing': dict(result.get('timing') or {}), 'receipt_ref': result.get('receipt_ref'),
         })
-
 
     def record_command(
         self,
@@ -1435,7 +1484,7 @@ class RunProfiler:
         if not isinstance(data, dict):
             return {}
         task_state = data.get("task_state") if isinstance(data.get("task_state"), dict) else {}
-        from agent_core.workflow.managed_stop import current_managed_stop, projection
+        from agent_core.terminal_facts import current_managed_stop, projection
         common = current_managed_stop(data)
         if common:
             return projection(common)
@@ -1685,6 +1734,9 @@ class RunProfiler:
         human_events = [e for e in events if e.get("type") == "confirmation" and not e.get("automatic")]
         llm_events = [e for e in events if e.get("type") == "llm"]
         node_events = [e for e in events if e.get("type") == "node"]
+        candidate_rejections = list((task.get("candidate_rejections") or {}).values())
+        format_rejections = [row for row in candidate_rejections if str(row.get("reason_code") or "").startswith(
+            ("GENERATE_SCRIPT_BLOCK", "GENERATE_DISPLAY", "GENERATE_RESPONSE", "GENERATE_SCRIPT_SYNTAX"))]
 
         command_total = sum(float(e.get("duration_seconds") or 0) for e in command_events)
         command_success = sum(
@@ -1750,6 +1802,11 @@ class RunProfiler:
             "total_tokens": sum(int(e.get("total_tokens") or 0) for e in llm_events),
             "reasoning_tokens": reasoning_tokens,
             "contains_estimates": any(e.get("tokens_estimated") for e in llm_events),
+            "usage_by_origin": {origin: {key: sum(int(e.get(key) or 0) for e in llm_events
+                if (e.get("usage_origins") or {}).get(key, "estimated" if e.get("tokens_estimated") else "actual") == origin)
+                for key in ("prompt_tokens", "completion_tokens", "total_tokens")} for origin in ("actual", "estimated")},
+            "missing_usage_calls": {key: sum((e.get("usage_origins") or {}).get(key) == "missing" or e.get(key) is None for e in llm_events)
+                for key in ("prompt_tokens", "completion_tokens", "total_tokens")},
             "prompt_cache_hit_tokens": prompt_cache_hit_tokens,
             "prompt_cache_miss_tokens": prompt_cache_miss_tokens,
             "prompt_cache_usage_reported_calls": len(cache_usage_events),
@@ -1774,6 +1831,10 @@ class RunProfiler:
             "install_or_repair_seconds_estimate": round(install_repair, 3),
             "analysis_planning_overhead_seconds": round(max(0.0, wall - command_total - human_total), 3),
             "llm_calls": len(llm_events),
+            "llm_usage_groups": [{"event_id": e.get("id"), "node": e.get("node"),
+                "correlation": e.get("correlation", {}), "finish_reason": e.get("finish_reason"),
+                "duration_seconds": e.get("duration_seconds"), "usage_origins": e.get("usage_origins", {})}
+                for e in llm_events],
             "commands": len(command_events),
             "local_inspections": len(inspection_events),
             "local_inspection_seconds": sum(float(e.get('duration_seconds') or 0) for e in inspection_events),
@@ -1786,6 +1847,9 @@ class RunProfiler:
             "correction_count": _coerce_int(task.get("correction_count")),
             "max_retry_count": _coerce_int(task.get("max_retry_count")),
             "manual_feedback_or_rejection_count": len(review_feedback_or_rejections),
+            "candidate_rejection_count": len(candidate_rejections),
+            "candidate_format_rejection_count": len(format_rejections),
+            "candidate_contract_rejection_count": len(candidate_rejections) - len(format_rejections),
             "node_seconds": node_totals,
             "tokens": token_totals,
         }
@@ -1900,7 +1964,7 @@ class RunProfiler:
             f"| LLM calls | {summary['llm_call_seconds']:.3f} | {self._format_seconds(summary['llm_call_seconds'])} |",
             f"| Analysis/planning/overhead | {summary['analysis_planning_overhead_seconds']:.3f} | {self._format_seconds(summary['analysis_planning_overhead_seconds'])} |",
             f"| Install or repair estimate | {summary['install_or_repair_seconds_estimate']:.3f} | {self._format_seconds(summary['install_or_repair_seconds_estimate'])} |",
-            f"| Corrections | {summary['correction_count']:.3f} | {summary['correction_count']} retry verdict(s) |",
+            f"| Supervisor retries | {summary['correction_count']:.3f} | {summary['correction_count']} retry verdict(s), separate from candidate rejection |",
             "",
             "## Counts",
             "",
@@ -1908,7 +1972,8 @@ class RunProfiler:
             f"- Commands: {summary['commands']} ({summary['successful_commands']} success, {summary['failed_commands']} failed)",
             f"- Local inspections (separate from approved Commands): {summary.get('local_inspections', 0)}, {summary.get('local_inspection_seconds', 0):.3f}s; components={summary.get('local_inspection_timing', {})}; scan is included in preparation; inspection is included in node/overhead time, not additive",
             f"- Confirmations: {summary['manual_confirmations']} manual, {summary['auto_confirmations']} automatic",
-            f"- Review feedback/rejections: {summary['manual_feedback_or_rejection_count']}",
+            f"- Human review feedback/rejections: {summary['manual_feedback_or_rejection_count']}",
+            f"- Candidate rejections: {summary.get('candidate_rejection_count', 0)} (format={summary.get('candidate_format_rejection_count', 0)}, contract={summary.get('candidate_contract_rejection_count', 0)})",
             f"- Tokens: prompt={summary['tokens']['prompt_tokens']}, completion={summary['tokens']['completion_tokens']}, total={summary['tokens']['total_tokens']} (contains estimates: {token_note})",
             f"- Prompt cache: hit={cache_hit_text}, miss={cache_miss_text}, rate={cache_hit_rate_text}, status={summary['tokens'].get('cache_metric_status', 'not_reported')}, reported calls={summary['tokens'].get('prompt_cache_usage_reported_calls', 0)}",
             "",
@@ -2033,6 +2098,13 @@ class RunProfiler:
                 return _shorten(event.get("stdout_preview", ""), 800)
         return ""
 
+    def record_candidate_rejections(self, task_id: str, ledger: Mapping[str, Any]) -> None:
+        """Project the durable event ledger, deduplicated across retries/reloads."""
+        self._ensure_task(task_id)["candidate_rejections"] = {
+            str(key): {name: row.get(name) for name in ("reason_code", "repair_stage", "status", "repair_ordinal")}
+            for key, row in (ledger.get("events") or {}).items() if isinstance(row, Mapping)
+        }
+
     def _append_event(self, task_id: str, event: Dict[str, Any]) -> None:
         task = self._ensure_task(task_id)
         task["events"].append(event)
@@ -2122,6 +2194,7 @@ class ProfilingCallbackHandler(BaseCallbackHandler):
             prompt_cache_miss_tokens=usage["prompt_cache_miss_tokens"],
             cache_metric_status=usage["cache_metric_status"],
             estimated=estimated,
+            reported_usage=usage, correlation=start.get("correlation"),
             started_at=start.get("started_at"),
             finish_reason=finish_reason,
             provider_status="succeeded" if truncated else "",
@@ -2176,6 +2249,7 @@ class ProfilingCallbackHandler(BaseCallbackHandler):
                 prompt_cache_miss_tokens=usage["prompt_cache_miss_tokens"],
                 cache_metric_status=usage["cache_metric_status"],
                 estimated=estimated,
+                reported_usage=usage, correlation=start.get("correlation"),
                 error=type(error).__name__,
                 started_at=start.get("started_at"),
                 finish_reason=finish_reason or "length",
@@ -2198,6 +2272,7 @@ class ProfilingCallbackHandler(BaseCallbackHandler):
             completion_tokens=0,
             total_tokens=start["prompt_tokens_estimate"],
             estimated=True,
+            reported_usage={}, correlation=start.get("correlation"),
             error=type(error).__name__,
             started_at=start.get("started_at"),
             usage_source="prompt_estimate_after_error",
@@ -2221,4 +2296,7 @@ class ProfilingCallbackHandler(BaseCallbackHandler):
             "started_at": _now_iso(),
             "started_monotonic": time.perf_counter(),
             "prompt_tokens_estimate": _estimate_tokens(prompt_text),
+            "correlation": {key: kwargs.get("metadata", {}).get(key) for key in
+                ("provider_attempt_id", "semantic_invocation_id", "call_id", "seed_id", "source_epoch_id", "generate_exit_reason")
+                if kwargs.get("metadata", {}).get(key) is not None},
         }

@@ -1077,6 +1077,19 @@ def evaluate_workspace_mutation_receipts(
             == identity
             and str(receipt.get("mutation") or "").strip() == mutation
         ]
+        if not candidates:
+            # Execute publishes only accepted receipts as effects. Preserve a
+            # rejected Controller receipt for diagnosis, never as completion
+            # evidence; otherwise an unsupported reuse contract looks like a
+            # missing receipt and needlessly retries the same write operation.
+            candidates = [
+                dict(row)
+                for row in journal.get("receipts", ()) or ()
+                if isinstance(row, Mapping)
+                and row.get("attested") is False
+                and str(row.get("canonical_resource_id") or "").strip() == identity
+                and str(row.get("mutation") or "").strip() == mutation
+            ]
         receipt = candidates[0] if len(candidates) == 1 else {}
         intent = intents.get(str(receipt.get("intent_id") or ""), {})
         receipt_check: Dict[str, Any] = {}
@@ -1127,8 +1140,38 @@ def evaluate_workspace_mutation_receipts(
                 status = "failed"
                 reason_code = "WORKSPACE_MUTATION_RECEIPT_INVALID"
                 disposition = "correction_required"
+                if (
+                    receipt_shape_valid
+                    and not scope_mismatches
+                    and not receipt_check.get("mismatches")
+                    and receipt_check.get("immutable_hash_valid") is True
+                    and receipt_check.get("producer") == "biomind.runtime_attester.v1"
+                    and receipt.get("attested") is False
+                    and (
+                        receipt.get("attestation_status") in {
+                            "idempotent_revalidation_contract_missing",
+                            "idempotent_revalidation_contract_invalid",
+                        }
+                        or (
+                            receipt.get("attestation_status") == "idempotent_revalidation_failed"
+                            and isinstance(receipt.get("controller_revalidation_evidence_validation"), Mapping)
+                            and receipt["controller_revalidation_evidence_validation"].get("code")
+                            == "WORKSPACE_REVALIDATION_LIMIT_EXCEEDED"
+                        )
+                    )
+                ):
+                    status = "contract_error"
+                    reason_code = (
+                        "WORKSPACE_REVALIDATION_LIMIT_EXCEEDED"
+                        if receipt.get("attestation_status") == "idempotent_revalidation_failed"
+                        else "WORKSPACE_REVALIDATION_CONTRACT_REQUIRED"
+                    )
+                    disposition = "plan_revision_required"
         runtime_access_validation = receipt.get(
             "runtime_access_evidence_validation"
+        )
+        controller_revalidation_validation = receipt.get(
+            "controller_revalidation_evidence_validation"
         )
         receipt_summary = {
             "receipt_id": str(receipt.get("receipt_id") or ""),
@@ -1154,6 +1197,11 @@ def evaluate_workspace_mutation_receipts(
             "runtime_access_evidence_validation": (
                 deepcopy(dict(runtime_access_validation))
                 if isinstance(runtime_access_validation, Mapping)
+                else {}
+            ),
+            "controller_revalidation_evidence_validation": (
+                deepcopy(dict(controller_revalidation_validation))
+                if isinstance(controller_revalidation_validation, Mapping)
                 else {}
             ),
             "receipt_validation": receipt_check,

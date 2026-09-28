@@ -10,7 +10,6 @@ import unittest
 from unittest.mock import patch
 
 from agent_core.plan_tracker import load_plan_state, save_plan_state
-from bio_agents import BioAnalystAgent
 from memory.session_archive import SessionArchive
 from memory.session_archive_writer import (
     SessionArchiveObservationWriter,
@@ -41,29 +40,6 @@ def _payload(ordinal=1):
 
 
 class SessionArchiveObservationWriterTests(unittest.TestCase):
-    def test_b1_locked_archive_does_not_block_observation_node(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            db_path = Path(tmpdir) / "archive.sqlite3"
-            SessionArchive(db_path)
-            lock = sqlite3.connect(db_path, timeout=0.1)
-            lock.execute("BEGIN EXCLUSIVE")
-            writer = SessionArchiveObservationWriter(
-                db_path=db_path,
-                capacity=4,
-                busy_timeout_seconds=0.1,
-                max_write_attempts=1,
-                shutdown_drain_seconds=0.1,
-            )
-            agent = BioAnalystAgent.__new__(BioAnalystAgent)
-            agent.default_project_id = "default"
-            agent.session_archive_writer = writer
-            started = time.monotonic()
-            asyncio.run(agent._observe_session_memory("task-observe", "generate", payload={"x": 1}))
-            elapsed = time.monotonic() - started
-            self.assertLess(elapsed, 0.1)
-            lock.rollback()
-            lock.close()
-            writer.close(0.3)
 
     def test_b2_queue_full_drops_without_waiting(self):
         entered = threading.Event()

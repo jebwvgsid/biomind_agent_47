@@ -18,10 +18,6 @@ from agent_core.plan_tracker import (approve_plan_state, build_plan_state, load_
     mark_step_verification_pending, record_provenance_event, save_plan_state)
 from agent_core.step_effects import canonical_step_effect
 from agent_core.task_spec import create_task_spec, task_spec_revision
-from agent_core.workflow.commit_step import CommitStep
-from agent_core.workflow.verifier import TypedSupervisor
-from supervisor import SupervisorNode
-from tests.test_unified_binding_rollback import _Reviewer
 
 REAL_BWA_FIXTURE = {
     "reference.dict": "QEhECVZOOjEuNgpAU1EJU046Y2hyMQlMTjoyNTYJTTU6ZWQ0MTQwYTdlMzQ3OTJmYjcwZWFkNzBkNWYxY2Y5NzAJVVI6ZmlsZTovdG1wL2Jpb21pbmQtZDMtbWljcm8vYnVuZGxlL3JlZmVyZW5jZS5mYQpAU1EJU046Y2hyMglMTjoxMjgJTTU6YTA2ODg3M2IzN2NlOTU2NDEwOWE4N2EwY2QzMDQwODAJVVI6ZmlsZTovdG1wL2Jpb21pbmQtZDMtbWljcm8vYnVuZGxlL3JlZmVyZW5jZS5mYQo=",
@@ -80,51 +76,10 @@ def _setup(root, *, predicate=True):
     return task_id, bundle
 
 
-async def _verify(root, task_id, bundle, *, predicate=True, damage=None, preexisting=False):
-    plan = load_plan_state(root, task_id)
-    step = plan["steps"][0]
-    action = {"action_id": "action-reference", "step_id": "prepare", "type": "execute",
-        "plan_id": plan["plan_id"], "plan_version": plan["plan_version"], "purpose": "analysis",
-        "command_role": "analysis_execution", "code": "# Fixture executor claims created; deterministic validator must check files.\n",
-        "outputs": [str(bundle)], "expected_step_effect": canonical_step_effect(step)}
-    record_provenance_event(plan, "action_bound", {"action": action})
-    attempt = record_provenance_event(plan, "attempt_started", {"action_id": action["action_id"], "step_id": "prepare"})
-    if not preexisting:
-        _write_damage(bundle, damage)
-    execution = {"task_id": task_id, "execution_id": "execution-reference", "step_id": "prepare", "action_id": action["action_id"],
-        "attempt_id": attempt["attempt_id"], "plan_id": plan["plan_id"], "plan_version": plan["plan_version"],
-        "command_role": "analysis_execution", "purpose": "analysis", "returncode": 0, "exit_code": 0,
-        "execution_status": "succeeded", "raw_stdout": "", "raw_stderr": "", "declared_outputs": [str(bundle)],
-        "produced_artifacts": [str(bundle)], "step_effect": canonical_step_effect(step),
-        "effect_evidence": {"produces_observations": [{"observation_id": "reference_bundle_valid", "value": True}] if predicate else [],
-            "explicit_side_effects": [{"effect_id": "create_reference_indexes", "evidence": {
-                "reference_resource_ref": "input.reference_fasta", "index_artifacts": ["output.reference_indexes"]}}]}}
-    record_provenance_event(plan, "execution_finished", {"attempt_id": attempt["attempt_id"], "execution_record": execution})
-    mark_step_verification_pending(plan, step_id="prepare", attempt_id=attempt["attempt_id"])
-    save_plan_state(root, task_id, plan)
-    supplied = {"task_id": task_id, "workflow_routing_schema_version": 2, "validation_level": "scientific",
-                "pending_action": action, "execution_evidence": execution}
-    verifier = TypedSupervisor(data_path=str(root), verifier=SupervisorNode(_Reviewer(), output_dir=str(root / "task_outputs")).run)
-    supplied.update(await verifier.run(supplied))
-    (root / "verification.json").write_text(json.dumps(supplied["verification_outcome"], indent=2))
-    return supplied
 
 
-def test_original_directory_contract_can_commit_partial_bundle(tmp_path):
-    task_id, bundle = _setup(tmp_path, predicate=False)
-    supplied = asyncio.run(_verify(tmp_path, task_id, bundle, predicate=False, damage="partial_bwa"))
-    assert supplied["verification_outcome"]["type"] in {"verified", "verified_with_warnings"}, supplied
-    result = asyncio.run(CommitStep(data_path=str(tmp_path)).run(supplied))
-    assert result["commit_step_outcome"]["type"] == "plan_complete", result
 
 
-def test_complete_real_tool_bundle_validates_and_commits(tmp_path):
-    task_id, bundle = _setup(tmp_path)
-    supplied = asyncio.run(_verify(tmp_path, task_id, bundle))
-    assert supplied["verification_outcome"]["type"] in {"verified", "verified_with_warnings"}, supplied
-    result = asyncio.run(CommitStep(data_path=str(tmp_path)).run(supplied))
-    assert result["commit_step_outcome"]["type"] == "plan_complete", result
-    assert load_plan_state(tmp_path, task_id)["steps"][0]["status"] == "passed"
 
 
 def _write_damage(bundle, damage):
@@ -152,36 +107,10 @@ def _write_damage(bundle, damage):
         p = bundle / "reference.fa.pac"; data = p.read_bytes(); p.write_bytes(bytes([data[0] ^ 255]) + data[1:])
 
 
-@pytest.mark.parametrize("damage", ["fai_only", "partial_bwa", "empty_bwt", "wrong_contig", "wrong_fai_length", "wrong_dict_length", "wrong_md5", "wrong_source", "wrong_pac", "wrong_amb", "truncated_sa"])
-def test_bad_bundle_rejected_by_actual_validation_and_commit(tmp_path, damage):
-    task_id, bundle = _setup(tmp_path)
-    supplied = asyncio.run(_verify(tmp_path, task_id, bundle, damage=damage))
-    assert supplied["verification_outcome"]["type"] not in {"verified", "verified_with_warnings"}, supplied
-    report = supplied["verification_outcome"]["payload"]["completion_report"]
-    assert report["completion_gate"]["passed"], report["completion_gate"]
-    assert any(row.get("parser_id") == REFERENCE_BUNDLE_PARSER_ID and not row["passed"]
-               and row["reason_code"].startswith("REFERENCE_") for row in report["predicate_results"])
-    result = asyncio.run(CommitStep(data_path=str(tmp_path)).run(supplied))
-    assert result["commit_step_outcome"]["type"] == "contract_rejected"
-    assert load_plan_state(tmp_path, task_id)["steps"][0]["status"] != "passed"
 
 
-def test_commit_recomputes_bundle_after_successful_verification(tmp_path):
-    task_id, bundle = _setup(tmp_path)
-    supplied = asyncio.run(_verify(tmp_path, task_id, bundle))
-    assert supplied["verification_outcome"]["type"] in {"verified", "verified_with_warnings"}, supplied
-    (bundle / "reference.fa.sa").write_bytes(b"corrupted after validation")
-    result = asyncio.run(CommitStep(data_path=str(tmp_path)).run(supplied))
-    assert result["commit_step_outcome"]["type"] == "contract_rejected", result
 
 
-def test_old_unowned_bundle_still_rejected_by_existing_provenance_gate(tmp_path):
-    task_id, bundle = _setup(tmp_path)
-    _bundle(bundle)
-    supplied = asyncio.run(_verify(tmp_path, task_id, bundle, preexisting=True))
-    assert supplied["verification_outcome"]["type"] not in {"verified", "verified_with_warnings"}
-    result = asyncio.run(CommitStep(data_path=str(tmp_path)).run(supplied))
-    assert result["commit_step_outcome"]["type"] == "contract_rejected"
 
 
 @pytest.mark.parametrize("scope", ["missing_source_role", "multiple_outputs"])

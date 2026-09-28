@@ -1,14 +1,25 @@
 ---
 name: popgen-gwas-workflow
-description: Route and supervise population genetics GWAS workflows from resequencing VCFs, phenotype tables, Q/PCA covariates, kinship, and gene annotations. Use when the user asks for SNP/InDel/SV GWAS, EMMAX, TASSEL GLM/MLM, Manhattan/QQ plots, significant loci, candidate genes, LDblock visualization, or population-structure-aware association planning. Do not use as the execution skill for crop-specific GEMMA/GAPIT/rMVP wrappers.
-version: "1.1.0"
-tags: [GWAS, population-genetics, EMMAX, TASSEL, GLM, MLM, Manhattan, QQ, LDblock, candidate-genes]
-legacy_ids: [gwas-popgen, population-gwas, popgen-gwas, GWAS群体遗传分析]
-task_types: [gwas_population_genetics]
-stage_tags: [gwas_triage, workflow_routing]
-inputs: [vcf, phenotype_table, trait, q_matrix, pca_covariates, gff3, model_choice]
-outputs: [selected_gwas_skill, stage_plan, output_contract, blocked_reason]
+description: Route and supervise population genetics GWAS workflows from resequencing VCFs, phenotype tables, Q/PCA
+  covariates, kinship, and gene annotations. Use when the user asks for SNP/InDel/SV GWAS, EMMAX, TASSEL GLM/MLM,
+  Manhattan/QQ plots, significant loci, candidate genes, LDblock visualization, or population-structure-aware association
+  planning. Do not use as the execution skill for crop-specific GEMMA/GAPIT/rMVP wrappers.
+metadata:
+  version: 1.1.0
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # Population Genetics GWAS Workflow
 
@@ -60,8 +71,7 @@ Use the input-prep Skill's phase-local `inspect_inputs` (standard-library,
 observation-only) or `inspect_vcf_samples` (verified bcftools) capability for the
 actual initial operation. Do not require all later association/plotting packages
 before that phase. A local successful probe is not whole-workflow readiness.
-Consume the accepted `gwas_input_structure` observation from the explicit Plan
-predecessor, retaining source hashes/read scope, phenotype header and columns,
+Consume the accepted `gwas_input_structure` observation from the preceding input inspection, retaining source hashes/read scope, phenotype header and columns,
 ID set/order comparison, and Q mapping status.
 
 No-header phenotype data are data from row one; use explicit column indexes.
@@ -70,7 +80,7 @@ Without recorded row-to-sample correspondence, initial inspection/status may
 complete, but Q covariate preparation and association_using_q must stop. Do not
 invent a mapping, silently drop Q, or claim the requested MLM has completed.
 A later change to a scientifically justified model belongs to the existing
-scientific decision and Plan revision flow. Read the input-prep Skill's
+explicit scientific decision and approval process. Read the input-prep Skill's
 `references/input-identity.md` before resolving identity or selecting helper flags.
 
 ## 输出结果
@@ -89,8 +99,8 @@ publishes `gwas_input_structure`; it does not create `00.input_check/`. When a
 sample-list file is needed, choose the file-producing capability and declare
 that real file explicitly. Never create empty directories or sample files to
 make an observation step pass. An already approved required output can change
-only through the existing Plan revision and approval flow, not by dropping it
-after execution. Keep the requested task-level reports as explicit Plan results.
+only through the agreed scope change and approval process, not by dropping it
+after execution. Keep the requested task-level reports as explicit requested results.
 
 ```text
 outdir/

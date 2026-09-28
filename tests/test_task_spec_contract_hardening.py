@@ -11,7 +11,6 @@ from agent_core.task_spec import (
     extract_request_contracts,
     format_effective_user_facts_context,
 )
-from bio_agents import BioAnalystAgent
 from execution.profiling import RunProfiler
 
 
@@ -140,43 +139,6 @@ class TaskSpecContractHardeningTests(unittest.TestCase):
         self.assertIn("[EFFECTIVE USER FACTS]", rendered)
         self.assertIn("[USER SOURCE REFERENCES]", rendered)
 
-    def test_final_metrics_artifacts_come_from_structured_contracts(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            root = Path(tmpdir)
-            outdir = root / "outputs"
-            outdir.mkdir()
-            report = outdir / "report.md"
-            report.write_text("complete\n", encoding="utf-8")
-            task_spec = ensure_task_spec({
-                "goal": "use genomics/snpeff-annotation and input/data.vcf",
-                "output_contracts": [
-                    {"role": "output_dir", "path": str(outdir), "required": True},
-                    {"filename": "report.md", "required": True, "source_type": "system_required"},
-                ],
-            })
-            plan = build_plan_state(
-                "metrics-task",
-                "- [ ] Step 1: Report | Action: EXECUTE | Skills: [] | Outputs: [report.md] | Done: report exists\n",
-            )
-            plan["task_spec"] = task_spec
-            save_plan_state(root, "metrics-task", plan)
-            agent = BioAnalystAgent.__new__(BioAnalystAgent)
-            agent.data_path = str(root)
-
-            artifacts = agent._structured_final_artifacts("metrics-task", {})
-            profiler = RunProfiler(root)
-            profiler.start_task("metrics-task")
-            profiler.record_final_result("metrics-task", status="completed", output_artifacts=artifacts)
-            snapshot = profiler.snapshot("metrics-task")
-
-        self.assertEqual(len(artifacts), 1)
-        self.assertEqual(artifacts[0]["path"], str(report))
-        self.assertEqual(artifacts[0]["producer_type"], "plan_step")
-        self.assertTrue(artifacts[0]["exists"])
-        self.assertIsInstance(snapshot["final_result"]["output_artifacts"][0], dict)
-        serialized = str(snapshot["final_result"]["output_artifacts"])
-        self.assertNotIn("snpeff-annotation", serialized)
-        self.assertNotIn("input/data.vcf", serialized)
 
 
 if __name__ == "__main__":

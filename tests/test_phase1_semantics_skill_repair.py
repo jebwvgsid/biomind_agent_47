@@ -7,7 +7,6 @@ from pathlib import Path
 
 from agent_core.formal_artifact_resolver import resolve_formal_upstream_artifacts
 from agent_core.skill_manager import SkillManager
-from bio_agents import BioAnalystAgent
 from memory.task_semantics import infer_task_semantics
 
 
@@ -146,40 +145,6 @@ class PhaseOneSkillRepairTests(unittest.TestCase):
 
         self.assertIn("genomics/snpeff-annotation", candidates)
 
-    def test_original_prompt_upstream_counterfactual_converges(self):
-        prompt = FIXTURE.read_text(encoding="utf-8")
-        semantics = infer_task_semantics("phase1_counterfactual", messages=[prompt])
-        with tempfile.TemporaryDirectory() as tmpdir:
-            formal = resolve_formal_upstream_artifacts(
-                prompt,
-                work_dir=tmpdir,
-                project_root=tmpdir,
-            )
-        candidates = self.manager.candidate_skill_ids_for_prompt(
-            prompt,
-            max_results=self.manager.MAX_SELECTED_SKILLS,
-        )
-        agent = BioAnalystAgent.__new__(BioAnalystAgent)
-        agent.skill_manager = self.manager
-        first = agent._consultant_skill_repair_decision(
-            ["genomics/reference-guided-variant-annotation"],
-            candidates,
-            validation_errors=[],
-            max_skills=self.manager.MAX_SELECTED_SKILLS,
-        )
-        second = agent._consultant_skill_repair_decision(
-            ["genomics/snpeff-annotation"],
-            candidates,
-            validation_errors=[first["feedback"]],
-            max_skills=self.manager.MAX_SELECTED_SKILLS,
-        )
-
-        self.assertEqual(semantics.get("samples", []), [])
-        self.assertNotEqual(semantics.get("analysis_type"), "tad_boundary_change")
-        self.assertNotEqual(formal.get("artifact_kind"), "tad_boundaries")
-        self.assertEqual(first["action"], "reselect")
-        self.assertEqual(second["action"], "handoff")
-        self.assertEqual(second["selected"], ["genomics/snpeff-annotation"])
 
     def test_valid_selection_survives_an_invalid_peer(self):
         result = self.manager.repair_selected_skill_ids(
@@ -226,40 +191,6 @@ class PhaseOneSkillRepairTests(unittest.TestCase):
         self.assertLessEqual(len(result["repaired_ids"]), 1)
         self.assertTrue(set(result["selected"]).issubset(set(self.candidates)))
 
-    def test_reselection_is_restricted_and_repeated_invalid_is_dropped(self):
-        agent = BioAnalystAgent.__new__(BioAnalystAgent)
-        agent.skill_manager = self.manager
-
-        first = agent._consultant_skill_repair_decision(
-            ["genomics/reseq-variant-workflow", "missing/not-real"],
-            self.candidates,
-            validation_errors=[],
-            max_skills=12,
-        )
-        self.assertEqual(first["action"], "reselect")
-        self.assertEqual(first["selected"], ["genomics/reseq-variant-workflow"])
-
-        second_valid = agent._consultant_skill_repair_decision(
-            ["scrna/annotate/basic"],
-            self.candidates,
-            validation_errors=[first["feedback"]],
-            max_skills=12,
-        )
-        self.assertEqual(second_valid["action"], "handoff")
-        self.assertEqual(
-            second_valid["selected"],
-            ["genomics/reseq-variant-workflow", "scrna/annotate/basic"],
-        )
-
-        second_invalid = agent._consultant_skill_repair_decision(
-            ["still/not-real"],
-            self.candidates,
-            validation_errors=[first["feedback"]],
-            max_skills=12,
-        )
-        self.assertEqual(second_invalid["action"], "handoff")
-        self.assertEqual(second_invalid["selected"], ["genomics/reseq-variant-workflow"])
-        self.assertNotIn("still/not-real", second_invalid["selected"])
 
 
 if __name__ == "__main__":

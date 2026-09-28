@@ -1,24 +1,21 @@
 ---
-name: scRNA QC Filter
-description: 对 Seurat 单细胞对象执行质控统计、percent.mt 计算、阈值过滤和 QC 图导出。用于课程第4天的质控过滤步骤，也适用于其他样本的可重复 QC。Use when Codex needs a reusable QC step for scRNA-seq data before downstream normalization and clustering.
-tags: [single-cell, scRNA, Seurat, QC, filtering, 单细胞, 质控]
-task_types: [single_cell_rnaseq]
-stage_tags: [qc_filter]
-inputs: [raw_seurat_object, qc_thresholds]
-outputs: [qc_filtered_seurat_object, qc_report]
-when_to_use:
-  - Workflow stage is qc_filter.
-  - User needs mitochondrial/ribosomal/count/feature filtering for scRNA-seq.
-when_not_to_use: [Bulk RNA-seq, already filtered Seurat object]
-legacy_ids: [scrna-qc-filter]
-runtime:
-  default_env: bio_scrna_core
-  env_runner: conda run -n bio_scrna_core Rscript
-  language: r
-  packages: [Seurat, yaml, ggplot2, patchwork]
-  capabilities: [scrna-qc, scrna-filter]
-  install_tool: '<install_tool env="bio_scrna_core">scrna-env-bootstrap_r</install_tool>'
+name: filter
+description: 对 Seurat 单细胞对象执行质控统计、percent.mt 计算、阈值过滤和 QC 图导出。用于课程第4天的质控过滤步骤，也适用于其他样本的可重复 QC。Use when Codex needs
+  a reusable QC step for scRNA-seq data before downstream normalization and clustering.
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # scRNA QC Filter
 
@@ -42,16 +39,15 @@ Use this skill to run a manifest-driven QC step on an existing Seurat object.
 ## Quick Start
 
 ```bash
-conda run -n bio_scrna_core Rscript skills/scrna/qc/filter/scripts/qc_filter_seurat.R --manifest /abs/path/manifest.yaml
+Rscript "${SKILL_DIR}/scripts/qc_filter_seurat.R" --manifest /abs/path/manifest.yaml
 ```
 
 ## Environment
 
-Reuse `bio_scrna_core`. If the environment is missing or package verification
-fails, delegate installation with:
+Use an existing environment containing the dependencies listed in `references/dependencies.md`. If dependencies are missing, ask the user before changing an environment:
 
 ```text
-<install_tool env="bio_scrna_core">scrna-env-bootstrap_r</install_tool>
+先确认所需依赖（scrna-env-bootstrap_r）与目标环境，再请求用户明确安装授权
 ```
 
 Do not inline package-manager installation commands from this skill.

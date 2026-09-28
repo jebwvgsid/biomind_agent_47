@@ -4,8 +4,8 @@
 The raw occurrence inventory is useful for migration work, but occurrence
 counts alone cannot distinguish a frozen compatibility reader from a new
 authority.  This report therefore also verifies the canonical-first contract
-of every durable/runtime consumer and forbids new inline ``final_contract``
-writes outside the isolated v2 replay runner.
+of the explicitly listed retained fact consumers and forbids new inline
+``final_contract`` writes. Retired controller entrypoints are not active consumers.
 """
 
 from __future__ import annotations
@@ -21,11 +21,12 @@ ROOT = Path(__file__).resolve().parents[1]
 PRODUCTION_FILES = (
     "bio_agents.py",
     "supervisor.py",
-    "memory_manager.py",
     "package_manager.py",
     "text_rag.py",
+    "integrations/pi_runtime/python_service.py",
 )
-PRODUCTION_DIRS = ("agent_core", "config", "execution", "memory", "prompts")
+PRODUCTION_DIRS = ("agent_core", "config", "execution", "memory", "prompts",
+                   "integrations/pi_runtime/domain_adapter")
 KEYS = {
     "task_spec",
     "expected_outputs",
@@ -42,22 +43,18 @@ KEYS = {
 # ``current_task.task_spec``.  This is deliberately explicit: adding a new
 # fallback consumer requires an auditable policy change here.
 CANONICAL_FIRST_CONSUMERS = {
-    ("bio_agents.py", "_wiki_terminal_snapshot"),
-    ("bio_agents.py", "_structured_final_artifacts"),
-    ("bio_agents.py", "_resolve_resume_node"),
-    ("bio_agents.py", "_build_resume_runner_state"),
-    ("bio_agents.py", "_task_spec_for_state"),
-    ("bio_agents.py", "_adjudicate_post_review_recovery"),
-    ("bio_agents.py", "_validate_generate_context"),
-    ("bio_agents.py", "_knowledge_claim_registry"),
-    ("bio_agents.py", "_knowledge_conflict_update"),
+    # Explicit assessments, fact projections and storage readers remain subject
+    # to the same canonical-first rule after the old controllers are removed.
     ("supervisor.py", "_effective_declared_requirements"),
-    ("supervisor.py", "review"),
     ("agent_core/completion_gate.py", "_expected_artifacts_from_final_plan"),
+    ("agent_core/completion_gate.py", "_canonical_output_alternative_groups"),
     ("agent_core/completion_gate.py", "_text_for_output_root_discovery"),
+    ("agent_core/completion_gate.py", "verify_work_result"),
     ("agent_core/context_lineage.py", "build_decision_lineage_bundle"),
     ("agent_core/context_lineage.py", "dump_effective_user_facts"),
     ("agent_core/diagnostics.py", "build_recovery_context"),
+    ("agent_core/plan_tracker.py", "validate_renderer_manifest_outputs"),
+    ("agent_core/plan_tracker.py", "load_plan_state"),
 }
 
 LEGACY_TASKSPEC_ADAPTERS = {
@@ -67,14 +64,11 @@ LEGACY_TASKSPEC_ADAPTERS = {
 }
 
 LEGACY_FINAL_CONTRACT_READERS = {
-    ("bio_agents.py", "resume_existing_terminal_protocol"),
-    ("bio_agents.py", "planner"),
     ("agent_core/wiki_lifecycle.py", "terminal_snapshot_projection"),
 }
 
-LEGACY_FINAL_CONTRACT_WRITERS = {
-    ("bio_agents.py", "_run_consultant_finalize_v2"),
-}
+# No retired controller keeps an exemption for writing new inline contracts.
+LEGACY_FINAL_CONTRACT_WRITERS: set[tuple[str, str]] = set()
 
 
 def production_python_files() -> list[Path]:

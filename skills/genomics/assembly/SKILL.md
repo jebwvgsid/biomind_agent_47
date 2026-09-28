@@ -1,7 +1,20 @@
 ---
-name: Hifiasm Assembly
+name: assembly
 description: 用于 PacBio HiFi 数据的 hifiasm 组装流程，优先处理输入检查、软件检查、组装命令生成、结果文件判定与后续 GFA/FA 转换。
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # Hifiasm Assembly
 
@@ -30,7 +43,7 @@ description: 用于 PacBio HiFi 数据的 hifiasm 组装流程，优先处理输
 ## 重要原则
 
 ### 1. 一次只做一步
-- 不要在一次 `<execute>` 中同时做“组装 + 转 fasta + 统计 + 清理”
+- 不要在一次命令执行 中同时做“组装 + 转 fasta + 统计 + 清理”
 - 先跑组装，再看输出，再决定下一步
 
 ### 2. 优先只读检查
@@ -84,7 +97,7 @@ description: 用于 PacBio HiFi 数据的 hifiasm 组装流程，优先处理输
 
 如果需要先确认 `hifiasm` 是否可用，优先输出：
 
-<execute>
+```bash
 #!/bin/bash
 echo "[PWD]"
 pwd
@@ -94,11 +107,10 @@ which hifiasm || true
 echo
 hifiasm --help >/dev/null 2>&1
 echo "[RETURNCODE] $?"
-</execute>
-
+```
 ### 判定逻辑
 - 如果 `which hifiasm` 有输出，且 help 返回码为 0，说明工具基本可用
-- 如果不可用，优先使用 `<install_tool env="bioinfo">hifiasm</install_tool>`
+- 如果不可用，优先使用 `先确认所需依赖（hifiasm）与目标环境，再请求用户明确安装授权`
 
 ---
 
@@ -106,15 +118,14 @@ echo "[RETURNCODE] $?"
 
 如果用户让你先检查 HiFi 输入文件，优先输出：
 
-<execute>
+```bash
 #!/bin/bash
 echo "[PWD]"
 pwd
 echo
 echo "[CANDIDATE HIFI FILES]"
 find . -maxdepth 3 \( -name "*.fastq" -o -name "*.fq" -o -name "*.fastq.gz" -o -name "*.fq.gz" -o -name "*.fa" -o -name "*.fasta" -o -name "*.fa.gz" -o -name "*.fasta.gz" \) | sort | head -n 50
-</execute>
-
+```
 ---
 
 ## 单样本 hifiasm 组装推荐模板
@@ -127,14 +138,13 @@ find . -maxdepth 3 \( -name "*.fastq" -o -name "*.fq" -o -name "*.fastq.gz" -o -
 
 优先输出类似下面命令：
 
-<execute>
+```bash
 #!/bin/bash
 mkdir -p ./hifiasm_run
 cd ./hifiasm_run
 
 hifiasm -o sample.asm -t 32 /path/to/sample.hifi.fastq.gz
-</execute>
-
+```
 ### 说明
 - `-o sample.asm` 是输出前缀，不是最终单个文件名
 - `-t 32` 是线程数，可根据用户环境调整
@@ -163,14 +173,13 @@ hifiasm -o sample.asm -t 32 /path/to/sample.hifi.fastq.gz
 
 如果 primary 组装已经完成，并且存在 `.p_ctg.gfa`，再单独执行这一步：
 
-<execute>
+```bash
 #!/bin/bash
 cd ./hifiasm_run
 
 awk '/^S/{print ">"$2; print $3}' sample.asm.p_ctg.gfa > sample.p_ctg.fa
 awk '/^S/{print ">"$2; print $3}' sample.asm.a_ctg.gfa > sample.a_ctg.fa
-</execute>
-
+```
 ### 注意
 - 在执行这一步前，先确认 `.gfa` 文件存在
 - 不要默认假设 `a_ctg.gfa` 一定存在
@@ -182,7 +191,7 @@ awk '/^S/{print ">"$2; print $3}' sample.asm.a_ctg.gfa > sample.a_ctg.fa
 
 组装完成后，优先做最小检查：
 
-<execute>
+```bash
 #!/bin/bash
 cd ./hifiasm_run
 
@@ -196,16 +205,15 @@ ls -lh *.p_ctg.gfa 2>/dev/null || true
 echo
 echo "[ALT GFA]"
 ls -lh *.a_ctg.gfa 2>/dev/null || true
-</execute>
-
+```
 ---
 
 ## 智能体行为约束
 
 ### 应该做的
-- 根据当前 step 只生成一步代码
+- 按当前用户请求选择所需操作，使用当前宿主命令工具执行示例
 - 尽量使用只读检查作为第一步
-- 如果 `hifiasm` 缺失，使用 `<install_tool>`
+- 如果 `hifiasm` 缺失，先提出具体安装方案并等待用户明确授权
 - 如果输入路径不明确，先问用户
 - 如果文件不存在，明确指出具体缺了什么
 - 组装后先检查输出，再做转换或统计
@@ -249,7 +257,7 @@ ls -lh *.a_ctg.gfa 2>/dev/null || true
 ---
 
 ## 成功判定
-当前 step 可视为成功，当且仅当：
+组装结果的科学检查条件：
 
 ### 软件检查步
 - `which hifiasm` 找得到

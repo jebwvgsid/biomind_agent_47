@@ -24,12 +24,11 @@ Do not use this skill for:
 - BAMs without read groups; go back to mapping/preparation.
 
 Confirm sample ploidy before HaplotypeCaller when the user prohibits guessing
-critical scientific parameters. Preserve an unknown value in Consultant's
-existing unresolved handoff and the same Plan's ask_user dependency. Input
+critical scientific parameters. Keep an unknown value as an explicit question for the user. Input
 checks and mapping need not wait, but calling/filter decisions that depend on
-this value must wait for the existing user-decision flow. General Plan approval
+this value must wait for the user’s decision. General execution approval
 is not biological confirmation. Use only the answer interpreted through the
-existing confirm_decision evidence; never infer from names or species labels.
+the recorded user answer; never infer from names or species labels.
 
 ## 调用的参数
 

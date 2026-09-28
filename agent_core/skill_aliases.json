@@ -1,0 +1,472 @@
+{
+  "3d-dna/3d-dna-analysis": [
+    "3d-genome-analysis",
+    "three-dimensional-genome",
+    "hic-analysis",
+    "chromatin-contact-analysis",
+    "三维基因组分析"
+  ],
+  "3d-dna/calder2-subcompartment": [
+    "calder2-compartment",
+    "calder2-subcompartment",
+    "calder-subcompartment",
+    "sub-compartment",
+    "subcompartment-calling",
+    "亚区室鉴定",
+    "层级区室鉴定",
+    "calder2-subcompartment-analysis",
+    "3d-dna/calder2-subcompartment"
+  ],
+  "3d-dna/compartment-calling": [
+    "ab-compartment",
+    "compartment-calling",
+    "AB区室鉴定",
+    "区室鉴定",
+    "普通区室鉴定",
+    "默认区室鉴定",
+    "A/B区室",
+    "compartment-analysis",
+    "3d-dna/compartment-calling"
+  ],
+  "3d-dna/differential-compartment": [
+    "diff-compartment",
+    "compartment-switch",
+    "AB-compartment-switch",
+    "差异区室鉴定",
+    "区室差异分析",
+    "differential-compartment-analysis",
+    "3d-dna/differential-compartment"
+  ],
+  "3d-dna/differential-tad": [
+    "genomics/chromatin/differential-tad",
+    "differential-tad",
+    "diff-tad",
+    "hicdifferentialtad",
+    "差异TADs鉴定",
+    "差异TAD",
+    "differential-tad-analysis",
+    "3d-dna/differential-tad"
+  ],
+  "3d-dna/loop-calling": [
+    "loops-analysis",
+    "mustache-loop-calling",
+    "differential-loops",
+    "loop-detection",
+    "Loops分析",
+    "loop 鉴定",
+    "loop鉴定",
+    "loop 分析",
+    "loop分析"
+  ],
+  "3d-dna/loop-classification": [
+    "loops-classification",
+    "loop-anchor-annotation",
+    "enhancer-promoter-loops",
+    "Loop分类"
+  ],
+  "3d-dna/tad-boundary-change": [
+    "genomics/chromatin/tad-boundary-change",
+    "tad-boundary-change",
+    "tad-boundary-statistics",
+    "TAD边界改变统计",
+    "TAD边界变化",
+    "tad-boundary-change-analysis",
+    "3d-dna/tad-boundary-change"
+  ],
+  "3d-dna/tad-calling": [
+    "genomics/chromatin/tad-calling",
+    "tad-calling",
+    "tad-analysis",
+    "3d-dna/tad-calling"
+  ],
+  "crop-breeding/crop-cnn-attention-genomic-prediction": [
+    "cropformer",
+    "crop-cnn-attention"
+  ],
+  "crop-breeding/crop-conserved-transcriptome-ml": [
+    "conserved-transcriptome-ml",
+    "evolution-informed-ml"
+  ],
+  "crop-breeding/crop-dnngp-multiomics-prediction": [
+    "dnngp",
+    "crop-multiomics-gp"
+  ],
+  "crop-breeding/crop-genomic-prediction": [
+    "crop-genomic-prediction-guide",
+    "genomic-prediction-guide",
+    "crop-breeding/crop-genomic-prediction"
+  ],
+  "crop-breeding/crop-gp-waiter-transformer": [
+    "gp-waiter",
+    "crop-gwas-weighted-transformer"
+  ],
+  "crop-breeding/crop-gwas-pipeline": [
+    "crop-gwas",
+    "plant-gwas",
+    "gwas-pipeline"
+  ],
+  "crop-breeding/crop-gxe-environmental-index-prediction": [
+    "ceris-jgra",
+    "crop-gxe-prediction",
+    "environmental-index-prediction"
+  ],
+  "crop-breeding/crop-pangenome-sv-genomic-selection": [
+    "crop-sv-genomic-selection",
+    "pangenome-genomic-selection",
+    "grape-pan-selection"
+  ],
+  "crop-breeding/crop-smart-breeding-strategy": [
+    "smart-breeding-strategy",
+    "crop-breeding-router"
+  ],
+  "databases/ncbi/entrez-fetch": [
+    "bio-entrez-fetch",
+    "entrez-fetch",
+    "ncbi-fetch",
+    "ncbi-record-fetch",
+    "ncbi-entrez-fetch",
+    "databases/ncbi/entrez-fetch"
+  ],
+  "databases/ncbi/entrez-link": [
+    "bio-entrez-link",
+    "entrez-link",
+    "ncbi-elink",
+    "ncbi-crossref",
+    "ncbi-entrez-link",
+    "databases/ncbi/entrez-link"
+  ],
+  "databases/ncbi/entrez-search": [
+    "bio-entrez-search",
+    "entrez-search",
+    "ncbi-search",
+    "pubmed-search",
+    "ncbi-entrez-search",
+    "databases/ncbi/entrez-search"
+  ],
+  "databases/ncbi/geo-data": [
+    "bio-geo-data",
+    "geo-data",
+    "ncbi-geo",
+    "geo-search",
+    "ncbi-geo-data",
+    "databases/ncbi/geo-data"
+  ],
+  "enrichment-analysis": [
+    "go-kegg-enrichment",
+    "functional-enrichment",
+    "gene-set-enrichment"
+  ],
+  "epigenomics/methylation/aporec-methylation-workflow": [
+    "aporec",
+    "aporec_methylation",
+    "porec-methylation",
+    "nanopore-porec-methylation",
+    "三代甲基化流程",
+    "AporeC甲基化"
+  ],
+  "epigenomics/methylation/aporec-porec-contact": [
+    "aporec-contact",
+    "porec-contact",
+    "porec-pairs-cool",
+    "aporec-pairs-cool",
+    "PoreC接触矩阵",
+    "AporeC互作矩阵"
+  ],
+  "epigenomics/methylation/dorado-modbase-prep": [
+    "dorado-modbase-prep",
+    "dorado-5mc-prep",
+    "nanopore-modbase-prep",
+    "甲基化上游准备",
+    "nanopore-dorado-modbase-prep",
+    "epigenomics/methylation/dorado-modbase-prep"
+  ],
+  "epigenomics/methylation/gene-plot": [
+    "甲基化基因绘图",
+    "methylation_profile_plot",
+    "epigenomics/methylation/gene-plot"
+  ],
+  "epigenomics/methylation/modkit-dmr": [
+    "modkit-dmr",
+    "nanopore-dmr",
+    "nanopore-5mc-dmr",
+    "differential-methylation",
+    "5mC-DMR",
+    "bedMethyl-DMR",
+    "DMR分析",
+    "差异甲基化",
+    "差异甲基化分析",
+    "5mC差异甲基化DMR分析",
+    "bedMethyl差异甲基化",
+    "两个bedMethyl",
+    "用两个bedMethyl做5mC差异甲基化DMR分析",
+    "nanopore-modkit-dmr",
+    "epigenomics/methylation/modkit-dmr"
+  ],
+  "epigenomics/methylation/modkit-pileup": [
+    "modkit-methylation-pileup",
+    "modkit-pileup",
+    "nanopore-5mc-pileup",
+    "5mC-pileup",
+    "plant-5mC-pileup",
+    "modkit检测植物5mC",
+    "植物5mC",
+    "生成CG_CHG_CHH_bigWig",
+    "纳米孔甲基化检测",
+    "nanopore-modkit-pileup",
+    "epigenomics/methylation/modkit-pileup"
+  ],
+  "genomics/assembly": [
+    "Hifiasm Assembly",
+    "genomics/assembly"
+  ],
+  "genomics/assembly-variant-assemblytics": [
+    "assemblytics",
+    "assemblytics-sv"
+  ],
+  "genomics/assembly-variant-svim-asm": [
+    "svim-asm",
+    "svim_asm",
+    "assembly-svim"
+  ],
+  "genomics/assembly-variant-syri": [
+    "syri-assembly-variant",
+    "assembly-sv",
+    "genome-alignment-variant",
+    "SyRI比较",
+    "SyRI倒位易位SNP",
+    "两个染色体级组装用SyRI比较倒位易位和SNP",
+    "组装比较SyRI"
+  ],
+  "genomics/long-read-sv-cutesv": [
+    "cutesv",
+    "cuteSV",
+    "longread-cutesv"
+  ],
+  "genomics/long-read-sv-sniffles-survivor": [
+    "longread-sv",
+    "sniffles-sv",
+    "survivor-merge",
+    "nanopore-sv",
+    "pacbio-sv"
+  ],
+  "genomics/long-read-sv-sniffles2": [
+    "sniffles2-sv",
+    "sniffles2",
+    "longread-sniffles2",
+    "nanopore-sniffles2",
+    "pacbio-sniffles2"
+  ],
+  "genomics/pacbio-sv-pbsv": [
+    "pbsv",
+    "pacbio-pbsv",
+    "hifi-pbsv"
+  ],
+  "genomics/reseq-variant-workflow": [
+    "reseq_variant_calling",
+    "resequencing-variant-workflow",
+    "重测序变异检测"
+  ],
+  "genomics/rnaseq-variant-calling": [
+    "rna-variant-calling",
+    "rnaseq-snp-indel",
+    "transcriptome-variant",
+    "RNA-seq数据想检测表达区域SNP和INDEL",
+    "表达区域SNP",
+    "RNA-seq SNP INDEL"
+  ],
+  "genomics/wgs-bcftools-snp-indel": [
+    "bcftools-snp-indel",
+    "wgs-bcftools",
+    "samtools-bcftools-variant"
+  ],
+  "genomics/wgs-cnvnator-cnv": [
+    "cnvnator-cnv",
+    "wgs-cnv",
+    "read-depth-cnv"
+  ],
+  "genomics/wgs-gatk-snp-indel": [
+    "gatk-wgs",
+    "wgs-gatk",
+    "gatk-snp-indel",
+    "resequencing-gatk",
+    "GATK SNP和InDel检测",
+    "GATK SNP InDel",
+    "双端WGS GATK SNP InDel",
+    "WGS fastq GATK"
+  ],
+  "genomics/wgs-lumpy-sv": [
+    "lumpy-sv",
+    "short-read-sv",
+    "wgs-structural-variant"
+  ],
+  "genomics/wgs-manta-sv": [
+    "manta-sv",
+    "short-read-manta",
+    "wgs-sv-manta",
+    "短读长SV",
+    "短读长结构变异"
+  ],
+  "genomics/wgs-short-read-mapping": [
+    "short-read-mapping",
+    "bwa-mapping",
+    "wgs-bwa-mem",
+    "resequencing-mapping",
+    "双端WGS fastq",
+    "WGS fastq比对",
+    "先比对再做GATK"
+  ],
+  "open-chromatin/modkit-cpu": [
+    "chromatin_accessibility_cpu",
+    "open_chromatin_cpu",
+    "modkit_open_chromatin",
+    "染色质可及性分析",
+    "modkit-open-chromatin-cpu",
+    "open-chromatin/modkit-cpu"
+  ],
+  "population-genetics/gwas-emmax-association": [
+    "emmax-gwas",
+    "gwas-emmax",
+    "EMMAX关联分析"
+  ],
+  "population-genetics/gwas-ldblock-candidate-region": [
+    "gwas-candidate-region",
+    "ldblock-candidate",
+    "GWAS候选基因",
+    "LDblock"
+  ],
+  "population-genetics/gwas-manhattan-qq-plot": [
+    "gwas-plot",
+    "manhattan-qq",
+    "GWAS曼哈顿图",
+    "QQ图"
+  ],
+  "population-genetics/gwas-tassel-glm-mlm": [
+    "tassel-gwas",
+    "gwas-tassel",
+    "TASSEL关联分析"
+  ],
+  "population-genetics/gwas-vcf-prep-qc": [
+    "gwas-prep-qc",
+    "gwas-vcf-qc",
+    "emmax-tassel-prep",
+    "GWAS输入准备"
+  ],
+  "population-genetics/popgen-gwas-workflow": [
+    "gwas-popgen",
+    "population-gwas",
+    "popgen-gwas",
+    "GWAS群体遗传分析"
+  ],
+  "scrna/annotate/scrna-annotate-basic": [
+    "scrna-annotate-basic",
+    "scRNA Annotate Basic",
+    "scrna/annotate/basic"
+  ],
+  "scrna/cluster/scrna-cluster-basic": [
+    "scrna-cluster-basic",
+    "scRNA Cluster Basic",
+    "scrna/cluster/basic"
+  ],
+  "scrna/de/contrast": [
+    "scrna-de-contrast",
+    "scRNA DE Contrast",
+    "scrna/de/contrast"
+  ],
+  "scrna/de/pseudobulk": [
+    "scrna-pseudobulk-de",
+    "scrna-de-pseudobulk",
+    "scRNA Pseudobulk DE",
+    "scrna/de/pseudobulk"
+  ],
+  "scrna/enrichment/marker-de": [
+    "scrna-enrichment",
+    "scrna-marker-enrichment",
+    "scrna-de-enrichment",
+    "scRNA Marker And DE Enrichment",
+    "scrna/enrichment/marker-de"
+  ],
+  "scrna/env/bootstrap": [
+    "scrna-env-bootstrap",
+    "scRNA Environment Bootstrap",
+    "scrna/env/bootstrap"
+  ],
+  "scrna/ingest/data-download": [
+    "scrna-data-download-ingest",
+    "scRNA Data Download And Ingest",
+    "scrna/ingest/data-download"
+  ],
+  "scrna/integration/batch-correction": [
+    "scrna-batch-correction",
+    "scrna-integrate",
+    "scRNA Integration Batch Correction",
+    "scrna/integration/batch-correction"
+  ],
+  "scrna/markers/conserved": [
+    "scrna-conserved-markers",
+    "scrna-markers-conserved",
+    "scRNA Conserved Markers",
+    "scrna/markers/conserved"
+  ],
+  "scrna/markers/find": [
+    "scrna-markers-find",
+    "scRNA Markers Find",
+    "scrna/markers/find"
+  ],
+  "scrna/preprocess/scrna-preprocess-basic": [
+    "scrna-preprocess-basic",
+    "scRNA Preprocess Basic",
+    "scrna/preprocess/basic"
+  ],
+  "scrna/preprocess/sctransform": [
+    "scrna-sctransform",
+    "scrna-sct-preprocess",
+    "scRNA SCTransform Preprocess",
+    "scrna/preprocess/sctransform"
+  ],
+  "scrna/qc/cell-cycle-doublet": [
+    "scrna-cell-cycle-doublet",
+    "scrna-enhanced-qc",
+    "scRNA Cell Cycle And Doublet QC",
+    "scrna/qc/cell-cycle-doublet"
+  ],
+  "scrna/qc/filter": [
+    "scrna-qc-filter",
+    "scRNA QC Filter",
+    "scrna/qc/filter"
+  ],
+  "scrna/report/summary": [
+    "scrna-summary-report",
+    "scrna-report",
+    "scRNA Analysis Summary Report",
+    "scrna/report/summary"
+  ],
+  "scrna/trajectory/pseudotime": [
+    "scrna-pseudotime",
+    "scrna-trajectory",
+    "scRNA Trajectory Pseudotime",
+    "scrna/trajectory/pseudotime"
+  ],
+  "scrna/workflows/ingest-qc": [
+    "scrna-ingest-qc",
+    "scrna_ingest_qc",
+    "run_scrna_ingest_qc",
+    "scRNA Ingest QC Workflow",
+    "scrna/workflows/ingest-qc"
+  ],
+  "sequence/search/local-blast": [
+    "bio-local-blast",
+    "local-blast",
+    "blast-plus"
+  ],
+  "sequence/search/remote-blast": [
+    "bio-blast-searches",
+    "blast-searches",
+    "remote-blast",
+    "ncbi-blast"
+  ],
+  "sequence/search/sequence-similarity": [
+    "bio-sequence-similarity",
+    "sequence-similarity",
+    "homolog-search"
+  ]
+}

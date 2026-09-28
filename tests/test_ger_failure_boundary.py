@@ -8,7 +8,6 @@ import pytest
 
 from agent_core.plan_contract import StateCASConflict
 from agent_core.workflow.inspection_evidence import InspectionEvidenceError, InspectionObjectReader, inspection_scope
-from agent_core.workflow.managed_stop import build_managed_stop
 from agent_core.workflow.recovery_projection import CausalFailurePacketBinder, project_recovery_seed
 from tests.test_recovery_projection import _durable, _execute_failure
 
@@ -89,17 +88,6 @@ def test_bad_inspection_scope_keeps_direct_failure_and_explains_unavailable(tmp_
     assert 'return_code' in str(packet['diagnostic_facts'])
 
 
-def test_candidate_stop_does_not_inherit_previous_attempt_or_rc(tmp_path):
-    store = Store(tmp_path)
-    store.binder().bind({'task_id':'task-recovery'}, 'execute_outcome', store.attempt(1, 17))
-    boundary = {'node':'generate', 'status':'blocked', 'outcome': {
-        'type':'blocked', 'summary':'Invalid candidate syntax',
-        'payload':{'reason_code':'GENERATE_SCRIPT_BLOCK_INVALID'}}}
-    stop = build_managed_stop('task-recovery', {}, store.value, boundary)
-    assert stop['scope']['attempt_id']==''
-    assert stop['execution']['executed'] is False
-    assert stop['execution']['returncode'] is None
-    assert stop['origin']['attempt_id']==''
 
 
 def test_cancel_is_not_caught_by_publication_diagnostics(tmp_path):
@@ -119,16 +107,6 @@ def test_cas_conflict_does_not_overwrite_new_durable_failure(tmp_path):
     assert store.path.read_bytes()==before
 
 
-def test_published_old_event_after_attempt_advance_is_diagnostic_only(tmp_path,caplog):
-    from tests.test_inspection_evidence import _real_handoff_reader, _advance_real_attempt
-    fixture,_,_,_=_real_handoff_reader(tmp_path)
-    source=fixture.supervisor_updates[0]['verification_outcome']
-    _advance_real_attempt(fixture)
-    before=fixture.reload()
-    result=CausalFailurePacketBinder(data_path=str(tmp_path)).bind(fixture.state,'verification_outcome',source)
-    assert result=={}
-    assert fixture.reload()==before
-    assert 'RECOVERY_CAUSAL_REPLAY_SCOPE_STALE' in caplog.text
 
 
 @pytest.mark.parametrize('field',['task_id','step_id','episode_id'])

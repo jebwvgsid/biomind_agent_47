@@ -1610,6 +1610,84 @@ def _diagnostic_facts(
     return tuple(freeze(item) for item in facts)
 
 
+def verification_causal_signature(source_kind: str, source: Mapping[str, Any]) -> str:
+    """Identity of a scoped Supervisor assessment, never a general error deduper.
+
+    Only the two Supervisor producer kinds have the report/generation lifecycle
+    contract. Other admission, tool and validation producers keep their original
+    identity. The original outcome is retained byte-for-byte in its archive.
+    """
+    if source_kind not in {"verification_outcome", "completion_gate_outcome"}:
+        return ""
+    payload = source.get("payload") or {}
+    report = _compact_completion_report(payload.get("completion_report"))
+    scope = source.get("scope") or {}
+    keys = ("task_id", "plan_id", "plan_version", "step_id", "action_id", "attempt_id")
+    if not report.get("validation_digest") or not all(scope.get(key) for key in keys):
+        return ""
+    report_scope = report.get("scope") or {}
+    if any(str(report_scope.get(key) or "") != str(scope[key]) for key in keys):
+        return ""
+    # These two report-local fields describe publication, not the assessed
+    # execution. Do not drop similarly named fields from nested facts.
+    report.pop("report_id", None)
+    report["scope"].pop("state_generation", None)
+    return _hash({
+        "producer": source_kind, "type": source.get("type"),
+        "scope": {key: scope[key] for key in keys},
+        "report": report,
+        "gate": _compact_completion_gate(payload.get("completion_gate")),
+        "failure_owner": payload.get("failure_owner"),
+        "error_code": payload.get("error_code"),
+        "contract_violations": payload.get("contract_violations"),
+        "missing_evidence": payload.get("missing_evidence"),
+    })
+
+
+def inherited_verification_cause(
+    source_kind: str, source: Mapping[str, Any], durable: Mapping[str, Any],
+) -> dict[str, str]:
+    """Resolve a matching trusted persisted producer packet in the current Plan.
+
+    Publication changes may append a packet version but cannot create a fresh
+    incident/budget. A changed attempt or assessed fact does not match.
+    """
+    signature = verification_causal_signature(source_kind, source)
+    if not signature:
+        return {}
+    registry = (durable.get("task_state") or {}).get("causal_failure_packets") or {}
+    matches = []
+    for ref, record in registry.items():
+        if not isinstance(record, Mapping) or record.get("source_kind") != source_kind:
+            continue
+        if verification_causal_signature(source_kind, record.get("failure_source") or {}) != signature:
+            continue
+        packet = _failure_packet_from_record(str(ref), record)
+        if _content_ref("failure-source", record.get("failure_source") or {}) != record.get("failure_source_ref"):
+            raise StageContractError("RECOVERY_CAUSAL_SOURCE_REF_MISMATCH", str(ref))
+        scope = source.get("scope") or {}
+        if (packet.source != source_kind or packet.attempt_ref != scope.get("attempt_id")
+                or packet.action_ref != scope.get("action_id") or packet.step_id != scope.get("step_id")):
+            raise StageContractError("RECOVERY_CAUSAL_PACKET_SCOPE_MISMATCH", str(ref))
+        if not packet.incident_id:
+            continue
+        if (packet.plan_spec_ref.plan_id != str(durable.get("plan_id") or "")
+                or packet.plan_spec_ref.plan_version != str(durable.get("plan_version") or "")
+                or packet.plan_spec_ref.plan_revision != int(durable.get("plan_revision") or 1)):
+            continue
+        _validate_incident_lineage(packet, registry)
+        matches.append((packet.packet_version, str(ref), packet))
+    if not matches:
+        return {}
+    # If historical buggy publications already forked an incident, retain the
+    # first trusted cause. Normal new packets resolve to its latest head.
+    first = matches[0][2].incident_id
+    _, ref, packet = max((row for row in matches if row[2].incident_id == first), key=lambda row: row[:2])
+    return {"incident_id": packet.incident_id,
+            "failure_fingerprint": packet.failure_fingerprint,
+            "causal_parent_packet_ref": ref}
+
+
 def _failure_incident_id(
     *,
     source_kind: str,
@@ -1727,6 +1805,11 @@ def build_causal_failure_record(
     runtime_source = _runtime_source(source_kind, raw_source)
     raw_payload = _source_payload(source_kind, raw_source)
     payload = _source_payload(source_kind, runtime_source)
+    if not payload.get("incident_id"):
+        inherited = inherited_verification_cause(source_kind, raw_source, durable)
+        if inherited:
+            payload = {**payload, **inherited}
+            runtime_source = {**runtime_source, "payload": payload}
     failure_type, failure_owner, error_code, retryable = _failure_identity(
         source_kind, raw_source
     )

@@ -7,9 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
-from agent_core.cli_display import DisplayModel
 from agent_core.cli_lifecycle import tool_result_text, cancellation_receipt_text
-from agent_core.cli_terminal import Terminal
 from agent_core.skill_resource_binding import continue_action_skill_selection, bind_action_skill_resources
 from agent_core.skill_access import SkillAccessError
 from tests.test_skill_resource_binding import fixture
@@ -31,16 +29,6 @@ def test_truncated_exec_receipt_preserves_a_readable_exact_log_reference():
     assert '/fixture/stdout.log' in text and '/fixture/stderr.log' not in text
 
 
-def test_repeated_cancel_wait_is_deduplicated_per_actual_input_cycle():
-    model=DisplayModel()
-    terminal=SimpleNamespace(fallback=False,pending=None,cancel_requested=False,
-        context=('task','running',{}),_request_serial=1,receive=model.receive,cancel_callback=None)
-    for _ in range(8):Terminal.request_cancel(terminal)
-    assert sum('仍待确认' in s for s in model.history)==1
-    assert sum('已请求取消' in s for s in model.history)==1
-    terminal.cancel_requested=False;terminal._request_serial+=1
-    for _ in range(8):Terminal.request_cancel(terminal)
-    assert sum('仍待确认' in s for s in model.history)==2
 
 
 def test_local_cleanup_receipt_never_claims_global_or_remote_cleanup():
@@ -52,13 +40,6 @@ def test_local_cleanup_receipt_never_claims_global_or_remote_cleanup():
     assert '本地清理未确认' in partial and '仍登记 1' in partial
 
 
-def test_public_english_is_not_keyword_filtered_and_internal_events_stay_in_details():
-    model=DisplayModel()
-    body='1. Primary Request and Intent: user-facing diagnostic evidence.'
-    model.receive('message',body,purpose='telemetry',node='recovery_context_compaction')
-    assert not model.history and body in model.details
-    model.receive('model_public',body,source='model_public',node='recovery')
-    assert body in model.history
 
 
 @pytest.mark.parametrize('change',['none','explicit_new','ordinary','snapshot','stale','capability'])

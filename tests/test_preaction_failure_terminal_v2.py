@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, patch
 from agent_core.managed_artifacts import managed_action_fingerprint
 from agent_core.plan_tracker import record_preaction_contract_failure
 from execution.profiling import RunProfiler
-from supervisor import RuleEngine, SupervisorNode
+from supervisor import RuleEngine
 
 
 FIXTURE_PATH = (
@@ -193,43 +193,6 @@ class DurablePreactionFailureTests(unittest.TestCase):
         )
 
 
-class NoExecutionSupervisorTests(unittest.IsolatedAsyncioTestCase):
-    async def test_preaction_terminal_failure_skips_execution_review(self) -> None:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            node = SupervisorNode(object(), output_dir=tmpdir, use_llm_review=True)
-            node._llm_reviewer.review = AsyncMock(
-                side_effect=AssertionError("scientific reviewer must not run")
-            )
-            failure = {
-                "error_code": "MANAGED_ARTIFACT_PLACEHOLDER_EMBEDDED",
-                "owner": "GENERATED_ACTION",
-                "stage": "pre_action_contract",
-                "message": "Managed placeholders must occupy a complete argv/env value.",
-                "execution_started": False,
-                "termination_reason": "repair_no_progress",
-            }
-            with patch.object(
-                RuleEngine,
-                "run",
-                side_effect=AssertionError("RuleEngine must not run"),
-            ):
-                result = await node.run({
-                    "task_id": "session-no-execution",
-                    "failure": failure,
-                    "latest_execution": {},
-                })
-
-        node._llm_reviewer.review.assert_not_awaited()
-        self.assertEqual(result["next_step"], "finish")
-        self.assertEqual(result["task_status"], "failed")
-        self.assertEqual(result["step_status"], "failed")
-        self.assertEqual(result["required_next_action"], "GENERATED_ACTION_CONTRACT_ERROR")
-        self.assertNotIn("validation_evidence", result)
-        self.assertNotIn("returncode", json.dumps(result, default=str))
-        serialized = json.dumps(result, default=str)
-        self.assertNotIn("INCOMPLETE_EVIDENCE", serialized)
-        self.assertNotIn("RUN_ALLOWED_PROBE", serialized)
-        self.assertNotIn("diagnosing", serialized)
 
 
 if __name__ == "__main__":

@@ -1,21 +1,24 @@
 ---
 name: gwas-tassel-glm-mlm
-description: Run TASSEL GWAS using GLM or MLM from resequencing VCF, TASSEL trait files, Q/PCA covariates, and optional kinship matrix. Use when the user asks for TASSEL, GLM, MLM, centered IBS kinship, fixed-effect covariates, or TASSEL-based SNP/InDel/SV association testing. Do not use for EMMAX, GEMMA, GAPIT3, or rMVP workflows.
-version: "1.0.0"
-tags: [GWAS, TASSEL, GLM, MLM, kinship, covariates, association]
-legacy_ids: [tassel-gwas, gwas-tassel, TASSEL关联分析]
-task_types: [gwas_population_genetics]
-stage_tags: [tassel_glm, tassel_mlm]
-inputs: [vcf, tassel_trait, tassel_covariate, tassel_kinship]
-outputs: [tassel_association, kinship, manhattan_input, logs]
-runtime:
-  default_env: popgen_gwas
-  env_runner: bash
-  language: bash
-  packages: [tassel, openjdk, python]
-  capabilities: [tassel-glm, tassel-mlm, tassel-kinship, gwas-standardization]
-  healthcheck: bash -lc "run_pipeline.pl -h >/dev/null 2>&1 && python skills/population-genetics/gwas-tassel-glm-mlm/scripts/tassel_to_manhattan.py --help >/dev/null"
+description: Run TASSEL GWAS using GLM or MLM from resequencing VCF, TASSEL trait files, Q/PCA covariates, and optional
+  kinship matrix. Use when the user asks for TASSEL, GLM, MLM, centered IBS kinship, fixed-effect covariates, or
+  TASSEL-based SNP/InDel/SV association testing. Do not use for EMMAX, GEMMA, GAPIT3, or rMVP workflows.
+metadata:
+  version: 1.0.0
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # GWAS TASSEL GLM MLM
 
@@ -96,7 +99,7 @@ run_pipeline.pl \
 Standardize output:
 
 ```bash
-python skills/population-genetics/gwas-tassel-glm-mlm/scripts/tassel_to_manhattan.py \
+python "${SKILL_DIR}/scripts/tassel_to_manhattan.py" \
   --input "${TASSEL_ASSOC_TABLE}" \
   --out "${OUTDIR}/02.association/tassel.${MODEL}.manht_input.tsv"
 ```

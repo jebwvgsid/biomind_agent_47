@@ -1,46 +1,28 @@
 ---
-name: calder2-subcompartment-analysis
-description: >
-  Run CALDER2 hierarchical compartment and sub-compartment calling from Hi-C,
-  Micro-C, Pore-C, or other chromatin contact matrices through the BioMind
-  CALDER2 wrapper. Use only when the user explicitly asks for CALDER2, Calder,
-  hierarchical compartments, sub-compartments/subcompartments, 亚区室, 层级区室,
-  A.1/A.2/B.1/B.2 labels, or Compartment4/Compartment8 outputs. Do not use
-  this skill for a plain request to 鉴定区室, A/B区室鉴定, compartment calling, or
-  ordinary A/B compartments. For ordinary A/B compartment calling, use
-  3d-dna/compartment-calling.
+name: calder2-subcompartment
+description: 'Run CALDER2 hierarchical compartment and sub-compartment calling from Hi-C, Micro-C, Pore-C, or other
+  chromatin contact matrices through the BioMind CALDER2 wrapper. Use only when the user explicitly asks for CALDER2,
+  Calder, hierarchical compartments, sub-compartments/subcompartments, 亚区室, 层级区室, A.1/A.2/B.1/B.2 labels, or Compartment4/Compartment8
+  outputs. Do not use this skill for a plain request to 鉴定区室, A/B区室鉴定, compartment calling, or ordinary A/B compartments.
+  For ordinary A/B compartment calling, use 3d-dna/compartment-calling.
+
+  '
 metadata:
-  version: "1.0.0"
-  tags: [CALDER2, Calder, sub-compartment, subcompartment, hierarchical-compartment, Hi-C, Micro-C, Pore-C, 亚区室, 层级区室, A.1, A.2, B.1, B.2, Compartment4, Compartment8]
-  task_types: [chromatin_contact_compartment]
-  stage_tags: [subcompartment_calling]
-  inputs: [cool_matrix, mcool_matrix, resolution, feature_track]
-  outputs: [sub_compartment_tracks, compartment_summary]
-  when_to_use:
-    - User explicitly asks for CALDER2 or sub-compartment labels.
-    - User needs hierarchical A/B sub-compartments such as A.1, A.2, B.1, B.2.
-  when_not_to_use:
-    - Ordinary A/B compartment calling where PC1/eigenvector output is enough.
-    - Differential comparison from already existing compartment files.
-  legacy_ids: [calder2-compartment, calder2-subcompartment, calder-subcompartment, sub-compartment, subcompartment-calling, 亚区室鉴定, 层级区室鉴定]
-  runtime:
-    default_env: calder2
-    install_forbidden_envs: [hicexplore]
-    env_runner: conda run -n calder2 python
-    language: python
-    packages: [cooler, pandas, numpy, scipy, h5py]
-    optional_packages: [CALDER, data.table]
-    install_tool: calder_r_runtime
-    install_policy: declared-only
-    install_command: conda create -n calder2 -c conda-forge -c bioconda python=3.10 r-calder2 cooler pandas numpy scipy h5py r-data.table -y
-    capabilities: [calder2, calder, hierarchical-subcompartment, sub-compartment-summary, cooler-to-calder-dump]
-    healthcheck: conda run -n calder2 python skills/3d-dna/calder2-subcompartment/scripts/run_calder_compartments.py --help
-    mode_healthchecks:
-      official-r:
-        - conda run -n calder2 python -c "import cooler, pandas, numpy, h5py; print('PY_OK')"
-        - conda run -n calder2 which Rscript
-        - conda run -n calder2 Rscript -e "suppressPackageStartupMessages(library(CALDER)); suppressPackageStartupMessages(library(data.table)); cat('CALDER_OK\n')"
+  version: 1.0.0
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # CALDER2 Hierarchical Sub-Compartment Analysis
 
@@ -74,9 +56,9 @@ default repair path.
 Mandatory healthchecks:
 
 ```bash
-conda run -n calder2 python -c "import cooler, pandas, numpy, h5py; print('PY_OK')"
-conda run -n calder2 which Rscript
-conda run -n calder2 Rscript -e "suppressPackageStartupMessages(library(CALDER)); suppressPackageStartupMessages(library(data.table)); cat('CALDER_OK\n')"
+python -c "import cooler, pandas, numpy, h5py; print('PY_OK')"
+which Rscript
+Rscript -e "suppressPackageStartupMessages(library(CALDER)); suppressPackageStartupMessages(library(data.table)); cat('CALDER_OK\n')"
 ```
 
 Only proceed after all checks pass.
@@ -101,7 +83,7 @@ matrix bin, matching the selected cooler chromnames and bin size.
 Official CALDER2 mode from `.mcool` via wrapper dump conversion:
 
 ```bash
-conda run -n calder2 python skills/3d-dna/calder2-subcompartment/scripts/run_calder_compartments.py \
+python "${SKILL_DIR}/scripts/run_calder_compartments.py" \
   --sample leaf Matrix/Final/leaf.mcool \
   --sample bud Matrix/Final/bud.mcool \
   --resolution-bp 40000 \
@@ -116,7 +98,7 @@ Plant-style `Chr01` names when CALDER expects stripped chromosome IDs and a
 `chr` feature-track prefix:
 
 ```bash
-conda run -n calder2 python skills/3d-dna/calder2-subcompartment/scripts/run_calder_compartments.py \
+python "${SKILL_DIR}/scripts/run_calder_compartments.py" \
   --sample leaf Matrix/Final/leaf.mcool \
   --resolution-bp 40000 \
   --feature-track ref/gene_density.bed \

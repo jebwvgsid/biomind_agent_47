@@ -1,31 +1,27 @@
 ---
-name: tad-analysis
-description: >
-  Run generalized TAD analysis / TAD calling with HiCExplorer hicFindTADs for
-  one or many Hi-C, Micro-C, Pore-C, or chromatin contact matrix samples. Use
-  when the user asks for TAD分析, TAD calling, hicFindTADs, HiCExplorer, 拓扑关联结构域,
-  TAD边界, TAD domains, separation score, domain length statistics, multi-sample
-  TAD batch analysis, sample sheet workflows, resolution confirmation, or balance
-  checks for .cool/.mcool matrices.
-version: "1.2.1"
-legacy_ids: [genomics/chromatin/tad-calling, tad-calling, tad-analysis]
-tags: [TAD, TAD分析, TAD-calling, hicFindTADs, HiCExplorer, Hi-C, Micro-C, Pore-C, mcool, cool, cooler-balance, sample-sheet, multi-sample, resolution, boundaries, domains]
-task_types: [chromatin_contact_tad]
-stage_tags: [matrix_preflight, tad_calling]
-inputs: [validated_matrix_inputs, cool_matrix, mcool_matrix, sample_sheet]
-outputs: [tad_domains, tad_boundaries, tad_summary, matrix_balance_report]
-when_to_use:
-  - Workflow stage is tad_calling.
-  - User needs hicFindTADs TAD calling from .cool or .mcool matrices.
-when_not_to_use: [existing TAD boundary comparison only]
-runtime:
-  default_env: hicexplore
-  env_runner: conda run -n hicexplore python
-  language: python
-  packages: [hicexplorer, cooler, matplotlib]
-  capabilities: [tad-calling, hicfindtads, cooler-preflight]
-  healthcheck: conda run -n hicexplore python -c "import shutil, cooler, matplotlib; assert shutil.which('hicFindTADs'); print('OK')"
+name: tad-calling
+description: 'Run generalized TAD analysis / TAD calling with HiCExplorer hicFindTADs for one or many Hi-C, Micro-C,
+  Pore-C, or chromatin contact matrix samples. Use when the user asks for TAD分析, TAD calling, hicFindTADs, HiCExplorer,
+  拓扑关联结构域, TAD边界, TAD domains, separation score, domain length statistics, multi-sample TAD batch analysis, sample
+  sheet workflows, resolution confirmation, or balance checks for .cool/.mcool matrices.
+
+  '
+metadata:
+  version: 1.2.1
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # TAD Analysis with hicFindTADs
 
@@ -37,11 +33,10 @@ It writes native HiCExplorer outputs plus combined multi-sample tables for domai
 Resolution is a required analysis setting, not a separate file input role.
 For example, a confirmed 40kb resolution means the integer setting
 `resolution_bp=40000`, passed as `--resolution-bp 40000`; do not declare an
-input path `"40000"` to represent that setting. Consultant can preserve an
-evidence-supported setting through the existing `confirm_decision` operation
-with `decision.semantic_key="resolution_bp"` and `decision.value=40000`, citing
-the current evidence that actually confirms it. If unresolved, retain the
-uncertainty in the existing handoff and obtain confirmation before execution.
+input path `"40000"` to represent that setting. Record the selected setting and its source in the analysis notes.
+User values cite their actual turn; Skill defaults cite this Skill/version and
+remain defaults even if adopted. Record the selected value as a method parameter.
+If the required resolution is unknown, retain that uncertainty before execution.
 Keep user-declared matrix paths as inputs even before inspection, with their
 unverified status explained; do not invent availability. Explicit matrix URIs
 such as `sample.mcool::/resolutions/40000` remain resource references whose
@@ -67,7 +62,7 @@ internal group also specifies the resolution, as described below.
 ## Quick Start
 
 ```bash
-conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/call_tads.py \
+python "${SKILL_DIR}/scripts/call_tads.py" \
   --sample-sheet samples.tsv \
   --resolution-bp 40000 \
   --out-root TADs/HiCExplorer \
@@ -86,38 +81,46 @@ flower	hic_matrix/Corrected/flower.mcool
 
 ## Software Environment
 
-Use the shared TAD/HiCExplorer environment `hicexplore` for TAD calling, differential TAD, boundary statistics, and Hi-C heatmap-related skills. Do not emit direct package-manager installation commands as an execution step.
+Use an existing environment containing HiCExplorer and this method’s documented dependencies for TAD calling, differential TAD and boundary statistics. Do not emit direct package-manager installation commands as an execution step.
 
-Verify first. If this succeeds, do not install anything:
-
-```bash
-conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/call_tads.py --help
-```
-
-If verification fails because the environment is missing or HiCExplorer, cooler, or matplotlib is missing, delegate installation into the same shared environment with these tags instead of writing a conda command:
-
-```text
-<install_tool env="hicexplore">hicexplorer</install_tool>
-<install_tool env="hicexplore">cooler</install_tool>
-<install_tool env="hicexplore">matplotlib</install_tool>
-```
-
-After the install subagent completes, re-run the verification command before running data. Never create a second TAD environment unless the user explicitly asks for a different environment name.
+When an existing successful registration covers the needed tools and capabilities,
+use its actual prefix and launcher directly. Do not repeat `--help`, version,
+import or health checks merely because the conversation or cache changed.
+Registration time is history, not an expiry. The host’s launch environment need not be the scientific environment.
+If registration is incomplete, locate only the missing part through configured
+Conda roots and known prefixes. Ask for an environment location if unresolved.
+A failed input read or timeout does not establish a missing dependency.
+Honor the task's dependency policy: blocked means stop and explain; an installation
+requires a concrete target, missing packages, change scope and explicit user
+approval through the existing installer. Verify the new change before registration.
+Validate changed dependencies only when needed; reading this method performs no checks.
 
 ## Agent Decision Protocol
 
-### Resolution-only validation (Generate action contract)
+### Lightweight notes and explicit scientific checks
+
+Keep optional notes of goals, method, parameters and a few milestones.
+Reference the original sample sheet once with its actual columns and relative
+path base. Keep the sample sheet as the canonical list rather than duplicating every row. Batch scripts consume all rows and return summary plus detail paths.
+
+Call the resolution and balance checks below explicitly and read their actual
+results. A model conclusion cannot rewrite a negative tool result. Report any
+unperformed or failed check. Continue in the current analysis workflow, preserving the actual observations.
+Controlled script drafts still use complete reads and CAS patches; saving or
+syntax checking is not execution. End with the actual full/partial outcome.
+
+### Resolution-only validation
 
 For a step that only checks input resolution availability, use the registered
-`scripts/check_cooler_resolution.py` resource. Declare
-`skill_resources="3d-dna/tad-calling#scripts/check_cooler_resolution.py"` on the
-script block and use its binder-provided environment variable as the script path.
-Run one `conda run --no-capture-output -n hicexplore python -u` process for all
-inputs, with repeated `--input <approved-resource-handle> <approved-bound-path>`,
-`--resolution-bp <approved-positive-integer>`, and
-`--observation <exact-current-declared-observation-handle>`.
-The same query result supplies display, exact group comparison, and the existing
-structured observation emitter. Do not rewrite this query as inline Python,
+`scripts/check_cooler_resolution.py` resource at its exact registered Skill path.
+Use the adopted registered runtime prefix/interpreter (not an assumed environment
+name), one unbuffered Python process for all inputs, with repeated
+`--input <declared-sample> <exact-approved-input-path>` and
+`--resolution-bp <approved-positive-integer>`. The script returns plain JSON with
+exact input paths for the model to assess. No generated binder variable or
+observation handle is required; omit --observation. Existing legacy
+callers may still pass their actual declared --observation handle.
+The same query result supplies display, exact group comparison and recorded evidence. Do not rewrite this query as inline Python,
 compare integers to group paths, or query again for the decision. A negative
 result exits nonzero while preserving the negative observation. Query errors do
 not mean the resolution is absent. Metadata presence does not validate the full
@@ -127,11 +130,11 @@ matrix or its balance. This entry neither balances nor writes inputs.
 
 Before running `hicFindTADs`, do these checks:
 
-1. Verify the `hicexplore` environment. If dependencies are missing, use `<install_tool env="hicexplore">...</install_tool>` and re-verify.
+1. Reuse a covering registration directly; resolve only a real registration gap under the task dependency policy.
 2. If the user provides plain `.mcool` paths and no explicit resolution, ask the user which resolution to use. Do not guess from common values like 40000.
 3. If paths are full URIs such as `sample.mcool::/resolutions/40000`, treat that as explicit resolution confirmation.
 4. Prefer one confirmed resolution per multi-sample comparison. Do not combine different resolutions in one summary unless the user explicitly asks for separate runs.
-5. Let the script ensure cooler balance by default. It verifies the `weight` bin column before running `hicFindTADs`; if the column is missing or has no finite values, it automatically runs `cooler balance` on the effective cooler URI and then re-checks. For a read-only preflight step, run the wrapper with `--preflight-only`.
+5. Check the `weight` column with `--preflight-only` (read-only). Missing weights are an input condition, not missing dependencies. Automatic balance is disabled by default: `--auto-balance` writes the effective matrix URI. The plan must name the original input or working copy, exact target and approved write scope. Prefer a working copy under the existing approval boundary; never treat selecting `weight` as permission to modify an input.
 6. Use `--skip-balance-check` only when the user says the matrix is already corrected by another method and the `weight` column check is inappropriate.
 
 Do not write ad hoc balance checks with `clr.bins()["weight"].dropna()` or
@@ -148,7 +151,7 @@ script. Do not use `cooler.fileops.list_coolers()` alone as a balance check; it
 only lists available resolution groups.
 
 ```bash
-conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/check_mcool_balance.py \
+python "${SKILL_DIR}/scripts/check_mcool_balance.py" \
   --sample leaf /path/to/leaf.mcool \
   --sample bud /path/to/bud.mcool \
   --out-dir /path/to/results/BM-3DDNA-BALANCE-MEDIUM-002
@@ -165,16 +168,39 @@ not automatically mean the matrix is unbalanced. Always base `report.md` on
 Read-only wrapper preflight command:
 
 ```bash
-conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/call_tads.py --sample leaf /path/to/leaf.mcool --sample bud /path/to/bud.mcool --resolution-bp 40000 --out-root TADs/HiCExplorer --preflight-only
+python "${SKILL_DIR}/scripts/call_tads.py" --sample leaf /path/to/leaf.mcool --sample bud /path/to/bud.mcool --resolution-bp 40000 --out-root TADs/HiCExplorer --preflight-only
 ```
+
+This command writes `{out-root}/{resolution_bp}/tad_preflight.tsv`, with columns
+`sample`, `resolution_bp`, `matrix`, `balanced`, `status`, and `message`.
+Declare that exact output with `role: "tad_preflight"`: the host checks every
+declared sample and input URI, the required resolution, `balanced=yes`, and
+`status=success`. The dedicated `check_mcool_balance.py` output described above
+has a different schema; it is not an output of `call_tads.py --preflight-only`.
+Reports, reproduction scripts and stage-status tables are separate delivery work.
+
+Preflight never overwrites `tad_preflight.tsv`: if that exact path already exists,
+select an explicitly authorized new output location or use the existing receipt
+through the host's evidence review. No balance check is rerun on this conflict.
+Unrelated BED/cache files do not block writing a new preflight table. Conversely,
+an existing preflight table alone does not block a later TAD execution in the same
+resolution directory.
+
+For TAD calling, declare the actual `tad_run_summary.tsv` with
+`role: "tad_run_summary"` and domains/boundaries BED outputs with `format: "bed"`.
+These existing checks consume the saved files; they do not require a fabricated
+observation JSON or a repeated scientific run. Keep the scientific interpretation
+and report-consistency requirements in the description and evidence-based
+`assessment`. Neither a readable table nor the outer process exit code alone
+establishes that every sample succeeded.
 
 Resolution discovery command when the user has not specified a resolution:
 
 ```bash
-conda run -n hicexplore python -c "import cooler; print(cooler.fileops.list_coolers('/path/to/sample.mcool'))"
+python -c "import cooler; print(cooler.fileops.list_coolers('/path/to/sample.mcool'))"
 ```
 
-Do not use bare commands such as `cooler info sample.mcool` unless `which cooler` has been checked and does not point to a stale `bin_shims/cooler`. Prefer `conda run -n hicexplore cooler ...` or `conda run -n hicexplore python -c "import cooler; ..."` for HiCExplorer workflows.
+Do not use bare commands such as `cooler info sample.mcool` unless `which cooler` has been checked and does not point to a stale `bin_shims/cooler`. Prefer `cooler ...` or `python -c "import cooler; ..."` for HiCExplorer workflows.
 
 ### Tier 1 — 直接调用脚本
 
@@ -183,7 +209,7 @@ Do not use bare commands such as `cooler info sample.mcool` unless `which cooler
 For many samples, use a sample sheet:
 
 ```bash
-conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/call_tads.py \
+python "${SKILL_DIR}/scripts/call_tads.py" \
   --sample-sheet /path/to/samples.tsv \
   --resolution-bp 40000 \
   --out-root TADs/HiCExplorer \
@@ -193,7 +219,7 @@ conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/call_tads.py \
 For a small number of samples, repeat `--sample`:
 
 ```bash
-conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/call_tads.py \
+python "${SKILL_DIR}/scripts/call_tads.py" \
   --sample SAMPLE_A /path/to/sample_a.mcool \
   --sample SAMPLE_B /path/to/sample_b.mcool \
   --resolution-bp 40000 \
@@ -211,9 +237,9 @@ conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/call_tads.py \
 | "用 40kb 分辨率" / "40000 resolution" | `--resolution-bp 40000` |
 | "已经是 full URI 了" | `--sample S sample.mcool::/resolutions/40000` |
 | "多线程 / 32 线程" | `--number-of-processors 32` |
-| "只统计已有结果，不重新跑" | `--stats-only` |
-| "结果已存在就跳过运行" | `--skip-existing` |
-| "重新覆盖已有结果" | `--force` |
+| "只统计已有结果，不重新跑" | `--stats-only`，新汇总位置用 `--summary-out-dir` |
+| "结果已存在就跳过运行" | `--skip-existing`，新汇总位置用 `--summary-out-dir` |
+| "重新运行已有分析" | 明确选择新的 `--out-root`；`--force` 只取消 skip 选择，不授权覆盖或清理缓存 |
 | "不要自动 balance，缺 weight 就报错" | `--no-auto-balance` |
 | "多重检验用 fdr" | `--correct-for-multiple-testing fdr` |
 | "限制染色体 Chr03" | `--chromosome Chr03` |
@@ -222,6 +248,31 @@ conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/call_tads.py \
 | "画 domains 长度分布" | `--plot-lengths` |
 
 Do NOT touch the script for these changes.
+
+Before execution the wrapper checks this batch's native output prefixes, logs,
+z-score/TAD-score caches, and intended summary files. An occupied target is an
+`OUTPUT_CONFLICT`; old bytes remain untouched. It does not delete caches or pass
+an invented force option to HiCExplorer. In particular, a leftover
+`*_tad_score.bm` is never implicitly reused, even if its z-score partner is missing.
+Use a newly declared run location or the host's existing explicit conflict and
+authorization flow. `--extra-arg` cannot override matrix/output bindings or enable
+`--TAD_sep_score_prefix`; scientific tuning flags remain available.
+
+`--stats-only` rows are `read_existing`; `--skip-existing` rows that read old native
+results are `reused`. Their per-sample `return_code` is empty: outer wrapper exit 0
+only means the requested reading/statistics operation completed. These rows are
+not new scientific successes and cannot satisfy a new-execution `tad_run_summary`
+or `sample_results` check. Keep the original native `source_file` paths and review
+original task/attempt, method, input versions, coverage and contents through the
+existing evidence path. Cross-session automatic acceptance is not implied, and a
+historical prefix fingerprint cannot be upgraded to full-file evidence.
+
+`--summary-out-dir` is available only with `--stats-only` or `--skip-existing` and
+names the direct destination for new combined tables/optional plot, without
+changing the native `--out-root/RESOLUTION` paths. Record its real paths in the
+analysis notes. Existing summary files are refused there too. Failures, skipped/unattempted
+samples, reused samples and read-only statistics are counted separately; TSV
+fields use CSV quoting so multiline/tab/quote-bearing errors remain intact.
 
 ### Tier 3 — 读脚本并修改
 
@@ -236,13 +287,13 @@ Do NOT touch the script for these changes.
 
 ```bash
 # 1. Read the script first
-cat skills/3d-dna/tad-calling/scripts/call_tads.py
+cat "${SKILL_DIR}/scripts/call_tads.py"
 
 # 2. Copy to a working file. NEVER edit files inside the skill directory.
-cp skills/3d-dna/tad-calling/scripts/call_tads.py ./call_tads_custom.py
+cp "${SKILL_DIR}/scripts/call_tads.py" ./call_tads_custom.py
 
 # 3. Modify only the copied script, then run it.
-conda run -n hicexplore python ./call_tads_custom.py --sample-sheet samples.tsv --resolution-bp 40000 --out-root TADs/HiCExplorer
+python ./call_tads_custom.py --sample-sheet samples.tsv --resolution-bp 40000 --out-root TADs/HiCExplorer
 ```
 
 NEVER edit files inside the skill directory unless the user explicitly asks to update the skill package.
@@ -273,7 +324,7 @@ Input format requirements and traps:
 Many samples from a manifest:
 
 ```bash
-conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/call_tads.py \
+python "${SKILL_DIR}/scripts/call_tads.py" \
   --sample-sheet samples.tsv \
   --resolution-bp 40000 \
   --out-root TADs/HiCExplorer \
@@ -283,7 +334,7 @@ conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/call_tads.py \
 Small batch using repeated `--sample`:
 
 ```bash
-conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/call_tads.py \
+python "${SKILL_DIR}/scripts/call_tads.py" \
   --sample leaf hic_matrix/Corrected/leaf.mcool \
   --sample bud hic_matrix/Corrected/bud.mcool \
   --sample root hic_matrix/Corrected/root.mcool \
@@ -294,7 +345,7 @@ conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/call_tads.py \
 Full URI input where resolution is encoded in every matrix path:
 
 ```bash
-conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/call_tads.py \
+python "${SKILL_DIR}/scripts/call_tads.py" \
   --sample sampleA hic_matrix/Corrected/sampleA.mcool::/resolutions/40000 \
   --sample sampleB hic_matrix/Corrected/sampleB.mcool::/resolutions/40000 \
   --out-root TADs/HiCExplorer
@@ -303,17 +354,18 @@ conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/call_tads.py \
 Generate only statistics from existing HiCExplorer outputs:
 
 ```bash
-conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/call_tads.py \
+python "${SKILL_DIR}/scripts/call_tads.py" \
   --sample-sheet samples.tsv \
   --resolution-bp 40000 \
   --out-root TADs/HiCExplorer \
-  --stats-only
+  --stats-only \
+  --summary-out-dir TADs/review_summary_NEW
 ```
 
 Run when balance has been externally verified but no `weight` column exists:
 
 ```bash
-conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/call_tads.py \
+python "${SKILL_DIR}/scripts/call_tads.py" \
   --sample-sheet samples.tsv \
   --resolution-bp 40000 \
   --out-root TADs/HiCExplorer \
@@ -323,7 +375,7 @@ conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/call_tads.py \
 Pass advanced hicFindTADs options without editing the script:
 
 ```bash
-conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/call_tads.py \
+python "${SKILL_DIR}/scripts/call_tads.py" \
   --sample-sheet samples.tsv \
   --resolution-bp 40000 \
   --out-root TADs/HiCExplorer \
@@ -387,16 +439,16 @@ for line in domains.read_text().splitlines():
 
 | 报错信息 | 原因 | 修复命令 |
 |---|---|---|
-| `[ERROR] hicFindTADs not found on PATH` | 如果 healthcheck 曾成功，说明命令没有进入 `hicexplore`；否则才是 HiCExplorer 缺失或环境损坏 | 先重生成 `conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/call_tads.py ...`；只有 healthcheck 失败才用 `<install_tool env="hicexplore">hicexplorer</install_tool>` |
-| `[ERROR] missing dependency: No module named 'cooler'` | balance/resolution preflight 需要 cooler Python 包 | `<install_tool env="hicexplore">cooler</install_tool>` |
-| `[ERROR] --resolution-bp is required for .mcool` | `.mcool` 有多个分辨率，脚本不会替用户猜 | `conda run -n hicexplore python -c "import cooler; print(cooler.fileops.list_coolers('sample.mcool'))"` |
+| `[ERROR] hicFindTADs not found on PATH` | 如果 healthcheck 曾成功，说明命令没有进入 `hicexplore`；否则才是 HiCExplorer 缺失或环境损坏 | 先重生成 `python "${SKILL_DIR}/scripts/call_tads.py" ...`；只有 healthcheck 失败才用 `先确认所需依赖（hicexplorer）与目标环境，再请求用户明确安装授权` |
+| `[ERROR] missing dependency: No module named 'cooler'` | balance/resolution preflight 需要 cooler Python 包 | `先确认所需依赖（cooler）与目标环境，再请求用户明确安装授权` |
+| `[ERROR] --resolution-bp is required for .mcool` | `.mcool` 有多个分辨率，脚本不会替用户猜 | `python -c "import cooler; print(cooler.fileops.list_coolers('sample.mcool'))"` |
 | `[ERROR] automatic balancing is disabled ...` | cooler 未 balance 且命令禁用了自动 balance，或失败类型不能通过 balance 修复 | 去掉 `--no-auto-balance`，或先提供已 balance 的矩阵 |
 | `[ERROR] file does not exist: ...` | 输入路径写错，或 URI 前面的基础文件不存在 | `test -f hic_matrix/Corrected/sample.mcool && echo OK` |
 | `[ERROR] sample sheet missing required column(s)` | sample sheet 没有 `sample` 和 `matrix` 列 | `head -n 1 samples.tsv` |
 | `[ERROR] mixed resolutions in one run are not supported` | 多样本比较混入不同 resolution | 按 resolution 拆分 sample sheet 后分别运行 |
 | `[ERROR] missing expected output: sample_domains.bed` | 输出前缀、样本名、resolution 或已有文件名不匹配 | `ls -lh TADs/HiCExplorer/40000` |
-| `MemoryError`, `Killed`, or process exits without outputs | 分辨率太高、矩阵太大、线程过多导致内存不足 | `conda run -n hicexplore python skills/3d-dna/tad-calling/scripts/call_tads.py --number-of-processors 4 --resolution-bp 40000 ...` |
-| `[ERROR] matplotlib is required for --plot-lengths` | 可选绘图依赖缺失 | `<install_tool env="hicexplore">matplotlib</install_tool>` |
+| `MemoryError`, `Killed`, or process exits without outputs | 分辨率太高、矩阵太大、线程过多导致内存不足 | `python "${SKILL_DIR}/scripts/call_tads.py" --number-of-processors 4 --resolution-bp 40000 ...` |
+| `[ERROR] matplotlib is required for --plot-lengths` | 可选绘图依赖缺失 | `先确认所需依赖（matplotlib）与目标环境，再请求用户明确安装授权` |
 
 ## Reference Documentation
 

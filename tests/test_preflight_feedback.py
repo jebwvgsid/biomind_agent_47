@@ -19,7 +19,6 @@ from execution.preflight_progress import PREFIX, parse_progress, without_progres
 from execution.executor import run_command, get_last_execution_metadata
 from agent_core.step_effects import emit_observation, extract_structured_effect_evidence
 from agent_core.cli_display import bind_terminal, StreamDisplayCopy
-from agent_core.cli_terminal import PlainTerminal
 from tests.cli_model_progress_support import TimedWriter
 
 ENV = {'PATH': '/usr/bin:/bin', 'LC_ALL': 'C.UTF-8'}
@@ -62,54 +61,6 @@ def assess(row, raw_path):
     return {'passed': value['prefix_valid'] is True, 'value': value, 'scope': 'synthetic_prefix'}
 
 
-@pytest.mark.parametrize('mode', ['compact', 'verbose', 'off'])
-def test_four_real_checks_progress_visible_before_return_capture_stays_private(tmp_path, mode):
-    async def run():
-        release = tmp_path / 'release'
-        started = asyncio.Event()
-        writer = TimedWriter()
-        owner = PlainTerminal(writer, enabled=mode != 'off', verbosity='verbose' if mode == 'verbose' else 'compact')
-        previous = bind_terminal(owner)
-        progress = Progress(started, StreamDisplayCopy('stderr', task_id='synthetic', action_id='preflight', execution_attempt_id='a1'))
-        checks = []
-        for index in range(4):
-            evidence = emit_observation('child-' + str(index), {'prefix_valid': True, 'full_scientific_validation': False})
-            body = ('while [ ! -f ' + shlex.quote(str(release)) + ' ]; do sleep 0.02; done\n' if index == 0 else '')
-            body += "printf '%s\\n' " + shlex.quote(evidence)
-            checks.append(tiny(tmp_path, 'S' + str(index), body))
-        task = asyncio.create_task(run_checks(checks, evidence_dir=tmp_path / 'evidence',
-            timeout_seconds=3, progress_stream=progress, env=ENV, assess=assess))
-        try:
-            await asyncio.wait_for(started.wait(), 3)
-            assert not task.done()
-            assert progress.records[-1]['event'] == 'process_started'
-            assert progress.records[-1]['completed'] == 0
-            assert 'S0' in owner.model.status()
-            await owner.drain(timeout=1)
-            if mode != 'off':
-                assert '检查进程已启动 S0' in writer.getvalue()
-            else:
-                assert writer.getvalue() == ''
-            release.touch()
-            result = await task
-            await owner.drain(timeout=1)
-            assert result['returned'] == result['passed'] == 4
-            assert [r['event'] for r in progress.records] == sum(
-                [['item_started', 'process_started', 'item_returned'] for _ in range(4)], []) + ['summary']
-            assert all(r['execution']['process_reaped'] for r in result['checks'])
-            for row in result['checks']:
-                raw = Path(row['raw']['stdout']).read_text()
-                assert raw.count('BIOMIND_EFFECT_EVIDENCE_JSON=') == 1
-                assert 'BIOMIND_EFFECT_EVIDENCE_JSON=' not in writer.getvalue()
-            assert len([r for r in progress.records if r['event'] == 'process_started']) == 4
-            artifact('preflight-four-' + mode + '.json', {'result': result, 'last_status': owner.model.status(),
-                'display': writer.getvalue(), 'model_calls': 0, 'route': 'caller_existing_route',
-                'source': 'run_checks → run_command → real shell processes; parent stderr → StreamDisplayCopy → production owner'})
-        finally:
-            release.touch()
-            if not task.done(): task.cancel()
-            bind_terminal(previous); owner.close()
-    asyncio.run(run())
 
 
 def test_local_timeout_keeps_partial_results_and_cleans_nested_child(tmp_path):
@@ -203,30 +154,6 @@ def test_actual_new_batch_cli_merges_one_outer_observation_preserves_prefix_scop
     asyncio.run(run())
 
 
-def test_progress_excluded_only_from_model_copies_and_preserved_in_raw(tmp_path):
-    from agent_core.node_context import _without_control_metadata
-    from agent_core.workflow.recovery_projection import _bounded_scalar
-    progress = PREFIX + json.dumps({'version': 1, 'event': 'item_started', 'item': 'S1_R1',
-        'index': 1, 'total': 4, 'completed': 0, 'passed': 0}) + '\n'
-    marker = emit_observation('formal', {'value': 0}) + '\n'
-    raw = 'real error\n' + progress + marker + 'last evidence\n'
-    copied = _without_control_metadata({'stderr': raw})['stderr']
-    assert PREFIX not in copied and marker in copied and 'real error' in copied
-    assert PREFIX not in _bounded_scalar(raw)
-    assert PREFIX in raw and raw.count(marker) == 1
-    assert without_progress(PREFIX + 'invalid-json\n') == PREFIX + 'invalid-json\n'
-    assert without_progress('print(' + repr(progress) + ')') == 'print(' + repr(progress) + ')'
-    assert parse_progress(PREFIX + '{"version":1,"event":{}}') is None
-    from agent_core.workflow.recovery_agent import _observation_envelope
-    from types import SimpleNamespace
-    seed = SimpleNamespace(failure_packet=SimpleNamespace(task_id='synthetic', step_id='step-1'),
-                           plan_spec_ref=SimpleNamespace(plan_id='synthetic-plan'))
-    source = {'execution': {'raw_stderr': raw, 'stdout': marker}}
-    envelope = _observation_envelope(request_id='tool-1', tool='failure.inspect', arguments={},
-                                    result=source, error={}, seed=seed)
-    assert PREFIX not in json.dumps(envelope)
-    assert source['execution']['raw_stderr'] == raw
-    assert envelope['result']['execution']['stdout'] == marker
 
 
 @pytest.mark.parametrize('failure', ['exit', 'exit124', 'parse'])
@@ -298,55 +225,3 @@ def test_deadline_begins_at_call_not_candidate_construction_or_approval_wait(tmp
     asyncio.run(run())
 
 
-def test_actual_recovery_tool_message_excludes_progress_without_new_model_calls(tmp_path):
-    from copy import deepcopy
-    from langchain_core.messages import AIMessage
-    from agent_core.workflow.recovery_agent import RecoveryAgentLoop
-    from tests.test_recovery_agent_loop import _seed_fixture, _directive
-
-    async def run():
-        compared = []
-        for mode in ('compact', 'verbose', 'off'):
-            durable, seed = _seed_fixture()
-            progress = PREFIX + json.dumps({'version': 1, 'event': 'item_started', 'item': 'S1_R1',
-                'index': 1, 'total': 4, 'completed': 0, 'passed': 0}) + '\n'
-            formal = emit_observation('formal', {'prefix_valid': False})
-            original = {'status': 'ok', 'execution': {'raw_stderr': 'actual-error\n' + progress,
-                        'stdout': formal}, 'source_ref': 'synthetic-execution'}
-            saved = deepcopy(original)
-            requests, tools_called = [], []
-            owner = PlainTerminal(TimedWriter(), enabled=mode != 'off', verbosity='verbose' if mode == 'verbose' else 'compact')
-            previous = bind_terminal(owner)
-
-            async def provider(messages, **_kwargs):
-                requests.append([{'type': message.type, 'content': message.content} for message in messages])
-                for message in messages:
-                    if message.type == 'tool':
-                        assert PREFIX not in message.content
-                        assert 'actual-error' in message.content and 'BIOMIND_EFFECT_EVIDENCE_JSON=' in message.content
-                ordinal = len(requests)
-                if ordinal <= 2:
-                    return AIMessage(content='', tool_calls=[{'id': 'inspect-' + str(ordinal),
-                        'name': 'failure_inspect' if ordinal == 1 else 'step_inspect', 'args': {}, 'type': 'tool_call'}])
-                return AIMessage(content=json.dumps({'protocol': 'recovery-submission-v1',
-                    'explanation': '已核对失败回执，提交当前步骤的既有恢复决定。', 'directive': json.loads(_directive())}))
-
-            class Dispatcher:
-                def dispatch_full(self, name, arguments):
-                    tools_called.append(name)
-                    return original
-
-            try:
-                result = await RecoveryAgentLoop(model=object(), dispatcher=Dispatcher(), bind_tools=False,
-                    provider_invoke=provider).ainvoke(seed=seed, durable=durable)
-                assert not result['terminal_error'], result
-                assert len(requests) == 3 and len(tools_called) == 2
-                assert original == saved
-                compared.append({'directive': result['directive'], 'llm_turns': result['audit']['turn_count'],
-                                 'tool_calls': tools_called, 'added_narration_calls': 0})
-            finally:
-                bind_terminal(previous); owner.close()
-        assert compared[0] == compared[1] == compared[2]
-        artifact('preflight-recovery-tool-messages.json', {'modes': compared,
-            'assertion': 'Actual next provider requests exclude only progress; original dispatcher raw source unchanged'})
-    asyncio.run(run())

@@ -3,7 +3,6 @@ from __future__ import annotations
 import unittest
 
 from agent_core.node_context import build_node_context, evaluate_node_staleness
-from bio_agents import BioAnalystAgent
 
 
 def _task_spec(*, revision: int = 4) -> dict:
@@ -80,98 +79,6 @@ def _skill_context() -> dict:
     }
 
 
-class ExecuteRevisionGateTests(unittest.TestCase):
-    def test_pending_action_matches_all_current_authority_revisions(self) -> None:
-        agent = BioAnalystAgent.__new__(BioAnalystAgent)
-        action = {
-            "step_id": "step-current",
-            "task_revision": 4,
-            "plan_version": "plan_v9",
-            "plan_revision": 9,
-            "authoritative_user_turn_revision": 12,
-            "plan_id": "plan-current",
-            "execution_epoch": "epoch-3",
-        }
-
-        self.assertEqual(
-            agent._pending_action_revision_mismatches(action, _plan_state()),
-            {},
-        )
-
-    def test_pending_action_reports_each_changed_authority_revision(self) -> None:
-        agent = BioAnalystAgent.__new__(BioAnalystAgent)
-        action = {
-            "step_id": "step-old",
-            "task_revision": 3,
-            "plan_version": "plan_v8",
-            "plan_revision": 8,
-            "authoritative_user_turn_revision": 11,
-            "plan_id": "plan-old",
-            "execution_epoch": "epoch-2",
-        }
-
-        mismatches = agent._pending_action_revision_mismatches(
-            action,
-            _plan_state(),
-        )
-
-        self.assertEqual(
-            set(mismatches),
-            {
-                "step_id",
-                "task_revision",
-                "plan_version",
-                "plan_revision",
-                "authoritative_user_turn_revision",
-                "plan_id",
-                "execution_epoch",
-            },
-        )
-        self.assertEqual(
-            mismatches["authoritative_user_turn_revision"],
-            {"bound": "11", "current": "12"},
-        )
-        self.assertEqual(
-            mismatches["task_revision"],
-            {"bound": "3", "current": "4"},
-        )
-
-    def test_pending_action_identity_must_still_be_durable(self) -> None:
-        agent = BioAnalystAgent.__new__(BioAnalystAgent)
-        action = {
-            "action_id": "action-current",
-            "step_id": "step-current",
-            "task_revision": 4,
-            "plan_version": "plan_v9",
-            "plan_revision": 9,
-            "authoritative_user_turn_revision": 12,
-            "plan_id": "plan-current",
-            "execution_epoch": "epoch-3",
-        }
-        plan = _plan_state()
-
-        missing = agent._pending_action_revision_mismatches(action, plan)
-        self.assertEqual(
-            missing["pending_action_identity"],
-            {"bound": "action-current", "current": ""},
-        )
-
-        plan["task_state"] = {
-            "pending_action": {"action_id": "action-successor"},
-        }
-        replaced = agent._pending_action_revision_mismatches(action, plan)
-        self.assertEqual(
-            replaced["pending_action_identity"],
-            {"bound": "action-current", "current": "action-successor"},
-        )
-
-        plan["task_state"]["pending_action"] = {
-            "action_id": "action-current",
-        }
-        self.assertEqual(
-            agent._pending_action_revision_mismatches(action, plan),
-            {},
-        )
 
 
 class SkillNodeContextStaleGateTests(unittest.TestCase):

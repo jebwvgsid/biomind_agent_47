@@ -41,19 +41,19 @@
 查一个数据库：
 
 ```bash
-python examples/search_entrez.py --db pubmed --term "Saccharum drought RNA-seq" --max-results 10
+python "${SKILL_DIR}/examples/search_entrez.py" --db pubmed --term "Saccharum drought RNA-seq" --max-results 10
 ```
 
 查看数据库字段：
 
 ```bash
-python examples/database_info.py --db sra
+python "${SKILL_DIR}/examples/database_info.py" --db sra
 ```
 
 跨数据库统计关键词：
 
 ```bash
-python examples/global_query.py --term "Saccharum"
+python "${SKILL_DIR}/examples/global_query.py" --term "Saccharum"
 ```
 
 ## 汇报格式

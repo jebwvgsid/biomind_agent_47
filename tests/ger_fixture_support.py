@@ -23,24 +23,3 @@ def configure_protocol(case, *, execution_capability_id=None):
     case._planner_payload,case._consultant_payload=planning,handoff
 
 
-async def generate_until_ready_or_stopped(case,task_id,candidate):
-    captures=[];events=[]
-    async def provider(messages,*,stage,node_context=None,**_kwargs):
-        if stage=='consultant':return AIMessage(content=json.dumps(case._consultant_payload(case.root/'report.md')))
-        if stage in {'planner','planner_structure_repair','planner_repair'}:return AIMessage(content=json.dumps(case._planner_payload()))
-        if stage=='generate':
-            payload=node_context.llm_payload.to_dict()
-            payload['_provider_request']='\n'.join(str(m.content) for m in messages)
-            captures.append(payload)
-            return AIMessage(content=candidate(payload,len(captures)))
-        raise AssertionError(stage)
-    case.agent._ainvoke_node_llm=provider
-    runner=case._runner_state(task_id);app=case.agent._app_for_task(task_id,runner)
-    config={'configurable':{'thread_id':task_id},'recursion_limit':20}
-    stream=app.astream(runner,config=config,stream_mode='updates')
-    try:
-        async for event in stream:
-            events.append(event)
-            if event.get('generate',{}).get('generate_outcome',{}).get('type')=='action_ready':break
-    finally:await stream.aclose()
-    return events,captures,app.get_state(config).values

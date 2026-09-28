@@ -25,7 +25,7 @@ from agent_core.skill_access import (
 )
 from agent_core.skill_manager import SkillManager
 from agent_core.task_spec import canonical_current_task_spec, task_semantic_hash
-from bio_agents import BioAnalystAgent
+from agent_core.skill_access import authorised_task_skill_selection
 from prompts.manager import PromptManager
 
 
@@ -151,11 +151,9 @@ class ProgressiveSkillAccessTests(unittest.TestCase):
         )
 
         planner_system = PromptManager.get_planner_v2_system_prompt()
-        self.assertIn("new_task_revision", planner_system)
-        self.assertIn(
-            "historical task revision, current task revision, and base Plan revision",
-            planner_system,
-        )
+        # Default v3 planning delegates internal revision identities to the host.
+        self.assertIn("submit_draft_file", planner_system)
+        self.assertIn("finish_task", planner_system)
         self.assertNotIn("new_plan_revision", planner_system)
         planner_human = json.loads(
             PromptManager.get_planner_v2_human_prompt({
@@ -224,6 +222,7 @@ class ProgressiveSkillAccessTests(unittest.TestCase):
             [{
                 "skill_id": "genomics/alpha-annotation",
                 "operation": "section",
+                "snapshot_id": original_snapshot_id,
                 "heading": "Input requirements",
             }],
         )
@@ -381,10 +380,11 @@ class ProgressiveSkillAccessTests(unittest.TestCase):
             }],
         )
         selected_range = range_result["results"][0]
-        self.assertEqual(selected_range["exact_text"], "Alpha exact input line.")
+        self.assertEqual(selected_range["exact_text"], "Alpha exact input line.\n")
         self.assertEqual(selected_range["start_line"], target_line)
         self.assertEqual(selected_range["end_line"], target_line)
 
+        # Full document reads use their own cap plus the host context allowance.
         with mock.patch("agent_core.skill_access.SKILL_FULL_READ_MAX_CHARS", 32):
             _, full_result = self.context(
                 state,
@@ -393,11 +393,15 @@ class ProgressiveSkillAccessTests(unittest.TestCase):
                     "operation": "full",
                 }],
             )
-        self.assertEqual(full_result["status"], "REQUIRES_NARROWING")
+        self.assertEqual(full_result["status"], "PARTIAL")
         full_item = full_result["results"][0]
-        self.assertEqual(full_item["status"], "REQUIRES_NARROWING")
-        self.assertTrue(full_item["heading_index"])
-        self.assertNotIn("exact_text", full_item)
+        self.assertEqual(full_item["status"], "PARTIAL")
+        end = full_item['source_end_char']
+        self.assertGreater(end, 0)
+        self.assertLessEqual(end, 32)
+        self.assertEqual(full_item["exact_text"], snapshot["exact_text"][:end])
+        self.assertFalse(full_item['ends_mid_line'])
+        self.assertEqual(full_item["next_request"]["char_offset"], end)
 
     def test_context_request_uses_cache_then_returns_no_progress_without_failure_counts(self):
         state, _ = self.active_state()
@@ -1044,7 +1048,7 @@ class ProgressiveSkillAccessTests(unittest.TestCase):
         }
 
         self.assertEqual(
-            BioAnalystAgent._authorised_task_skill_selection(
+            authorised_task_skill_selection(
                 state, promoted
             ),
             ["transcriptomics/beta-expression"],
@@ -1052,7 +1056,7 @@ class ProgressiveSkillAccessTests(unittest.TestCase):
 
         supplement = {**promoted, "relation": "supplement"}
         self.assertEqual(
-            BioAnalystAgent._authorised_task_skill_selection(
+            authorised_task_skill_selection(
                 state, supplement
             ),
             [

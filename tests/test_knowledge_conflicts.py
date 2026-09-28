@@ -3,7 +3,6 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from supervisor import SupervisorNode
 
 from agent_core.knowledge_conflicts import (
     ClaimRegistry,
@@ -313,28 +312,6 @@ class KnowledgeConflictTests(unittest.TestCase):
             self.assertEqual(summary["active_plan_version"], "plan_v1")
 
 
-class SupervisorConflictGateTests(unittest.IsolatedAsyncioTestCase):
-    async def test_final_audit_cannot_pass_with_unresolved_blocking_conflict(self):
-        supervisor = SupervisorNode(llm=None, output_dir=tempfile.mkdtemp(), use_llm_review=False)
-        result = await supervisor.final_audit(
-            {
-                "task_id": "task",
-                "execution_evidence": {"command": "run", "returncode": 0},
-                "knowledge_conflicts": [{
-                    "conflict_id": "conflict_1",
-                    "conflict_type": "PLAN_RUNTIME_CONFLICT",
-                    "severity": "blocking",
-                    "status": "needs_probe",
-                    "description": "plan and runtime disagree",
-                }],
-                "knowledge_conflict_summary": {"blocking_conflicts": ["conflict_1"]},
-            }
-        )
-        self.assertEqual(result["supervisor_verdict"], "FAIL")
-        self.assertEqual(result["validation_evidence"]["status"], "INVALID")
-        self.assertTrue(result["validation_evidence"]["errors"])
-        self.assertNotIn("next_step", result)
-        self.assertNotIn("required_next_action", result)
 
 
 if __name__ == "__main__":

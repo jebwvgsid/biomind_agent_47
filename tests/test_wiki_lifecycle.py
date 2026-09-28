@@ -8,7 +8,6 @@ from agent_core.wiki_lifecycle import (
     evaluate_wiki_eligibility,
     terminal_snapshot_projection,
 )
-from bio_agents import BioAnalystAgent
 
 
 def _snapshot(*, task_status="completed", terminal_status="completed", error=""):
@@ -40,43 +39,6 @@ def _snapshot(*, task_status="completed", terminal_status="completed", error="")
 
 
 class WikiLifecycleTests(unittest.TestCase):
-    def test_terminal_verification_prefers_durable_canonical_task_spec(self):
-        with tempfile.TemporaryDirectory() as root:
-            plan = build_plan_state(
-                "wiki-task",
-                "- [>] Step 1: work | Action: EXECUTE | Done: validated output",
-            )
-            canonical = create_task_spec("canonical goal", task_id="wiki-task")
-            plan["current_task"] = {"task_spec": canonical}
-            save_plan_state(root, "wiki-task", plan)
-
-            captured = {}
-            agent = BioAnalystAgent.__new__(BioAnalystAgent)
-            agent.data_path = root
-
-            def verify(**kwargs):
-                captured["task_spec"] = kwargs["task_spec"]
-                return {"compiled_contract_ref": "object://compiled"}
-
-            agent._load_verified_finalize_v4_contract = verify
-            agent._wiki_terminal_snapshot(
-                "wiki-task",
-                values={
-                    "task_spec": create_task_spec(
-                        "stale checkpoint goal",
-                        task_id="wiki-task",
-                    ),
-                    "consultation_state": {
-                        "finalize_protocol": {
-                            "schema_version": 4,
-                            "wire_schema_version": 3,
-                            "finalize_status": "compiled",
-                        },
-                    },
-                },
-            )
-
-        self.assertEqual(captured["task_spec"]["goal"], "canonical goal")
 
     def test_blocked_task_is_ineligible_and_denial_is_durable(self):
         snapshot = _snapshot(

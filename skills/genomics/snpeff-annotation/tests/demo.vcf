@@ -1,4 +1,0 @@
-##fileformat=VCFv4.2
-##contig=<ID=contig_alpha,length=10000>
-#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
-contig_alpha	100	.	A	G	60	PASS	.

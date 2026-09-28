@@ -171,6 +171,7 @@ TASK_SPEC_MUTATION_OPERATIONS = {
     "remove_constraint",
     "upsert_output_contract",
     "remove_output_contract",
+    "upsert_parameter",
     "confirm_decision",
     "remove_decision",
     "mark_ambiguity",
@@ -823,34 +824,11 @@ def canonical_input_role(role: str = "", path: str = "") -> str:
     if normalized in {"annotation_genbank", "genbank"}:
         return "annotation_genbank"
     if normalized == "annotation_file":
-        # A discovery audit may report the broad role while the canonical
-        # request parser has already specialized the same artifact.  Use the
-        # file format when it is decisive so verification updates the existing
-        # binding instead of creating an unverified parallel identity.
-        if name.endswith(".gtf"):
-            return "annotation_gtf"
-        if re.search(r"\.gff3?$", name):
-            return "annotation_gff3"
-        if re.search(r"\.(?:gb|gbk|genbank)$", name):
-            return "annotation_genbank"
-        return "annotation_file"
+        return normalized
     if normalized in {"alignment_bam", "bam"}:
         return "alignment_bam"
-    if normalized not in {"", "input", "input_file", "file"}:
-        return normalized
-    if re.search(r"\.vcf(?:\.gz)?$|\.bcf$", name):
-        return "variant_vcf"
-    if re.search(r"\.(?:fa|fasta|fna)$", name):
-        return "reference_fasta"
-    if name.endswith(".gtf"):
-        return "annotation_gtf"
-    if re.search(r"\.gff3?$", name):
-        return "annotation_gff3"
-    if re.search(r"\.(?:gb|gbk|genbank)$", name):
-        return "annotation_genbank"
-    if name.endswith(".bam"):
-        return "alignment_bam"
-    return generic_artifact_role(path)
+    # A path suffix is a method hint, not authority to replace a supplied role.
+    return normalized or 'input_file'
 
 
 def _binding_source(source: str) -> str:
@@ -972,8 +950,9 @@ def normalize_input_binding(
     verified = bool(raw.get("verified") or _text(raw.get("status")).lower() == "verified")
     evidence = raw.get("verification_evidence") or raw.get("evidence") or []
     provenance = _binding_provenance(raw, binding_source)
-    declared_role = _text(raw.get("role")) or generic_artifact_role(path)
+    declared_role = _text(raw.get("role"))
     role = canonical_input_role(declared_role, path)
+    suggestion = generic_artifact_role(path) if not declared_role else _text(raw.get("role_suggestion"))
     artifact_id = _text(raw.get("artifact_id") or raw.get("input_id"))
     if not artifact_id:
         artifact_id = _artifact_identity("input", role, path)
@@ -1004,6 +983,7 @@ def normalize_input_binding(
         "direction": "input",
         "input_instance": input_instance,
         "role": role,
+        "role_suggestion": suggestion,
         "format": file_format,
         "path_policy": path_policy,
         "canonical_path": path,
@@ -1060,16 +1040,24 @@ def normalize_output_binding(
     semantic_handle = _text(raw.get("semantic_handle")) or _artifact_semantic_handle(
         "output", output_id or role, "output"
     )
+    file_format = _text(raw.get("format") or raw.get("type"))
     artifact_kind = _field_key(raw.get("artifact_kind") or raw.get("kind"))
     if artifact_kind not in {"file", "directory"}:
-        artifact_kind = "directory" if role == "output_dir" else "file"
-    file_format = _text(raw.get("format") or raw.get("type"))
+        # Legacy declarations already derive format from the locator. Derive
+        # the missing kind from that same value, rather than manufacturing a
+        # file/directory contradiction for every non-output_dir directory role.
+        inferred_format = file_format or (_artifact_format(path_or_name) if path_or_name else "file")
+        artifact_kind = "directory" if role == "output_dir" or inferred_format in {"dir", "directory"} else "file"
     if not file_format:
         file_format = (
             "directory"
             if artifact_kind == "directory"
             else (_artifact_format(path_or_name) if path_or_name else "file")
         )
+        # A declared extensionless file (e.g. README) remains a file. Explicit
+        # contradictory formats are intentionally left for validation below.
+        if artifact_kind == "file" and file_format == "directory":
+            file_format = "file"
     root_ref = _field_key(raw.get("root_ref") or raw.get("output_root_ref"))
     path_policy = _field_key(raw.get("path_policy")) or (
         "managed_exact"
@@ -1094,7 +1082,7 @@ def normalize_output_binding(
         "validation_contract_id": _text(
             raw.get("validation_contract_id")
             or raw.get("validator")
-            or raw.get("validation")
+            or (raw.get("validation") if isinstance(raw.get("validation"), str) else None)
             or ("directory-v1" if artifact_kind == "directory" else "nonempty-file-v1")
         ),
         "source": source_value,
@@ -1118,6 +1106,10 @@ def normalize_output_binding(
         "description": _text(raw.get("description")),
         "aliases": list(raw.get("aliases") or []),
     })
+    if isinstance(raw.get("validation"), Mapping):
+        # Keep the existing explicit output interface through canonicalization;
+        # it is not a string validator ID and must reach Gate and the producer.
+        normalized["validation"] = deepcopy(dict(raw["validation"]))
     if "resource_kind" in raw:
         kind = raw["resource_kind"]
         if kind not in {"immutable_artifact", "mutable_workspace"}:
@@ -1166,6 +1158,10 @@ def effective_output_contracts(
         key = _field_key(item.get("output_id") or item.get("artifact_id") or item.get("role"))
         if key in indexes:
             existing = normalized[indexes[key]]
+            if "validation" in item:
+                if "validation" in existing and existing["validation"] != item["validation"]:
+                    raise ValueError("OUTPUT_VALIDATION_CONFLICT: " + key)
+                existing["validation"] = deepcopy(item["validation"])
             existing["required"] = bool(existing.get("required", True) or item.get("required", True))
             existing["provenance"] = _binding_provenance(
                 {"provenance": [*(existing.get("provenance") or []), *(item.get("provenance") or [])]},
@@ -1318,30 +1314,16 @@ def _dedupe_input_aliases(inputs: List[Dict[str, Any]]) -> tuple[List[Dict[str, 
         if len(unique) <= 1:
             resolved.extend(unique)
             continue
-        existing = [item for item in unique if Path(artifact_locator(item)).is_file()]
-        if len(existing) == 1:
-            chosen = deepcopy(existing[0])
-            chosen["aliases"] = [
-                artifact_locator(item) for item in unique
-                if artifact_locator(item) != artifact_locator(chosen)
-            ]
-            chosen["resolution_status"] = "resolved"
-            resolved.append(chosen)
-            audit.append({
-                "status": "INPUT_ALIAS_RESOLVED",
-                "role": role,
-                "basename": basename,
-                "resolved_path": artifact_locator(chosen),
-                "aliases": chosen["aliases"],
-            })
-        else:
-            resolved.extend(unique)
-            audit.append({
-                "status": "AMBIGUOUS_INPUT_ALIAS",
-                "role": role,
-                "basename": basename,
-                "candidate_paths": [artifact_locator(item) for item in unique],
-            })
+        # Filesystem existence cannot identify an alias or authorize replacing
+        # an explicit sample. Canonical project-relative paths were resolved
+        # upstream; retain every distinct locator and any confirmed aliases.
+        resolved.extend(unique)
+        audit.append({
+            "status": "DISTINCT_INPUT_PATHS_PRESERVED",
+            "role": role,
+            "basename": basename,
+            "candidate_paths": [artifact_locator(item) for item in unique],
+        })
     return resolved, audit
 
 
@@ -2237,6 +2219,7 @@ def canonical_current_task_spec(
             **_parameters_from_candidates(legacy_facts),
         },
         "output_contracts": outputs,
+        "parameter_sources": deepcopy(dict(raw.get("parameter_sources") or {})),
         "confirmed_decisions": deepcopy(list(raw.get("confirmed_decisions") or [])),
         "unresolved_questions": deepcopy(list(raw.get("unresolved_questions") or [])),
         "requirements": requirements,
@@ -3456,6 +3439,7 @@ def apply_task_spec_mutation_proposal(
         },
         "upsert_output_contract": {"op", "output_contract", "reason", "supporting_evidence"},
         "remove_output_contract": {"op", "role", "reason", "supporting_evidence"},
+        "upsert_parameter": {"op", "parameter", "reason", "supporting_evidence"},
         "confirm_decision": {"op", "decision", "reason", "supporting_evidence"},
         "remove_decision": {"op", "semantic_key", "reason", "supporting_evidence"},
         "mark_ambiguity": {"op", "ambiguity", "reason", "supporting_evidence"},
@@ -3680,6 +3664,24 @@ def apply_task_spec_mutation_proposal(
                     and _semantic_key(item.get("semantic_key")) == f"required_output.{role}"
                 )
             ]
+        elif kind == "upsert_parameter":
+            parameter = operation.get("parameter")
+            if not isinstance(parameter, Mapping) or not parameter.get("semantic_key") or "value" not in parameter:
+                raise ValueError("TASKSPEC_PARAMETER_REQUIRES_KEY_AND_VALUE")
+            key = _field_key(parameter["semantic_key"])
+            if not key:
+                raise ValueError("TASKSPEC_PARAMETER_CANONICAL_KEY_REQUIRED")
+            source = deepcopy(dict(parameter.get("provenance") or {}))
+            prior = staged.setdefault("parameter_sources", {}).get(key, {})
+            # A repeated suggestion cannot silently replace an explicit user choice.
+            if prior.get("source_type") == "user_explicit" and source.get("source_type") != "user_explicit":
+                continue
+            staged.setdefault("parameters", {})[key] = deepcopy(parameter["value"])
+            staged["parameter_sources"][key] = source
+            # A parameter occupies one slot; remove only the obsolete representation
+            # for that exact slot. Other user decisions and historical sessions remain intact.
+            staged["confirmed_decisions"] = [row for row in staged.get("confirmed_decisions", [])
+                if _field_key(row.get("semantic_key")) != key]
         elif kind == "confirm_decision":
             if not isinstance(operation.get("decision"), Mapping):
                 raise ValueError("TASKSPEC_MUTATION_STRUCTURE_INVALID: decision must be an object")
@@ -4173,6 +4175,8 @@ def semantic_install_policy(
     spec: Mapping[str, Any] | None,
     *,
     dependency_key: str = "",
+    target_env: str = "",
+    target_prefix: str = "",
 ) -> Dict[str, Any]:
     """Resolve install policy from typed constraints only.
 
@@ -4180,6 +4184,12 @@ def semantic_install_policy(
     user prose.  Runtime code must not recover this policy with language
     keywords after Consultant has compiled the request.
     """
+    from agent_core.installation_policy import scoped_installation_preparation
+    scoped_grant = scoped_installation_preparation(spec, dependency_key=dependency_key,
+        target_env=target_env, target_prefix=target_prefix)
+    if scoped_grant:
+        return {"install_allowed": True, "proposal_preparation_only": True,
+                "reason": "later_scoped_user_preparation", "constraint": scoped_grant}
     dependency_slot = _field_key(dependency_key)
     accepted_failure_keys = {"failure_policy.runtime_missing"}
     if dependency_slot:
@@ -5877,7 +5887,7 @@ def format_planner_task_contract_context(spec: Mapping[str, Any] | None) -> str:
     output_fields = (
         "artifact_id", "output_id", "semantic_handle", "direction", "role",
         "artifact_kind", "format", "path_policy", "root_ref", "filename",
-        "canonical_path", "required_basename", "required", "validation_contract_id",
+        "canonical_path", "required_basename", "required", "validation_contract_id", "validation",
         "source_type", "source_ref", "source_id", "producer_owner", "producer_step_id",
         "user_visible", "resolution_base", "provenance",
         "resource_kind", "contract_revision", "contract_source",

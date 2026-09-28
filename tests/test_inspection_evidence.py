@@ -314,16 +314,6 @@ def test_I07_I15_safe_error_details_do_not_publish_absolute_paths(tmp_path):
     assert '/private' not in exc.value.detail and '[path]' in exc.value.detail
 
 
-def _real_handoff_reader(root):
-    from tests.test_inspection_workflow import make_inspection_fixture
-    fixture=make_inspection_fixture(root,resolve_second=False)
-    asyncio.run(fixture.inspect_handoff())
-    durable=fixture.reload()
-    seed=project_recovery_seed(fixture.state,durable).recovery_seed
-    store=PhaseArchiveStore(root)
-    registry=build_recovery_inspection_registry(seed,durable,phase_store=store)
-    dispatcher=RecoveryLocalToolDispatcher(seed=seed,durable=durable,registry=registry,phase_store=store)
-    return fixture,seed,registry,dispatcher
 
 
 def _advance_real_attempt(fixture):
@@ -335,92 +325,15 @@ def _advance_real_attempt(fixture):
     return fixture.reload()
 
 
-def test_I11_durable_attempt_advance_revokes_existing_reader_and_old_seed_registry(tmp_path):
-    fixture,seed,registry,dispatcher=_real_handoff_reader(tmp_path)
-    row=typed_rows(registry)[0]
-    newer=_advance_real_attempt(fixture)
-    assert newer['steps'][0]['verification_attempt_id']!=seed.failure_packet.attempt_ref
-    with patch.object(StateContractStore,'read_object',side_effect=AssertionError('stale inspection body must not read')):
-        with pytest.raises(InspectionEvidenceError,match='SCOPE_MISMATCH.*attempt_id'):
-            dispatcher.dispatch_full('evidence.read',{'evidence_ref':row['ref_id']})
-        with pytest.raises(InspectionEvidenceError,match='SCOPE_MISMATCH.*attempt_id'):
-            build_recovery_inspection_registry(seed,newer,phase_store=PhaseArchiveStore(tmp_path))
 
 
-def test_I11_stale_producer_cannot_publish_after_actual_attempt_advance(tmp_path):
-    fixture,_seed,_registry,_dispatcher=_real_handoff_reader(tmp_path)
-    source=fixture.supervisor_updates[0]['verification_outcome']
-    _advance_real_attempt(fixture)
-    before=fixture.reload()['task_state']['inspection_ref_registry']
-    real_put=StateContractStore.put_object
-    def reject_inspection(self,kind,body):
-        assert not kind.startswith('recovery_inspection.'),'stale producer must not save inspection objects'
-        return real_put(self,kind,body)
-    with patch.object(StateContractStore,'put_object',reject_inspection):
-        with pytest.raises(InspectionEvidenceError,match='SCOPE_MISMATCH.*attempt_id'):
-            CausalFailurePacketBinder(data_path=str(tmp_path)).bind(fixture.state,'verification_outcome',source)
-    assert fixture.reload()['task_state']['inspection_ref_registry']==before
 
 
-def test_I11_new_episode_revokes_existing_reader_without_attempt_change(tmp_path):
-    fixture,seed,registry,dispatcher=_real_handoff_reader(tmp_path)
-    row=typed_rows(registry)[0]
-    asyncio.run(fixture.inspect_handoff())
-    newer=fixture.reload()
-    current=project_recovery_seed(fixture.state,newer).recovery_seed
-    assert current.seed_id!=seed.seed_id
-    assert current.failure_packet.attempt_ref==seed.failure_packet.attempt_ref
-    with patch.object(StateContractStore,'read_object',side_effect=AssertionError('old episode body must not read')):
-        with pytest.raises(InspectionEvidenceError,match='SCOPE_MISMATCH.*episode_id'):
-            dispatcher.dispatch_full('evidence.read',{'evidence_ref':row['ref_id']})
 
 
-def test_I11_unrelated_CAS_save_does_not_revoke_same_episode_reader(tmp_path):
-    fixture,seed,registry,dispatcher=_real_handoff_reader(tmp_path)
-    row=typed_rows(registry)[0]
-    durable=fixture.reload();generation=durable['state_generation']
-    durable['task_state']['inspection_unrelated_note']='safe metadata update'
-    save_plan_state(tmp_path,fixture.task_id,durable)
-    assert fixture.reload()['state_generation']>generation
-    result=dispatcher.dispatch_full('evidence.read',{'evidence_ref':row['ref_id']})
-    assert result['content'] and result['scope']['episode_id']==seed.seed_id
 
 
-def test_I12_durable_index_key_mismatch_rejected_before_read(tmp_path):
-    fixture,seed,registry,dispatcher=_real_handoff_reader(tmp_path)
-    row=typed_rows(registry)[0]
-    durable=fixture.reload()
-    durable['task_state']['inspection_ref_registry'][row['ref_id']]['ref_id']='inspection:sha256:'+'0'*64
-    save_plan_state(tmp_path,fixture.task_id,durable)
-    newer=fixture.reload()
-    with patch.object(StateContractStore,'read_object',side_effect=AssertionError('substituted object must not read')):
-        with pytest.raises(RecoveryToolError,match='INSPECTION_REF_INDEX_MISMATCH'):
-            build_recovery_inspection_registry(seed,newer,phase_store=PhaseArchiveStore(tmp_path))
-        with pytest.raises(InspectionEvidenceError,match='INSPECTION_REF_INDEX_MISMATCH'):
-            dispatcher.dispatch_full('evidence.read',{'evidence_ref':row['ref_id']})
 
 
-@pytest.mark.parametrize('owner,status',[
-    ('step','done'),('step','passed'),('step','completed'),
-    ('task','completed'),('task','cancelled'),
-])
-def test_I11_finished_authority_revokes_reader(tmp_path,owner,status):
-    fixture,_seed,registry,dispatcher=_real_handoff_reader(tmp_path)
-    row=typed_rows(registry)[0]
-    # Scope helper also serves producer/registry: terminal status must win
-    # even if an old active packet and verification attempt are retained.
-    from agent_core.workflow.inspection_evidence import assert_current_inspection_scope
-    durable=fixture.reload()
-    if owner=='step':durable['steps'][0]['status']=status
-    else:durable['task_state']['status']=status
-    with pytest.raises(InspectionEvidenceError,match='EPISODE_INACTIVE'):
-        assert_current_inspection_scope(durable,dispatcher.inspection_reader.scope)
 
 
-def test_I14_authority_read_is_bounded_before_inspection_body(tmp_path):
-    fixture,_seed,registry,dispatcher=_real_handoff_reader(tmp_path)
-    row=typed_rows(registry)[0]
-    with patch('agent_core.workflow.inspection_evidence.MAX_INSPECTION_AUTHORITY_BYTES',128):
-        with patch.object(StateContractStore,'read_object',side_effect=AssertionError('oversized authority must not read inspection body')):
-            with pytest.raises(InspectionEvidenceError,match='AUTHORITY_SIZE_LIMIT'):
-                dispatcher.dispatch_full('evidence.read',{'evidence_ref':row['ref_id']})

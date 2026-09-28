@@ -73,23 +73,6 @@ if "--baseline" in sys.argv:
             exec(compile(sources[module.__name__], module.__file__, "exec"), module.__dict__)
     sys.meta_path.insert(0, BaselineLoader())
 
-if len(sys.argv) > 1 and sys.argv[1] == "--control-child":
-    import asyncio, json
-    from bio_agents import BioAnalystAgent
-    inputs = iter([json.loads(sys.argv[2]), "/exit"])
-    agent = BioAnalystAgent.__new__(BioAnalystAgent)
-    calls = []
-    async def prompt(*args, **kwargs): return next(inputs)
-    async def dispatch(text, task_id, **kwargs):
-        calls.append(text)
-        return {"status":"offline_boundary", "model_calls":0}
-    agent._aprompt_user = prompt
-    agent._run_agent_interrupt_loop = dispatch
-    agent._should_auto_rename_session = lambda *args, **kwargs: False
-    asyncio.run(agent.interactive_mode())
-    print("OFFLINE_CONTROL_RESULT=" + json.dumps({"dispatches":calls,
-        "receipt":agent._last_cli_control_receipt, "model_calls":0}))
-    raise SystemExit(0)
 
 import pytest
 raise SystemExit(pytest.main(["--noconftest", "-q", "-p", "no:cacheprovider", *sys.argv[1:]]))

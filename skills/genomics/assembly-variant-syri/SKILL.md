@@ -1,23 +1,25 @@
 ---
 name: assembly-variant-syri
-description: Detect synteny-aware variants between two chromosome-level assemblies using MUMmer/nucmer alignment and SyRI, with optional plotsr visualization. Use when users provide reference and query assemblies and ask for assembly-based SNP, InDel, inversion, translocation, duplication, syntenic regions, or structural variation. Do not use on FASTQ/BAM read data.
-version: "1.0.0"
-tags: [assembly, SyRI, MUMmer, nucmer, delta-filter, structural-variant, synteny, inversion, translocation, plotsr]
-legacy_ids: [syri-assembly-variant, assembly-sv, genome-alignment-variant, SyRI比较, SyRI倒位易位SNP, 两个染色体级组装用SyRI比较倒位易位和SNP, 组装比较SyRI]
-task_types: [assembly_variant_calling]
-stage_tags: [whole_genome_alignment, syri, synteny_sv]
-inputs: [reference_assembly_fasta, query_assembly_fasta]
-outputs: [delta_alignment, coords, syri_out, syri_vcf, syri_summary, plotsr_pdf]
-runtime:
-  default_env: bio_syri
-  env_runner: bash
-  language: bash
-  packages: [mummer4, syri, plotsr, samtools]
-  capabilities: [assembly-comparison, synteny-aware-sv, variant-vcf]
-  healthcheck: bash -lc "nucmer --version >/dev/null && delta-filter -h >/dev/null 2>&1 && syri --help >/dev/null 2>&1"
-  install_policy: prefer-declared
-  install_command: mamba create -n bio_syri -c conda-forge -c bioconda -y syri mummer4 plotsr samtools
+description: Detect synteny-aware variants between two chromosome-level assemblies using MUMmer/nucmer alignment
+  and SyRI, with optional plotsr visualization. Use when users provide reference and query assemblies and ask for
+  assembly-based SNP, InDel, inversion, translocation, duplication, syntenic regions, or structural variation. Do
+  not use on FASTQ/BAM read data.
+metadata:
+  version: 1.0.0
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # Assembly Variant Calling with SyRI
 

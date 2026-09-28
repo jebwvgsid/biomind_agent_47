@@ -97,7 +97,7 @@ def import_cooler():
         raise RuntimeError(
             "cooler is required to infer resolution from .cool/.mcool inputs. "
             "Pass --resolution-bp or --boundary-tol-bp, or delegate: "
-            '<install_tool env="hicexplore">cooler</install_tool>'
+            'ask the user before installing the required dependency: cooler'
         ) from exc
     return cooler
 

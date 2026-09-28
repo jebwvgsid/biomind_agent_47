@@ -18,7 +18,6 @@ from agent_core.workflow.recovery_projection import (
     build_causal_failure_record,
     project_recovery_seed,
 )
-from agent_core.workflow.recovery_runtime import TypedRecovery
 from agent_core.workflow.stage_contracts import RecoverySeed, StageContractError
 
 
@@ -471,95 +470,12 @@ class RecoveryRuntimeProjectionIntegrationTests(unittest.IsolatedAsyncioTestCase
             value["instruction"] = "Correct only the failed semantic scope."
         return value
 
-    async def _run(
-        self, source_kind: str, source: dict
-    ) -> tuple[dict, _MemoryStore, dict]:
-        state, durable, _ = _causal_fixture(source_kind, source)
-        action = (
-            "revise_plan"
-            if source_kind in {"completion_gate_outcome", "commit_step_outcome"}
-            else "retry_step"
-        )
-        state["recovery_directive"] = self._directive(
-            action,
-            evidence_refs=tuple(source.get("evidence_refs") or ()),
-        )
-        store = _MemoryStore(durable)
-        result = await TypedRecovery(
-            data_path="/fixture", loader=store.load, saver=store.save
-        ).run(state)
-        return result, store, state
 
-    async def test_execute_semantics_do_not_regress(self) -> None:
-        result, _, _ = await self._run("execute_outcome", _execute_failure())
-        self.assertEqual(
-            result["recovery_outcome"]["type"], "candidate_repair_required"
-        )
-        self.assertEqual(
-            result["recovery_outcome"]["payload"]["failure_owner"],
-            "GENERATED_ACTION",
-        )
 
-    async def test_completion_gate_requests_plan_revision(self) -> None:
-        result, _, _ = await self._run(
-            "completion_gate_outcome", _verification_rejected()
-        )
-        self.assertEqual(
-            result["recovery_outcome"]["type"], "plan_revision_required"
-        )
-        self.assertEqual(
-            result["recovery_outcome"]["payload"]["contract_violations"],
-            ["Correct only the failed semantic scope."],
-        )
 
-    async def test_commit_requests_plan_revision(self) -> None:
-        result, _, _ = await self._run(
-            "commit_step_outcome", _commit_conflict()
-        )
-        self.assertEqual(
-            result["recovery_outcome"]["type"], "plan_revision_required"
-        )
 
-    async def test_resume_valid_packet_and_consumed_replay_are_idempotent(self) -> None:
-        state, durable, _ = _causal_fixture(
-            "execute_outcome", _execute_failure()
-        )
-        store = _MemoryStore(durable)
-        recovery = TypedRecovery(
-            data_path="/fixture", loader=store.load, saver=store.save
-        )
-        directive = self._directive("retry_step", evidence_refs=("execution-1",))
-        resumed = await recovery.run({
-            "task_id": "task-recovery",
-            "recovery_directive": directive,
-        })
-        state["recovery_directive"] = directive
-        replayed = await recovery.run(state)
-        self.assertEqual(resumed, replayed)
-        self.assertEqual(
-            store.value["task_state"]["active_failure_packet_ref"], ""
-        )
 
-    async def test_resume_missing_packet_fails_closed(self) -> None:
-        store = _MemoryStore(_durable())
-        result = await TypedRecovery(
-            data_path="/fixture", loader=store.load, saver=store.save
-        ).run({"task_id": "task-recovery"})
-        self.assertEqual(
-            result["recovery_outcome"]["type"], "internal_protocol_error"
-        )
-        self.assertEqual(
-            result["recovery_outcome"]["payload"]["error_code"],
-            "RECOVERY_CAUSAL_PACKET_MISSING",
-        )
 
-    async def test_install_failure_enters_bounded_repair(self) -> None:
-        result, _, _ = await self._run(
-            "install_subagent_outcome", _install_failure()
-        )
-        self.assertEqual(
-            result["recovery_outcome"]["type"], "candidate_repair_required"
-        )
 
 
 if __name__ == "__main__":

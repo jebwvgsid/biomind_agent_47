@@ -18,7 +18,6 @@ from agent_core.task_spec import (
     create_task_spec,
     resolve_effective_user_facts,
 )
-from memory_manager import MemoryManager
 
 
 class _SummaryLLM:
@@ -136,43 +135,6 @@ class Batch8ReplayTests(unittest.TestCase):
             self.assertEqual(bundle["segments"]["execute_validate"]["calls"][0]["manifest"]["call_kind"], "supervisor_reviewer")
             self.assertEqual(bundle["controller_lineage"][0]["payload"]["to_node"], "execute")
 
-    def test_compression_does_not_change_facts_or_snapshot_hashes(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            spec = create_task_spec("输入 /data/a.vcf；不得猜测数据库", task_id="compressed")
-            plan = _persist_spec(tmpdir, "compressed", spec)
-            store = ContextLineageStore(tmpdir, "compressed")
-            _call(store, "consultant", "X" * 120000, "selected skill/a")
-            before_facts = dump_effective_user_facts(tmpdir, "compressed")
-            before = build_decision_lineage_bundle(tmpdir, "compressed")
-
-            manager = MemoryManager(
-                _SummaryLLM(),
-                archive_dir=str(Path(tmpdir) / "archives"),
-                max_tokens=100,
-                compress_threshold=0.5,
-                keep_recent_tokens=20,
-            )
-            _, compressed = asyncio.run(manager.maybe_compress([
-                SystemMessage(content="stable system"),
-                HumanMessage(content="old " + "Y" * 10000),
-                AIMessage(content="middle " + "Z" * 5000),
-                HumanMessage(content="latest answer"),
-            ], "compressed"))
-            self.assertTrue(compressed)
-
-            plan = load_plan_state(tmpdir, "compressed")
-            plan["task_state"]["compression_summary"] = "compressed old messages"
-            plan["task_state"]["messages"] = [{"role": "system", "content": "summary only"}]
-            save_plan_state(tmpdir, "compressed", plan)
-
-            after_facts = dump_effective_user_facts(tmpdir, "compressed")
-            after = build_decision_lineage_bundle(tmpdir, "compressed")
-            self.assertEqual(before_facts["effective_facts_revision"], after_facts["effective_facts_revision"])
-            self.assertEqual(
-                before["segment_plan"][0]["hash"],
-                after["segment_plan"][0]["hash"],
-            )
-            self.assertTrue(Path(after["segments"]["task_user_consult"]["calls"][0]["manifest"]["request_payload_ref"]).is_file())
 
     def test_legacy_checkpoint_does_not_claim_exact_prompt(self):
         with tempfile.TemporaryDirectory() as tmpdir:

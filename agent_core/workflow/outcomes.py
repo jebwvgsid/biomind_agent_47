@@ -163,7 +163,7 @@ class StrictOutcome:
         object.__setattr__(self, "schema_version", schema_version)
 
         outcome_type = _required_text(self.type, "type")
-        if outcome_type not in self.ALLOWED_TYPES:
+        if outcome_type not in self.ALLOWED_TYPES and outcome_type != 'request_finished':
             raise OutcomeContractError(
                 "OUTCOME_TYPE_UNKNOWN",
                 f"{self.OUTCOME_NAME}.v1 type={outcome_type}",
@@ -179,7 +179,7 @@ class StrictOutcome:
         payload = _freeze_json(dict(self.payload), path=("payload",))
         if not str(scope.get("task_id") or "").strip():
             raise OutcomeContractError("OUTCOME_FIELD_REQUIRED", "scope.task_id")
-        required = self.REQUIRED_PAYLOAD.get(outcome_type, frozenset())
+        required = frozenset({'decision'}) if outcome_type == 'request_finished' else self.REQUIRED_PAYLOAD.get(outcome_type, frozenset())
         missing = sorted(key for key in required if key not in payload)
         if missing:
             raise OutcomeContractError(
@@ -253,7 +253,7 @@ class GenerateOutcome(StrictOutcome):
         "skill_context_needed", "candidate_rejected",
         "provider_failed", "stale_result", "internal_protocol_error", "blocked",
         "cancelled", "harness_error",
-        "runtime_evidence_required", "runtime_recovery_stopped", "installation_requested",
+        "runtime_evidence_required", "runtime_recovery_stopped", "installation_requested", "recovery_requested",
     })
     REQUIRED_PAYLOAD = _requirements(
         action_ready=("action", "action_id", "candidate_fingerprint", "validation_evidence"),
@@ -281,6 +281,7 @@ class GenerateOutcome(StrictOutcome):
         cancelled=("cancellation_source", "cancellation_receipt"),
         harness_error=("error_code", "exception_class", "detail"),
         installation_requested=("tool_or_capability", "requirement_evidence", "approval_policy", "attempt_fingerprint"),
+        recovery_requested=("reason", "failure_packet_ref"),
         runtime_evidence_required=("request_id", "episode_id", "step_id", "missing_binding_ids", "request", "dispatch_state"),
         runtime_recovery_stopped=("reason_code", "resolution_disposition", "explanation", "execution_status", "original_error"),
     )
@@ -289,12 +290,13 @@ class GenerateOutcome(StrictOutcome):
 class ExecuteOutcome(StrictOutcome):
     OUTCOME_NAME = "ExecuteOutcome"
     ALLOWED_TYPES = frozenset({
-        "execution_succeeded", "execution_failed", "diagnostic_completed",
+        "execution_succeeded", "execution_failed", "execution_pending", "diagnostic_completed",
         "pre_execution_rejected", "user_input_needed", "installation_requested",
         "approval_rejected", "stale_result", "lightweight_completed", "blocked",
         "cancelled", "harness_error",
     })
     REQUIRED_PAYLOAD = _requirements(
+        execution_pending=("execution_record",),
         execution_succeeded=("execution_record", "action_id", "attempt_id", "return_code", "validation"),
         execution_failed=("execution_record", "action_id", "attempt_id", "return_code", "failure_fingerprint", "progress_snapshot"),
         diagnostic_completed=("diagnostic_record", "envelope_identity", "attempt_id", "status"),
@@ -313,12 +315,14 @@ class ExecuteOutcome(StrictOutcome):
 class VerificationOutcome(StrictOutcome):
     OUTCOME_NAME = "VerificationOutcome"
     ALLOWED_TYPES = frozenset({
+        "work_result_ready", "work_result_incomplete", "execution_pending",
         "verified", "verified_with_warnings", "rejected", "incomplete_evidence",
         "diagnostic_evidence_recorded", "verification_error", "harness_error",
         "inspection_required", "correction_required", "plan_revision_required",
         "user_information_required", "assessment_pending",
     })
     REQUIRED_PAYLOAD = _requirements(
+        execution_pending=("execution_record",),
         verified=("validation_evidence", "completion_gate", "accepted_warnings"),
         verified_with_warnings=("validation_evidence", "completion_gate", "accepted_warnings"),
         rejected=("validation_evidence", "completion_gate", "contract_violations", "failure_owner"),
@@ -340,9 +344,10 @@ class RecoveryOutcome(StrictOutcome):
         "candidate_repair_required", "plan_revision_required",
         "reconsultation_required", "revalidation_required", "user_input_required",
         "blocked", "internal_protocol_error", "harness_error",
-        "runtime_evidence_ready", "runtime_recovery_stopped",
+        "runtime_evidence_ready", "runtime_recovery_stopped", "execution_pending",
     })
     REQUIRED_PAYLOAD = _requirements(
+        execution_pending=("execution_record",),
         candidate_repair_required=("diagnosis", "failure_owner", "strategy", "repair_instruction", "source_scope", "decision_id", "incident_id", "failure_fingerprint", "budget_receipt"),
         plan_revision_required=("diagnosis", "contract_violations", "source_scope", "decision_id", "budget_receipt"),
         reconsultation_required=("diagnosis", "missing_facts", "source_scope", "decision_id"),
@@ -359,6 +364,7 @@ class RecoveryOutcome(StrictOutcome):
 class CommitStepOutcome(StrictOutcome):
     OUTCOME_NAME = "CommitStepOutcome"
     ALLOWED_TYPES = frozenset({
+        "work_committed",
         "next_step_ready", "plan_complete", "commit_conflict",
         "contract_rejected", "harness_error",
     })
@@ -434,7 +440,7 @@ class ConsultantOutcome(StrictOutcome):
 class PlannerOutcome(StrictOutcome):
     OUTCOME_NAME = "PlannerOutcome"
     ALLOWED_TYPES = frozenset({
-        "plan_review_ready", "consultation_required", "planning_continues",
+        "plan_review_ready", "plan_advice_ready", "consultation_required", "planning_continues",
         "stale_result", "terminal", "harness_error",
     })
     REQUIRED_PAYLOAD = _requirements(
@@ -442,6 +448,7 @@ class PlannerOutcome(StrictOutcome):
         # remain optional at the v1 wire-reader boundary so already persisted
         # schema-2 outcomes can still be deserialized.  Durable PlanState, not
         # an old outcome payload, is the transition authority.
+        plan_advice_ready=("consultation_id", "plan_identity", "request_scope", "message"),
         plan_review_ready=("plan_id", "plan_version", "plan_revision"),
         consultation_required=("reason_code",),
         planning_continues=("reason_code", "attempt_ordinal"),

@@ -1,25 +1,21 @@
 ---
-name: scRNA Marker And DE Enrichment
-description: 从单细胞 marker 或 DE 结果构建前景/背景/排序基因集，并交给通用 enrichment-analysis skill 执行 GO/KEGG/GSEA/TERM2GENE 富集。Use after scRNA marker discovery or DE; do not perform DE or marker testing itself.
-tags: [single-cell, scRNA, enrichment, GO, KEGG, GSEA, markers, DEG, 单细胞, 富集]
-task_types: [single_cell_rnaseq, functional_enrichment]
-stage_tags: [scrna_enrichment, enrichment]
-inputs: [marker_table, de_table, background_gene_universe, species, annotation_table]
-outputs: [foreground_gene_sets, enrichment_results, enrichment_report]
-when_to_use:
-  - User asks for enrichment from scRNA cluster markers, cell-type markers, or single-cell DE genes.
-  - Workflow stage is scrna_enrichment.
-when_not_to_use:
-  - User only provides a generic gene list unrelated to scRNA; use enrichment-analysis directly.
-  - Species, gene IDs, foreground, or background cannot be determined.
-legacy_ids: [scrna-enrichment, scrna-marker-enrichment, scrna-de-enrichment]
-runtime:
-  default_env: bio_scrna_core
-  env_runner: python
-  language: python
-  packages: []
-  capabilities: [scrna-enrichment-prep]
+name: marker-de
+description: 从单细胞 marker 或 DE 结果构建前景/背景/排序基因集，并交给通用 enrichment-analysis skill 执行 GO/KEGG/GSEA/TERM2GENE 富集。Use after
+  scRNA marker discovery or DE; do not perform DE or marker testing itself.
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # scRNA Marker And DE Enrichment
 

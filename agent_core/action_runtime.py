@@ -1,9 +1,7 @@
-"""Capability-owned runtime and execution provenance contracts.
+"""Formal command execution and historical capability runtime contracts.
 
-This module is the only authority for turning a selected Skill capability into
-the environment of one executable action.  Runtime discovery may populate the
-registry, but neither Planner prose nor generated source text can enlarge the
-capability's binding scope.
+Ordinary work uses explicit parameters, frozen sources and the shared runner.
+The versioned capability helpers below remain available to historical actions.
 """
 
 from __future__ import annotations
@@ -119,6 +117,10 @@ class ActionRuntimeContractError(ValueError):
 
     def to_diagnostic(self) -> Dict[str, Any]:
         return {"code": self.code, **deepcopy(self.diagnostic)}
+
+
+class PrelaunchAdmissionRejected(ActionRuntimeContractError):
+    """Host preparation rejection certified inside the exclusive, pre-delegation scope."""
 
 
 def canonical_skill_namespace(skill_id: Any) -> str:
@@ -366,7 +368,7 @@ def _registry_record(
         "env_name": env_name,
         "value": value,
         "value_kind": value_kind,
-        "source": "verified_runtime_audit",
+        "source": "registered_runtime" if audit.get("runtime_source") == "registered_runtime" else "verified_runtime_audit",
         "source_runtime_audit_id": _runtime_audit_id(audit),
         "source_skill_id": str(audit.get("skill_id") or audit.get("skill") or ""),
         "status": "ready",
@@ -786,6 +788,48 @@ def build_action_execution_environment(
     return effective
 
 
+def freeze_execution_environment(
+    base_environment: Mapping[str, Any],
+    action_environment: Optional[Mapping[str, Any]] = None,
+) -> Dict[str, str]:
+    """Freeze safe launch defaults into the existing validated action.env.
+
+    Ambient credentials and arbitrary launcher variables are not copied. The
+    explicit action bindings are already part of the reviewed action contract.
+    Reusing this return value for subsequent argv/cwd/env preparation makes a
+    later launcher export irrelevant to this accepted action.
+    """
+    effective = {
+        "PATH": str(base_environment.get("PATH") or "/usr/bin:/bin"),
+        "LC_ALL": str(base_environment.get("LC_ALL") or "C.UTF-8"),
+    }
+    if base_environment.get("TMPDIR"):
+        effective["TMPDIR"] = str(base_environment["TMPDIR"])
+    for raw_name, raw_value in (action_environment or {}).items():
+        name = str(raw_name)
+        value = str(raw_value)
+        if not _ENV_NAME_RE.fullmatch(name) or "\x00" in value:
+            raise ActionRuntimeContractError("ACTION_ENV_SNAPSHOT_INVALID", env_name=name)
+        effective[name] = value
+    prefix = str((action_environment or {}).get("ENV_PREFIX") or (action_environment or {}).get("CONDA_PREFIX") or "")
+    if prefix:
+        if not Path(prefix).is_absolute():
+            raise ActionRuntimeContractError("ACTION_ENV_SNAPSHOT_PATH_INVALID")
+        effective["CONDA_PREFIX"] = prefix
+        effective["PATH"] = str(Path(prefix) / "bin") + os.pathsep + effective["PATH"]
+    # PATH/TMPDIR are explicit locations; empty/relative PATH components would
+    # reintroduce a dependence on a later process working directory.
+    if any(not part or not Path(part).is_absolute() for part in effective["PATH"].split(os.pathsep)):
+        raise ActionRuntimeContractError("ACTION_ENV_SNAPSHOT_PATH_INVALID")
+    if effective.get("TMPDIR") and not Path(effective["TMPDIR"]).is_absolute():
+        raise ActionRuntimeContractError("ACTION_ENV_SNAPSHOT_TMPDIR_INVALID")
+    if any("\x00" in value for value in effective.values()):
+        raise ActionRuntimeContractError("ACTION_ENV_SNAPSHOT_INVALID")
+    if not re.fullmatch(r"[A-Za-z0-9_.@-]+", effective["LC_ALL"]):
+        raise ActionRuntimeContractError("ACTION_ENV_SNAPSHOT_LOCALE_INVALID")
+    return dict(sorted(effective.items()))
+
+
 def build_exact_action_environment(
     base_environment: Mapping[str, Any],
     *,
@@ -915,6 +959,25 @@ def serialize_action_capability_instructions(
     )
 
 
+def resolve_execution_runner(language: str, environment: Mapping[str, Any]) -> str:
+    """Select the existing runner once, using the reviewed launch environment."""
+    import shutil
+    import sys
+    if language == "Python":
+        prefix = str(environment.get("ENV_PREFIX") or environment.get("CONDA_PREFIX") or "")
+        if prefix:
+            runner = Path(prefix) / "bin" / "python"
+            if not runner.is_absolute() or not runner.is_file() or not os.access(runner, os.X_OK):
+                raise ActionRuntimeContractError("EXECUTION_RUNNER_UNAVAILABLE", runner=str(runner))
+            return str(runner)
+        return str(Path(sys.executable).absolute())
+    name = "bash" if language == "Bash" else "Rscript"
+    selected = shutil.which(name, path=str(environment.get("PATH") or "/usr/bin:/bin"))
+    if not selected:
+        raise ActionRuntimeContractError("EXECUTION_RUNNER_UNAVAILABLE", runner=name)
+    return str(Path(selected).absolute())
+
+
 def build_execution_policy_manifest(
     *,
     action_identity: Mapping[str, Any],
@@ -923,6 +986,8 @@ def build_execution_policy_manifest(
     policy: Optional[Mapping[str, Any]] = None,
     skill_resources: Sequence[Mapping[str, Any]] = (),
     evidence_root: str = "",
+    runner_executable: str = "",
+    registered_preflight_evidence: Optional[Mapping[str, Any]] = None,
     output_write_guard: Optional[Mapping[str, Any]] = None,
 ) -> Dict[str, Any]:
     policy_value = {
@@ -944,6 +1009,10 @@ def build_execution_policy_manifest(
         "scope": "current_action",
         "policy": policy_value,
     }
+    if runner_executable:
+        if not Path(runner_executable).is_absolute():
+            raise ActionRuntimeContractError("EXECUTION_RUNNER_PATH_INVALID")
+        manifest["runner_executable"] = runner_executable
     if output_write_guard is not None:
         manifest["output_write_guard"] = deepcopy(dict(output_write_guard))
     if evidence_root and any(row.get("handle") in {
@@ -955,8 +1024,27 @@ def build_execution_policy_manifest(
         manifest["evidence_binding"] = {"environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR",
             "approved_root": root, "leaf_rule": "current_attempt/preflight",
             "creator": "helper", "purpose": "internal_execution_evidence"}
+        if registered_preflight_evidence:
+            row = dict(registered_preflight_evidence)
+            if row.get("semantic_handle") != "plan.input_preflight_evidence" or not row.get("expected_path"):
+                raise ActionRuntimeContractError("PREFLIGHT_REGISTERED_BINDING_INVALID")
+            exact = approved_resource_locator({"canonical_path": row["expected_path"]})["path"]
+            manifest["evidence_binding"].update(leaf_rule="registered_exact_path",
+                canonical_path=exact, semantic_handle="plan.input_preflight_evidence",
+                authority="controller_output_bindings", purpose="formal_plan_evidence")
     manifest["manifest_hash"] = _manifest_hash(manifest)
     return manifest
+
+
+def registered_preflight_output(action):
+    """Read the exact host-bound output; no guessing by filename or artifact text."""
+    if action.get('execution_protocol_version') == 3:
+        return None  # Optional legacy helper binding only; actual preflight is task work.
+    rows = [row for row in action.get("controller_output_bindings", [])
+            if isinstance(row, Mapping) and row.get("semantic_handle") == "plan.input_preflight_evidence"]
+    if len(rows) > 1:
+        raise ActionRuntimeContractError("PREFLIGHT_REGISTERED_BINDING_AMBIGUOUS")
+    return dict(rows[0]) if rows else None
 
 
 def _output_path_state(path: Path) -> Dict[str, Any]:
@@ -1074,14 +1162,34 @@ def preserve_approved_output_files(guard: Mapping[str, Any], *, decision: str,
                 if (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns, before.st_ctime_ns) != tuple(
                         row["before"][k] for k in ("device", "inode", "size", "mtime_ns", "ctime_ns")):
                     raise ActionRuntimeContractError("OUTPUT_TARGET_CHANGED_SINCE_REVIEW", path=row["path"])
-                backup_fd = os.open(Path(row["backup_path"]).name,
-                    os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=parent_fd)
-                with os.fdopen(backup_fd, "wb") as backup:
-                    for chunk in iter(lambda: source.read(1024 * 1024), b""):
-                        backup.write(chunk)
-                        digest.update(chunk)
-                    backup.flush()
-                    os.fsync(backup.fileno())
+                try:
+                    backup_fd = os.open(Path(row["backup_path"]).name,
+                        os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=parent_fd)
+                except FileExistsError:
+                    # A crash may leave a completed backup before its receipt
+                    # is saved. Reuse only this guard's exact backup, after a
+                    # full comparison to the still-unchanged reviewed source.
+                    # Partial/tampered copies remain untouched and cannot admit
+                    # execution. This does not upgrade any scientific evidence.
+                    backup_fd = os.open(Path(row["backup_path"]).name,
+                        os.O_RDONLY | os.O_NOFOLLOW, dir_fd=parent_fd)
+                    with os.fdopen(backup_fd, "rb") as backup:
+                        info = os.fstat(backup.fileno())
+                        if not stat.S_ISREG(info.st_mode) or info.st_size != before.st_size:
+                            raise ActionRuntimeContractError("OUTPUT_BACKUP_CHANGED")
+                        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+                            if backup.read(len(chunk)) != chunk:
+                                raise ActionRuntimeContractError("OUTPUT_BACKUP_CHANGED")
+                            digest.update(chunk)
+                        if backup.read(1):
+                            raise ActionRuntimeContractError("OUTPUT_BACKUP_CHANGED")
+                else:
+                    with os.fdopen(backup_fd, "wb") as backup:
+                        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+                            backup.write(chunk)
+                            digest.update(chunk)
+                        backup.flush()
+                        os.fsync(backup.fileno())
                 os.fsync(parent_fd)
         finally:
             os.close(parent_fd)
@@ -1103,15 +1211,22 @@ def resolve_preflight_evidence_binding(manifest, *, approved_root, attempt_id, a
     validate_manifest_hash(manifest)
     from agent_core.approved_resource_locator import approved_resource_locator
     root = approved_resource_locator({"canonical_path": str(approved_root)})["path"]
-    if binding != {"environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR",
-            "approved_root": root, "leaf_rule": "current_attempt/preflight",
-            "creator": "helper", "purpose": "internal_execution_evidence"}:
+    expected = {"environment_variable": "BIOMIND_PREFLIGHT_EVIDENCE_DIR",
+        "approved_root": root, "leaf_rule": "current_attempt/preflight",
+        "creator": "helper", "purpose": "internal_execution_evidence"}
+    registered = binding.get("leaf_rule") == "registered_exact_path"
+    if registered:
+        exact = approved_resource_locator({"canonical_path": binding.get("canonical_path", "")})["path"]
+        expected.update(leaf_rule="registered_exact_path", canonical_path=exact,
+            semantic_handle="plan.input_preflight_evidence", authority="controller_output_bindings",
+            purpose="formal_plan_evidence")
+    if binding != expected:
         raise ActionRuntimeContractError("PREFLIGHT_EVIDENCE_BINDING_DRIFT")
     if binding["environment_variable"] in action_environment:
         raise ActionRuntimeContractError("PREFLIGHT_EVIDENCE_ENV_RESERVED")
     if not str(attempt_id).startswith("attempt_") or Path(attempt_id).name != attempt_id:
         raise ActionRuntimeContractError("PREFLIGHT_ATTEMPT_ID_INVALID")
-    leaf = Path(root) / attempt_id / "preflight"
+    leaf = Path(binding["canonical_path"]) if registered else Path(root) / attempt_id / "preflight"
     checked = approved_resource_locator({"canonical_path": str(leaf)})["path"]
     if Path(checked).exists():
         raise ActionRuntimeContractError("PREFLIGHT_EVIDENCE_ALREADY_EXISTS")
@@ -1127,6 +1242,7 @@ def build_action_approval_identity(
     artifact_env_manifest_hash: str,
     execution_policy_manifest_hash: str,
     working_directory: str,
+    execution_environment: Optional[Mapping[str, Any]] = None,
 ) -> Dict[str, Any]:
     identity = {
         "schema_version": ACTION_APPROVAL_IDENTITY_SCHEMA_VERSION,
@@ -1137,6 +1253,9 @@ def build_action_approval_identity(
         "execution_policy_manifest_hash": str(execution_policy_manifest_hash or ""),
         "working_directory": str(Path(working_directory).expanduser().resolve()),
     }
+    if execution_environment is not None:
+        identity["execution_environment_hash"] = stable_digest(dict(sorted(
+            (str(key), str(value)) for key, value in execution_environment.items())))
     identity["approval_identity_hash"] = stable_digest(identity)
     return identity
 
@@ -1148,7 +1267,7 @@ def validate_action_approval_identity(
     fields = (
         "generated_script_sha256", "capability_contract_hash",
         "runtime_env_manifest_hash", "artifact_env_manifest_hash",
-        "execution_policy_manifest_hash", "working_directory",
+        "execution_policy_manifest_hash", "working_directory", "execution_environment_hash",
     )
     drift = {
         field: {"approved": str(approved.get(field) or ""), "observed": str(observed.get(field) or "")}
@@ -1187,3 +1306,544 @@ def assert_current_action_runtime_scope(action: Mapping[str, Any]) -> None:
             missing_fields=missing,
             required_action="regenerate_and_review_current_action",
         )
+
+
+def registered_execution_environment(state: Mapping[str, Any], explicit: Mapping[str, Any]) -> Dict[str, str]:
+    """Materialize accepted registration for this step, without a fresh probe.
+
+    An explicit reviewed environment stays explicit. Ambiguous task bindings do
+    not fall back silently to the host Python interpreter.
+    """
+    environment = {str(k): str(v) for k, v in explicit.items()}
+    task = state.get("task_state") or {}
+    explicit_prefix = environment.get("ENV_PREFIX") or environment.get("CONDA_PREFIX")
+    if explicit_prefix:
+        if any(row.get("prefix") == explicit_prefix for row in (task.get("runtime_invalidations") or {}).values()):
+            raise ActionRuntimeContractError("REGISTERED_RUNTIME_REQUIRES_TARGETED_DIAGNOSIS")
+        return environment
+    if not task.get("runtime_evidence"):
+        return environment
+    from agent_core.runtime_evidence import project_registered_runtime_scopes
+    step = next((item for item in state.get("steps") or []
+                 if item.get("step_id") == state.get("current_step_id")), {})
+    selected = list(step.get("skill_ids") or [])
+    for key in ("selected_skill_id", "skill_id"):
+        if step.get(key):
+            selected.append(str(step[key]))
+    audits, evaluations = project_registered_runtime_scopes(task, task_id=state.get("task_id"), skill_ids=selected)
+    registered = [row for row in audits if row.get("runtime_source") == "registered_runtime"]
+    prefixes = {str(row["resolved_runtime_paths"].get("RESOLVED_ENV_PREFIX") or
+                    row["resolved_runtime_paths"].get("ENV_PREFIX") or "") for row in registered} - {""}
+    if any((value.get("runtime.environment.prefix") or {}).get("availability") in {"AMBIGUOUS", "UNAVAILABLE"}
+           for value in evaluations) or len(prefixes) > 1:
+        raise ActionRuntimeContractError("REGISTERED_EXECUTION_ENVIRONMENT_UNRESOLVED")
+    if any(row.get("prefix") in prefixes for row in (task.get("runtime_invalidations") or {}).values()):
+        raise ActionRuntimeContractError("REGISTERED_RUNTIME_REQUIRES_TARGETED_DIAGNOSIS")
+    if len(prefixes) == 1:
+        environment["ENV_PREFIX"] = next(iter(prefixes))
+    return environment
+
+
+async def execute_formal_command(service, arguments, *, task_id, call_id, stage='generate',
+                                 runtime_observation=None, cancel_event=None, original_deadline=None):
+    """Command-tool adapter to the SAME formal runner and PlanTracker lineage.
+
+    Identity is the persisted tool intent, never the content hash. Holding its
+    file lock prevents two restored callers launching it together. A persisted
+    exit receipt is replayed even if the tool-message checkpoint was lost.
+    """
+    import asyncio
+    import fcntl
+    import shlex
+    import socket
+    import time
+    from agent_core.plan_tracker import (load_plan_state, save_plan_state,
+        record_provenance_event, classify_attempt_resume, canonical_task_spec_for_state, resolve_work_output)
+    from agent_core.request_state import request_scope, current_finish
+    from execution.executor import run_command, get_last_execution_metadata
+    from execution.script_validation import check_executable_action, resolve_direct_script_argv, explicit_script_diagnostic
+
+    if not isinstance(arguments, Mapping) or set(arguments) - {
+        'cmd', 'argv', 'workdir', 'env', 'timeout_ms', 'max_output_chars', 'script_path', 'helper_paths', 'expected_sha256', 'legacy_action', 'script_args', 'interpreter', 'write_paths', 'delete_paths'}:
+        raise ValueError('EXEC_COMMAND_ARGUMENTS_INVALID')
+    if not call_id:
+        raise ValueError('EXECUTION_INTENT_ID_MISSING')
+    durable = load_plan_state(service.data_path, task_id)
+    observation = runtime_observation if runtime_observation is not None else {}
+    observation['launch_delegated'] = False
+    observation['preparation_settlement'] = {'safe_to_release':True,
+        'phase':'permission_admission','effects':[],
+        'boundary':'before_preparation_and_launch'}
+    def check_cancelled():
+        current = load_plan_state(service.data_path, task_id)
+        if ((cancel_event is not None and cancel_event.is_set())
+                or (current.get('task_state') or {}).get('status') == 'cancelled'):
+            raise asyncio.CancelledError()
+    check_cancelled()
+    scope = request_scope(durable)
+    review = (durable.get('task_state') or {}).get('result_review') or {}
+    if review.get('request_scope') == scope:
+        raise ValueError('RESULT_REVIEW_FORBIDS_EXECUTION')
+    intent_id = hashlib.sha256(json.dumps([scope, call_id], sort_keys=True).encode()).hexdigest()[:24]
+    action_id, attempt_id = 'action-' + intent_id, 'attempt-' + intent_id
+    attempt_dir = Path(service.data_path).absolute() / 'task_outputs' / task_id / 'attempts' / attempt_id
+    attempt_dir.mkdir(parents=True, exist_ok=True)
+    receipt_path = attempt_dir / 'exit_status.json'
+    args_hash = hashlib.sha256(json.dumps(arguments, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+    lock = (attempt_dir / 'intent.lock').open('a+')
+    try:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            from agent_core.execution_permissions import (request_permission, command_payload,
+                                                          PermissionPending)
+            waiting = request_permission(service.data_path, task_id, call_id,
+                                         command_payload(service, arguments, task_id))
+            if waiting['status'] == 'pending':
+                raise PermissionPending(waiting)
+            return {'status': 'running', 'attempt_id': attempt_id, 'exit_code': None,
+                'receipt_ref': str(receipt_path), 'replayed': True}
+        # A receipt is the launch fact; missing chat text cannot invalidate it.
+        if receipt_path.is_file():
+            result = json.loads(receipt_path.read_text())
+            if result.get('arguments_hash') != args_hash:
+                raise ValueError('EXECUTION_INTENT_ARGUMENTS_CHANGED')
+            _record_formal_receipt(service.data_path, task_id, result)
+            return {**result, 'replayed': True}
+        prior = (durable.get('provenance_state') or {}).get('attempts', {}).get(attempt_id)
+        if prior:
+            original = (durable.get('provenance_state') or {}).get('actions', {}).get(action_id, {}).get('normalized_action') or {}
+            if original.get('arguments_hash') != args_hash:
+                raise ValueError('EXECUTION_INTENT_ARGUMENTS_CHANGED')
+            resume = classify_attempt_resume(durable, step_id=prior.get('step_id'), action_id=action_id)
+            return {'status': 'running' if resume.get('route') == 'monitor_running_attempt' else 'reconciliation_required',
+                'attempt_id': attempt_id, 'exit_code': None, 'resume': resume, 'replayed': True}
+        for previous_attempt in (durable.get('provenance_state') or {}).get('attempts', {}).values():
+            if (previous_attempt.get('status') in {'STARTING', 'RUNNING', 'UNKNOWN_AFTER_CRASH'}):
+                raise ValueError('PRIOR_PROCESS_REQUIRES_MONITOR_OR_RECONCILIATION')
+
+        # Only reached after exclusive intent ownership, replay and prior-run checks.
+        # This is host control-flow evidence, not an execution_started default.
+        observation['preparation_settlement'] = {
+            'safe_to_release': True, 'phase': 'scoped_preparation',
+            'effects': [{'kind': 'attempt_control_files', 'path': str(attempt_dir),
+                        'retained': True, 'rolled_back': False}],
+            'boundary': 'exclusive_intent_before_starting_and_delegation'}
+        from agent_core.execution_permissions import (authorize_command, claim_permission,
+            validate_permit, execution_context, command_payload, digest as permission_digest)
+        permission = await authorize_command(service, arguments, task_id=task_id,
+            call_id=call_id, cancel_event=cancel_event)
+        durable = load_plan_state(service.data_path, task_id)
+        check_cancelled()
+        if current_finish(durable):
+            raise PrelaunchAdmissionRejected('CURRENT_REQUEST_ALREADY_ENDED', phase='dynamic_admission')
+        if observation.get('expected_request_scope') is not None and observation['expected_request_scope'] != scope:
+            raise PrelaunchAdmissionRejected('FORMAL_REQUEST_SCOPE_CHANGED', phase='dynamic_admission')
+        admission = (durable.get('task_state') or {}).get('intent_admission') or {}
+        if admission.get('request_kind') != 'execute' or admission.get('execution_scope') not in {'simple', 'managed'}:
+            raise PrelaunchAdmissionRejected('CURRENT_REQUEST_HAS_NO_EXECUTION_AUTHORIZATION', phase='dynamic_admission')
+        approval = durable.get('current_approval') or {}
+        requested_review_done = approval.get('status') == 'approved' and approval.get('plan_snapshot_ref') == durable.get('plan_snapshot_ref')
+        if admission.get('review_before_execution') and not requested_review_done:
+            raise PrelaunchAdmissionRejected('USER_REQUESTED_REVIEW_BEFORE_EXECUTION', phase='dynamic_admission')
+        project = Path(service.project_for_task(task_id)).absolute()
+        cwd = Path(arguments.get('workdir') or project).expanduser()
+        if not cwd.is_absolute():
+            cwd = project / cwd
+        try:
+            cwd = cwd.resolve(strict=True)
+        except (FileNotFoundError, NotADirectoryError):
+            raise PrelaunchAdmissionRejected('EXECUTION_CWD_NOT_DIRECTORY', phase='dynamic_admission')
+        if not cwd.is_dir():
+            raise PrelaunchAdmissionRejected('EXECUTION_CWD_NOT_DIRECTORY', phase='dynamic_admission')
+        from agent_core.work_outputs import file_fingerprint
+        from agent_core.work_plan import action_targets, authority_identity
+        output_rows = action_targets(durable, arguments, project)
+        step = {}
+        draft = ((durable.get('task_state') or {}).get('generate_context_episode') or {}).get('draft_file') or {}
+        draft_scope = draft.get('scope') or {}
+        current_draft = (draft.get('status') == 'validated' and draft.get('content_ref')
+            and all(draft_scope.get(k) == v for k,v in scope.items()))
+        selected_source, selected_sha = None, None
+        if current_draft:
+            if Path(str(draft.get('path') or '')).suffix.lower() in {'.py','.sh','.r'}:
+                selected_source, selected_sha = draft['path'], draft.get('sha256')
+            elif Path(str(draft.get('path') or '')).suffix.lower() == '.json':
+                from agent_core.state_contract_store import StateContractStore
+                saved = StateContractStore(service.data_path,task_id).read_object(draft['content_ref'], expected_type='draft_candidate_content')
+                selected = json.loads(saved['content'])
+                if isinstance(selected,dict) and selected.get('script_path'):
+                    selected_source, selected_sha = selected['script_path'], selected.get('expected_sha256')
+        legacy = arguments.get('legacy_action') or {}
+        actual_arguments = dict(arguments)
+        if legacy:
+            from agent_core.step_effects import executable_carrier
+            carrier = executable_carrier(legacy)
+            checked = check_executable_action(legacy)
+            if checked.get('required') and checked.get('check_status') != 'PASS':
+                return {'status': 'not_run', 'syntax_check': checked, 'execution_started': False}
+            if legacy.get('script_path') and not carrier.get('argv') and not carrier.get('script_available'):
+                actual_arguments.update({k:v for k,v in legacy.items() if k in {'script_path','script_args','interpreter','helper_paths','expected_sha256'}})
+            elif carrier.get('argv'):
+                actual_arguments['argv'] = list(carrier['argv'])
+                for field in ('script_path', 'helper_paths', 'expected_sha256'):
+                    if field in legacy:
+                        actual_arguments[field] = legacy[field]
+            elif carrier.get('script_available'):
+                language = carrier['language']
+                interpreter, suffix = {'bash': ('bash', 'sh'), 'shell': ('bash', 'sh'), 'python': ('python', 'py'), 'r': ('Rscript', 'R')}[language]
+                if selected_source and selected_sha == hashlib.sha256(carrier['body'].encode()).hexdigest():
+                    actual_arguments.update(script_path=selected_source, script_args=[], interpreter=interpreter, expected_sha256=selected_sha)
+                else:
+                    inline = attempt_dir / ('inline.' + suffix)
+                    observation['preparation_settlement']['effects'].append({'kind':'inline_source', 'path':str(inline), 'retained':True})
+                    _output_path_state(inline)
+                    if inline.exists() and inline.read_text() != carrier['body']:
+                        raise ValueError('INLINE_SOURCE_VERSION_CHANGED')
+                    if not inline.exists():
+                        with inline.open('x') as stream:
+                            stream.write(carrier['body'])
+                    actual_arguments.update(script_path=str(inline), script_args=[], interpreter=interpreter)
+            else:
+                raise ValueError('EXECUTABLE_CARRIER_MISSING')
+        env = freeze_execution_environment(os.environ, registered_execution_environment(durable, actual_arguments.get('env') or {}))
+        diagnostic = explicit_script_diagnostic({k:v for k,v in actual_arguments.items() if k != 'legacy_action'})
+        if diagnostic:
+            raise PrelaunchAdmissionRejected(diagnostic['error'], phase='carrier_admission',
+                reason=diagnostic['reason'], instruction=diagnostic['instruction'])
+        argv, command = actual_arguments.get('argv'), actual_arguments.get('cmd')
+        source = actual_arguments.get('script_path')
+        if selected_source and not source:
+            raise PrelaunchAdmissionRejected('SELECTED_CANDIDATE_REQUIRES_SOURCE', phase='source_identity',
+                instruction='Execute the selected draft using script_path + script_args; omitting source does not remove its version obligation.')
+        tokens = list(argv) if argv is not None else None
+        script_index = None
+        if source:
+            if argv is not None or command is not None:
+                resolved = resolve_direct_script_argv(actual_arguments)  # legacy only
+                if resolved.get('code'):
+                    raise PrelaunchAdmissionRejected(resolved['code'], phase='carrier_admission', reason=resolved['reason'], instruction=resolved['instruction'])
+                tokens, script_index = resolved['argv'], resolved['script_index']
+                if (cwd / tokens[script_index]).resolve() != (cwd / source).resolve():
+                    raise PrelaunchAdmissionRejected('EXPLICIT_SCRIPT_ARGV_MISMATCH', phase='source_identity')
+            else:
+                language = {'.py':'python','.sh':'bash','.r':'r'}.get(Path(source).suffix.lower())
+                if language is None:
+                    raise PrelaunchAdmissionRejected('CONTROLLED_SCRIPT_LANGUAGE_REQUIRED', phase='source_identity')
+                default_runner = {'python':'python','bash':'bash','r':'Rscript'}[language]
+                runner = actual_arguments.get('interpreter') or default_runner
+                # Match a host-supported file runner, then resolve that exact
+                # runner in the selected environment. Never fall back to sys.executable.
+                runner_kind = ('python' if re.fullmatch(r'python(?:\d+(?:\.\d+)*)?', Path(runner).name)
+                    else 'bash' if Path(runner).name in {'bash','sh'} else 'r' if Path(runner).name == 'Rscript' else None)
+                if runner_kind != language:
+                    raise PrelaunchAdmissionRejected('CONTROLLED_SCRIPT_RUNNER_MISMATCH', phase='source_identity')
+                tokens = [runner, *(['-u'] if language == 'python' else []), str(source), *actual_arguments.get('script_args', [])]
+                script_index = 2 if language == 'python' else 1
+            import shutil
+            runner = tokens[0]
+            selected_runner = str((cwd / runner).absolute()) if '/' in runner else shutil.which(runner, path=env['PATH'])
+            if not selected_runner or not Path(selected_runner).is_file() or not os.access(selected_runner, os.X_OK):
+                raise PrelaunchAdmissionRejected('EXECUTION_RUNNER_UNAVAILABLE', phase='source_identity')
+            tokens[0] = selected_runner
+            if selected_source and (cwd / source).resolve() != (cwd / selected_source).resolve():
+                raise PrelaunchAdmissionRejected('SELECTED_CANDIDATE_SOURCE_MISMATCH', phase='source_identity')
+        original_command = command if command is not None else shlex.join(tokens)
+        command = original_command
+        frozen_files = []
+        syntax = {'required': False, 'check_status': 'NOT_APPLICABLE', 'reason': 'native argv or complex shell command'}
+        if not source and argv is None:
+            syntax = check_executable_action({'type': 'execute', 'argv': argv} if argv is not None else
+                {'type': 'execute', 'language': 'bash', 'code': command})
+            if syntax.get('required') and syntax.get('check_status') != 'PASS':
+                return {'status': 'not_run', 'syntax_check': syntax, 'execution_started': False}
+        if source:
+            try:
+                source = (cwd / source).resolve(strict=True)
+            except FileNotFoundError:
+                raise PrelaunchAdmissionRejected('EXPLICIT_SCRIPT_MISSING', phase='source_identity')
+            if script_index is None:
+                raise PrelaunchAdmissionRejected('EXPLICIT_SCRIPT_REQUIRES_DIRECT_INTERPRETER_ARGV', phase='carrier_admission')
+            content = source.read_bytes()
+            sha = hashlib.sha256(content).hexdigest()
+            expected = actual_arguments.get('expected_sha256') or (draft.get('sha256') if str(source) == draft.get('path') else '')
+            if (expected and expected != sha) or (selected_sha and selected_sha != sha):
+                raise PrelaunchAdmissionRejected('SCRIPT_VERSION_CHANGED', phase='source_version', instruction='Read and explicitly select the current file; retain expected_sha256.')
+            language = {'.sh': 'bash', '.py': 'python', '.r': 'r'}.get(source.suffix.lower())
+            if language:
+                syntax = check_executable_action({'type': 'execute', 'language': language, 'code': content.decode()})
+                if syntax.get('required') and syntax.get('check_status') != 'PASS':
+                    return {'status': 'not_run', 'syntax_check': syntax, 'execution_started': False, 'path': str(source)}
+            layout = attempt_dir / 'source'
+            if layout.is_symlink():
+                raise ValueError('FROZEN_SOURCE_LAYOUT_CHANGED')
+            observation['preparation_settlement']['effects'].append({'kind':'frozen_source_layout', 'path':str(layout), 'retained':True})
+            layout.mkdir(exist_ok=True)
+            selected_files = [source]
+            for helper in actual_arguments.get('helper_paths') or []:
+                path = (source.parent / helper).resolve(strict=True)
+                if not path.is_relative_to(source.parent):
+                    raise PrelaunchAdmissionRejected('HELPER_OUTSIDE_EXPLICIT_SCRIPT_LAYOUT', phase='dynamic_admission')
+                selected_files.append(path)
+            for path in dict.fromkeys(selected_files):
+                body = content if path == source else path.read_bytes()
+                target = layout / path.relative_to(source.parent)
+                _output_path_state(target)  # Refuse a symlink in the frozen layout.
+                target.parent.mkdir(parents=True, exist_ok=True)
+                if target.exists():
+                    # A previous admission/backup failure may leave frozen
+                    # sources without any dispatch. Reuse exact immutable bytes
+                    # only; never replace that intent's frozen source on retry.
+                    if stat.S_IMODE(target.stat().st_mode) != 0o500 or target.read_bytes() != body:
+                        raise ValueError('FROZEN_SOURCE_VERSION_CHANGED')
+                else:
+                    with target.open('xb') as stream:
+                        stream.write(body)
+                    target.chmod(0o500)
+                frozen_files.append({'original_path': str(path), 'path': str(target), 'sha256': hashlib.sha256(body).hexdigest()})
+            tokens = list(tokens)
+            tokens[script_index] = str(layout / source.name)
+            command = shlex.join(tokens)
+        # Snapshot known files without scanning an entire project or inferring
+        # dependencies from arbitrary shell text.
+        spec = canonical_task_spec_for_state(durable) or {}
+        paths = []
+        step = {}
+        from agent_core.work_outputs import file_fingerprint
+        output_rows = action_targets(durable, arguments, project)
+        paths.extend(row['canonical_path'] for row in output_rows)
+        def observe():
+            result = {}
+            for raw in paths:
+                if not raw:
+                    continue
+                path = Path(raw)
+                try:
+                    info = path.stat()
+                    result[str(path)] = {'exists': True, 'size': info.st_size, 'mtime_ns': info.st_mtime_ns,
+                        'kind': 'directory' if path.is_dir() else 'file'}
+                    if path.is_file():
+                        # Keep the original bounded strength. Later acceptance
+                        # cannot upgrade a historical prefix to a full hash.
+                        result[str(path)].update(file_fingerprint(path))
+                except OSError as exc:
+                    result[str(path)] = {'exists': False, 'error': type(exc).__name__}
+            return result
+        check_cancelled()
+        # Claim before any mutation of a user target, not just before spawn.
+        if permission_digest(command_payload(service, arguments, task_id)) != permission['action_hash']:
+            raise ActionRuntimeContractError('PERMISSION_ACTION_CHANGED_BEFORE_CLAIM')
+        permit = claim_permission(service.data_path, task_id, permission, attempt_id)
+        durable = load_plan_state(service.data_path, task_id)
+        if (durable.get('task_state') or {}).get('report_preservation_authorization'):
+            from agent_core.workflow.report_preservation import execute_report_preservation
+            def preservation_scope(current):
+                return (request_scope(current) == scope and not current_finish(current)
+                        and (current.get('task_state') or {}).get('status') != 'cancelled'
+                        and not (cancel_event is not None and cancel_event.is_set()))
+            observation['preparation_settlement'].update(safe_to_release=False, phase='report_preservation')
+            preserved = execute_report_preservation(service.data_path, task_id, scope_guard=preservation_scope)
+            observation['preparation_settlement']['effects'].append({'kind':'report_preservation', 'receipts':deepcopy(preserved), 'retained':True})
+            if all(row.get('status') == 'completed' for row in preserved):
+                observation['preparation_settlement'].update(safe_to_release=True, phase='scoped_preparation')
+            durable = load_plan_state(service.data_path, task_id)
+            check_cancelled()
+        from agent_core.work_output_protection import prepare_output_protection, output_file_identities
+        def output_scope_guard():
+            validate_permit(permit)
+            check_cancelled()
+            latest = load_plan_state(service.data_path, task_id)
+            if (request_scope(latest) != scope or current_finish(latest)
+                    or authority_identity(latest) != authority_identity(durable)):
+                raise ActionRuntimeContractError('OUTPUT_WRITE_SCOPE_CHANGED')
+        output_guard, output_protection = prepare_output_protection(durable, output_rows,
+            data_path=service.data_path, attempt_dir=attempt_dir, scope_guard=output_scope_guard,
+            preparation_observation=observation['preparation_settlement'])
+        observation['preparation_settlement']['effects'].append({'kind':'output_protection', 'receipt':deepcopy(output_protection), 'retained':True})
+        before = observe()
+        from agent_core.revision_evidence import observed_inputs, method_context
+        input_before = {}
+        from agent_core.input_manifest import manifest_snapshot
+        manifest_before = None
+        action = {'type': 'execute', 'execution_protocol_version': 3, 'action_id': action_id,
+            'arguments_hash': args_hash, 'arguments': deepcopy(dict(arguments)), 'request_scope': scope, 'tool_call_id': call_id,
+            'step_id': '', 'plan_version': None,
+            'cmd': command, 'original_cmd': original_command, 'argv': tokens, 'cwd': str(cwd), 'env': env,
+            'execution_carrier': 'argv' if tokens is not None else 'shell',
+            'shell': None if tokens is not None else '/bin/sh', 'shell_login': False,
+            'frozen_files': frozen_files, 'syntax_check': syntax,
+            'dependency_scope': 'explicit script and helper paths only; complex shell dependencies not inferred'}
+        # Complete write admission before persisting STARTING or charging a
+        # dispatch/repair. No await separates this check from the actual runner.
+        # A rejected target must not leave a phantom active process to reconcile.
+        output_scope_guard()
+        validate_output_write_guard(output_guard)
+        action['action_hash'] = hashlib.sha256(json.dumps(action, sort_keys=True).encode()).hexdigest()
+        observation['preparation_settlement'].update(safe_to_release=False, phase='starting_publication')
+        record_provenance_event(durable, 'action_bound', {'action': action})
+        record_provenance_event(durable, 'attempt_created', {'action_id': action_id, 'attempt_id': attempt_id,
+            'step_id': action['step_id'], 'stdout_path': str(attempt_dir/'stdout.log'),
+            'stderr_path': str(attempt_dir/'stderr.log'), 'exit_status_path': str(receipt_path)})
+        record_provenance_event(durable, 'attempt_state_changed', {'attempt_id': attempt_id, 'status': 'STARTING'})
+        task = durable.setdefault('task_state', {})
+        budgets = task.setdefault('budgets', {})
+        budgets['primary_execution_dispatches'] = int(budgets.get('primary_execution_dispatches') or 0)+1
+        save_plan_state(service.data_path, task_id, durable)
+        async def lifecycle(status, details):
+            observation.update(details)
+            if status == 'HEARTBEAT':
+                status = 'RUNNING'
+            if status == 'PROCESS_CANCELLED':
+                status = 'PROCESS_EXITED' if details.get('process_reaped') else 'UNKNOWN_AFTER_CRASH'
+            state = load_plan_state(service.data_path, task_id)
+            record_provenance_event(state, 'attempt_state_changed', {'attempt_id': attempt_id, 'status': status, **details})
+            save_plan_state(service.data_path, task_id, state)
+        try:
+            check_cancelled()
+            from agent_core.cli_tool_activity import runtime_event
+            runtime_event('preparing', {'cmd': command, 'argv': tokens, 'cwd': str(cwd),
+                'environment_names': sorted(env), 'action_id': action_id,
+                'execution_attempt_id': attempt_id})
+            observation['launch_delegated'] = True
+            with execution_context(permit, tokens if tokens is not None else command, cwd=cwd, env=env):
+                stdout, stderr, rc = await run_command(tokens if tokens is not None else command, cwd=cwd, env=env,
+                    runtime_observation=observation, cancel_event=cancel_event, original_deadline=original_deadline,
+                    timeout=float(arguments['timeout_ms'])/1000 if arguments.get('timeout_ms') else None,
+                    lifecycle_callback=lifecycle, profile=False,
+                    capture_log_paths={'stdout': str(attempt_dir/'stdout.log'), 'stderr': str(attempt_dir/'stderr.log')},
+                    display_context={'task_id': task_id, 'node': stage, 'execution_attempt_id': attempt_id})
+        except asyncio.CancelledError:
+            state = load_plan_state(service.data_path, task_id)
+            attempt = state['provenance_state']['attempts'][attempt_id]
+            cancellation = dict(observation) or get_last_execution_metadata()
+            attempt['status'] = 'PROCESS_EXITED' if cancellation.get('process_reaped') else 'UNKNOWN_AFTER_CRASH'
+            attempt['returncode'] = cancellation.get('process_returncode')
+            attempt['cancellation_requested'] = True
+            attempt['cancellation_receipt'] = cancellation
+            save_plan_state(service.data_path, task_id, state)
+            # Cancellation is a request fact; preserve an observed natural rc=0.
+            # A missing exit or incomplete drain is not a consumable terminal.
+            complete = bool(cancellation.get('cleanup_confirmed')) or observation.get('launch_delegated') is False
+            cancelled_result = {'status': 'cancelled' if complete else 'reconciliation_unknown',
+                'terminal': complete, 'execution_protocol_version': 3,
+                'execution_started': True if cancellation.get('process_started_at') else (None if observation.get('launch_delegated') else False),
+                'attempt_id': attempt_id, 'action_id': action_id, 'task_id': task_id,
+                'step_id': action['step_id'], 'request_scope': scope, 'arguments_hash': args_hash,
+                'exit_code': cancellation.get('process_returncode'),
+                'returncode': cancellation.get('process_returncode'),
+                'receipt_ref': str(receipt_path), 'runtime_metadata': cancellation,
+                'stdout_path': str(attempt_dir/'stdout.log'), 'stderr_path': str(attempt_dir/'stderr.log'),
+                'scientific_validation': 'not_assessed', 'cleanup_confirmed': complete}
+            from agent_core.command_inspection_owner import _once
+            if complete and not receipt_path.exists():
+                _once(receipt_path, cancelled_result)
+            observation['cancelled_result'] = cancelled_result
+            raise
+        # A changed/unreadable manifest after execution is evidence of a gap,
+        # not grounds to discard the real process exit receipt.
+        manifest_after, manifest_error, input_after = None, None, {}
+        try:
+            manifest_after = None
+            input_after = {}
+        except (ValueError, OSError) as exc:
+            manifest_error = str(exc)
+        output_after, output_snapshot_error = {}, None
+        try: output_after = observe()
+        except (ValueError, OSError) as exc: output_snapshot_error = str(exc)
+        result = {'status': 'exited', 'terminal': True, 'execution_protocol_version': 3, 'execution_started': True,
+            'attempt_id': attempt_id, 'action_id': action_id, 'step_id': action['step_id'],
+            'task_id': task_id, 'plan_id': durable.get('plan_id'), 'plan_version': durable.get('plan_version'), 'execution_id': 'exec-' + attempt_id, 'arguments_hash': args_hash, 'request_scope': scope,
+            'cmd': command, 'original_cmd': original_command, 'argv': tokens, 'cwd': str(cwd), 'env': env,
+            'execution_carrier': action['execution_carrier'], 'shell': action['shell'], 'shell_login': action['shell_login'],
+            'hostname': socket.gethostname(), 'exit_code': rc, 'returncode': rc,
+            'stdout': stdout, 'stderr': stderr, 'stdout_path': str(attempt_dir/'stdout.log'),
+            'stderr_path': str(attempt_dir/'stderr.log'), 'receipt_ref': str(receipt_path),
+            'frozen_files': frozen_files, 'syntax_check': syntax, 'dependency_scope': action['dependency_scope'],
+            'before_files': before, 'after_files': output_after, 'output_snapshot_error': output_snapshot_error, 'scientific_validation': 'not_assessed',
+            'output_write_guard': output_guard, 'output_write_protection': output_protection,
+            'output_file_identities': output_file_identities(output_guard),
+            'execution_repair': deepcopy(action.get('execution_repair') or {}),
+            'authority_identity': authority_identity(durable),
+            'before_input_files': input_before, 'after_input_files': input_after,
+            'input_manifest_before': manifest_before, 'input_manifest_after': manifest_after,
+            'input_manifest_error': manifest_error,
+            'review_method_context': {},
+            # Preserve only the method/validation context needed for later
+            # acceptance. Host status, evidence and recursive execution_history
+            # are not part of the method and must not be copied into receipts.
+            'review_step_context': {key: deepcopy(step[key]) for key in (
+                'description','title','tool','purpose','action','skill_ids',
+                'workflow_stage_ids','execution_capability_id','operation','validation') if key in step},
+            'finished_at': time.time(), 'runtime_metadata': dict(observation) or get_last_execution_metadata()}
+        result['cleanup_confirmed'] = bool(result['runtime_metadata'].get('cleanup_confirmed', True))
+        from agent_core.command_inspection_owner import _once
+        _once(receipt_path, result)
+        _record_formal_receipt(service.data_path, task_id, result)
+        return result
+    except Exception as exc:
+        from agent_core.execution_permissions import PermissionPending, PermissionDenied
+        if isinstance(exc, (PermissionPending, PermissionDenied)):
+            raise
+        settlement = observation.get('preparation_settlement') or {}
+        if (runtime_observation is not None and settlement.get('safe_to_release') is True
+                and observation.get('launch_delegated') is False):
+            # Classify by this owned preparation scope, never by exception names.
+            import traceback
+            issue = deepcopy(getattr(exc, 'issue', None) or getattr(exc, 'diagnostic', None) or {})
+            code = getattr(exc, 'code', None) or issue.pop('code', None) or type(exc).__name__
+            issue.pop('phase', None)
+            raise PrelaunchAdmissionRejected(code, phase=settlement['phase'],
+                original_error=type(exc).__name__ + ': ' + str(exc),
+                original_traceback=traceback.format_exc(), **issue) from exc
+        raise
+    finally:
+        lock.close()
+
+
+def _record_formal_receipt(data_path, task_id, result):
+    """Reconcile a durable process exit exactly once, including crash replay."""
+    from agent_core.plan_tracker import load_plan_state, save_plan_state, record_provenance_event, StateCASConflict
+    from agent_core.request_state import request_scope
+    for _ in range(3):
+        state = load_plan_state(data_path, task_id)
+        if ((state.get('task_state') or {}).get('status') == 'cancelled'
+                or result.get('status') == 'cancelled' or result.get('terminal') is False):
+            return
+        attempt_id = result['attempt_id']
+        attempt = state['provenance_state']['attempts'][attempt_id]
+        if result.get('request_scope') and result['request_scope'] != request_scope(state):
+            # Retain the old attempt's real exit, without publishing evidence,
+            # failures, budget charges or step transitions into a new request.
+            if attempt.get('command_receipt') == result['receipt_ref']:
+                return
+            if attempt.get('status') in {'STARTING', 'RUNNING', 'UNKNOWN_AFTER_CRASH'}:
+                record_provenance_event(state, 'attempt_state_changed', {
+                    'attempt_id': attempt_id, 'status': 'PROCESS_EXITED', 'returncode': result['exit_code'],
+                    'exit_status_path': result['receipt_ref']})
+                attempt = state['provenance_state']['attempts'][attempt_id]
+            attempt['command_receipt'] = result['receipt_ref']
+            attempt['command_receipt_sha256'] = hashlib.sha256(Path(result['receipt_ref']).read_bytes()).hexdigest()
+            try:
+                save_plan_state(data_path, task_id, state)
+                return
+            except StateCASConflict:
+                continue
+        if attempt.get('command_receipt') == result['receipt_ref']:
+            return
+        record_provenance_event(state, 'execution_finished', {'attempt_id': attempt_id, 'execution_record': result})
+        attempt = state['provenance_state']['attempts'][attempt_id]
+        attempt['command_receipt'] = result['receipt_ref']
+        attempt['command_receipt_sha256'] = __import__('hashlib').sha256(Path(result['receipt_ref']).read_bytes()).hexdigest()
+        state['execution_evidence'] = deepcopy(result)
+        from agent_core.registered_runtime import record_execution_invalidation
+        record_execution_invalidation(state, result)
+        if result['exit_code'] != 0:
+            budgets = state.setdefault('task_state', {}).setdefault('budgets', {})
+            budgets['primary_execution_failures'] = int(budgets.get('primary_execution_failures') or 0) + 1
+            attempt['failure_source'] = {'attempt_id': attempt_id, 'returncode': result['exit_code'], 'receipt_ref': result['receipt_ref']}
+        try:
+            save_plan_state(data_path, task_id, state)
+            return
+        except StateCASConflict:
+            continue
+    raise ValueError('EXECUTION_RECEIPT_STATE_CONFLICT')

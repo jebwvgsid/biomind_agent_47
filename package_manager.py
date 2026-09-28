@@ -1,3 +1,4 @@
+from agent_core.cli_display import display_print
 import os
 import json
 import re
@@ -77,7 +78,7 @@ class PackageManager:
             self.root_dir.mkdir(parents=True, exist_ok=True)
         except: pass
         
-        print(f"🏭 Software Repository: {self.root_dir}")
+        display_print(f"Software Repository: {self.root_dir}", purpose='details')
 
         # 3. 定义关键路径
         self.registry_path = self.root_dir / "software_registry.json"
@@ -88,10 +89,10 @@ class PackageManager:
         # [修改] 源码目录初始化逻辑
         if BIO_SOURCE_INSTALL_DIR:
             self.source_root = Path(BIO_SOURCE_INSTALL_DIR)
-            print(f"📂 Source Install Path (Config): {self.source_root}")
+            display_print(f"Source Install Path (Config): {self.source_root}", purpose='details')
         else:
             self.source_root = self.root_dir / "source_tools"
-            print(f"📂 Source Install Path (Default): {self.source_root}")
+            display_print(f"Source Install Path (Default): {self.source_root}", purpose='details')
             
         self.source_root.mkdir(parents=True, exist_ok=True)
 
@@ -415,25 +416,45 @@ class PackageManager:
     def get_shim_dir_str(self):
         return str(self.shim_dir)
 
-    def _environment_runtime_available(self, env_name: str, info: Optional[Dict[str, Any]] = None) -> bool:
-        """Return whether a registered environment is eligible for reuse."""
+    def _known_environment_prefixes(self) -> Dict[str, List[str]]:
+        """Read path metadata only; never invoke Conda or health checks."""
+        found: Dict[str, List[str]] = {}
+        def include(raw):
+            path = Path(str(raw or ""))
+            if path.is_absolute() and path.is_dir():
+                value = str(path.resolve())
+                if value not in found.setdefault(path.name, []):
+                    found[path.name].append(value)
+        include(os.environ.get("CONDA_PREFIX"))
+        for raw in getattr(self, "known_environment_prefixes", []) or []:
+            include(raw)
+        try:
+            listing = Path.home() / ".conda" / "environments.txt"
+            if listing.is_file():
+                for raw in listing.read_text(encoding="utf-8").splitlines():
+                    include(raw.strip())
+        except (OSError, UnicodeError):
+            pass
+        root = Path(str(self.conda_root)) / "envs" if self.conda_root else None
+        if root and root.is_dir():
+            for path in sorted(root.iterdir())[:128]:
+                include(path)
+        return found
 
-        env_name = str(env_name or "").strip()
+    def _registered_prefixes(self, env_name: str, record: Dict[str, Any], known=None) -> List[str]:
+        explicit = str(record.get("prefix") or record.get("path") or
+                       (record.get("resolved_runtime_paths") or {}).get("RESOLVED_ENV_PREFIX") or "")
+        if explicit:
+            return [str(Path(explicit).resolve())] if Path(explicit).is_absolute() else []
+        return list((known if known is not None else self._known_environment_prefixes()).get(env_name, []))
+
+    def _environment_runtime_available(self, env_name: str, info: Optional[Dict[str, Any]] = None) -> bool:
+        """Eligibility is registration and unambiguous path metadata, not a probe."""
         record = dict(info or (self.registry.get("environments") or {}).get(env_name, {}) or {})
-        if str(record.get("status") or "").lower() == "broken":
+        if str(record.get("status") or "").lower() in {"broken", "disabled", "invalid", "failed"}:
             return False
-        if not env_name:
-            return False
-        current_prefix = Path(os.environ.get("CONDA_PREFIX", ""))
-        if current_prefix.name == env_name and current_prefix.is_dir():
-            return True
-        if self.conda_root:
-            prefix = Path(self.conda_root) / "envs" / env_name
-            return prefix.is_dir()
-        explicit_prefix = Path(str(record.get("prefix") or record.get("path") or ""))
-        if str(explicit_prefix) not in {"", "."}:
-            return explicit_prefix.is_dir()
-        return str(record.get("status") or "").lower() in self.INSTALLED_STATUSES
+        prefixes = self._registered_prefixes(str(env_name or ""), record)
+        return len(prefixes) == 1 and Path(prefixes[0]).is_dir()
 
     def environment_runtime_available(self, env_name: str) -> bool:
         """Public read-only environment presence check used by runtime preflight."""
@@ -625,69 +646,57 @@ class PackageManager:
 
     def discover_runtime_candidates(self, requirements: Optional[Dict[str, Any]], *,
                                     target_env: str = "", limit: int = 8) -> List[Dict[str, Any]]:
-        """Read-only, bounded candidates for the *provided* operation contract.
-
-        Presence and metadata only rank candidates. Neither registration nor a
-        executable bit is a successful runtime probe. An explicit target never
-        falls back to another environment, including when it does not exist.
-        """
+        """Bounded metadata discovery, preserving real prefixes and ambiguity."""
         requirements = requirements or {}
         declared = str(requirements.get("env") or requirements.get("default_env") or "").strip()
         target = str(target_env or "").strip()
         if target and (not re.fullmatch(r"[A-Za-z0-9_.-]+", target) or target in {".", ".."}):
             raise ValueError("RUNTIME_CANDIDATE_TARGET_INVALID")
-        root = Path(str(self.conda_root or "")) if self.conda_root else None
-        if root is None:
-            return []
         environments = self.registry.get("environments") or {}
-        names: Dict[str, List[str]] = {}
-        def include(name, source):
-            name = str(name or "").strip()
-            if name and name not in {".", ".."} and re.fullmatch(r"[A-Za-z0-9_.-]+", name):
-                origins = names.setdefault(name, [])
-                if source not in origins:
-                    origins.append(source)
-        if target:
-            include(target, "explicit_target")
-        else:
-            include(declared, "skill_runtime_declaration")
-            for name in environments:
-                include(name, "software_registry")
-            for record in (self.registry.get("tools") or {}).values():
-                include(record.get("env") or record.get("env_name"), "registered_tool")
-            directory = root / "envs"
-            if directory.is_dir():
-                # Configured managed root only. Do not recursively search home
-                # or admit external prefixes through a named-env work order.
-                for path in sorted(directory.iterdir())[:128]:
-                    if path.is_dir():
-                        include(path.name, "configured_conda_root")
-        wanted_tools = sorted(set(self._ensure_list(requirements.get("tools"))))
+        known = self._known_environment_prefixes()
+        names = list(dict.fromkeys([target] if target else [declared, *environments, *known]))
+        wanted = set(self._ensure_list(requirements.get("tools")))
         packages = set(self._ensure_list(requirements.get("packages")))
         caps = set(self._ensure_list(requirements.get("capabilities")))
         rows = []
-        for name, origins in names.items():
-            prefix = root / "envs" / name
+        for name in filter(None, names):
             record = dict(environments.get(name) or {})
-            present = prefix.is_dir()
-            found = {tool: str(prefix / "bin" / tool) for tool in wanted_tools
-                     if re.fullmatch(r"[A-Za-z0-9_.+-]+", tool)
-                     and (prefix / "bin" / tool).is_file()
-                     and os.access(prefix / "bin" / tool, os.X_OK)}
-            matched_packages = packages & set(self._ensure_list(record.get("packages")))
-            matched_caps = caps & set(self._ensure_list(record.get("capabilities")))
-            if not target and name != declared and not (found or matched_packages or matched_caps):
-                continue
-            missing_tools = sorted(set(wanted_tools) - set(found))
-            rows.append({"env": name, "prefix": str(prefix), "provenance": origins,
-                "registered_status": str(record.get("status") or "unregistered"),
-                "prefix_present": present, "tool_candidates": found, "missing_tool_candidates": missing_tools,
-                "matched_packages": sorted(matched_packages), "matched_capabilities": sorted(matched_caps),
-                "availability": "UNKNOWN", "reason_code": "RUNTIME_CANDIDATE_UNVERIFIED" if present else "RUNTIME_CANDIDATE_PREFIX_MISSING",
-                "is_declared": name == declared, "explicit_target": bool(target),
-                "score": len(found) * 20 + len(matched_packages) * 10 + len(matched_caps) * 5})
-        rows.sort(key=lambda row: (not row["is_declared"], not row["prefix_present"], -row["score"], row["env"]))
+            prefixes = self._registered_prefixes(name, record, known)
+            for prefix_text in prefixes or [""]:
+                prefix = Path(prefix_text) if prefix_text else None
+                present = bool(prefix and prefix.is_dir())
+                found = {tool: str(prefix / "bin" / tool) for tool in wanted
+                         if prefix and re.fullmatch(r"[A-Za-z0-9_.+-]+", tool)
+                         and (prefix / "bin" / tool).is_file() and os.access(prefix / "bin" / tool, os.X_OK)}
+                matched_packages = packages & set(self._ensure_list(record.get("packages")))
+                matched_caps = caps & set(self._ensure_list(record.get("capabilities")))
+                if not target and name != declared and not (found or matched_packages or matched_caps):
+                    continue
+                reason = "RUNTIME_CANDIDATE_LOCATION_AMBIGUOUS" if len(prefixes) > 1 else "RUNTIME_CANDIDATE_UNVERIFIED" if present else "RUNTIME_CANDIDATE_PREFIX_MISSING"
+                rows.append({"env": name, "prefix": prefix_text,
+                    "provenance": ["software_registry" if record else "known_environment_inventory"],
+                    "registered_status": str(record.get("status") or "unregistered"),
+                    "prefix_present": present, "tool_candidates": found,
+                    "missing_tool_candidates": sorted(wanted - set(found)),
+                    "matched_packages": sorted(matched_packages), "matched_capabilities": sorted(matched_caps),
+                    "availability": "UNKNOWN", "reason_code": reason,
+                    "location_ambiguous": len(prefixes) > 1,
+                    "is_declared": name == declared, "explicit_target": bool(target),
+                    "score": len(found) * 20 + len(matched_packages) * 10 + len(matched_caps) * 5})
+        rows.sort(key=lambda row: (not row["is_declared"], not row["prefix_present"], -row["score"], row["env"], row["prefix"]))
         return rows[:max(1, min(16, int(limit)))]
+
+    def registered_runtime_reuse(self, requirements: Optional[Dict[str, Any]], *,
+                                 skill_record: Optional[Dict[str, Any]] = None,
+                                 target_env: str = "") -> Dict[str, Any]:
+        """Select covered successful registration without creating a health receipt.
+
+        Skill declarations are never registration evidence. ``skill_record`` must
+        be the persisted record, obtained with get_runtime_registration().
+        """
+        from agent_core.registered_runtime import registered_runtime_reuse
+        return registered_runtime_reuse(self, requirements or {},
+            skill_record=skill_record or {}, target_env=target_env)
 
     def find_matching_environment(self, requirements: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         requirements = requirements or {}
@@ -746,6 +755,14 @@ class PackageManager:
             packages=info.get("packages"),
             healthcheck=healthcheck or info.get("healthcheck", ""),
         )
+        # This legacy synchronous verifier cannot obtain a human decision.
+        # Repository metadata is not permission to run an arbitrary shell.
+        # Runtime callers must supply a matching claimed execution context.
+        from agent_core.execution_permissions import require_dispatch, PermissionDenied
+        try:
+            require_dispatch(command)
+        except PermissionDenied:
+            return False, "HEALTHCHECK_PERMISSION_REQUIRED: use the controlled Runtime execution path."
         info["healthcheck"] = command
         run_command, process_env = self._direct_environment_healthcheck(env_name, command)
         if process_env is None:
@@ -900,33 +917,8 @@ class PackageManager:
         return repaired
 
     def install_package(self, tool_name: str, specific_cmd: str = None) -> tuple:
-        """自动安装 (Conda)"""
-        if not self.conda_exe: return False, "Conda/Mamba not found."
-        tool_name = tool_name.lower()
-        env_name = self._default_tool_env(tool_name)
-        logger.info(f"📦 Installing {tool_name} to {env_name}...")
-        
-        cmd = specific_cmd if specific_cmd else f"{self.conda_exe} create -n {env_name} -c bioconda -c conda-forge {tool_name} -y"
-        try:
-            proc = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-            if proc.returncode != 0: return False, f"Install failed: {proc.stderr}"
-            
-            shim_path = self._create_shim(env_name, tool_name)
-            self.registry.setdefault("tools", {})[tool_name] = {
-                "name": tool_name, "env": env_name, "shim_path": str(shim_path),
-                "install_time": datetime.now().isoformat(), "category": "Auto Installed"
-            }
-            self.register_environment(
-                env_name=env_name,
-                purpose=f"Runtime for tool {tool_name}",
-                capabilities=[f"tool:{tool_name}"],
-                status="installed",
-                tool_name=tool_name,
-            )
-            self.bind_tool_to_environment(tool_name, env_name)
-            self._save_registry()
-            return True, f"Installed {tool_name} successfully."
-        except Exception as e: return False, str(e)
+        """Legacy automatic installer is disabled; use Installer human approval."""
+        return False, "LEGACY_INSTALL_DISABLED: use Installer with explicit human approval."
 
     # =========================================================
     # [核心修改] 注册现有工具 (支持 setup_script 和 路径优化)
@@ -1016,7 +1008,7 @@ class PackageManager:
             )
             self.bind_tool_to_environment(tool_name, env_name)
             self._save_registry()
-            print(f"✅ Registered tool: {tool_name}")
+            display_print(f"✅ Registered tool: {tool_name}")
             return True
         except Exception as e:
             logger.error(f"Registration failed: {e}")
@@ -1031,7 +1023,7 @@ class PackageManager:
                 data = yaml.safe_load(f)
             if not data or 'tools' not in data: return
             
-            print(f"⚙️  Loading config: {config_file}")
+            display_print(f"⚙️  Loading config: {config_file}")
             count = 0
             for tool, conf in data['tools'].items():
                 if conf.get('env'):
@@ -1042,7 +1034,7 @@ class PackageManager:
                         conf.get('setup')
                     )
                     count += 1
-            if count > 0: print(f"   Loaded {count} tools.")
+            if count > 0: display_print(f"   Loaded {count} tools.")
         except Exception as e: logger.error(f"YAML load failed: {e}")
 
     # =========================================================

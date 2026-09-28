@@ -1,22 +1,24 @@
 ---
 name: crop-gs-sommer-multikernel-gxe
-description: >
-  Execute professional crop genomic prediction with CRAN sommer for multi-kernel,
-  GxE, dominance, family/environment random effects, multi-trait, or complex
-  mixed-model designs. Use only when a model configuration is explicitly defined.
-tags: [crop-breeding, genomic-selection, sommer, multi-kernel, GxE, mixed-model]
-task_types: [crop_genomic_prediction]
-stage_tags: [sommer_multikernel_gxe]
-inputs: [genotype_matrix, phenotype_table, model_config]
-outputs: [variance_components, prediction_table, model_performance, final_model]
-runtime:
-  default_env: crop_gp_pro
-  env_runner: conda run -n crop_gp_pro Rscript
-  language: R
-  packages: [sommer, yaml]
-  healthcheck: conda run -n crop_gp_pro Rscript -e "library(sommer); library(yaml); cat('OK\n')"
-  install_command: conda install -n crop_gp_pro -c conda-forge r-sommer r-yaml -y
+description: 'Execute professional crop genomic prediction with CRAN sommer for multi-kernel, GxE, dominance, family/environment
+  random effects, multi-trait, or complex mixed-model designs. Use only when a model configuration is explicitly
+  defined.
+
+  '
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # Crop GS sommer Multi-Kernel GxE
 
@@ -34,7 +36,7 @@ single ordinary RR-BLUP/GBLUP run. The model must be defined in
 ## Professional Command
 
 ```bash
-conda run -n crop_gp_pro Rscript skills/crop-breeding/crop-gs-sommer-multikernel-gxe/scripts/run_sommer_multikernel_gxe.R \
+Rscript "${SKILL_DIR}/scripts/run_sommer_multikernel_gxe.R" \
   --model-config model_config.yaml \
   --outdir results/gs_sommer
 ```

@@ -9,10 +9,103 @@ import re
 import shlex
 import sys
 import time
+from pathlib import PurePath
+
+
+def resolve_direct_script_argv(arguments: dict) -> dict:
+    """Legacy exact file-template adapter. Never called for general execution."""
+    argv, cmd = arguments.get('argv'), arguments.get('cmd')
+    result = {'carrier': 'argv' if argv is not None else 'cmd', 'argv': None,
+              'script_index': None, 'interpreter': None}
+    def reject(reason, index=None):
+        return {**result, 'code': 'EXPLICIT_SCRIPT_REQUIRES_DIRECT_INTERPRETER_ARGV',
+                'reason': reason, 'position': index,
+                'instruction': 'Use script_path + script_args + interpreter (host Python file mode preserves unbuffered output), retaining expected_sha256 and helpers. Complex legacy interpreter options require an explicitly supported file runner; do not remove protection or flatten shell text.'}
+    if (argv is None) == (cmd is None):
+        return reject('provide_exactly_one_cmd_or_argv')
+    if argv is None:
+        if not isinstance(cmd, str) or not cmd.strip() or '\x00' in cmd:
+            return reject('invalid_cmd')
+        # Intentionally conservative even inside quotes: use argv for these
+        # characters. shlex is not a shell parser; do not silently change cmd.
+        for chars, reason in [('\n\r', 'multiline_explicit_script_cmd'),
+                              ('|;&<>`$(){}*?[]~#', 'shell_syntax_requires_argv')]:
+            positions = [cmd.index(c) for c in chars if c in cmd]
+            if positions:
+                return reject(reason, min(positions))
+        try:
+            argv = shlex.split(cmd)
+        except ValueError:
+            return reject('shell_quoting_invalid')
+    if not isinstance(argv, list) or not argv or any(not isinstance(a, str) or '\x00' in a for a in argv):
+        return reject('invalid_argv')
+    result['argv'] = list(argv)
+    exe = PurePath(argv[0]).name
+    language = ('python' if re.fullmatch(r'python(?:\d+(?:\.\d+)*)?', exe)
+                else 'bash' if exe in {'bash', 'sh'} else 'r' if exe == 'Rscript' else None)
+    result['interpreter'] = language
+    if language is None:
+        return reject('not_a_direct_supported_interpreter', 0)
+    # Compatibility only: templates already used by native file calls, plus
+    # the incident's Python -u template. New source calls use host construction.
+    i = 1
+    if language == 'python' and len(argv) > 1 and argv[1] == '-u':
+        i = 2
+    if i >= len(argv) or not argv[i] or argv[i].startswith('-'):
+        return reject('legacy_file_template_requires_migration', i)
+    return {**result, 'script_index': i}
+
+
+def explicit_script_diagnostic(arguments: dict) -> dict | None:
+    def refusal(code, reason):
+        return {'status':'not_run', 'terminal':True, 'execution_started':False,
+                'exit_code':None, 'cleanup_confirmed':True, 'phase':'carrier_admission',
+                'error':code, 'reason':reason, 'position':None,
+                'instruction':'Provide cmd OR argv for general execution, or script_path + script_args + interpreter for a frozen file. Retain version and helper protection.'}
+    if arguments.get('legacy_action'):
+        return None  # Checked after the existing legacy producer has materialized.
+    if 'helper_paths' in arguments and (not isinstance(arguments['helper_paths'],list) or any(not isinstance(x,str) or not x or '\x00' in x for x in arguments['helper_paths'])):
+        return refusal('HELPER_PATHS_INVALID','helper_paths_must_be_paths')
+    source, argv, cmd = arguments.get('script_path'), arguments.get('argv'), arguments.get('cmd')
+    if source is not None and (not isinstance(source,str) or not source or '\x00' in source):
+        return refusal('EXPLICIT_SCRIPT_INVALID','invalid_source_path')
+    source_only = bool(source) and argv is None and cmd is None
+    if source_only:
+        values = arguments.get('script_args', [])
+        runner = arguments.get('interpreter')
+        if not isinstance(values,list) or any(not isinstance(x,str) or '\x00' in x for x in values):
+            return refusal('SCRIPT_ARGUMENTS_INVALID','script_args_must_be_strings')
+        if runner is not None and (not isinstance(runner,str) or not runner or '\x00' in runner or runner.startswith('-')):
+            return refusal('SCRIPT_INTERPRETER_INVALID','one_runner_path_required')
+        return None
+    if 'script_args' in arguments or 'interpreter' in arguments:
+        return refusal('CONTROLLED_SCRIPT_CARRIER_CONFLICT','source_only_fields_with_general_or_legacy_carrier')
+    if (argv is None) == (cmd is None):
+        return refusal('PROVIDE_EXACTLY_ONE_CMD_OR_ARGV','invalid_carrier_count')
+    if argv is not None and (not isinstance(argv,list) or not argv or not argv[0] or any(not isinstance(x,str) or '\x00' in x for x in argv)):
+        return refusal('EXECUTION_ARGV_INVALID','invalid_argv')
+    if cmd is not None and (not isinstance(cmd,str) or not cmd.strip() or '\x00' in cmd):
+        return refusal('EXECUTION_COMMAND_REQUIRED','invalid_cmd')
+    if not source:
+        return None
+    resolved = resolve_direct_script_argv(arguments)
+    if not resolved.get('code'):
+        return None
+    return {**refusal(resolved['code'],resolved['reason']), **{k:resolved[k] for k in ('position','instruction')}}
 
 
 def check_executable_action(action: dict) -> dict:
     """Check the same explicit operand used by helper materialization/Execute."""
+    diagnostic = explicit_script_diagnostic(action) if (action.get('argv') or 'cmd' in action or 'script_path' in action or 'script_args' in action) else None
+    if diagnostic:
+        return {**diagnostic, 'required': True, 'check_status': 'FAIL', 'code': diagnostic['error']}
+    if action.get('argv'):
+        # Native arrays are not an inline-source declaration. The target owns
+        # -c/-m and option syntax; explicit files are checked after selection.
+        return {'schema_version':1,'check_id':'executable_syntax','required':False,
+                'check_status':'NOT_APPLICABLE','execution_started':False,
+                'source':'external_argv','language':'',
+                'detail':'Direct argv is opaque; no interpreter or script position inference.'}
     from agent_core.step_effects import executable_carrier
     selected = executable_carrier(action)
     record = {"schema_version": 1, "check_id": "executable_syntax",
@@ -159,3 +252,40 @@ def _static_python_fragments(body):
             found.append(('python_heredoc:'+str(start+1),index+1,''.join(lines[index:stop])))
         index=stop+1
     return found,uncovered
+
+
+def check_registered_script_sources(resources: list[dict]) -> list[dict]:
+    """Check only caller-verified registered resources, never arbitrary argv paths.
+
+    Call after bind_action_skill_resources has verified selection and identity.
+    The recorded hash binds the static check to exactly those full source bytes.
+    """
+    import os
+    import stat
+    from pathlib import Path
+    records = []
+    for resource in resources:
+        path = str(resource.get('canonical_path') or '')
+        language = {'.py': 'python', '.sh': 'bash', '.r': 'r'}.get(Path(path).suffix.lower())
+        if not language:
+            continue
+        base = {'schema_version': 1, 'check_id': 'executable_syntax', 'source': path,
+                'handle': resource.get('handle'), 'carrier': 'registered_file',
+                'execution_started': False, 'required': language != 'r'}
+        try:
+            fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+            with os.fdopen(fd, 'rb') as stream:
+                if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+                    raise ValueError('REGISTERED_SCRIPT_NOT_REGULAR')
+                raw = stream.read(MAX_SOURCE_BYTES + 1)
+            if len(raw) > MAX_SOURCE_BYTES:
+                raise ValueError('REGISTERED_SCRIPT_SIZE_LIMIT')
+            digest = hashlib.sha256(raw).hexdigest()
+            if digest != str(resource.get('content_hash') or '').removeprefix('sha256:'):
+                raise ValueError('REGISTERED_SCRIPT_CONTENT_DRIFT')
+            checked = check_executable_action({'code': raw.decode('utf-8'), 'language': language})
+            records.append({**checked, **base, 'body_sha256': digest})
+        except (OSError, ValueError) as exc:
+            records.append({**base, 'check_status': 'CHECK_ERROR', 'code': str(exc),
+                            'detail': 'The current registered source could not be fully verified; no execution occurred.'})
+    return records

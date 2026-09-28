@@ -1,28 +1,25 @@
 ---
 name: crop-gp-waiter-transformer
-description: >
-  Run or plan GP-WAITER-style crop phenotype prediction with GWAS-derived SNP weights, weighted embedding, CNN feature extraction, Transformer self-attention, SHAP/attention interpretation, and SNP-to-gene follow-up. Use when genotype markers, phenotype values, and GWAS p-values or summary statistics are available for crop genomic prediction; prefer crop-cnn-attention-genomic-prediction when no GWAS weights exist.
-tags: [crop-breeding, genomic-prediction, GP-WAITER, Transformer, GWAS, SHAP, 表型预测, 基因组选择]
-task_types: [crop_genomic_prediction]
-stage_tags: [weighted_transformer_prediction]
-inputs: [genotype_matrix, phenotype_table, gwas_summary, marker_annotation]
-outputs: [prediction_table, model_performance, important_snps, attention_weights, snp_to_gene]
-when_to_use:
-  - User asks for GP-WAITER, GWAS-weighted Transformer, weighted SNP embedding, or interpretable crop phenotype prediction.
-  - A GWAS summary table can be aligned to the genotype marker matrix.
-when_not_to_use:
-  - No phenotype table is available for training or validation.
-  - Only transcriptome features are available without genotype markers.
-legacy_ids: [gp-waiter, crop-gwas-weighted-transformer]
-runtime:
-  default_env: gp_waiter
-  env_runner: conda run -n gp_waiter python
-  language: python
-  packages: [pytorch, numpy, pandas, scikit-learn]
-  capabilities: [upstream-gp-waiter, gwas-weighted-prediction]
-  healthcheck: conda run -n gp_waiter python -c "import torch, numpy, pandas, sklearn; print('OK')"
-  install_command: mamba create -n gp_waiter -c pytorch -c nvidia -c conda-forge python=3.9 pytorch==1.13.0 pytorch-cuda=11.7 pip -y
+description: 'Run or plan GP-WAITER-style crop phenotype prediction with GWAS-derived SNP weights, weighted embedding,
+  CNN feature extraction, Transformer self-attention, SHAP/attention interpretation, and SNP-to-gene follow-up.
+  Use when genotype markers, phenotype values, and GWAS p-values or summary statistics are available for crop genomic
+  prediction; prefer crop-cnn-attention-genomic-prediction when no GWAS weights exist.
+
+  '
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # Crop GP-WAITER Transformer
 

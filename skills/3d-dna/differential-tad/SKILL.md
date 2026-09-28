@@ -1,31 +1,28 @@
 ---
-name: differential-tad-analysis
-description: >
-  Run HiCExplorer hicDifferentialTAD differential TAD analysis between target
-  and control contact matrices using a target-specific TAD domain BED. Use when
-  the user asks for 差异TAD, differential TADs, hicDifferentialTAD, target vs
-  control TAD comparison, intra-TAD / left-inter-TAD / right-inter-TAD mode
-  testing, rejected.diff_tad statistics, or bidirectional TAD comparison where
-  both target direction and whether to run reverse comparison must be confirmed.
-version: "1.0.0"
-tags: [TAD, differential-TAD, hicDifferentialTAD, HiCExplorer, Hi-C, Micro-C, Pore-C, mcool, cool, 差异TAD, bidirectional]
-task_types: [chromatin_contact_tad]
-stage_tags: [differential_tad]
-inputs: [target_matrix, control_matrix, target_tad_domains]
-outputs: [differential_tad_tables]
-when_to_use:
-  - Workflow stage is differential_tad.
-  - User needs target-vs-control hicDifferentialTAD testing after TAD calling.
-when_not_to_use: [boundary change summary only, no target control pairing]
-legacy_ids: [genomics/chromatin/differential-tad, differential-tad, diff-tad, hicdifferentialtad, 差异TADs鉴定, 差异TAD]
-runtime:
-  default_env: hicexplore
-  env_runner: conda run -n hicexplore python
-  language: python
-  packages: [hicexplorer]
-  capabilities: [differential-tad, hicdifferentialtad, bidirectional-tad-comparison]
-  healthcheck: conda run -n hicexplore python skills/3d-dna/differential-tad/scripts/run_differential_tads.py --help
+name: differential-tad
+description: 'Run HiCExplorer hicDifferentialTAD differential TAD analysis between target and control contact matrices
+  using a target-specific TAD domain BED. Use when the user asks for 差异TAD, differential TADs, hicDifferentialTAD,
+  target vs control TAD comparison, intra-TAD / left-inter-TAD / right-inter-TAD mode testing, rejected.diff_tad
+  statistics, or bidirectional TAD comparison where both target direction and whether to run reverse comparison
+  must be confirmed.
+
+  '
+metadata:
+  version: 1.0.0
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # Differential TAD Analysis
 
@@ -65,24 +62,24 @@ Do not infer bidirectional analysis just because two samples are provided.
 
 ## Software Environment
 
-Use the shared TAD/HiCExplorer environment `hicexplore` for TAD calling, differential TAD, boundary statistics, and Hi-C heatmap-related skills.
+Use an existing environment containing HiCExplorer and this method’s documented dependencies for TAD calling, differential TAD and boundary statistics.
 
 Verify first. If this succeeds, do not install anything:
 
 ```bash
-conda run -n hicexplore python skills/3d-dna/differential-tad/scripts/run_differential_tads.py --help
+python "${SKILL_DIR}/scripts/run_differential_tads.py" --help
 ```
 
 If verification fails because the environment is missing or HiCExplorer is missing, delegate installation into the same shared environment instead of writing a conda command:
 
 ```text
-<install_tool env="hicexplore">hicexplorer</install_tool>
+先确认所需依赖（hicexplorer）与目标环境，再请求用户明确安装授权
 ```
 
 If matrix resolution inspection is also needed, use the same environment for `cooler`:
 
 ```text
-<install_tool env="hicexplore">cooler</install_tool>
+先确认所需依赖（cooler）与目标环境，再请求用户明确安装授权
 ```
 
 After any installer delegation, re-run the verification command before running data. Never create a second TAD environment unless the user explicitly asks for a different environment name.
@@ -92,7 +89,7 @@ After any installer delegation, re-run the verification command before running d
 One-way comparison matching the user's example:
 
 ```bash
-conda run -n hicexplore python skills/3d-dna/differential-tad/scripts/run_differential_tads.py \
+python "${SKILL_DIR}/scripts/run_differential_tads.py" \
   --target leaf Matrix/Final/leaf.mcool::/resolutions/40000 \
   --control bud Matrix/Final/bud.mcool::/resolutions/40000 \
   --tad-domains TADs/HiCExplorer/40000/leaf_domains.bed \
@@ -106,7 +103,7 @@ conda run -n hicexplore python skills/3d-dna/differential-tad/scripts/run_differ
 Bidirectional comparison:
 
 ```bash
-conda run -n hicexplore python skills/3d-dna/differential-tad/scripts/run_differential_tads.py \
+python "${SKILL_DIR}/scripts/run_differential_tads.py" \
   --target leaf Matrix/Final/leaf.mcool::/resolutions/40000 \
   --control bud Matrix/Final/bud.mcool::/resolutions/40000 \
   --tad-domains TADs/HiCExplorer/40000/leaf_domains.bed \

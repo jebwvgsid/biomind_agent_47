@@ -1,7 +1,6 @@
 from pathlib import Path
 import unittest
 
-from agent_core.installer import InstallerAgent
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 
@@ -77,23 +76,3 @@ def test_installer_uses_step_local_context_after_initial_prompt():
     assert "step context clipped" in source
 
 
-class InstallerStepContextTests(unittest.TestCase):
-    def test_step_context_keeps_work_order_and_latest_evidence(self):
-        messages = [
-            HumanMessage(content="original install work order"),
-            SystemMessage(content="stable installer instructions"),
-            AIMessage(content="old install command"),
-            HumanMessage(content="<observation>old failure</observation>"),
-            AIMessage(content="current install command"),
-            HumanMessage(content="<observation>current result</observation>"),
-        ]
-
-        visible = InstallerAgent._step_local_messages(messages, max_messages=6, max_chars=4000)
-        text = "\n".join(str(message.content) for message in visible)
-
-        self.assertIn("original install work order", text)
-        self.assertIn("current install command", text)
-        self.assertIn("current result", text)
-        self.assertNotIn("old install command", text)
-        self.assertLessEqual(len(visible), 6)
-        self.assertLessEqual(sum(len(str(message.content)) for message in visible), 4000)

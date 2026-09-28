@@ -141,14 +141,28 @@ def candidate_progress_assessment(
     checks.setdefault("executable_syntax", {"check_id": "executable_syntax",
         "check_status": "PASS" if "executable_syntax" in representation else "NOT_EVALUATED",
         "detail": "Recorded validator checkpoint" if "executable_syntax" in representation else "No syntax result recorded at this admission boundary."})
+    not_applicable = set()
+    invalid_applicability = set()
+    if checks["executable_syntax"].get("check_status") == "NOT_APPLICABLE":
+        from agent_core.step_effects import executable_carrier
+        try:
+            carrier = executable_carrier(view) if isinstance(view, Mapping) else {}
+        except (TypeError, ValueError):
+            carrier = {}  # A malformed candidate cannot establish N/A.
+        if carrier.get("source") == "external_argv" and not carrier.get("script_available"):
+            not_applicable.add("executable_syntax")
+            lost_representation.discard("executable_syntax")
+        else:
+            invalid_applicability.add("executable_syntax")
     unknown = sorted({key for key in lost_representation
         if checks.get(key, {}).get("check_status") not in {"PASS", "FAIL", "NOT_APPLICABLE"}} | {key for key, row in checks.items()
-        if row.get("check_status") in {"NOT_EVALUATED", "CHECK_ERROR"}})
+        if row.get("check_status") in {"NOT_EVALUATED", "CHECK_ERROR"}} | invalid_applicability)
     failed = sorted(key for key, row in checks.items() if row.get("check_status") == "FAIL")
     return {"schema_version": 2, "producer": CANDIDATE_REPAIR_RECEIPT_PRODUCER,
         "repeat_proven": bool(recurrence or legacy_repeat),
         "stop_authority": "proven_recurrence_only; progress_proven is diagnostic",
         "check_records": checks, "unknown_targets": unknown,
+        "not_applicable_targets": sorted(not_applicable),
         "failed_checks": failed, "new_failure_targets": sorted(set(pending_targets) - set(prior_targets)) if previous else [],
         "progress_proven": proven, "basis": basis,
         "comparison_fingerprint": comparison, "validation_signature": validation_signature,

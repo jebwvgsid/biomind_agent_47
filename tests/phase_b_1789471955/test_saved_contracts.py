@@ -73,6 +73,3 @@ def test_T03_historical_attestation_and_layout_facts_remain_distinct(tmp_path):
         'wrong_config_content':wrong[0]['result']['content'],'workspace_root':workspace,
         'approved_data_root':str(Path(workspace)/'data'),'final_config_line':final['config_data_dir_line'],
         'new_scientific_review':'NOT_RUN','historical_commits_added':0},indent=2))
-    from supervisor import SUPERVISOR_REVIEW_INSTRUCTIONS_V2
-    assert 'wrong config data.dir still requires correction' in SUPERVISOR_REVIEW_INSTRUCTIONS_V2
-    assert 'Never strip a repeated data directory' in SUPERVISOR_REVIEW_INSTRUCTIONS_V2

@@ -6,7 +6,7 @@ VCF header only, complete phenotype/Q/map/TFAM bytes, and a GFF3 prefix only.
 It does not validate all variants, associations or annotation records.
 The bcftools `inspect_vcf_samples` capability publishes an observation; the
 alternative `extract_vcf_samples` uses the same phase-local binding and the
-existing generated-artifact mechanism when the Plan explicitly requires a
+existing generated-artifact mechanism when the task explicitly requires a
 sample-list file. This separate capability selection keeps files optional for
 initial inspection without changing the compiler's required-artifact semantics. The
 single structured observation publishes VCF/phenotype/Q file versions and read
@@ -14,7 +14,7 @@ scope under each item's `file_identity` business field. These identities must
 remain attached to the accepted observation in the next provider request;
 internal parser `source` fields are not control provenance or a substitute for
 that semantic delivery. The single observation can satisfy an observation-only input-check
-Plan; it does not replace a nonempty sample file that the Plan explicitly
+task; it does not replace a nonempty sample file that the task explicitly
 requires. Keep adverse and unknown findings in the accepted observation.
 
 ## Phenotype tables
@@ -48,7 +48,7 @@ inspection may finish with `q_mapping.status=unknown` and
 not make a Q-dependent artifact or claim scientific completion. The sorter
 rejects unknown mapping before opening output files. Do not remove Q or switch
 the scientific model implicitly; any later alternative requires the existing
-scientific decision and Plan revision flow.
+explicit scientific decision and approval process.
 
 A labeled Q table may provide actual IDs. Merely selecting `--sample-column 1`
 in a wholly numeric table without a header does not establish Q correspondence;
@@ -82,7 +82,7 @@ Never manufacture assignments for the current task merely to pass validation.
 For an unlabeled numeric Q with an established mapping:
 
 ```bash
-python scripts/sort_phenotype.py --tfam target.tfam --phenotype Q.tsv \
+python "${SKILL_DIR}/scripts/sort_phenotype.py" --tfam target.tfam --phenotype Q.tsv \
   --header absent --input-kind q_covariates --trait 1,2,3 \
   --q-row-map supplied-row-map.json --out-emmax-covar covariates.emmax.txt
 ```

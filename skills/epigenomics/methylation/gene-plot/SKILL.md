@@ -1,24 +1,27 @@
 ---
-name: 甲基化基因绘图
-description: >
-  Plot CG/CHG/CHH DNA methylation profiles (upstream → gene body → downstream)
-  from bigWig files, combined with gene expression (TPM) and chromatin compartment
-  labels. Generates per-gene 3×3 PNG panels and a TSV summary. Use when user asks
-  to visualize methylation, compare epigenetic patterns across samples, or integrate
-  methylation with expression data for specific genes.
-version: "2.0"
-tags: [methylation, bigwig, epigenomics, visualization, porec, RNA-seq]
-legacy_ids: [甲基化基因绘图, methylation_profile_plot]
-task_types: [aporec_methylation, methylation_visualization]
-stage_tags: [methylation_profile_plot]
-inputs: [methylation_bigwig, gene_bed_or_gff, tpm_table, compartment_bed, gene_list]
-outputs: [profile_plots, profile_summary_tsv]
-runtime:
-  default_env: bio_methylation_plot
-  env_runner: conda run -n bio_methylation_plot python
-  python_packages: [pyBigWig, pandas, numpy, matplotlib]
-  install_tool: '<install_tool env="bio_methylation_plot">methylation-gene-plot_python_deps</install_tool>'
+name: gene-plot
+description: 'Plot CG/CHG/CHH DNA methylation profiles (upstream → gene body → downstream) from bigWig files, combined
+  with gene expression (TPM) and chromatin compartment labels. Generates per-gene 3×3 PNG panels and a TSV summary.
+  Use when user asks to visualize methylation, compare epigenetic patterns across samples, or integrate methylation
+  with expression data for specific genes.
+
+  '
+metadata:
+  version: '2.0'
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # Methylation Profile Plot
 
@@ -57,7 +60,7 @@ fails, delegate installation instead of emitting direct package-manager
 installation commands:
 
 ```text
-<install_tool env="bio_methylation_plot">methylation-gene-plot_python_deps</install_tool>
+先确认所需依赖（methylation-gene-plot_python_deps）与目标环境，再请求用户明确安装授权
 ```
 
 After the install subagent completes, re-run the dependency check before
@@ -80,7 +83,7 @@ Use this skill when:
 Standard case: user provides gene IDs and file paths.
 
 ```bash
-python scripts/plot_methylation.py \
+python "${SKILL_DIR}/scripts/plot_methylation.py" \
     --gff /path/to/genome.gff3 \
     --tpm /path/to/gene_tpm.csv \
     --outdir /path/to/output \
@@ -103,17 +106,17 @@ Before running the plotting command, execute a small dependency check with the
 same `python` executable that will run `plot_methylation.py`:
 
 ```bash
-conda run -n bio_methylation_plot python - <<'PY'
+python - <<'PY'
 import pyBigWig, pandas, numpy, matplotlib
 print("methylation plotting Python dependencies OK")
 PY
 ```
 
 If this fails, do not run the plot command yet. Delegate dependency setup with
-`<install_tool env="bio_methylation_plot">methylation-gene-plot_python_deps</install_tool>`.
+`先确认所需依赖（methylation-gene-plot_python_deps）与目标环境，再请求用户明确安装授权`.
 For this skill, the default reproducible environment is `bio_methylation_plot`.
 After the environment is ready, run the plotting script with:
-`conda run -n bio_methylation_plot python`.
+`python`.
 
 ### Tier 1 — Call script directly
 **Trigger**: Standard use case. User provides gene list, bigWig paths, GFF, TPM.
@@ -139,10 +142,10 @@ Trigger keywords: "加一个" / "新增面板" / "改成小提琴图" / "只显�
 Action:
 ```bash
 # 1. Read the script first
-cat scripts/plot_methylation.py
+cat "${SKILL_DIR}/scripts/plot_methylation.py"
 
 # 2. Copy to working directory — NEVER edit files inside the skill directory
-cp scripts/plot_methylation.py ./plot_custom.py
+cp "${SKILL_DIR}/scripts/plot_methylation.py" ./plot_custom.py
 
 # 3. Edit plot_custom.py, then run it
 python plot_custom.py [same args as above]
@@ -199,7 +202,7 @@ If no match is found, the script exits with an error listing available columns.
 ### Minimal two-sample comparison
 
 ```bash
-conda run -n bio_methylation_plot python scripts/plot_methylation.py \
+python "${SKILL_DIR}/scripts/plot_methylation.py" \
     --gff genome.gff3 --tpm tpm.csv \
     --outdir ./out \
     --genes GENE_A GENE_B \
@@ -210,7 +213,7 @@ conda run -n bio_methylation_plot python scripts/plot_methylation.py \
 ### Single gene, wide window
 
 ```bash
-python scripts/plot_methylation.py \
+python "${SKILL_DIR}/scripts/plot_methylation.py" \
     --gff genome.gff3 --tpm tpm.csv \
     --outdir ./out \
     --genes GT21.04g7G0018420 \
@@ -231,7 +234,7 @@ show "NA" for compartment labels without crashing:
 
 ```bash
 GENES=$(cat gene_list.txt | tr '\n' ' ')
-python scripts/plot_methylation.py \
+python "${SKILL_DIR}/scripts/plot_methylation.py" \
     --gff genome.gff3 --tpm tpm.csv \
     --outdir ./out \
     --genes $GENES \
@@ -337,7 +340,7 @@ Then adjust your `--sample` labels to match a substring of the column names.
 ### pyBigWig dependency is missing
 
 ```text
-<install_tool env="bio_methylation_plot">methylation-gene-plot_python_deps</install_tool>
+先确认所需依赖（methylation-gene-plot_python_deps）与目标环境，再请求用户明确安装授权
 ```
 
 ### Memory error with many genes
@@ -346,7 +349,7 @@ Process genes in batches:
 ```bash
 split -l 10 gene_list.txt batch_
 for f in batch_*; do
-    python scripts/plot_methylation.py --genes $(cat $f) [other args]
+    python "${SKILL_DIR}/scripts/plot_methylation.py" --genes $(cat $f) [other args]
 done
 ```
 

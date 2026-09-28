@@ -412,6 +412,26 @@ def terminal_line_framing():
                 pass  # A disconnected terminal cannot be restored.
 
 
+from agent_core.cli_display import safe_text
+
+
+def plain_input(prompt, timeout=0):
+    """Canonical plain input without readline's ANSI/bracketed-paste modes."""
+    from agent_core.human_io import HumanInputEOF, HumanInputTimeout
+    import select
+    try:
+        sys.stdout.write(safe_text(prompt))
+        sys.stdout.flush()
+    except BrokenPipeError:
+        raise HumanInputEOF('plain output closed') from None
+    if timeout and not select.select([sys.stdin], [], [], timeout)[0]:
+        raise HumanInputTimeout('plain input timed out')
+    value = sys.stdin.readline()
+    if value == '':
+        raise HumanInputEOF('plain input closed')
+    return value[:-1] if value.endswith('\n') else value
+
+
 def safe_input(prompt: str, timeout_seconds: Optional[int] = None, *, history: bool = True) -> str:
     """Read one line from stdin with POSIX timeout support.
 
@@ -426,7 +446,6 @@ def safe_input(prompt: str, timeout_seconds: Optional[int] = None, *, history: b
     if input_terminal() is not None:
         return input_terminal().read(prompt, timeout=timeout)
     if os.getenv("BIOMIND_UI", "").lower() == "plain" or os.getenv("TERM") == "dumb":
-        from agent_core.cli_terminal import plain_input
         return plain_input(prompt, timeout)
     return _readline_input_with_timeout(prompt, timeout, history=history)
 

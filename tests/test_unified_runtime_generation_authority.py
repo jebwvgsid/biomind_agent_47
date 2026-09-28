@@ -96,53 +96,7 @@ def test_current_installation_can_retire_once_preserving_actions_and_not_cover_n
         service.prepare_generation({"task_id": tid}, selected_skill_id=sid, capability_contract=contract)
 
 
-def _admit_retry(tmp_path, tid, plan, execution):
-    from agent_core.workflow.outcomes import ExecuteOutcome
-    from agent_core.workflow.recovery_projection import build_causal_failure_record
-    from agent_core.workflow.recovery_runtime import RecoveryRuntime
-    outcome = ExecuteOutcome(schema_version=1, type="execution_failed", summary="Fixture ended failure",
-        scope={key: execution[key] for key in ("task_id", "plan_id", "plan_version", "step_id", "action_id", "attempt_id")},
-        payload={"execution_record": execution, "action_id": execution["action_id"],
-            "attempt_id": execution["attempt_id"], "return_code": 1, "failure_fingerprint": "fixture-failure", "progress_snapshot": {}},
-        evidence_refs=(execution["execution_id"],)).to_dict()
-    record = build_causal_failure_record("execute_outcome", outcome, plan, task_id=tid)
-    plan["task_state"].update(causal_failure_packets={record["packet_ref"]: record},
-        active_failure_packet_ref=record["packet_ref"])
-    save_plan_state(tmp_path, tid, plan)
-    state = {"task_id": tid, "active_failure_packet_ref": record["packet_ref"],
-        "failure_packet": record["failure_packet"], "failure_source": record["failure_source"],
-        "recovery_archive_ref": "phase-archive:offline-fixture",
-        "recovery_directive": {"schema_version": 1, "directive_id": "current-retry", "task_id": tid,
-            "action": "retry_step", "target_step_id": "science", "summary": "Inspect the runtime then regenerate",
-            "reason_code": "RUNTIME_PREPARATION_REQUIRED", "instruction": "Acquire declared runtime facts",
-            "evidence_refs": [execution["execution_id"]]}}
-    result = asyncio.run(RecoveryRuntime(data_path=str(tmp_path)).run(state))
-    assert result["recovery_outcome"]["type"] == "candidate_repair_required", result
-    return load_plan_state(tmp_path, tid)
 
 
-def test_formal_adopted_recovery_can_retire_once_but_not_a_later_attempt(tmp_path):
-    tid, sid, contract, service, plan, execution = _current_failure(tmp_path)
-    plan = _admit_retry(tmp_path, tid, plan, execution)
-    actions = deepcopy(plan["provenance_state"]["actions"])
-    accepted = service.prepare_generation({"task_id": tid}, selected_skill_id=sid, capability_contract=contract)
-    assert accepted["provenance_state"]["actions"] == actions
-    assert accepted["task_state"]["recovery_state"]["state_events"][-1]["authority"] == "recovery"
-    _failed_attempt(accepted, "third-failure")
-    save_plan_state(tmp_path, tid, accepted)
-    with pytest.raises(RuntimeRecoveryError, match="GENERATION_AUTHORITY_REQUIRED"):
-        service.prepare_generation({"task_id": tid}, selected_skill_id=sid, capability_contract=contract)
 
 
-@pytest.mark.parametrize("mutation", ["completed", "source_attempt", "envelope_hash", "directive_digest"])
-def test_typed_recovery_checks_adopted_scope_and_integrity(tmp_path, mutation):
-    tid, sid, contract, service, plan, execution = _current_failure(tmp_path)
-    plan = _admit_retry(tmp_path, tid, plan, execution)
-    recovery = plan["task_state"]["recovery_state"]
-    if mutation == "completed": recovery["active_recovery"]["status"] = "completed"
-    elif mutation == "source_attempt": recovery["active_recovery"]["source_attempt_id"] = "other"
-    elif mutation == "envelope_hash": recovery["active_recovery_envelope"]["immutable_hash"] = "tampered"
-    else: plan["task_state"]["typed_recovery_receipts"]["current-retry"]["directive_digest"] = "tampered"
-    save_plan_state(tmp_path, tid, plan)
-    with pytest.raises(RuntimeRecoveryError, match="GENERATION_AUTHORITY_REQUIRED"):
-        service.prepare_generation({"task_id": tid}, selected_skill_id=sid, capability_contract=contract)

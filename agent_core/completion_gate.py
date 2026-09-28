@@ -2970,6 +2970,11 @@ class CompletionGate:
 
     @staticmethod
     def validate_current_step(data_path: str | Path, task_id: str, plan_state: Dict[str, Any]) -> GateResult:
+        from agent_core.plan_contract import is_simple_plan
+        if is_simple_plan(plan_state):
+            execution = plan_state.get('execution_evidence') or {}
+            checked = verify_work_result(plan_state, plan_state.get('step_completion_candidate') or {}, project_dir=execution.get('cwd') or Path(data_path).absolute())
+            return GateResult(checked['passed'], classification='work_result_evidence', feedback=json.dumps(checked, ensure_ascii=False))
         step = current_running_step(plan_state)
         if not step:
             return GateResult(True)
@@ -3566,3 +3571,313 @@ class CompletionGate:
             )
 
         return GateResult(True, checked_artifacts=expected)
+
+
+def verify_work_result(state, claim, *, project_dir):
+    """Current-step acceptance from actual execution or explicit existing-result review."""
+    import json
+    import time
+    from pathlib import Path
+    from agent_core.plan_tracker import current_plan_step_with_index, resolve_work_output
+    from agent_core.work_outputs import (WorkOutputError, step_outputs, plan_identity, file_fingerprint)
+    from agent_core.work_validation import validate_output, validate_step_facts, normalized_validation
+    from agent_core.work_reuse import review_sources, reuse_file_evidence, delivery_sources
+    from agent_core.request_state import request_scope
+    from agent_core.execution_observation import execution_is_pending
+    def reject(code, **details):
+        return {'passed':False,'issues':[{'code':code,**details}], 'files':[], 'validated_facts':[],
+            'source_receipts':[], 'not_checked':['not evaluated after '+code],
+            'step_id':state.get('current_step_id'), 'plan_identity':plan_identity(state),
+            'request_scope':request_scope(state), 'scope':'current declared step'}
+    if (state.get('task_state') or {}).get('status') == 'cancelled': return reject('REQUEST_CANCELLED')
+    project_dir = project_dir or (state.get('plan_document') or {}).get('path_bindings', {}).get('project_dir') or '.'
+    _, step = current_plan_step_with_index(state)
+    if not step: return reject('CURRENT_STEP_MISSING')
+    from agent_core.work_validation import validation_diagnostics
+    from agent_core.plan_contract import plan_admission_policy_enabled
+    runtime_shape_issues, _ = validation_diagnostics(
+        [step], check_field_policy=plan_admission_policy_enabled())
+    if runtime_shape_issues:
+        return reject('STEP_VALIDATION_NOT_EXECUTABLE', diagnostics=runtime_shape_issues)
+    done = {r['step_id'] for r in state.get('steps') or [] if r.get('status') == 'done'}
+    if not set(step.get('dependencies') or []) <= done: return reject('STEP_DEPENDENCIES_UNACCEPTED')
+    try: reuse = review_sources(state)
+    except (ValueError, OSError) as exc: return reject('REUSE_SOURCE_INVALID', message=str(exc))
+    execution = dict(state.get('execution_evidence') or {})
+    actuals, source_rows = [], []
+    from agent_core.work_assessment import resolve_read_sources, assessment_projection
+    assessment_value = claim.get('assessment')
+    evidence_ids = assessment_value.get('evidence', []) if isinstance(assessment_value, dict) else []
+    if not isinstance(evidence_ids, list): return reject('RESULT_ASSESSMENT_INVALID')
+    try: read_sources = resolve_read_sources(state, evidence_ids, project=project_dir)
+    except (ValueError, OSError) as exc:
+        return reject('ASSESSMENT_READ_INVALID', message=str(exc),
+            recovery_hint='Read the required evidence again with read_file under the current Plan. A stale read ID alone does not require rerunning the scientific command.')
+    from agent_core.revision_evidence import revised_observations
+    revalidation_issues = []
+    try:
+        historical = revised_observations(state, step, project_dir, revalidation_issues) if not reuse else []
+    except (ValueError, OSError) as exc:
+        return reject('REVISION_EVIDENCE_UNAVAILABLE', message=str(exc))
+    historical_ids = {a['attempt_id'] for _, a in historical}
+    receipt = str(execution.get('receipt_ref') or '')
+    if historical and execution.get('step_id') != step['step_id']:
+        receipt = max(historical,key=lambda pair:pair[1].get('finished_at') or 0)[0]['receipt_ref']
+    if reuse:
+        review, sources = reuse
+        if step['step_id'] not in review['requirements']: return reject('REUSE_TARGET_NOT_SELECTED')
+        source_rows, actuals = [r for r,a in sources], [a for r,a in sources]
+        rule = review['requirements'][step['step_id']]
+        # Host selection may narrow a step to its correct attempt, avoiding the
+        # earliest rc=0 receipt that contained a failing scientific subcommand.
+        ids = rule.get('source_attempt_ids') or [a['attempt_id'] for a in actuals]
+        actuals = [a for a in actuals if a['attempt_id'] in ids]
+        source_rows = [r for r in source_rows if r['attempt_id'] in ids]
+        if not actuals and rule.get('kind') != 'gate': return reject('REUSE_SOURCE_RECEIPT_MISSING')
+    else:
+        rule = normalized_validation(step.get('validation'))
+        if execution_is_pending(execution): return reject('EXECUTION_NOT_TERMINAL')
+        if rule.get('kind') != 'gate' and not (read_sources and not rule.get('kind') and (not receipt or execution.get('step_id') != step['step_id'])):
+            if not receipt or not Path(receipt).is_file(): return reject('EXECUTION_RECEIPT_MISSING')
+            actual = json.loads(Path(receipt).read_text())
+            if execution_is_pending(actual): return reject('EXECUTION_NOT_TERMINAL')
+            attempts = (state.get('provenance_state') or {}).get('attempts') or {}
+            if actual.get('attempt_id') not in attempts or actual.get('step_id') != step['step_id']:
+                return reject('RESULT_ATTEMPT_NOT_CURRENT')
+            registered = attempts[actual['attempt_id']]
+            if receipt not in {registered.get('command_receipt'), registered.get('exit_status_path')}:
+                return reject('RESULT_RECEIPT_NOT_REGISTERED')
+            if registered.get('command_receipt_sha256') and registered['command_receipt_sha256'] != __import__('hashlib').sha256(Path(receipt).read_bytes()).hexdigest():
+                return reject('RESULT_RECEIPT_INTEGRITY_CHANGED')
+            if actual.get('task_id') != state.get('task_id'): return reject('RESULT_TASK_NOT_CURRENT')
+            if actual.get('request_scope') is not None and actual['request_scope'] != request_scope(state): return reject('RESULT_REQUEST_NOT_CURRENT')
+            identity = actual.get('work_plan_identity')
+            if (identity and identity != plan_identity(state)) or (not identity and str(actual.get('plan_version')) != str(state.get('plan_version'))):
+                if actual['attempt_id'] not in historical_ids:
+                    return reject('RESULT_PLAN_NOT_CURRENT', revalidation_issues=revalidation_issues,
+                        recovery_hint='Keep the accepted Plan while resolving the listed evidence gap. Rewording Plan fields cannot certify an old input version. Preserve the old receipt identity; only perform a necessary current check if the available version evidence is insufficient.')
+            actuals = [actual]
+            source_rows = [{'attempt_id':actual['attempt_id'],'step_id':actual['step_id'],
+                'plan_version':actual.get('plan_version'),'receipt_ref':receipt,
+                'receipt_sha256':__import__('hashlib').sha256(Path(receipt).read_bytes()).hexdigest()}]
+    if not reuse and rule.get('kind') in {'observation','resolution','sample_results'}:
+        seen = {a['attempt_id'] for a in actuals}
+        for aid, row in ((state.get('provenance_state') or {}).get('attempts') or {}).items():
+            path = row.get('command_receipt') or row.get('exit_status_path')
+            if aid in seen or row.get('step_id') != step['step_id'] or not path: continue
+            try:
+                data = Path(path).read_bytes(); other = json.loads(data)
+            except (OSError, ValueError): continue
+            if row.get('command_receipt_sha256') and row['command_receipt_sha256'] != __import__('hashlib').sha256(data).hexdigest(): return reject('RESULT_RECEIPT_INTEGRITY_CHANGED')
+            if other.get('task_id') != state.get('task_id') or other.get('attempt_id') != aid or other.get('step_id') != step['step_id'] or other.get('work_plan_identity') != plan_identity(state): continue
+            if other.get('request_scope') is not None and other['request_scope'] != request_scope(state): continue
+            if execution_is_pending(other): return reject('EXECUTION_NOT_TERMINAL')
+            actuals.append(other)
+            source_rows.append({'attempt_id':aid,'step_id':step['step_id'],'plan_version':other.get('plan_version'),
+                'receipt_ref':path,'receipt_sha256':__import__('hashlib').sha256(data).hexdigest()})
+    for source, actual in historical:
+        if actual['attempt_id'] not in {a['attempt_id'] for a in actuals}:
+            actuals.append(actual); source_rows.append(source)
+        else:
+            source_rows = [source if row['attempt_id'] == actual['attempt_id'] else row for row in source_rows]
+    try: deliveries = delivery_sources(state) if reuse else []
+    except (ValueError, OSError) as exc: return reject("DELIVERY_SOURCE_INVALID", message=str(exc))
+    issues, files, facts, output_checks = [], [], [], []
+    assessment, assessment_issues = assessment_projection(claim, read_sources, actuals)
+    issues.extend(assessment_issues)
+    if step.get('validation') and not rule.get('kind') and assessment is None:
+        issues.append({'code':'RESULT_ASSESSMENT_REQUIRED',
+                       'reason':'Natural-language validation requires an evidence-based Generate assessment; a produced file is not that conclusion.'})
+    # The list version and every known member version must be consumed, not
+    # merely recorded in a terminal receipt. This applies within one Plan too.
+    from agent_core.input_manifest import manifest_snapshot, validate_manifest_unchanged
+    manifest_current = None
+    try:
+        manifest_current = manifest_snapshot(state, project_dir)
+        if manifest_current:
+            if not actuals:
+                issues.append({'code':'INPUT_MANIFEST_EXECUTION_SOURCE_REQUIRED'})
+            for actual in actuals:
+                previous = actual.get('input_manifest_before')
+                if not previous or previous != actual.get('input_manifest_after') or actual.get('input_manifest_error'):
+                    issues.append({'code':'INPUT_MANIFEST_SOURCE_CHANGED_OR_MISSING','attempt_id':actual.get('attempt_id')})
+                else:
+                    validate_manifest_unchanged(previous, state, project_dir)
+    except (ValueError, OSError) as exc:
+        issues.append({'code':'INPUT_MANIFEST_VERSION_UNCONFIRMED','message':str(exc)})
+    if not isinstance(claim.get('message'),str) or not claim['message'].strip(): issues.append({'code':'RESULT_ASSESSMENT_REQUIRED'})
+    for actual in actuals:
+        if actual.get('output_snapshot_error'): issues.append({'code':'OUTPUT_SNAPSHOT_INCOMPLETE','message':actual['output_snapshot_error']})
+        if actual.get('returncode') != 0: issues.append({'code':'PROCESS_NOT_SUCCESSFUL','attempt_id':actual.get('attempt_id'),'returncode':actual.get('returncode')})
+    try:
+        required = step_outputs(state, project_dir, step)
+        if all(r.get('step_id') == step['step_id'] or r.get('status') == 'done' for r in state.get('steps') or []):
+            from agent_core.work_outputs import materialize_outputs
+            from agent_core.plan_tracker import canonical_task_spec_for_state
+            spec = canonical_task_spec_for_state(state) or {}
+            required.extend(materialize_outputs(state, [r for r in spec.get('output_contracts') or [] if isinstance(r,dict) and r.get('required') is not False], project_dir))
+            required = list({(r['canonical_path'],r.get('original_reference')):r for r in required}.values())
+    except WorkOutputError as exc: return {'passed':False,'issues':[{**exc.issue,'step_id':step['step_id'],'plan_version':state.get('plan_version')}]}
+    selections = claim.get('outputs') or {}
+    for row in required:
+        raw = row['canonical_path']; ref = row.get('original_reference') or raw
+        try:
+            target = resolve_work_output(state, raw, project_dir)
+            selection = selections.get(raw, selections.get(ref))
+            # A many-sample artifact selection must not silently select leaf for bud.
+            if selection and resolve_work_output(state, str(selection), project_dir) != target:
+                issues.append({'code':'OUTPUT_SELECTION_MISMATCH','reference':ref,'required_path':str(target),'selected_path':str(selection)});continue
+            fp = file_fingerprint(target)
+            fp['declared_path'] = raw
+            if fp.get('kind') == 'directory':
+                # A directory is only its own declaration, never proof of children.
+                files.append(fp); continue
+            output_rule = row.get('validation') if isinstance(row.get('validation'), dict) else {}
+            if not fp['size'] and output_rule.get('allow_empty') is not True:
+                issues.append({'code':'REQUIRED_OUTPUT_EMPTY','path':str(target)})
+            if output_rule.get('freshness') not in (None, 'current_step'):
+                issues.append({'code':'OUTPUT_FRESHNESS_UNSUPPORTED','path':str(target)})
+            selected_rule = {'role':row.get('role'), 'format':row.get('format'), 'validation':output_rule}
+            validation_state = state
+            snapshot_origin = None
+            prior_internal_file = False
+            if output_rule.get('kind') == 'stage_status' and output_rule.get('freshness') != 'current_step':
+                # No cache or second state store: only registered Commit evidence
+                # for the same bytes and explicit rule may supply the old view.
+                for committed in (state.get('task_state') or {}).get('step_commit_receipts', {}).values():
+                    previous = committed.get('verification') or {}
+                    prior_internal_file |= any(all(old.get(k) == fp.get(k)
+                        for k in ('path','size','mtime_ns','sha256'))
+                        for old in previous.get('files') or [])
+                    for check in previous.get('output_checks') or []:
+                        old_file = check.get('file') or {}
+                        if (check.get('rule') == selected_rule and check.get('passed') is True
+                                and old_file.get('hash_coverage') == fp.get('hash_coverage') == 'full'
+                                and all(old_file.get(k) == fp.get(k) for k in ('path','size','mtime_ns','sha256'))
+                                and isinstance(check.get('step_states'), dict)):
+                            validation_state = {**state, 'steps':[{'step_id':k, 'status':v} for k,v in check['step_states'].items()]}
+                            snapshot_origin = committed.get('commit_id')
+                            break
+                    if snapshot_origin: break
+            try:
+                if prior_internal_file and not snapshot_origin:
+                    raise WorkOutputError('OUTPUT_SNAPSHOT_EVIDENCE_UNAVAILABLE', str(target),
+                        reason='No registered same-rule snapshot proves this previously accepted internal table; do not guess its historical state.')
+                fact = validate_output(validation_state, row, target)
+                output_checks.append({'file':dict(fp), 'rule':selected_rule, 'passed':True,
+                    'step_states':fact.get('step_states') if fact else None,
+                    'snapshot_commit_id':snapshot_origin, 'state_generation':state.get('state_generation')})
+                if fact:
+                    facts.append(fact)
+                    known_paths = {r['canonical_path'] for r in required}
+                    for member in fact.get('output_files') or []:
+                        if member['path'] not in known_paths:
+                            required.append({'canonical_path':member['path'],'original_reference':member['path'],'role':'result_member'})
+                            known_paths.add(member['path'])
+            except (ValueError, UnicodeError, WorkOutputError) as exc:
+                diagnostic = getattr(exc, 'issue', None)
+                issues.append({'code':'OUTPUT_CONTENT_INVALID','path':str(target),'reference':ref,
+                    'message':str(exc), **({'details':diagnostic} if diagnostic else {})})
+                output_checks.append({'file':dict(fp), 'rule':selected_rule, 'passed':False,
+                    'diagnostic':diagnostic or {'message':str(exc)}})
+            provenance, producer = None, None
+            for actual in actuals:
+                if reuse:
+                    provenance = reuse_file_evidence(target, actual, fp)
+                elif actual.get('attempt_id') in historical_ids:
+                    selected = next((source for source, old in historical
+                        if old['attempt_id'] == actual['attempt_id']), {})
+                    after = (actual.get('after_files') or {}).get(str(target)) or {}
+                    if (str(target) in selected.get('original_product_paths', [])
+                            and after.get('hash_coverage') == fp.get('hash_coverage') == 'full'
+                            and all(after.get(k) == fp.get(k) for k in ('size','mtime_ns','sha256'))):
+                        provenance = 'revalidated_original_product'
+                elif actual.get('attempt_id') not in historical_ids:
+                    before = (actual.get('before_files') or {}).get(str(target)) or {}
+                    after = (actual.get('after_files') or {}).get(str(target)) or {}
+                    if before != after and after.get('exists') and after.get('size') == fp['size'] and after.get('mtime_ns') == fp['mtime_ns']:
+                        provenance = 'current_attempt_change'
+                if provenance: producer=actual['attempt_id'];break
+            if not provenance:
+                owned = next((r for r in (state.get('task_state') or {}).get('accepted_work_files') or [] if r.get('path')==str(target) and r.get('size')==fp['size'] and r.get('mtime_ns')==fp['mtime_ns'] and all(r.get(k)==fp.get(k) for k in ('sha256','sample_sha256'))), None)
+                if owned: provenance, producer='previous_accepted',owned.get('producer_attempt_id')
+            if not provenance:
+                for delivery in deliveries:
+                    owned=next((r for r in delivery['files'] if all(r.get(k)==fp.get(k) for k in ('path','size','mtime_ns','sha256','sample_sha256'))),None)
+                    if owned:
+                        provenance='non_scientific_delivery_write';producer=None;break
+            if not provenance: issues.append({'code':'OUTPUT_PROVENANCE_UNCONFIRMED','path':str(target),'reference':ref})
+            if output_rule.get('freshness') == 'current_step' and provenance not in {'current_attempt_change','revalidated_original_product'}:
+                issues.append({'code':'OUTPUT_CURRENT_STEP_VERSION_REQUIRED', 'path':str(target),
+                    'rule_source':'output.validation.freshness=current_step',
+                    'instruction':'Refresh the declared scientific schema and submit new production/version evidence; a historical snapshot is insufficient.'})
+            fp.update(provenance=provenance or 'unconfirmed',producer_attempt_id=producer,step_id=step['step_id'])
+            files.append(fp)
+        except WorkOutputError as exc: issues.append(exc.issue)
+        except OSError as exc: issues.append({'code':'REQUIRED_OUTPUT_UNAVAILABLE','path':str(raw),'reference':ref,'error':type(exc).__name__})
+    accepted = (state.get('task_state') or {}).get('step_commit_receipts') or {}
+    dependency_facts = [f for r in accepted.values() if r.get('step_id') in step.get('dependencies',[]) for f in (r.get('verification') or {}).get('validated_facts') or []]
+    if not rule and any(r.get('role') in {'tad_domains','tad_boundaries','tad_summary'} for r in step_outputs(state, project_dir, step)): rule={'kind':'sample_results'}
+    superseded = []
+    evaluation_sources = actuals
+    if not reuse and rule.get('kind') in {'observation','resolution','sample_results'} and len(actuals)>1:
+        newest = actuals[0]  # the current execution receipt, checked against host state above
+        if newest.get('returncode') == 0 and newest.get('finished_at') and all(
+                a.get('finished_at') and a['finished_at'] < newest['finished_at'] for a in actuals[1:]):
+            try:
+                validate_step_facts(state, step, [newest], dependency_facts, rule)
+            except (ValueError, WorkOutputError, TypeError, AttributeError): pass
+            else:
+                evaluation_sources = [newest]
+                superseded = [a['attempt_id'] for a in actuals[1:]]
+                issues = [i for i in issues if not (i['code']=='PROCESS_NOT_SUCCESSFUL' and i.get('attempt_id') in superseded)]
+    if 'kind' not in rule and assessment and not assessment_issues:
+        # An explicit model conclusion may accept a natural-language obligation;
+        # it never replaces an existing failed machine rule or execution result.
+        pass
+    else:
+        try: facts.extend(validate_step_facts(state, step, evaluation_sources, dependency_facts, rule))
+        except (ValueError, WorkOutputError, TypeError, AttributeError) as exc: issues.append({'code':'STEP_FACTS_UNCONFIRMED','message':str(exc)})
+    facts.extend({'kind':'file_read','path':r['path'],'sha256':r['sha256'],
+                  'range_chars':[r['offset_chars'],r['end_chars']], 'source_evidence_id':r['evidence_id'],
+                  'scope':'bytes actually read; semantic conclusion belongs to Generate'} for r in read_sources)
+    actual = actuals[0] if actuals else {}
+    return {'work_protocol_version':3,'passed':not issues,'issues':issues,'attempt_id':actual.get('attempt_id',''),
+        'action_id':actual.get('action_id',''),'step_id':step['step_id'],'receipt_ref':receipt if not reuse else '',
+        'plan_id':state.get('plan_id'),'plan_version':state.get('plan_version'),
+        'source_reads':read_sources,'assessment':assessment,
+        'input_manifest':manifest_current,'input_manifest_project':str(Path(project_dir).absolute()),
+        'source_receipts':source_rows,'superseded_check_attempts':superseded,'delivery_receipts':deliveries,'acceptance_mode':'reuse_existing' if reuse else 'deterministic_gate' if rule.get('kind')=='gate' else 'revision_revalidation' if actual.get('attempt_id') in historical_ids else 'read_evidence' if read_sources and not actuals else 'execution',
+        'revalidated_inputs': __import__('agent_core.revision_evidence',fromlist=['observed_inputs']).observed_inputs(state,step,project_dir) if historical_ids else {},
+        'plan_identity':plan_identity(state),'request_scope':request_scope(state),'files':files,'validated_facts':facts,'output_checks':output_checks,
+        'reviewed_at':time.time(),'model_assessment':str(claim.get('message') or ''),
+        'scientific_validation':'declared checks only; not independent biological validation',
+        'not_checked':['scientific properties outside the recorded checks','unhashed remainder of large files'] + ((assessment or {}).get('not_checked') or []) + ([{'status':'not_evaluated','validation':step.get('validation')}] if step.get('validation') and not rule.get('kind') else []),
+        'state_generation':int(state.get('state_generation') or 0)}
+
+
+def work_verification_context(state):
+    """Project saved verification; historical evidence never becomes current success."""
+    from copy import deepcopy
+    from agent_core.work_outputs import plan_identity
+    from agent_core.request_state import request_scope
+    task = state.get('task_state') or {}
+    records = [*(task.get('work_result_history') or []), task.get('pending_work_result') or {}]
+    latest = {}
+    for row in records:
+        if not row or row.get('request_scope') != request_scope(state): continue
+        latest[(row.get('plan_identity'), row.get('step_id'))] = row
+    commits = task.get('step_commit_receipts') or {}
+    current, historical = [], []
+    for (identity, step), row in latest.items():
+        checked = row.get('verification') or {'issues': row.get('issues') or [], 'not_checked':['legacy verification details unavailable']}
+        if not checked.get('issues'): continue
+        value = {'step_id':step, 'plan_identity':identity, 'verification':deepcopy(checked)}
+        if identity != plan_identity(state):
+            value['disposition'] = 'superseded_by_accepted_plan'
+            value['replacement_plan_identity'] = plan_identity(state)
+            historical.append(value)
+        elif not any(r.get('step_id') == step and (r.get('verification') or {}).get('plan_identity') == identity for r in commits.values()):
+            value['disposition'] = 'unresolved'; current.append(value)
+    return {'unresolved': current, 'historical':historical,
+            'scope':'recorded declared checks; not an independent scientific certification'}

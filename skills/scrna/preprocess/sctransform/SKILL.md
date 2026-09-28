@@ -1,26 +1,22 @@
 ---
-name: scRNA SCTransform Preprocess
-description: 对 QC 后的 Seurat 对象执行 SCTransform 标准化、高变基因建模和可选协变量回归。Use when the user explicitly requests SCTransform/SCT or a workflow stage selects SCT preprocessing after scRNA QC; do not use as the default log-normalization path unless requested or justified by the workflow.
-tags: [single-cell, scRNA, Seurat, SCTransform, SCT, normalization, 单细胞, 预处理]
-task_types: [single_cell_rnaseq]
-stage_tags: [sctransform_preprocess, preprocess]
-inputs: [qc_filtered_seurat_object, regression_variables]
-outputs: [sct_seurat_object, variable_features, preprocess_summary]
-when_to_use:
-  - User asks for SCTransform, SCT, variance-stabilizing normalization, or regression-aware preprocessing.
-  - Workflow stage is sctransform_preprocess.
-when_not_to_use:
-  - User requested classic NormalizeData/FindVariableFeatures/ScaleData only.
-  - The SCT package is unavailable and the user did not approve environment repair.
-legacy_ids: [scrna-sctransform, scrna-sct-preprocess]
-runtime:
-  default_env: bio_scrna_core
-  env_runner: conda run -n bio_scrna_core Rscript
-  language: r
-  packages: [Seurat, sctransform, yaml, ggplot2, dplyr]
-  capabilities: [scrna-sctransform, scrna-preprocess]
-  install_tool: '<install_tool env="bio_scrna_core">scrna-env-bootstrap_r</install_tool>'
+name: sctransform
+description: 对 QC 后的 Seurat 对象执行 SCTransform 标准化、高变基因建模和可选协变量回归。Use when the user explicitly requests SCTransform/SCT
+  or a workflow stage selects SCT preprocessing after scRNA QC; do not use as the default log-normalization path
+  unless requested or justified by the workflow.
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # scRNA SCTransform Preprocess
 
@@ -49,15 +45,15 @@ Recommended fields:
 ## Quick Start
 
 ```bash
-conda run -n bio_scrna_core Rscript skills/scrna/preprocess/basic/scripts/preprocess_scrna_seurat.R --manifest /abs/path/manifest.yaml --input-rds /abs/path/seurat_qc.rds --output-rds /abs/path/objects/seurat_sct.rds
+Rscript "${PREPROCESS_SKILL_DIR}/scripts/preprocess_scrna_seurat.R" --manifest /abs/path/manifest.yaml --input-rds /abs/path/seurat_qc.rds --output-rds /abs/path/objects/seurat_sct.rds
 ```
 
 ## Environment
 
-Reuse `bio_scrna_core`. If `sctransform` is missing, delegate installation with:
+Reuse an existing environment containing the declared scRNA dependencies. If `sctransform` is missing, delegate installation with:
 
 ```text
-<install_tool env="bio_scrna_core">scrna-env-bootstrap_r</install_tool>
+先确认所需依赖（scrna-env-bootstrap_r）与目标环境，再请求用户明确安装授权
 ```
 
 Do not inline package-manager installation commands from this skill.

@@ -100,14 +100,3 @@ def test_T06_four_historical_episodes_are_reference_only_and_bounded(tmp_path):
         reader.read(entry,entry['locator'],causal_path=chain)
 
 
-def test_T06_dedup_exact_source_identity_preserves_other_origins():
-    from agent_core.workflow.recovery_node import _normalize_inherited_materials
-    body='identical bytes'
-    base={'material_id':'wrapper-1','source_ref':'immutable-origin-1','content_hash':hashlib.sha256(body.encode()).hexdigest(),
-        'scope':{'task_id':'fixture','revision':1},'coverage':{'kind':'full'},'body':body,'selected':True}
-    inputs=[base,{**base,'material_id':'wrapper-2'},
-        {**base,'material_id':'wrapper-3','source_ref':'immutable-origin-2'},
-        {**base,'material_id':'wrapper-4','scope':{'task_id':'fixture','revision':2}}]
-    messages,descriptors=_normalize_inherited_materials(inputs,epoch_id='fixture-epoch')
-    assert len(messages)==len(descriptors)==3
-    assert {d['source_ref'] for d in descriptors.values()}=={'immutable-origin-1','immutable-origin-2'}

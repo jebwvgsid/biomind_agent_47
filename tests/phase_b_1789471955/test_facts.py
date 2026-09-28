@@ -7,8 +7,6 @@ from unittest.mock import patch
 import pytest
 from agent_core.evidence_projection import candidate_binding_facts, committed_dependency_facts, dependency_input_scope
 from agent_core.semantic_completion import _derive_report_facts
-from agent_core.workflow.commit_step import CommitStep
-from agent_core.workflow.verifier import TypedSupervisor
 from tests.test_typed_verifier_commit import _durable_state, _validation, _raw_verified_outcome, _attach_semantic_report
 
 HISTORY = Path('/public/home/liusiqi/03.毕设/benchmarks/biomind_agent_benchmark/runs/task_outputs/session_1789471955')
@@ -96,47 +94,8 @@ def test_T02_declared_dependency_applicability(change):
     else: assert rows[0]['status'] != 'committed'
 
 
-def test_T04_T20_same_attempt_revalidation_then_single_commit():
-    durable = _durable_state()
-    execution = {'step_id':'step-1','action_id':'action-1','attempt_id':'attempt-1'}
-    recovery = {'schema_version':1,'type':'revalidation_required', 'summary':'Read missing evidence and review the existing attempt.',
-        'scope':{**{key:durable[key] for key in ('task_id','plan_id','plan_version')},**execution},
-        'payload':{'decision_id':'read-1','diagnosis':'read-only evidence','new_evidence_refs':['inspection-1'],
-                   'prior_validation_id':'prior-validation','source_scope':{}}, 'evidence_refs':['inspection-1']}
-    durable['task_state']['typed_recovery_receipts']={'read-1': {'outcome':deepcopy(recovery),
-        'causal_observation_receipts':[{'tool':'evidence.read','source_ref':'inspection-1','result':{'content':'bounded existing fact'}}]}}
-    writes, verifier_calls = [], []
-    def load(*_): return deepcopy(durable)
-    def save(_root,_task,candidate):
-        durable.clear(); durable.update(deepcopy(candidate)); durable['state_generation']+=1; writes.append(deepcopy(durable))
-    async def verifier(state):
-        verifier_calls.append(deepcopy(state))
-        assert state['execution_evidence']==execution and state['validation_evidence']=={}
-        return {'validation_evidence':_validation()}
-    with patch('agent_core.workflow.verifier.load_plan_state', side_effect=load), patch('agent_core.workflow.commit_step.load_plan_state',side_effect=load), patch('agent_core.workflow.commit_step.save_plan_state',side_effect=save):
-        result=asyncio.run(TypedSupervisor(data_path='/offline',verifier=verifier,gate_evaluator=lambda *_:{'passed':True}).run(
-            {'task_id':durable['task_id'],'execution_evidence':execution,'recovery_outcome':recovery,'validation_evidence':{'old':True}}))
-        assert result['verification_outcome']['type']=='verified', result
-        report=result['verification_outcome']['payload']['completion_report']
-        assert report['effect_presence']['revalidation_inspection_facts'][0]['observation']['result']['content']=='bounded existing fact'
-        committer=CommitStep(data_path='/offline',gate_evaluator=lambda *_:{'passed':True})
-        supplied={'task_id':durable['task_id'],'execution_evidence':execution,**result}
-        first=asyncio.run(committer.run(supplied)); second=asyncio.run(committer.run(supplied))
-    assert first['commit_step_outcome']['type']=='next_step_ready', first
-    assert first==second and len(writes)==1 and len(verifier_calls)==1
-    receipt=next(iter(durable['task_state']['typed_step_commit_receipts'].values()))
-    assert 'dependency_evidence' in receipt
-    assert set(durable['provenance_state']['attempts'])=={'attempt-1'}
 
 
-def test_T04_stale_revalidation_never_calls_verifier():
-    durable=_durable_state()
-    async def forbidden(_): raise AssertionError('stale revalidation reached verifier')
-    with patch('agent_core.workflow.verifier.load_plan_state',return_value=durable):
-        result=asyncio.run(TypedSupervisor(data_path='/offline',verifier=forbidden).run({'task_id':durable['task_id'],
-            'execution_evidence':{'action_id':'new-action','attempt_id':'new-attempt'},
-            'recovery_outcome':{'type':'revalidation_required','payload':{'decision_id':'old'}}}))
-    assert result['verification_outcome']['type']=='incomplete_evidence'
 
 
 def test_T04_reviewer_identity_uses_evidence_not_receipt_wrappers():

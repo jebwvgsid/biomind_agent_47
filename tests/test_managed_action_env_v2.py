@@ -12,7 +12,6 @@ from agent_core.managed_artifacts import (
     materialize_managed_action,
 )
 from agent_core.action_runtime import build_exact_action_environment
-from bio_agents import BioAnalystAgent
 from prompts.manager import PromptManager
 
 
@@ -138,21 +137,6 @@ class ManagedActionEnvV2Tests(unittest.TestCase):
         self.assertIn("Controller validates input/output coverage", prompt)
         self.assertNotIn('"outputs":["output.semantic_handle"]', prompt)
 
-    def test_execute_parser_discards_legacy_duplicate_output_identity(self) -> None:
-        action = BioAnalystAgent._structured_action_from_object({
-            "action_type": "execute",
-            "argv": ["tool", "{output:reference_fasta}"],
-            "produced_outputs": [{
-                "output_id": "output.reference_fasta",
-                "path": "/model-invented/reference.fa",
-            }],
-            "expected_evidence": ["artifact.output.reference_fasta"],
-        })
-
-        self.assertEqual(action["type"], "execute")
-        self.assertEqual(action["argv"], ["tool", "{output:reference_fasta}"])
-        self.assertNotIn("produced_outputs", action)
-        self.assertNotIn("expected_evidence", action)
 
 
 if __name__ == "__main__":

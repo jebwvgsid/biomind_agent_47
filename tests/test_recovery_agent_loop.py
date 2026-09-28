@@ -1,19 +1,17 @@
 from __future__ import annotations
 
 import copy
+import asyncio
 import json
 import unittest
 
 from langchain_core.messages import AIMessage
 
-from agent_core.workflow.recovery_agent import (
-    RecoveryAgentLoop,
-    RecoveryAgentLoopConfig,
-)
 from agent_core.workflow.recovery_projection import (
     build_causal_failure_record,
     project_recovery_seed,
 )
+from agent_core.workflow.outcomes import VerificationOutcome
 from agent_core.workflow.scoped_context import provider_visible_payload
 from tests.test_recovery_projection import _durable, _execute_failure
 
@@ -49,6 +47,195 @@ def _directive() -> str:
         "instruction": "Regenerate the current action using the verified runtime facts.",
         "evidence_refs": ["execution-1"],
     })
+
+
+def _typed_path_failure_seed():
+    durable = _durable()
+    outcome = VerificationOutcome(
+        schema_version=1,
+        type="correction_required",
+        summary="Workspace receipt does not prove the formal path.",
+        scope={
+            "task_id": "task-recovery",
+            "plan_id": "plan-recovery",
+            "plan_version": "plan-v1",
+            "step_id": "step-1",
+            "action_id": "action-1",
+            "attempt_id": "attempt-1",
+            "validation_id": "validation-path-1",
+        },
+        payload={
+            "validation_evidence": {"validation_id": "validation-path-1"},
+            "completion_gate": {
+                "passed": False,
+                "classification": "semantic_completion_rejected",
+                "missing_effects": {
+                    "workspace_mutations": ["artifact.snpeff_data_dir"],
+                },
+            },
+            "completion_report": {
+                "report_id": "completion-report-path-1",
+                "scope": {
+                    "task_id": "task-recovery",
+                    "plan_id": "plan-recovery",
+                    "plan_version": "plan-v1",
+                    "step_id": "step-1",
+                    "action_id": "action-1",
+                    "attempt_id": "attempt-1",
+                    "validation_id": "validation-path-1",
+                },
+                "validation_digest": "sha256:validation-path-1",
+                "deterministic_veto": True,
+                "effective_disposition": "correction_required",
+                "completion_gate": {
+                    "passed": False,
+                    "classification": "semantic_completion_rejected",
+                    "missing_effects": {
+                        "workspace_mutations": [
+                            "artifact.snpeff_data_dir"
+                        ],
+                    },
+                },
+                "process_outcome": {
+                    "validation_status": "VALID",
+                    "returncode": 0,
+                    "returncode_passed": True,
+                    "evidence_complete": True,
+                    "command_role": "analysis_execution",
+                    "execution_status": "succeeded",
+                },
+                "effect_presence": {
+                    "declared": {
+                        "workspace_mutations": [
+                            "artifact.snpeff_data_dir"
+                        ],
+                    },
+                    "observed": {"workspace_mutations": []},
+                    "missing": {
+                        "workspace_mutations": [
+                            "artifact.snpeff_data_dir"
+                        ],
+                    },
+                },
+                "binding_and_receipt_findings": [{
+                    "issue_id": "issue-workspace-path-1",
+                    "status": "failed",
+                    "code": "WORKSPACE_MUTATION_RECEIPT_INVALID",
+                    "affected_resource": "artifact.snpeff_data_dir",
+                    "receipt": {
+                        "receipt_id": "workspace-receipt-path-1",
+                        "producer": "biomind.runtime_attester.v1",
+                        "canonical_resource_id": "artifact.snpeff_data_dir",
+                        "formal_concrete_path": "/formal/snpeff",
+                        "attestation_status": (
+                            "idempotent_revalidation_evidence_missing"
+                        ),
+                        "attested": False,
+                        "scope_mismatches": {
+                            "formal_concrete_path": {
+                                "expected": "/formal/snpeff",
+                                "observed": "/wrong/snpeff",
+                            },
+                        },
+                        "evidence_refs": ["evidence:workspace-receipt-1"],
+                    },
+                }],
+                "semantic_review_requirements": {
+                    "required": False,
+                    "policy_source": "no_explicit_review_policy",
+                    "required_issue_ids": ["issue-workspace-path-1"],
+                    "allowed_issue_ids": [
+                        "validation-path-1", "issue-workspace-path-1"
+                    ],
+                    "decision_schema": "biomind.semantic_decision.v1",
+                    "review_input_status": "not_required",
+                    "commit_eligible": False,
+                    "commit_authority": "commit_step_only",
+                },
+                "findings": [{
+                    "issue_id": "issue-workspace-path-1",
+                    "nature": "binding_and_receipt",
+                    "code": "WORKSPACE_MUTATION_RECEIPT_INVALID",
+                    "contract_source": (
+                        "workspace_mutation_attestation:"
+                        "artifact.snpeff_data_dir:prepare_database"
+                    ),
+                    "actual": "/wrong/snpeff",
+                    "expected": "/formal/snpeff",
+                    "evidence_refs": ["evidence:workspace-receipt-1"],
+                    "affected_resource": "artifact.snpeff_data_dir",
+                    "affected_field": "formal_concrete_path",
+                    "status": "failed",
+                    "disposition": "correction_required",
+                    "confidence_or_unknown_reason": 1.0,
+                }],
+                "predicate_results": [{
+                    "result_id": "issue-workspace-path-1",
+                    "predicate_id": (
+                        "workspace_mutation_attestation:"
+                        "artifact.snpeff_data_dir:prepare_database"
+                    ),
+                    "observation_id": "artifact.snpeff_data_dir",
+                    "status": "failed",
+                    "passed": False,
+                    "reason_code": "WORKSPACE_MUTATION_RECEIPT_INVALID",
+                    "disposition": "correction_required",
+                    "parser_receipt": {
+                        "canonical_resource_id": "artifact.snpeff_data_dir",
+                        "formal_concrete_path": "/formal/snpeff",
+                        "scope_mismatches": {
+                            "formal_concrete_path": {
+                                "expected": "/formal/snpeff",
+                                "observed": "/wrong/snpeff",
+                            },
+                        },
+                        "attestation_status": (
+                            "idempotent_revalidation_evidence_missing"
+                        ),
+                        "evidence_refs": ["evidence:workspace-receipt-1"],
+                    },
+                }],
+            },
+            "semantic_decision": {"disposition": "correction_required"},
+            "contract_violations": [
+                "WORKSPACE_MUTATION_RECEIPT_INVALID"
+            ],
+            "failure_owner": "deterministic_predicate",
+            "binding": {
+                "issue_id": "binding-path-1",
+                "code": "BINDING_PATH_MISMATCH",
+                "canonical_resource_id": "artifact.snpeff_data_dir",
+                "formal_path": "/formal/snpeff",
+                "observed_path": "/wrong/snpeff",
+            },
+            "receipt": {
+                "issue_id": "receipt-path-1",
+                "reason_code": "WORKSPACE_MUTATION_RECEIPT_INVALID",
+                "receipt_reason": "formal_path_not_observed",
+            },
+        },
+        evidence_refs=("evidence:workspace-receipt-1",),
+    ).to_dict()
+    record = build_causal_failure_record(
+        "verification_outcome", outcome, durable, task_id="task-recovery"
+    )
+    task_state = dict(durable["task_state"])
+    task_state["causal_failure_packets"] = {record["packet_ref"]: record}
+    task_state["causal_failure_incident_heads"] = {
+        record["incident_id"]: record["packet_ref"]
+    }
+    task_state["active_failure_packet_ref"] = record["packet_ref"]
+    durable["task_state"] = task_state
+    projection = project_recovery_seed(
+        {
+            "task_id": "task-recovery",
+            "active_failure_packet_ref": record["packet_ref"],
+            "failure_packet": record["failure_packet"],
+        },
+        durable,
+    )
+    assert projection is not None
+    return durable, projection.recovery_seed, record
 
 
 class _Dispatcher:
@@ -88,185 +275,6 @@ class _ToolThenDirectiveModel:
         return AIMessage(content=_directive())
 
 
-class RecoveryAgentLoopTests(unittest.IsolatedAsyncioTestCase):
-    async def test_tool_episode_is_exact_append_only_with_one_frozen_seed(self) -> None:
-        durable, seed = _seed_fixture()
-        durable["messages"] = [{"role": "user", "content": "old global history"}]
-        model = _ToolThenDirectiveModel(durable)
-        dispatcher = _Dispatcher()
-        result = await RecoveryAgentLoop(
-            model=model, dispatcher=dispatcher, bind_tools=False
-        ).ainvoke(seed=seed, durable=durable)
-
-        self.assertFalse(result["terminal_error"])
-        self.assertEqual(result["directive"]["action"], "retry_step")
-        self.assertEqual(dispatcher.calls, [("failure.inspect", {})])
-        self.assertEqual(len(model.requests), 2)
-        self.assertEqual(
-            model.requests[1][:len(model.requests[0])], model.requests[0]
-        )
-        self.assertEqual(len(model.requests[0]), 2)
-        self.assertEqual(len(model.requests[1]), 4)
-        self.assertEqual(model.requests[0][1], model.requests[1][1])
-        wire = json.dumps(model.requests, ensure_ascii=False)
-        self.assertNotIn("old global history", wire)
-        self.assertNotIn("mutated after seed", wire)
-        self.assertTrue(result["audit"]["append_only"])
-
-    async def test_transport_retry_reuses_identical_message_array(self) -> None:
-        durable, seed = _seed_fixture()
-
-        class Flaky:
-            def __init__(self):
-                self.requests = []
-
-            async def ainvoke(self, messages):
-                self.requests.append([
-                    provider_visible_payload(item) for item in messages
-                ])
-                if len(self.requests) == 1:
-                    raise TimeoutError("fixture timeout")
-                return AIMessage(content=_directive())
-
-        model = Flaky()
-        result = await RecoveryAgentLoop(
-            model=model,
-            dispatcher=_Dispatcher(),
-            config=RecoveryAgentLoopConfig(max_transport_attempts=2),
-            bind_tools=False,
-        ).ainvoke(seed=seed, durable=durable)
-        self.assertFalse(result["terminal_error"])
-        self.assertEqual(model.requests[0], model.requests[1])
-        self.assertEqual(result["audit"]["transport_attempt_count"], 2)
-
-    async def test_four_provider_calls_preserve_every_prior_prefix(self) -> None:
-        durable, seed = _seed_fixture()
-
-        class ThreeToolsThenDirective:
-            def __init__(self):
-                self.requests = []
-
-            async def ainvoke(self, messages):
-                self.requests.append([
-                    provider_visible_payload(item) for item in messages
-                ])
-                if len(self.requests) <= 3:
-                    ordinal = len(self.requests)
-                    return AIMessage(content="", tool_calls=[{
-                        "id": f"call-{ordinal}",
-                        "name": "failure_inspect",
-                        "args": {"ref_id": f"failure-ref-{ordinal}"},
-                        "type": "tool_call",
-                    }])
-                return AIMessage(content=_directive())
-
-        model = ThreeToolsThenDirective()
-        result = await RecoveryAgentLoop(
-            model=model,
-            dispatcher=_Dispatcher(),
-            config=RecoveryAgentLoopConfig(
-                max_consecutive_no_progress_rounds=4,
-            ),
-            bind_tools=False,
-        ).ainvoke(seed=seed, durable=durable)
-        self.assertFalse(result["terminal_error"])
-        self.assertEqual(len(model.requests), 4)
-        for previous, current in zip(model.requests, model.requests[1:]):
-            self.assertEqual(current[:len(previous)], previous)
-        self.assertEqual(
-            [len(request) for request in model.requests], [2, 4, 6, 8]
-        )
-
-    async def test_exact_repeat_budget_stops_third_identical_request(self) -> None:
-        durable, seed = _seed_fixture()
-
-        class Repeat:
-            def __init__(self):
-                self.calls = 0
-
-            async def ainvoke(self, _messages):
-                self.calls += 1
-                return AIMessage(
-                    content="",
-                    tool_calls=[{
-                        "id": f"repeat-{self.calls}",
-                        "name": "failure_inspect",
-                        "args": {},
-                        "type": "tool_call",
-                    }],
-                )
-
-        result = await RecoveryAgentLoop(
-            model=Repeat(),
-            dispatcher=_Dispatcher(),
-            config=RecoveryAgentLoopConfig(
-                max_exact_repeated_tool_request=2,
-                max_consecutive_no_progress_rounds=3,
-            ),
-            bind_tools=False,
-        ).ainvoke(seed=seed, durable=durable)
-        self.assertEqual(
-            result["terminal_error"]["code"],
-            "RECOVERY_TOOL_REQUEST_REPEAT_LIMIT",
-        )
-        self.assertEqual(result["audit"]["tool_call_count"], 2)
-
-    async def test_no_progress_budget_stops_repeated_observation(self) -> None:
-        durable, seed = _seed_fixture()
-
-        class Repeat:
-            def __init__(self):
-                self.calls = 0
-
-            async def ainvoke(self, _messages):
-                self.calls += 1
-                return AIMessage(
-                    content="",
-                    tool_calls=[{
-                        "id": f"no-progress-{self.calls}",
-                        "name": "failure_inspect",
-                        "args": {},
-                        "type": "tool_call",
-                    }],
-                )
-
-        result = await RecoveryAgentLoop(
-            model=Repeat(),
-            dispatcher=_Dispatcher(),
-            config=RecoveryAgentLoopConfig(
-                max_exact_repeated_tool_request=10,
-                max_consecutive_no_progress_rounds=2,
-            ),
-            bind_tools=False,
-        ).ainvoke(seed=seed, durable=durable)
-        self.assertEqual(
-            result["terminal_error"]["code"], "RECOVERY_NO_PROGRESS_LIMIT"
-        )
-        # First inspection is progress; the next two are identical.
-        self.assertEqual(result["audit"]["tool_call_count"], 3)
-
-    async def test_single_observation_is_replaced_by_narrowing_receipt(self) -> None:
-        durable, seed = _seed_fixture()
-
-        class LargeDispatcher:
-            def dispatch(self, _tool, _args):
-                return {"content": "x" * 8_000}
-
-        model = _ToolThenDirectiveModel()
-        result = await RecoveryAgentLoop(
-            model=model,
-            dispatcher=LargeDispatcher(),
-            config=RecoveryAgentLoopConfig(
-                single_observation_chars=2_000,
-                cumulative_observation_chars=4_000,
-            ),
-            bind_tools=False,
-        ).ainvoke(seed=seed, durable=durable)
-        self.assertFalse(result["terminal_error"])
-        second_request = json.dumps(model.requests[1], ensure_ascii=False)
-        self.assertIn("REQUIRES_NARROWING", second_request)
-        self.assertNotIn("x" * 1_000, second_request)
-        self.assertLessEqual(result["audit"]["observation_chars"], 2_000)
 
 
 if __name__ == "__main__":

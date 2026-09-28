@@ -1,11 +1,52 @@
 # Runtime and reference preparation
 
-Select BWA (not BWA-MEM2) and Picard for this revision's required capabilities. Alternative implementations require a formal capability/Plan revision. Use the exact runtime bindings and explicit Java/PATH selection in the approved action. Probe results are per subcommand; samtools coverage may be unknown even when faidx and sort are available.
+This method uses BWA 0.7-compatible indexing (not BWA-MEM2) and Picard dictionary
+creation. Alternative implementations require an explicit method decision. Use
+verified executable paths and Java/PATH selection. An available samtools faidx
+or sort does not establish support for the separate samtools coverage command.
 
-prepare_reference consumes the formal reference_fasta input and produces one immutable directory: reference.fa, reference.fa.fai, reference.fa.amb, reference.fa.ann, reference.fa.bwt, reference.fa.pac, reference.fa.sa, reference.dict. Copy the original reference without changing bytes; execute every required index/dictionary command successfully and retain its stderr/returncode. Emit create_reference_indexes with actual products and reference_bundle_valid.value. The deterministic predicate independently checks products before Commit. Failed or partial products cannot be reported as a complete bundle.
+The complete fixed-layout reference bundle contains `reference.fa`,
+`reference.fa.fai`, `reference.dict`, and `reference.fa.{amb,ann,bwt,pac,sa}`.
+Copy the original FASTA byte-for-byte to a new project bundle directory before
+building indexes; do not mutate the user's source. Run BWA index, samtools faidx
+and Picard CreateSequenceDictionary as shown in mapping-methods.md. Retain each
+return code and stderr. Dictionary URI must identify the final reference location,
+with standard file URI escaping. Compare contig names, lengths and sequences
+between FASTA, FAI, dictionary and BWA products; mere file presence is insufficient.
 
-A failed tool check is evidence about this launch, not proof software is absent. Recovery reads failure receipts, ends the old attempt, uses an approved current capability/new generation scope, and performs controlled discovery. Installing or changing scientific implementation requires its own authorization. Scientific Generate actions never install. Installer receives only the concrete environment work order; it may install only the reviewed commands and never accepts scientific outputs.
+No automatic installation or fallback implementation occurs. Missing tools and
+failed launches are different facts. Preserve failed/partial products and logs;
+do not label an incomplete bundle successful or replace existing user results.
+The optional BioMind immutable-publication helper is owned by the host extension;
+it is not required to execute these documented native scientific commands.
 
-Input_check may remain accepted only while its input identity, checked scope, provenance and Commit are valid and it is outside the actual rollback set. Keep the input immutable, preserve prior outputs, and do not recreate a helper-owned evidence leaf.
+## Java selection and failed-attempt scratch
 
-Use `scripts/prepare_reference.py` for this fixed preparation operation; read `references/reference-helper.md` for its argv, approved engineering write scope, recovery policy and final-URI contract. New v3 capabilities select the v2 parser: dictionary UR must be the canonical final file URI. Historical frozen v2 capabilities retain their recorded parser and cannot be silently upgraded.
+For a bound executable shaped as `<environment>/bin/java`, derive the environment
+prefix with two parent operations. One parent is the bin directory, not JAVA_HOME:
+
+```bash
+JAVA_PREFIX="$(dirname "$(dirname "$JAVA_BIN")")"
+export JAVA_HOME="$JAVA_PREFIX"
+export PATH="$JAVA_PREFIX/bin:/usr/bin:/bin"
+test -x "$JAVA_HOME/bin/java"
+```
+
+For another layout, inspect the actual bound installation before choosing its
+JAVA_HOME. Do not fall back silently to ambient Java. Keep scratch on failure:
+
+```bash
+cleanup() {
+    rc=$?
+    if [ "$rc" -eq 0 ]; then
+        rm -rf -- "$WORK_DIR"
+    else
+        printf 'Failed-attempt scratch retained: %s\n' "$WORK_DIR" >&2
+    fi
+}
+trap cleanup EXIT
+```
+
+A later recovery may inspect that scratch but cannot adopt it as a successful
+BAM without recorded input identity and the normal result checks. SIGKILL
+itself can prevent the trap from running; preservation is not a success claim.

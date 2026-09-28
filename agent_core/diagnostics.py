@@ -1335,6 +1335,7 @@ def build_recovery_context(
         "code": repair_source["model_authored_code"],
         **repair_source,
         "model_source_ref": deepcopy(evidence.get("model_source_ref") or {}),
+        "executor_resource_evidence": (evidence.get("executor_metadata") or {}).get("resource_evidence") or {},
         "language": evidence.get("language"),
         "command_role": evidence.get("command_role") or "primary",
         "returncode": evidence.get("returncode", evidence.get("exit_code")),

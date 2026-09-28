@@ -36,7 +36,7 @@ Retain exact material by ID only; do not copy its body into the response. Keep
 every protocol_group_id together so assistant tool calls and tool results are
 not split.
 
-For input_mode hierarchical_lossy_coverage, the source_units are the complete
+For input_mode hierarchical_lossy_coverage, source_manifest.units contains the complete
 original body-free identities and hierarchical_summary_nodes are lossy map /
 merge results. Their model_visible_source_coverage proves that every original
 range was supplied to a prior bounded model call; it does not turn summaries

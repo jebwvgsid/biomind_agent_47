@@ -1,26 +1,21 @@
 ---
-name: scRNA Conserved Markers
-description: 在条件、样本或批次分组之间鉴定每个 cluster/cell type 的 conserved marker。Use after clustering or annotation when the user asks for conserved markers across groups; do not use for ordinary cluster marker discovery.
-tags: [single-cell, scRNA, Seurat, conserved-markers, marker, 单细胞]
-task_types: [single_cell_rnaseq]
-stage_tags: [conserved_marker_find]
-inputs: [clustered_seurat_object, annotated_seurat_object, grouping_column]
-outputs: [conserved_marker_table, conserved_marker_summary]
-when_to_use:
-  - User asks for conserved marker genes.
-  - Workflow stage is conserved_marker_find.
-when_not_to_use:
-  - User only needs FindAllMarkers for clusters.
-  - The grouping column for conserved testing is missing or ambiguous.
-legacy_ids: [scrna-conserved-markers, scrna-markers-conserved]
-runtime:
-  default_env: bio_scrna_core
-  env_runner: conda run -n bio_scrna_core Rscript
-  language: r
-  packages: [Seurat, yaml, ggplot2, dplyr]
-  capabilities: [scrna-conserved-markers, scrna-markers]
-  install_tool: '<install_tool env="bio_scrna_core">scrna-env-bootstrap_r</install_tool>'
+name: conserved
+description: 在条件、样本或批次分组之间鉴定每个 cluster/cell type 的 conserved marker。Use after clustering or annotation when the
+  user asks for conserved markers across groups; do not use for ordinary cluster marker discovery.
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # scRNA Conserved Markers
 

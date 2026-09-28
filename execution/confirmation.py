@@ -356,7 +356,7 @@ class ConfirmationUI:
     @staticmethod
     def prompt_confirmation(risk_level: RiskLevel, timeout: int = 0) -> str: # 👈 注意这里改为返回 str
         prompt_color = Fore.CYAN
-        enter_executes = risk_level == RiskLevel.SAFE
+        enter_executes = False  # Risk labels never authorize an empty input.
         if risk_level != RiskLevel.SAFE:
              display_print(f"\n{Fore.YELLOW}⚠️  This operation requires confirmation.{Style.RESET_ALL}")
              prompt_color = Fore.YELLOW
@@ -385,7 +385,7 @@ class ConfirmationUI:
                 if response == '':
                     if enter_executes:
                         return 'y'
-                    display_print(f"{Fore.YELLOW}Please type 'y' to execute this non-SAFE command, 'n' to reject, or 'q' to quit.{Style.RESET_ALL}")
+                    display_print(f"{Fore.YELLOW}Please type 'y' to execute this command, 'n' to reject, or 'q' to quit.{Style.RESET_ALL}")
                     continue
                 
                 if response.lower() in ['q', 'quit', 'exit', 'stop']:
@@ -402,7 +402,7 @@ class ConfirmationUI:
                 raise
             except HumanInputUnavailable:
                 restore_terminal_state()
-                return 'n'
+                raise
 
 #================================
 #4. 确认管理器 (主入口)
@@ -414,48 +414,19 @@ class ConfirmationManager:
         self.approval_history: List[Dict] = []
 
     def should_confirm(self, code: str, language: str, risk_analysis: Dict[str, Any]) -> bool:
-        mode = self.config.mode
-        risk_level = risk_analysis['risk_level']
-        
-        if mode == ConfirmationMode.NEVER: return False
-        if mode == ConfirmationMode.ALWAYS: return True
-        if mode == ConfirmationMode.SMART:
-            # === 严格模式修改 ===
-            # 只有 SAFE (白名单) 且 开启自动批准 时，才跳过确认
-            # 其他所有情况全部拦截
-            if self.config.auto_approve_safe and risk_level == RiskLevel.SAFE:
-                return False
-            return True
+        # Compatibility UI hint only. Runtime is the sole permission owner;
+        # SAFE and the historical NEVER option cannot grant execution.
         return True
 
     def request_confirmation(self, code: str, language: str, step_index: int = 1, total_steps: int = 1, context: Dict[str, Any] = None) -> str: # 👈 返回类型改为 str
         # 1. 风险分析
         risk_analysis = RiskAnalyzer.analyze(code, language)
         
-        # 2. 判断是否需要确认
-        if not self.should_confirm(code, language, risk_analysis):
-            display_print(f"{Fore.GREEN}✓ Auto-approved (Risk: Safe){Style.RESET_ALL}")
-            self._record_decision(code, language, True, "auto", risk_analysis)
-            return 'y' # 👈 自动批准返回 'y'
-        
-        # 3. 显示预览并请求确认
-        # Legacy confirmations have their own risk-dependent Enter semantics.
-        # Do not inherit a previous managed code-review display scope.
-        from agent_core.cli_display import input_terminal
-        owner = input_terminal()
-        if owner is not None:
-            owner.set_context('', 'legacy_confirmation', {})
-        if self.config.show_code_preview:
-            ConfirmationUI.display_code_preview(code, language, step_index, total_steps, risk_analysis)
-        
-        # 🌟 接收用户输入的字符串
-        user_response = ConfirmationUI.prompt_confirmation(risk_analysis['risk_level'], self.config.timeout_seconds)
-        
-        # 记录决策（只要不是 'y' 都算拒绝）
-        is_approved = (user_response == 'y')
-        self._record_decision(code, language, is_approved, "manual", risk_analysis)
-        
-        return user_response # 🌟 将字符串透传出去
+        from agent_core.middleware import HITLMiddleware
+        decision, _ = HITLMiddleware(auto_approve_safe=False).review_code(code, language)
+        result = 'y' if decision == 'approve' else 'q' if decision == 'quit' else 'n'
+        self._record_decision(code, language, result == 'y', 'human', risk_analysis)
+        return result
 
     def _record_decision(self, code, language, approved, method, risk_analysis):
         """记录决策统计"""

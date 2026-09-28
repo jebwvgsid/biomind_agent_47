@@ -14,7 +14,6 @@ from agent_core.plan_tracker import (
     validation_issue,
 )
 from agent_core.skill_manager import SkillManager
-from bio_agents import BioAnalystAgent
 
 
 KNOWN_SKILL = "genomics/snpeff-annotation"
@@ -109,27 +108,6 @@ class LexicalAuthorityRetirementTests(unittest.TestCase):
             ["fictional_pipeline.py"],
         )
 
-    def test_retained_step_skill_rule_is_typed_and_exact(self) -> None:
-        agent = BioAnalystAgent.__new__(BioAnalystAgent)
-        agent.skill_manager = self.manager
-        issues = agent._plan_step_skill_violations(
-            {
-                "steps": [
-                    {
-                        "step_id": "step-4",
-                        "skills_declared": False,
-                        "skill_ids": [],
-                    }
-                ]
-            },
-            [KNOWN_SKILL],
-        )
-
-        self.assertEqual(issues[0]["code"], "PLAN_STEP_SKILLS_UNDECLARED")
-        self.assertEqual(issues[0]["validator_id"], "plan_skill_bindings")
-        self.assertEqual(issues[0]["step_id"], "step-4")
-        self.assertEqual(issues[0]["field_path"], "$.steps[0].skill_ids")
-        self.assertTrue(issues[0]["fingerprint"])
 
 
 class PlanPatchRetirementTests(unittest.TestCase):

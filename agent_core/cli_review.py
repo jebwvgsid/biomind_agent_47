@@ -40,11 +40,6 @@ def review_display(title, content, *, language='', risk='', plan_id='', step_cou
 def show_review(view):
     """Present and retain the exact review copy through one input owner."""
     owner = terminal()
-    if owner is None:
-        from .cli_plain import PlainTerminal
-        from .cli_display import bind_terminal
-        owner = PlainTerminal()
-        bind_terminal(owner)
     if callable(getattr(owner, 'prepare_review', None)):
         owner.prepare_review(view)
         return

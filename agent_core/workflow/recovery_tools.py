@@ -528,6 +528,7 @@ class RecoveryLocalToolDispatcher:
         command_service: Any = None,
     ) -> None:
         self.command_service = command_service
+        self.data_path = str(phase_store.root.parent)
         self.seed = seed if isinstance(seed, RecoverySeed) else RecoverySeed.from_mapping(seed)
         self.durable = deepcopy(dict(durable))
         self.registry = registry
@@ -622,6 +623,7 @@ class RecoveryLocalToolDispatcher:
             name = name.replace("_", ".")
         args = dict(arguments or {})
         handlers = {
+            "inspect.ref": self._inspect_ref,
             "failure.inspect": self._failure_inspect,
             "step.inspect": self._step_inspect,
             "artifact.inspect": self._artifact_inspect,
@@ -648,6 +650,21 @@ class RecoveryLocalToolDispatcher:
             raise RecoveryToolError("ARTIFACT_IO_ERROR" if name.startswith("artifact.") else "INSPECTION_IO_ERROR", name) from exc
         result.setdefault("tool", name)
         return name, result
+
+    def _inspect_ref(self, args):
+        ref_id = str(args.get("ref_id") or "")
+        row = next((item for item in self.registry.provider_manifest() if item["ref_id"] == ref_id), None)
+        if row is None or not row.get("readable"):
+            raise RecoveryToolError("INSPECTION_REF_NOT_RESOLVABLE", ref_id)
+        reader = {"failure": "failure.inspect", "phase_archive": "step.inspect",
+                  "evidence": "evidence.read", "execution": "evidence.read", "attempt": "evidence.read",
+                  "artifact": "artifact.inspect"}.get(row.get("kind"))
+        if reader not in row.get("allowed_tools", []):
+            raise RecoveryToolError("INSPECTION_REF_KIND_MISMATCH", ref_id)
+        forwarded = {key: value for key, value in args.items() if key in {"start_line", "end_line", "section"}}
+        forwarded["evidence_ref" if reader == "evidence.read" else "ref_id"] = ref_id
+        _, result = self._dispatch_complete(reader, forwarded)
+        return {**result, "resolved_reader": reader}
 
     def _failure_inspect(self, args: Mapping[str, Any]) -> dict[str, Any]:
         packet = self.seed.failure_packet
@@ -951,7 +968,8 @@ class RecoveryLocalToolDispatcher:
 
     def _skill_headings(self, args: Mapping[str, Any]) -> dict[str, Any]:
         skill_id = str(args.get("skill_id") or "")
-        return self._skill_call(skill_id, {"skill_id": skill_id, "operation": "headings"})
+        return self._skill_call(skill_id, {"skill_id": skill_id, "operation": "headings",
+            **{key:args[key] for key in ('snapshot_id','char_offset','max_chars') if key in args}})
 
     def _skill_read(self, args: Mapping[str, Any]) -> dict[str, Any]:
         skill_id = str(args.get("skill_id") or "")
@@ -968,6 +986,7 @@ class RecoveryLocalToolDispatcher:
             request = {"skill_id": skill_id, "operation": "full"}
         else:
             raise RecoveryToolError("RECOVERY_TOOL_ARGUMENT_INVALID", "skill.read requires heading or range")
+        request.update({key:args[key] for key in ('snapshot_id','char_offset','max_chars') if key in args})
         return self._skill_call(skill_id, request)
 
     def _skill_search(self, args: Mapping[str, Any]) -> dict[str, Any]:
@@ -976,6 +995,7 @@ class RecoveryLocalToolDispatcher:
             "skill_id": skill_id,
             "operation": "search",
             "query": str(args.get("query") or ""),
+            **{key:args[key] for key in ('snapshot_id','char_offset','max_chars') if key in args},
         })
 
     def _retrieve_skill_resource(
@@ -989,8 +1009,9 @@ class RecoveryLocalToolDispatcher:
         immutable ``skill-excerpt:...`` reference, but it is not allowed to
         redirect the read to a current on-disk path or a different selected
         snapshot.  Path, coverage, and body are all resolved from the existing
-        canonical Skill access store before the normal ``skill.resource``
-        reader is invoked.
+        canonical Skill access store. This is a historical text read, not an
+        authorization to execute the current resource path; normal resource
+        binding still checks current on-disk bytes before execution.
         """
 
         skill_id = str(args.get("skill_id") or "").strip()
@@ -1045,9 +1066,17 @@ class RecoveryLocalToolDispatcher:
         coverage = deepcopy(dict(resolved.get("coverage") or {}))
         supplied_coverage = args.get("coverage")
         if supplied_coverage is not None:
+            # Legacy callers identify complete lines; character pages cannot
+            # be widened to that form when they begin/end inside a line.
+            legacy_lines = {key:coverage.get(key) for key in ("kind","start_line","end_line")}
+            compatible_lines = (
+                isinstance(supplied_coverage, Mapping)
+                and dict(supplied_coverage) == legacy_lines
+                and not coverage.get("starts_mid_line") and not coverage.get("ends_mid_line")
+            )
             if (
                 not isinstance(supplied_coverage, Mapping)
-                or dict(supplied_coverage) != coverage
+                or (dict(supplied_coverage) != coverage and not compatible_lines)
             ):
                 raise RecoveryToolError(
                     "RECOVERY_SKILL_RETRIEVAL_COVERAGE_MISMATCH",
@@ -1072,9 +1101,26 @@ class RecoveryLocalToolDispatcher:
                     retrieval_ref,
                 )
 
-        result = self._skill_call(skill_id, request)
-        rows = list(result.get("results") or ())
-        observed = dict(rows[0]) if len(rows) == 1 else {}
+        # The descriptor resolver has verified the entire immutable linkage,
+        # including the source snapshot, excerpt identity, coverage and hash.
+        # Reopening the live resource here would defeat historical recovery
+        # whenever that resource has since changed. Do not expose an executable
+        # resource_location from this archive-only read.
+        observed = {
+            "skill_id": skill_id,
+            "operation": "resource",
+            "excerpt_id": excerpt_id,
+            "snapshot_id": str(resolved.get("snapshot_id") or ""),
+            "resource_snapshot_id": str(resolved.get("resource_snapshot_id") or ""),
+            "resource_content_hash": str(resolved.get("resource_content_hash") or ""),
+            "resource_path": resource_path,
+            "content_hash": content_hash,
+            "exact_text": str(resolved.get("body") or ""),
+            "coverage": coverage,
+            "archive_only": True,
+            "execution_authority": False,
+        }
+        result = {"status": "COMPLETE", "results": [observed]}
         body = str(observed.get("exact_text") or "")
         observed_hash = hashlib.sha256(body.encode("utf-8")).hexdigest()
         if (
@@ -1119,6 +1165,7 @@ class RecoveryLocalToolDispatcher:
             request["start_line"] = args["start_line"]
         if args.get("end_line") is not None:
             request["end_line"] = args["end_line"]
+        request.update({key:args[key] for key in ('snapshot_id','char_offset','max_chars','refresh_resource','resource_content_hash') if key in args})
         return self._skill_call(skill_id, request)
 
     def _evidence_read(self, args: Mapping[str, Any]) -> dict[str, Any]:

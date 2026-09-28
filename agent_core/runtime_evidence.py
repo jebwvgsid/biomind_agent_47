@@ -28,7 +28,7 @@ INSPECTION_STATUSES = frozenset({
 })
 PRODUCERS = frozenset({
     "consultant_runtime_inspection", "runtime_inspection", "runtime_cache_adoption",
-    "legacy_unverified",
+    "legacy_unverified", "registered_runtime",
 })
 _SECRET = re.compile(r"(?i)(?:secret|password|credential|authorization|api[_-]?key|(?:^|[/_.-])token(?:$|[/_.-])|(?:^|/)\.env(?:$|[./]))")
 _NAME = re.compile(r"^[A-Z][A-Z0-9_]{1,127}$")
@@ -135,6 +135,8 @@ def make_runtime_evidence(
     status = inspection_status or ("succeeded" if raw_status == "ready" else "not_run" if raw_status == "unknown" else "execution_error")
     if status not in INSPECTION_STATUSES:
         raise RuntimeEvidenceError("RUNTIME_INSPECTION_STATUS_INVALID")
+    if producer == "registered_runtime" and status != "not_run":
+        raise RuntimeEvidenceError("REGISTERED_RUNTIME_IS_NOT_FRESH_INSPECTION")
     paths = _paths(dict(audit.get("resolved_runtime_paths") or {}))
     if coverage is None:
         # Share canonical output mapping with the existing materializer. This
@@ -163,7 +165,8 @@ def make_runtime_evidence(
         reason = _text(raw.get("reason_code"), "reason_code", limit=240)
         if not _CODE.fullmatch(reason):
             raise RuntimeEvidenceError("RUNTIME_EVIDENCE_REASON_INVALID", binding_id)
-        verified = bool(status == "succeeded" and complete_scope and producer != "legacy_unverified")
+        verified = bool(complete_scope and ((status == "succeeded" and producer != "legacy_unverified")
+                        or (producer == "registered_runtime" and status == "not_run")))
         if not verified:
             availability = "UNKNOWN"
             reason = reason or ("legacy_unverified" if producer == "legacy_unverified" else "inspection_scope_incomplete" if not complete_scope else "inspection_" + status)
@@ -179,14 +182,14 @@ def make_runtime_evidence(
     if isinstance(max_age_seconds, bool) or not isinstance(max_age_seconds, (int, float)) or not 0 < max_age_seconds <= 86400:
         raise RuntimeEvidenceError("RUNTIME_EVIDENCE_EXPIRY_INVALID")
     normalized_observed_at = _timestamp(observed_at, "observed_at")
-    effective_expiry = expires_at or (datetime.fromisoformat(normalized_observed_at) + timedelta(seconds=max_age_seconds)).isoformat()
+    effective_expiry = "" if producer == "registered_runtime" else expires_at or (datetime.fromisoformat(normalized_observed_at) + timedelta(seconds=max_age_seconds)).isoformat()
     observation = {
         "schema_version": SCHEMA_VERSION,
         "producer": producer,
         "source_ref": _text(source_ref, "source_ref"),
         "scope": scope,
         "observed_at": normalized_observed_at,
-        "expires_at": _timestamp(effective_expiry, "expires_at"),
+        "expires_at": _timestamp(effective_expiry, "expires_at", optional=producer == "registered_runtime"),
         "inspection": {"status": status, "method_digest": scope["inspection_contract_digest"], "coverage_complete": all(f["availability"] != "UNKNOWN" for f in facts.values()) and bool(facts)},
         "facts": facts,
         "resolved_runtime_paths": paths,
@@ -224,8 +227,8 @@ def validate_runtime_evidence(record: Mapping[str, Any]) -> dict[str, Any]:
     if not isinstance(value.get("scope"), Mapping) or set(value["scope"]) != set(SCOPE_FIELDS) or _scope(value["scope"]) != value["scope"]:
         raise RuntimeEvidenceError("RUNTIME_EVIDENCE_SCOPE_INVALID")
     observed = _timestamp(value.get("observed_at"), "observed_at")
-    expiry = _timestamp(value.get("expires_at"), "expires_at")
-    if observed != value["observed_at"] or expiry != value["expires_at"] or expiry <= observed:
+    expiry = _timestamp(value.get("expires_at"), "expires_at", optional=value.get("producer") == "registered_runtime")
+    if observed != value["observed_at"] or expiry != value["expires_at"] or (expiry and expiry <= observed):
         raise RuntimeEvidenceError("RUNTIME_EVIDENCE_TIME_INVALID")
     if not _text(value.get("origin_task_id"), "origin_task_id"):
         raise RuntimeEvidenceError("RUNTIME_EVIDENCE_TASK_REQUIRED")
@@ -236,6 +239,8 @@ def validate_runtime_evidence(record: Mapping[str, Any]) -> dict[str, Any]:
     inspection = value.get("inspection") or {}
     if set(inspection) != {"status", "method_digest", "coverage_complete"} or inspection.get("status") not in INSPECTION_STATUSES or inspection.get("method_digest") != value["scope"]["inspection_contract_digest"]:
         raise RuntimeEvidenceError("RUNTIME_INSPECTION_STATUS_INVALID")
+    if value["producer"] == "registered_runtime" and inspection["status"] != "not_run":
+        raise RuntimeEvidenceError("REGISTERED_RUNTIME_IS_NOT_FRESH_INSPECTION")
     if not isinstance(value.get("facts"), Mapping):
         raise RuntimeEvidenceError("RUNTIME_EVIDENCE_COVERAGE_INVALID")
     for binding_id, fact in value["facts"].items():
@@ -255,7 +260,7 @@ def validate_runtime_evidence(record: Mapping[str, Any]) -> dict[str, Any]:
         availability = fact.get("availability")
         if availability not in AVAILABILITIES:
             raise RuntimeEvidenceError("RUNTIME_EVIDENCE_AVAILABILITY_INVALID")
-        if availability != "UNKNOWN" and (not all(value["scope"].values()) or value["producer"] == "legacy_unverified" or inspection["status"] != "succeeded"):
+        if availability != "UNKNOWN" and (not all(value["scope"].values()) or value["producer"] == "legacy_unverified" or (inspection["status"] != "succeeded" and not (value["producer"] == "registered_runtime" and inspection["status"] == "not_run"))):
             raise RuntimeEvidenceError("RUNTIME_EVIDENCE_UNVERIFIED_FACT", binding_id)
         if availability == "AVAILABLE" and fact.get("output_name") not in value["resolved_runtime_paths"]:
             raise RuntimeEvidenceError("RUNTIME_EVIDENCE_COVERAGE_INVALID", binding_id)
@@ -392,9 +397,27 @@ def project_runtime_audits(task_state: Mapping[str, Any], *, task_id: str | None
                 "runtime_audit_id": record["evidence_id"],
                 "skill_id": record["scope"]["skill_id"], "skill": record["scope"]["skill_id"],
                 "checked_env": record["scope"]["environment_id"], "env": record["scope"]["environment_id"],
-                "status": "ready", "healthcheck_status": "passed",
+                "status": "ready", "healthcheck_status": "not_run" if record["producer"] == "registered_runtime" else "passed",
+                "runtime_source": record["producer"], "source_ref": record["source_ref"],
                 "resolved_runtime_paths": paths,
                 "runtime_evidence_digest": record["content_digest"],
                 "observed_at": record["observed_at"], "evidence_revision": record["acceptance"]["revision"],
             })
     return projected
+
+
+def project_registered_runtime_scopes(task_state: Mapping[str, Any], *, task_id=None, skill_ids=()):
+    """Keep operation scopes separate while resolving a concrete launch prefix.
+
+    Two registered operations may share the same prefix. Their different
+    inspection-contract digests do not make that launch location ambiguous.
+    Each operation still evaluates its own negatives and supersession normally.
+    """
+    selected = set(skill_ids)
+    scopes = {digest(row['scope']): row['scope'] for row in _accepted_records(task_state, task_id)
+              if row['producer'] == 'registered_runtime' and (not selected or row['scope']['skill_id'] in selected)}
+    audits, evaluations = [], []
+    for scope in scopes.values():
+        audits.extend(project_runtime_audits(task_state, task_id=task_id, skill_scope=scope))
+        evaluations.append(evaluate_runtime_evidence(task_state, task_id=task_id, skill_scope=scope))
+    return audits, evaluations

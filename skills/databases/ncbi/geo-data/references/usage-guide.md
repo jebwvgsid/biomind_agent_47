@@ -57,19 +57,19 @@ Useful filters:
 Search for candidate datasets:
 
 ```bash
-python examples/search_geo.py --term "Saccharum drought RNA-seq" --max-results 10
+python "${SKILL_DIR}/examples/search_geo.py" --term "Saccharum drought RNA-seq" --max-results 10
 ```
 
 Find SRA runs linked to a GEO series:
 
 ```bash
-python examples/geo_to_sra.py --gse GSE147507 --out GSE147507_sra_runs.txt
+python "${SKILL_DIR}/examples/geo_to_sra.py" --gse GSE147507 --out GSE147507_sra_runs.txt
 ```
 
 Find GEO datasets linked to a publication:
 
 ```bash
-python examples/geo_from_pubmed.py --pmid 32228226
+python "${SKILL_DIR}/examples/geo_from_pubmed.py" --pmid 32228226
 ```
 
 ## Output To Report

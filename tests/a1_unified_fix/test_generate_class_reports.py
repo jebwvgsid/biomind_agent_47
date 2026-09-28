@@ -5,7 +5,6 @@ from unittest.mock import patch
 import pytest
 from agent_core.plan_tracker import load_plan_state,save_plan_state
 from agent_core.workflow import runtime_recovery_reporting as reporting
-from agent_core.workflow.managed_stop import _managed_diagnostic_targets
 
 
 @pytest.mark.parametrize('owner',['same_task_older_stop','another_task','unknown_user'])
@@ -47,8 +46,3 @@ def test_partial_conflict_and_unwritable_diagnostics_are_truthful(tmp_path):
     assert not any(r.get('status')=='published' for r in rows if 'no-write' in r['path'])
 
 
-def test_task_store_fallback_needs_current_stop_and_cannot_escape(tmp_path):
-    task='new-diagnostics';s=load_plan_state(tmp_path,task);save_plan_state(tmp_path,task,s)
-    root=tmp_path/'task_outputs'/task
-    assert not _managed_diagnostic_targets(s,root,'absent')[0]
-    assert not _managed_diagnostic_targets(s,tmp_path/'other','absent')[0]

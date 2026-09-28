@@ -10,7 +10,7 @@ usage() {
 "  2. skills/scrna/ingest/data-download/scripts/ingest_scrna_seurat.R --manifest <manifest.yaml>" \
 "  3. skills/scrna/qc/filter/scripts/qc_filter_seurat.R --manifest <manifest.yaml>" \
 "" \
-"Default conda_env: bio_scrna_core"
+"Without conda_env, use Rscript from the current environment"
 }
 
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
@@ -24,7 +24,11 @@ if [[ $# -lt 1 ]]; then
 fi
 
 MANIFEST="$1"
-CONDA_ENV="${2:-bio_scrna_core}"
+CONDA_ENV="${2:-}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+SCRNA_DIR="$(cd -- "${SCRIPT_DIR}/../../.." && pwd)"
+runner=(Rscript)
+if [[ -n "${CONDA_ENV}" ]]; then runner=(conda run -n "${CONDA_ENV}" Rscript); fi
 
 if [[ ! -f "${MANIFEST}" ]]; then
   echo "Manifest not found: ${MANIFEST}" >&2
@@ -32,12 +36,12 @@ if [[ ! -f "${MANIFEST}" ]]; then
 fi
 
 echo "[1/3] Checking scRNA environment: ${CONDA_ENV}"
-conda run -n "${CONDA_ENV}" Rscript skills/scrna/env/bootstrap/scripts/check_scrna_env.R
+"${runner[@]}" "${SCRNA_DIR}/env/bootstrap/scripts/check_scrna_env.R"
 
 echo "[2/3] Building Seurat object from manifest: ${MANIFEST}"
-conda run -n "${CONDA_ENV}" Rscript skills/scrna/ingest/data-download/scripts/ingest_scrna_seurat.R --manifest "${MANIFEST}"
+"${runner[@]}" "${SCRNA_DIR}/ingest/data-download/scripts/ingest_scrna_seurat.R" --manifest "${MANIFEST}"
 
 echo "[3/3] Running QC filter from manifest: ${MANIFEST}"
-conda run -n "${CONDA_ENV}" Rscript skills/scrna/qc/filter/scripts/qc_filter_seurat.R --manifest "${MANIFEST}"
+"${runner[@]}" "${SCRNA_DIR}/qc/filter/scripts/qc_filter_seurat.R" --manifest "${MANIFEST}"
 
 echo "Done: ingest + QC completed for ${MANIFEST}"

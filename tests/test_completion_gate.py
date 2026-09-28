@@ -1147,14 +1147,6 @@ Output directory: runs/remaining/BM-REMAIN-SCRNA-002/medium
         self.assertTrue(result.passed, result.feedback)
         self.assertFalse(any("medium" in item for item in result.checked_artifacts))
 
-    def test_solution_branch_uses_final_gate_before_finishing(self):
-        source = (Path(__file__).resolve().parents[1] / "bio_agents.py").read_text(encoding="utf-8")
-
-        self.assertIn("def _prepare_final_solution_progress", source)
-        self.assertIn("CompletionGate.validate_final", source)
-        self.assertIn("can_finish, plan_progress, final_status, gate_feedback", source)
-        self.assertIn('"next_step": "generate"', source)
-        self.assertNotIn('while mark_plan_step_done(final_state, evidence="final solution accepted by completion gate")', source)
 
 
 if __name__ == "__main__":

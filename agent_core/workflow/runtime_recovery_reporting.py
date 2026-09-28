@@ -99,7 +99,7 @@ def _write_report(path: Path, body: str, *, prior_receipt: Mapping[str, Any] | N
                   publication: Mapping[str, Any] | None = None, record_prepared=None):
     """Publish a fully fsynced new file atomically; never replace unknown files."""
     path = _path(path)
-    if path.name not in _REPORTS:
+    if path.name not in _REPORTS and publication is None:
         raise RuntimeReportError("RUNTIME_REPORT_FILENAME_REJECTED")
     content = body.encode("utf-8")
     if len(content) > 1024 * 1024:
@@ -198,6 +198,9 @@ def _write_owned_report(path, content, fingerprint, publication, record_prepared
         except FileNotFoundError:return None
     def valid(name, expected):
         return _owned_file_matches(parent, name, expected, fingerprint, size=len(content))
+    def may_replace():
+        old = intent.get('overwrite_target') or {}
+        return bool(old and _owned_file_matches(parent, path.name, old, old.get('sha256'), size=old.get('size')))
     try:
         target=info(path.name)
         if intent.get("status") == "published":
@@ -219,11 +222,13 @@ def _write_owned_report(path, content, fingerprint, publication, record_prepared
                     or prepared.get("proof_name")!=proof or prepared.get("sha256")!=fingerprint or not valid(proof,prepared)):
                 raise RuntimeReportError("RUNTIME_REPORT_OWNERSHIP_PROOF_INVALID")
             if target is not None:
-                if not valid(path.name,prepared):raise RuntimeReportError("RUNTIME_REPORT_EXISTING_FILE_PROTECTED")
-                return {"path":str(path),"sha256":fingerprint,"operation_id":identity,
-                    "ownership":prepared,"recovered_from":"prepared_inode_hardlink"}
+                if valid(path.name, prepared):
+                    return {"path":str(path),"sha256":fingerprint,"operation_id":identity,
+                        "ownership":prepared,"recovered_from":"prepared_inode_hardlink"}
+                if not may_replace():
+                    raise RuntimeReportError('RUNTIME_REPORT_EXISTING_FILE_PROTECTED')
         else:
-            if target is not None:raise RuntimeReportError("RUNTIME_REPORT_EXISTING_FILE_PROTECTED")
+            if target is not None and not may_replace():raise RuntimeReportError("RUNTIME_REPORT_EXISTING_FILE_PROTECTED")
             try:fd=os.open(proof,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600,dir_fd=parent)
             except FileExistsError as exc:raise RuntimeReportError("RUNTIME_REPORT_UNCONFIRMED_PREPARATION") from exc
             with os.fdopen(fd,"wb") as handle:
@@ -232,6 +237,22 @@ def _write_owned_report(path, content, fingerprint, publication, record_prepared
             prepared={"operation_id":identity,"path":str(path),"sha256":fingerprint,
                 "proof_name":proof,"device":created.st_dev,"inode":created.st_ino}
             record_prepared(prepared)  # Durable acknowledgement BEFORE link.
+        if target is not None and not valid(path.name, prepared):
+            if not may_replace():
+                raise RuntimeReportError('RUNTIME_REPORT_OWNED_FILE_CHANGED')
+            swap = proof + '.publish'
+            try:
+                os.link(proof, swap, src_dir_fd=parent, dst_dir_fd=parent, follow_symlinks=False)
+            except FileExistsError:
+                if not valid(swap, prepared):
+                    raise RuntimeReportError('RUNTIME_REPORT_OWNED_FILE_CHANGED')
+            try:
+                if not may_replace():
+                    raise RuntimeReportError('RUNTIME_REPORT_OWNED_FILE_CHANGED')
+                os.replace(swap, path.name, src_dir_fd=parent, dst_dir_fd=parent)
+            finally:
+                try: os.unlink(swap, dir_fd=parent)
+                except FileNotFoundError: pass
         try:os.link(proof,path.name,src_dir_fd=parent,dst_dir_fd=parent,follow_symlinks=False)
         except FileExistsError as exc:
             if not valid(path.name,prepared):raise RuntimeReportError("RUNTIME_REPORT_EXISTING_FILE_PROTECTED") from exc
@@ -241,7 +262,7 @@ def _write_owned_report(path, content, fingerprint, publication, record_prepared
     finally:os.close(parent)
 
 
-def publish_report(data_path, task_id, path, body, *, owner, authorization_ref, scope_guard):
+def publish_report(data_path, task_id, path, body, *, owner, authorization_ref, scope_guard, overwrite_authorization=None):
     """Journal one file in existing PlanState CAS and immutable object store.
 
     Callers resolve authorization and freeze bodies. This function neither
@@ -249,7 +270,14 @@ def publish_report(data_path, task_id, path, body, *, owner, authorization_ref, 
     """
     from agent_core.plan_tracker import StateCASConflict
     from agent_core.state_contract_store import StateContractStore
-    path=_path(path);sha=hashlib.sha256(body.encode()).hexdigest()
+    path=_path(path)
+    from agent_core.workflow.report_preservation import preservation_authorization, execute_report_preservation
+    initial = load_plan_state(data_path, task_id)
+    requested = _requested_reports(initial, Path(data_path) / 'task_outputs' / task_id)
+    preservation = preservation_authorization(initial, requested.values())
+    if preservation and str(path) in preservation['paths']:
+        execute_report_preservation(data_path, task_id, scope_guard=scope_guard)
+    sha=hashlib.sha256(body.encode()).hexdigest()
     identity=hashlib.sha256(json.dumps([task_id,owner,str(path)],ensure_ascii=False).encode()).hexdigest()
     store=StateContractStore(data_path,task_id)
     def update(prepared=None, receipt=None):
@@ -275,6 +303,36 @@ def publish_report(data_path, task_id, path, body, *, owner, authorization_ref, 
             return deepcopy(row)
         raise RuntimeReportError('RUNTIME_REPORT_RECEIPT_CAS_CONFLICT')
     row=update()
+    if overwrite_authorization and not row.get('overwrite_target') and row.get('status') == 'intended':
+        authorization = dict(overwrite_authorization)
+        if authorization.get('path') != str(path) or authorization.get('source') not in {'user', 'user_confirmed', 'user_explicit'} or not authorization.get('evidence_ref'):
+            raise RuntimeReportError('RUNTIME_REPORT_OVERWRITE_NOT_AUTHORIZED')
+        parent = _open_directory(path.parent)
+        try:
+            info = os.stat(path.name, dir_fd=parent, follow_symlinks=False)
+            if not stat.S_ISREG(info.st_mode):
+                raise RuntimeReportError('RUNTIME_REPORT_EXISTING_FILE_PROTECTED')
+            fd = os.open(path.name, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=parent)
+            with os.fdopen(fd, 'rb') as stream:
+                old_body = stream.read(1024*1024+1)
+            if len(old_body) > 1024*1024:
+                raise RuntimeReportError('RUNTIME_REPORT_SIZE_LIMIT')
+            old = {'device': info.st_dev, 'inode': info.st_ino, 'size': info.st_size,
+                'sha256': hashlib.sha256(old_body).hexdigest(), 'authorization': authorization}
+        finally:
+            os.close(parent)
+        for _ in range(3):
+            state = load_plan_state(data_path, task_id)
+            if not scope_guard(state):
+                raise RuntimeReportError('RUNTIME_REPORT_SCOPE_CHANGED')
+            stored = state['task_state']['report_publications'][identity]
+            stored.setdefault('overwrite_target', old)
+            try:
+                save_plan_state(data_path, task_id, state)
+                row = deepcopy(stored)
+                break
+            except StateCASConflict:
+                continue
     receipt=_write_report(path,body,publication=row,record_prepared=lambda prepared:update(prepared=prepared))
     published = update(receipt=receipt)
     # Verify the final target and retire the ancillary proof only after CAS
@@ -361,31 +419,51 @@ def _durable_facts(durable, request):
     return completed, unfinished, deliveries, scripts, runtime
 
 
-def _requested_reports(durable, task_root, *, require_approval=True):
+def _requested_reports(durable, task_root, *, require_approval=False, unresolved=None, internal_targets=None):
     spec = canonical_task_spec_for_state(durable)
     outputs = effective_output_contracts(spec)
     approved = plan_approval_is_current(durable, int((durable.get("current_task") or {}).get("task_revision") or durable.get("task_revision") or 0))
     paths = {}
     for row in outputs:
         raw = str(row.get("canonical_path") or row.get("filename") or "")
-        if Path(raw).name not in _REPORTS or row.get("artifact_kind", "file") != "file":
+        semantic_name = Path(raw).name if Path(raw).name in _REPORTS else {
+            'report': 'report.md', 'reproduce': 'reproduce.sh', 'reproduce_script': 'reproduce.sh', 'reproducibility': 'reproduce.sh',
+            'stage_status': 'stage_status.tsv'}.get(str(row.get('role') or ''))
+        if not semantic_name or row.get("artifact_kind", "file") != "file":
+            continue
+        if not raw:
+            if unresolved is not None:
+                unresolved.append({'name': semantic_name, 'role': str(row.get('role') or ''),
+                    'artifact_id': str(row.get('artifact_id') or row.get('output_id') or ''),
+                    'reason_code': 'REPORT_PATH_NOT_MATERIALIZED'})
             continue
         path = Path(raw)
         if path.is_absolute():
             path = _path(path)
-            if not path.is_relative_to(task_root) and not ((approved or not require_approval) and str(row.get("source") or row.get("source_type")) in {"user_explicit", "user_confirmed"} and row.get("path_policy") == "managed_exact"):
-                raise RuntimeReportError("RUNTIME_REPORT_EXPLICIT_OUTPUT_NOT_APPROVED")
+            if not path.is_relative_to(task_root) and not (str(row.get("source") or row.get("source_type")) in {"user", "user_explicit", "user_confirmed"}):
+                raise RuntimeReportError("RUNTIME_REPORT_EXPLICIT_OUTPUT_NOT_AUTHORIZED")
         else:
-            if path.parts != (path.name,):
-                raise RuntimeReportError("RUNTIME_REPORT_RELATIVE_PATH_REJECTED")
-            path = task_root / path.name
+            from agent_core.plan_tracker import resolve_work_output
+            context = spec.get('path_context') or {}
+            path = resolve_work_output(durable, str(path), context.get('project_dir') or context.get('project_root') or task_root)
         # Even an approved output may not alias a declared scientific input.
         input_paths = {str(item.get("canonical_path") or item.get("path") or "") for item in spec.get("inputs") or [] if isinstance(item, Mapping)}
         if str(path) in input_paths:
             raise RuntimeReportError("RUNTIME_REPORT_INPUT_OVERLAP")
-        if path.name in paths and paths[path.name] != path:
+        if semantic_name in paths and paths[semantic_name] != path:
             raise RuntimeReportError("RUNTIME_REPORT_OUTPUT_AMBIGUOUS")
-        paths[path.name] = path
+        paths[semantic_name] = path
+        if internal_targets is not None:
+            # The legacy display projection drops validation metadata. Resolve
+            # the exact formal declaration through the same Gate consumer.
+            from agent_core.work_outputs import materialize_outputs
+            context = spec.get('path_context') or {}
+            declared = materialize_outputs(durable, [{'path':str(path)}],
+                context.get('project_dir') or context.get('project_root') or task_root)
+            rule = declared[0].get('validation') or {}
+            if (isinstance(rule, Mapping) and rule.get('kind') == 'stage_status'
+                    and row.get('producer_owner') == 'request_finish'):
+                internal_targets.add(str(path))
     return paths
 
 
@@ -399,9 +477,14 @@ def report_publication_preflight(durable, task_root):
     task_id = str(durable.get("task_id") or "")
     result = {"schema_version": 1, "producer": "report_publication_preflight_v1",
         "task_id": task_id, "status": "ready", "targets": [], "conflicts": [],
-        "publication_authorized": False, "final_writer_recheck_required": True}
+        "publication_authorized": False, "final_writer_recheck_required": True,
+        "planning_allowed": False, "publication_ready": False, "prerequisites": [],
+        "coverage": {"scope": "declared_report_targets_only", "status": "unverified",
+                     "requested_count": 0, "checked_count": 0, "unresolved": []}}
+    unresolved_reports = result['coverage']['unresolved']
     try:
-        paths = _requested_reports(durable, _path(task_root), require_approval=False)
+        paths = _requested_reports(durable, _path(task_root), require_approval=False,
+                                   unresolved=unresolved_reports)
     except (OSError, ValueError) as exc:
         result.update(status="unverified", reason_code=getattr(exc, "code", "RUNTIME_REPORT_CONTRACT_FAILED"),
                       error_type=type(exc).__name__)
@@ -466,6 +549,34 @@ def report_publication_preflight(durable, task_root):
         result.update(status="needs_user_decision", reason_code=result["conflicts"][0]["reason_code"],
             question="指定报告位置已有受保护文件或尚不能确认其归属。请明确另一个获授权的报告位置，或说明是否为原任务续跑；现有文件不会覆盖。",
             allowed_resolution="Existing task/output-contract decision and Plan approval flow; no automatic path change.")
+    from agent_core.workflow.report_preservation import preservation_prerequisites
+    prerequisites = preservation_prerequisites(durable, paths.values(), result['conflicts'])
+    operations = (durable.get('task_state') or {}).get('report_preservation_operations') or {}
+    # Frozen operations survive partial moves; do not select a second suffix.
+    prerequisites = [deepcopy(operations.get(item['operation_id']) or item) for item in prerequisites]
+    seen = {item['operation_id'] for item in prerequisites}
+    prerequisites.extend(deepcopy(item) for identity, item in operations.items()
+        if item.get('status') != 'completed' and identity not in seen)
+    covered = {item['source'] for item in prerequisites}
+    unresolved = [row for row in result['conflicts'] if row['path'] not in covered]
+    result.update(planning_allowed=not unresolved,
+                  publication_ready=bool(paths) and not unresolved_reports and not result['conflicts'] and not prerequisites,
+                  prerequisites=prerequisites)
+    if prerequisites and not unresolved:
+        result.update(status='ready_with_prerequisites', reason_code='RUNTIME_REPORT_PRESERVATION_REQUIRED')
+        result.pop('question', None)
+        result['allowed_resolution'] = 'Approved Plan preserves exact old reports before publication; Consult performs no file mutation.'
+    checked = sum(row['status'] != 'unverified' for row in result['targets'])
+    requested = len(paths) + len(unresolved_reports)
+    result['coverage'].update(requested_count=requested, checked_count=checked,
+        status='not_requested' if not requested else 'partial' if checked < requested else 'complete')
+    if not result['conflicts'] and not prerequisites:
+        if unresolved_reports:
+            result.update(status='deferred', reason_code='REPORT_TARGETS_NOT_MATERIALIZED')
+        elif not paths:
+            result.update(status='not_applicable', reason_code='NO_REPORT_TARGETS_REQUESTED')
+    # Naming is Planner's responsibility. Missing names permit planning, never
+    # publication or a claim that the output directory/scientific files were checked.
     identity_body = {key: value for key, value in result.items() if key != "receipt_id"}
     result["receipt_id"] = "report-preflight-" + hashlib.sha256(json.dumps(identity_body, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
     return result

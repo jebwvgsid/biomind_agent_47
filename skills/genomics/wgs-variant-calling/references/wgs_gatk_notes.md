@@ -70,7 +70,7 @@ Old project-specific `chr.list` generation such as `seq -w 1 24` should be repla
 
 ```bash
 samtools faidx reference.fa
-python skills/genomics/wgs-variant-calling/scripts/make_gatk_interval_plan.py \
+python "${SKILL_DIR}/scripts/make_gatk_interval_plan.py" \
   --fai reference.fa.fai \
   --out-prefix intervals/wgs \
   --max-interval-bp 500000000

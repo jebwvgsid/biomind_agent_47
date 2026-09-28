@@ -65,5 +65,8 @@ class LoggingConfig:
 # 配置日志
 logger = LoggingConfig.setup_logging(
     level=os.getenv('LOG_LEVEL', 'INFO'),
-    log_to_file=True
+    log_to_file=(
+        os.getenv("BIOMIND_DISABLE_DOTENV", "").strip().lower()
+        not in {"1", "true", "yes", "on"}
+    ),
 )

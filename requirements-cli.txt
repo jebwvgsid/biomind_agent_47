@@ -1,2 +1,4 @@
-# Optional dynamic CLI. Missing dependency falls back to plain output.
-prompt-toolkit==3.0.52
+# The production CLI is the Pi runtime in integrations/pi_runtime.
+# Its dependencies are pinned by package.json and package-lock.json there.
+# No additional Python terminal package is required.
+# This file does not uninstall packages from an existing Python environment.

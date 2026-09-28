@@ -21,7 +21,6 @@ from agent_core.step_effects import structured_effect_parse_receipt
 from agent_core.workflow.inspection_evidence import (
     INSPECTION_SCOPE_FIELDS, InspectionEvidenceError, InspectionObjectReader,
 )
-from agent_core.workflow.recovery_node import Schema2RecoveryNode
 from agent_core.workflow.recovery_projection import CausalFailurePacketBinder
 from agent_core.workflow.scoped_context import provider_visible_payload
 from tests.test_inspection_workflow import _tag_json
@@ -116,35 +115,6 @@ class _ReadLargeObject:
             "args": {"evidence_ref": self.row["ref_id"], "start_line": start}}])
 
 
-@pytest.mark.parametrize("kind", ["script", "execution"])
-def test_long_single_field_is_exactly_reconstructed_in_next_actual_recovery_request(tmp_path, kind):
-    async def run():
-        state, _seed, _registry, dispatcher, row, _entry, locator, expected, expected_field = _large_failure(tmp_path, kind)
-        first = dispatcher.dispatch_full("evidence.read", {"evidence_ref": row["ref_id"], "start_line": 1})
-        assert first["representation"] == "json_chunk_envelope_v1" and first["truncated"]
-        model = _ReadLargeObject(row, expected)
-        outcome = await Schema2RecoveryNode(data_path=str(tmp_path), model=model,
-            context_compaction_enabled=False).run(state)
-        (tmp_path / "large-evidence-requests.json").write_text(json.dumps(model.requests, ensure_ascii=False, indent=2))
-        (tmp_path / "large-evidence-outcome.json").write_text(json.dumps(outcome["recovery_outcome"], ensure_ascii=False, indent=2))
-        assert outcome["recovery_outcome"]["type"] == "blocked", outcome["recovery_outcome"]
-        assert outcome["recovery_outcome"]["payload"]["reason_code"] == "OFFLINE_LARGE_EVIDENCE_INSPECTED"
-        assert model.body == expected and len(model.pages) >= 2
-        actual_field = model.body["scripts"]["code"] if kind == "script" else model.body["execution"]["raw_stdout"]
-        assert actual_field == expected_field
-        assert "\u2028" in actual_field and "\u0085" in actual_field
-        after = StateContractStore(tmp_path, state["task_id"]).read_object(
-            locator["object_ref"], expected_type=locator["object_type"])
-        assert after["body"] == expected
-        assert sum(len(message["content"]) for message in model.requests[-1] if message.get("type") == "tool") < 96_000
-        (tmp_path / "large-evidence-receipt.json").write_text(json.dumps({"kind": kind,
-            "source_ref": row["ref_id"], "source_digest": row["digest"], "locator": dict(locator),
-            "actual_recovery_calls": len(model.requests), "pages_visible_to_next_model": model.pointers,
-            "body_sha256": hashlib.sha256(_canonical(expected).encode()).hexdigest(),
-            "next_model_body_sha256": hashlib.sha256(_canonical(model.body).encode()).hexdigest(),
-            "exact_field_sha256": hashlib.sha256(actual_field.encode()).hexdigest(),
-            "executed_commands": 0}, ensure_ascii=False, indent=2))
-    asyncio.run(run())
 
 
 def test_long_field_representation_does_not_relax_scope_checks(tmp_path):

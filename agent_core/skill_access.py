@@ -530,6 +530,17 @@ def validate_skill_decision(value: Mapping[str, Any]) -> Dict[str, Any]:
                     "SKILL_DECISION_SCHEMA_INVALID",
                     f"invalid context operation or skill_id: {operation!r}",
                 )
+            fields[operation] |= {"snapshot_id", "char_offset", "max_chars"}
+            if operation == "resource":
+                fields[operation] |= {"refresh_resource", "resource_content_hash"}
+            for numeric_field in ("char_offset", "max_chars"):
+                if numeric_field in request:
+                    try:
+                        request[numeric_field] = int(request[numeric_field])
+                    except (ValueError, TypeError) as exc:
+                        raise SkillAccessError("SKILL_DECISION_SCHEMA_INVALID", numeric_field) from exc
+                    if request[numeric_field] < (0 if numeric_field == "char_offset" else 1):
+                        raise SkillAccessError("SKILL_DECISION_SCHEMA_INVALID", numeric_field)
             unexpected = sorted(set(request) - fields[operation])
             required = {
                 "section": {"heading"},
@@ -937,6 +948,9 @@ class SkillAccessService:
         expected_cache_key = SkillAccessService._excerpt_cache_key(
             snapshot, request_spec
         )
+        if "source_start_char" in excerpt:
+            expected_cache_key = _digest({"request":expected_cache_key,
+                "source_content_hash":excerpt.get("source_content_hash") or snapshot.get("content_hash")})
         if (
             expected_excerpt_id != str(excerpt_id)
             or str((state.get("excerpt_cache") or {}).get(expected_cache_key) or "")
@@ -974,7 +988,7 @@ class SkillAccessService:
             })
             if (
                 not isinstance(resource_text, str)
-                or resource_key != expected_resource_key
+                or resource_key not in {expected_resource_key, expected_resource_key+":"+resource_hash}
                 or str(resource.get("snapshot_id") or "")
                 != str(snapshot.get("snapshot_id") or "")
                 or str(resource.get("skill_id") or "")
@@ -1000,11 +1014,15 @@ class SkillAccessService:
             raise SkillAccessError(
                 "SKILL_EXCERPT_LINKAGE_INVALID", f"range={start_line}-{end_line}"
             )
-        expected_text = (
-            source_text
-            if operation == "full"
-            else _source_slice(source_text, start_line, end_line)
-        )
+        if "source_start_char" in excerpt:
+            begin, end = int(excerpt["source_start_char"]), int(excerpt.get("source_end_char") or 0)
+            if not 0 <= begin <= end <= len(source_text) or str(excerpt.get("source_content_hash")) != _digest(source_text):
+                raise SkillAccessError("SKILL_EXCERPT_LINKAGE_INVALID", "character bounds/source hash")
+            if start_line != source_text[:begin].count("\n")+1 or end_line != source_text[:max(begin,end-1)].count("\n")+1:
+                raise SkillAccessError("SKILL_EXCERPT_LINKAGE_INVALID", "character/line coverage mismatch")
+            expected_text = source_text[begin:end]
+        else:
+            expected_text = source_text if operation == "full" else _source_slice(source_text,start_line,end_line)
         if exact_text != expected_text:
             raise SkillAccessError(
                 "SKILL_EXCERPT_LINKAGE_INVALID", f"excerpt_id={excerpt_id}"
@@ -1014,8 +1032,8 @@ class SkillAccessService:
             heading_matches = [
                 item for item in snapshot.get("heading_index") or []
                 if str(item.get("heading") or "") == heading
-                and int(item.get("start_line") or 0) == start_line
-                and int(item.get("end_line") or 0) == end_line
+                and int(item.get("start_line") or 0) == int(excerpt.get("requested_start_line") or start_line)
+                and int(item.get("end_line") or 0) == int(excerpt.get("requested_end_line") or end_line)
             ]
             if len(heading_matches) != 1:
                 raise SkillAccessError(
@@ -1091,6 +1109,10 @@ class SkillAccessService:
                 if str(snapshot.get("catalog_revision") or "") != (
                     effective_catalog_revision
                 ):
+                    continue
+                # Same catalog identity does not freeze a changed on-disk document.
+                # Keep the old snapshot and its approval; a fresh candidate is read-only.
+                if _digest(source.read_bytes().decode('utf-8')) != snapshot.get('content_hash'):
                     continue
                 # Searching for an already-active snapshot never downgrades
                 # the binding. A prior candidate disposition is cleared only
@@ -1246,6 +1268,8 @@ class SkillAccessService:
         try:
             resolved = (skill_dir / path).resolve(strict=True)
             resolved.relative_to(skill_dir)
+        except FileNotFoundError as exc:
+            raise SkillAccessError("SKILL_RESOURCE_NOT_FOUND", raw) from exc
         except (OSError, ValueError) as exc:
             raise SkillAccessError("SKILL_RESOURCE_OUT_OF_SCOPE", raw) from exc
         if not resolved.is_file() or resolved == skill_dir / "SKILL.md":
@@ -1325,6 +1349,7 @@ class SkillAccessService:
         task_revision: int,
         request_id: str = "",
         max_new_chars: Optional[int] = None,
+        include_provider_excerpt: bool = True,
     ) -> tuple[Dict[str, Any], List[Dict[str, Any]]]:
         """Validate and commit canonical immutable Skill documents once."""
         state = normalize_skill_access_state(value)
@@ -1382,17 +1407,34 @@ class SkillAccessService:
                     "state_revision": record["loaded_at_task_revision"],
                 },
             )
-        new_chars = sum(
-            len(str(item.get("document") or ""))
-            for item in documents
-            if not bool(item.get("cache_hit"))
-        )
-        if max_new_chars is not None and new_chars > int(max_new_chars):
-            raise SkillAccessError(
-                "SKILL_DOC_BATCH_CHAR_BUDGET_EXCEEDED",
-                f"aggregate_chars={new_chars}; aggregate_limit={int(max_new_chars)}",
-            )
+        # Store full immutable text internally; cache hits obey the same wire budget.
+        if include_provider_excerpt:
+            requests = [{"skill_id": doc["skill_id"], "operation": "full",
+                         "snapshot_id": doc["snapshot_id"]} for doc in documents]
+            pages = self._serve_batch(state, requests, request_id, max_new_chars)
+            for document, page in zip(documents, pages):
+                document["provider_excerpt"] = page
         return state, documents
+
+    def _serve_batch(self, state, requests, request_id, max_new_chars):
+        # One allowance for the entire reply. Short documents release unused
+        # room; no minimum page size may override the host's remaining context.
+        remaining = min(64000, max(0, int(32000 if max_new_chars is None else max_new_chars))) - 1024
+        results = []
+        for index, item in enumerate(requests):
+            budget = max(0, remaining - 2200 * (len(requests) - index - 1))
+            if item.get('max_chars') is not None:
+                budget = min(budget, max(0, int(item['max_chars'])))
+            if budget < 2200:
+                page = {'skill_id': item['skill_id'], 'status': 'REQUIRES_NARROWING',
+                        'body_delivered': False, 'has_more': True, 'next_request': dict(item),
+                        'reason': 'Insufficient context allowance for this page; no source text was delivered. '
+                                  'Compact context or request the necessary section only.'}
+            else:
+                page = self._serve_one(state, {**item, 'max_chars': budget}, request_id)
+            results.append(page)
+            remaining -= len(json.dumps(page, ensure_ascii=False)) + 256
+        return results
 
     @staticmethod
     def _excerpt_cache_key(snapshot: Mapping[str, Any], request: Mapping[str, Any]) -> str:
@@ -1404,6 +1446,8 @@ class SkillAccessService:
             "start_line": request.get("start_line"),
             "end_line": request.get("end_line"),
             "resource_path": str(request.get("resource_path") or "").replace("\\", "/"),
+            **{key:request[key] for key in ("char_offset", "max_chars", "refresh_resource", "resource_content_hash")
+               if key in request},
         })
 
     def _store_excerpt(
@@ -1418,7 +1462,8 @@ class SkillAccessService:
         end_line: int,
         extra: Mapping[str, Any] | None = None,
     ) -> Dict[str, Any]:
-        cache_key = self._excerpt_cache_key(snapshot, request)
+        cache_key = _digest({"request":self._excerpt_cache_key(snapshot, request),
+            "source_content_hash":(extra or {}).get("source_content_hash") or snapshot.get("content_hash")})
         cached_id = str(state["excerpt_cache"].get(cache_key) or "")
         if cached_id:
             cached = deepcopy(dict(state["excerpts"].get(cached_id) or {}))
@@ -1453,133 +1498,130 @@ class SkillAccessService:
         state["excerpt_cache"][cache_key] = excerpt_id
         return deepcopy(excerpt)
 
-    def _serve_one(
-        self,
-        state: MutableMapping[str, Any],
-        request: Mapping[str, Any],
-        request_id: str,
-    ) -> Dict[str, Any]:
-        snapshot = self._snapshot_for_skill(state, str(request.get("skill_id") or ""))
+    def _serve_one(self, state, request, request_id):
+        snapshot = (self._verified_snapshot(state, str(request["snapshot_id"]))
+                    if request.get("snapshot_id") else
+                    self._snapshot_for_skill(state, str(request.get("skill_id") or "")))
+        if str(snapshot.get("skill_id")) != str(request.get("skill_id")):
+            raise SkillAccessError("SKILL_SNAPSHOT_IDENTITY_MISMATCH", str(request.get("skill_id")))
+        if not request.get('snapshot_id'):
+            canonical, source, _ = self._registered_source(str(request.get('skill_id') or ''))
+            if _digest(source.read_bytes().decode('utf-8')) != snapshot.get('content_hash'):
+                # Refresh metadata, then read a distinct candidate snapshot. This
+                # does not rebind the active Skill or grant execution authority.
+                self.skill_manager.load_skill(canonical)
+                fresh, snapshot, _ = self.ensure_snapshot(state, canonical, status='candidate')
+                state.clear(); state.update(fresh)
         content = str(snapshot.get("exact_text") or "")
-        line_count = int(snapshot.get("line_count") or len(content.splitlines()))
         operation = str(request.get("operation") or "")
+        extra = {"source_path": snapshot.get("source_path"), "source_content_hash": snapshot.get("content_hash")}
+        if operation == "resource":
+            previous = None
+            if request.get("refresh_resource"):
+                key = _digest({"snapshot_id": snapshot["snapshot_id"], "resource_path": str(request.get("resource_path") or "").replace("\\", "/")})
+                previous = state["resource_snapshots"].pop(key, None)
+            resource = self._resource_snapshot(state, snapshot, str(request.get("resource_path") or ""))
+            if previous and previous["content_hash"] != resource["content_hash"]:
+                state["resource_snapshots"][key+":"+str(previous["content_hash"])] = previous
+            expected = str(request.get("resource_content_hash") or "")
+            if expected and expected != resource["content_hash"] and not request.get("refresh_resource"):
+                raise SkillAccessError("SKILL_RESOURCE_CHANGED", "Continuation belongs to a different resource version; refresh explicitly to switch.")
+            content = str(resource.get("exact_text") or "")
+            extra.update(resource_path=resource["resource_path"], resource_location=resource["resource_location"],
+                resource_snapshot_id=resource["resource_snapshot_id"], resource_content_hash=resource["content_hash"],
+                source_content_hash=resource["content_hash"])
+        lines = content.splitlines(keepends=True)
+        total = max(1, len(lines))
+        start_line, end_line = 1, total
         if operation == "headings":
-            return {
-                "skill_id": snapshot["skill_id"],
-                "snapshot_id": snapshot["snapshot_id"],
-                "operation": operation,
-                "heading_index": deepcopy(list(snapshot.get("heading_index") or [])),
-            }
-        if operation == "full":
-            if len(content) > int(SKILL_FULL_READ_MAX_CHARS):
-                return {
-                    "skill_id": snapshot["skill_id"],
-                    "snapshot_id": snapshot["snapshot_id"],
-                    "operation": operation,
-                    "status": "REQUIRES_NARROWING",
-                    "heading_index": deepcopy(list(snapshot.get("heading_index") or [])),
-                    "message": "Request one or more sections, searches, or ranges.",
-                }
-            start_line, end_line, exact_text = 1, max(1, line_count), content
-            extra: Dict[str, Any] = {}
-        elif operation == "section":
-            wanted = str(request.get("heading") or "").strip().casefold()
-            matches = [
-                item for item in snapshot.get("heading_index") or []
-                if str(item.get("heading") or "").strip().casefold() == wanted
-            ]
-            if len(matches) != 1:
-                raise SkillAccessError(
-                    "SKILL_CONTEXT_SECTION_UNAVAILABLE",
-                    f"heading={request.get('heading')!r}; matches={len(matches)}",
-                )
-            heading = matches[0]
-            start_line = int(heading["start_line"])
-            end_line = int(heading["end_line"])
-            exact_text = _source_slice(content, start_line, end_line)
-            extra = {"heading": str(heading["heading"])}
-        elif operation == "range":
-            start_line = int(request.get("start_line") or 0)
-            end_line = int(request.get("end_line") or 0)
-            if start_line < 1 or end_line > line_count:
-                raise SkillAccessError(
-                    "SKILL_CONTEXT_RANGE_INVALID",
-                    f"range={start_line}-{end_line}; line_count={line_count}",
-                )
-            exact_text = _source_slice(content, start_line, end_line)
-            extra = {}
-        elif operation == "search":
-            query = _normalize_query(request.get("query"))
-            terms = _unique(query.split())
-            source_lines = content.splitlines()
-            hits = [
-                index
-                for index, line in enumerate(source_lines, start=1)
-                if (query and query in line.casefold())
-                or any(term in line.casefold() for term in terms)
-            ]
-            if not hits:
-                return {
-                    "skill_id": snapshot["skill_id"],
-                    "snapshot_id": snapshot["snapshot_id"],
-                    "operation": operation,
-                    "query": str(request.get("query") or ""),
-                    "status": "NO_MATCH",
-                    "matched_ranges": [],
-                }
-            start_line = max(1, min(hits) - 2)
-            end_line = min(line_count, max(hits) + 2)
-            exact_text = _source_slice(content, start_line, end_line)
-            extra = {
-                "query": str(request.get("query") or ""),
-                "matched_ranges": [{"start_line": start_line, "end_line": end_line}],
-            }
-        elif operation == "resource":
-            resource = self._resource_snapshot(
-                state, snapshot, str(request.get("resource_path") or "")
-            )
-            resource_text = str(resource.get("exact_text") or "")
-            resource_lines = int(resource.get("line_count") or len(resource_text.splitlines()))
+            headings = list(snapshot.get("heading_index") or [])
+            offset = int(request.get("char_offset") or 0)
+            page = headings[offset:offset+20]
+            return {"skill_id":snapshot["skill_id"], "snapshot_id":snapshot["snapshot_id"],
+                "operation":operation, "heading_index":page, "total_headings":len(headings),
+                "total_lines":total, "has_more":offset+len(page)<len(headings),
+                "next_request": {**request, "char_offset":offset+len(page)} if offset+len(page)<len(headings) else None,
+                "body_delivered":False}
+        if operation in {"range", "resource"}:
             start_line = int(request.get("start_line") or 1)
-            end_line = int(request.get("end_line") or resource_lines or 1)
-            if start_line < 1 or end_line > max(1, resource_lines):
-                raise SkillAccessError(
-                    "SKILL_CONTEXT_RANGE_INVALID",
-                    f"resource range={start_line}-{end_line}; line_count={resource_lines}",
-                )
-            exact_text = _source_slice(resource_text, start_line, end_line)
-            extra = {
-                "resource_path": str(resource["resource_path"]),
-                "resource_location": str(resource["resource_location"]),
-                "resource_snapshot_id": str(resource["resource_snapshot_id"]),
-                "resource_content_hash": str(resource["content_hash"]),
-            }
-        else:  # pragma: no cover - validate_skill_decision owns this boundary.
+            end_line = int(request.get("end_line") or total)
+        elif operation == "section":
+            matches = [h for h in snapshot.get("heading_index") or []
+                       if str(h.get("heading") or "").strip().casefold() == str(request.get("heading") or "").strip().casefold()]
+            if len(matches) != 1:
+                raise SkillAccessError("SKILL_CONTEXT_SECTION_UNAVAILABLE", str(request.get("heading")))
+            start_line, end_line = int(matches[0]["start_line"]), int(matches[0]["end_line"])
+            extra["heading"] = matches[0]["heading"]
+        elif operation == "search":
+            query = _normalize_query(request.get("query")); terms = _unique(query.split())
+            hits = [i for i,line in enumerate(lines, 1) if query and query in line.casefold()]
+            if not hits:
+                hits = [i for i,line in enumerate(lines, 1) if terms and all(t in line.casefold() for t in terms)]
+            if not hits:
+                return {"skill_id":snapshot["skill_id"],"snapshot_id":snapshot["snapshot_id"],
+                        "operation":operation,"status":"NO_MATCH","matched_ranges":[],"body_delivered":False}
+            # Do not fill the unrelated gap between distant matches.
+            start_line, end_line = max(1,hits[0]-2), min(total,hits[0]+2)
+            extra.update(query=request.get("query"), matched_ranges=[{"start_line":max(1,h-2),"end_line":min(total,h+2)} for h in hits[:20]],
+                         total_matches=len(hits), more_matches=len(hits)>20)
+        elif operation != "full":
             raise SkillAccessError("SKILL_DECISION_SCHEMA_INVALID", operation)
-        if (
-            operation != "full"
-            and len(exact_text) > int(SKILL_EXCERPT_MAX_CHARS)
-        ):
-            return {
-                "skill_id": snapshot["skill_id"],
-                "snapshot_id": snapshot["snapshot_id"],
-                "operation": operation,
-                "status": "REQUIRES_NARROWING",
-                "start_line": start_line,
-                "end_line": end_line,
-                "message": "The requested excerpt exceeds SKILL_EXCERPT_MAX_CHARS.",
-                "heading_index": deepcopy(list(snapshot.get("heading_index") or [])),
-            }
-        return self._store_excerpt(
-            state,
-            snapshot=snapshot,
-            request=request,
-            request_id=request_id,
-            exact_text=exact_text,
-            start_line=start_line,
-            end_line=end_line,
-            extra=extra,
-        )
+        if start_line < 1 or end_line < start_line or end_line > total:
+            raise SkillAccessError("SKILL_CONTEXT_RANGE_INVALID", f"range={start_line}-{end_line}; line_count={total}")
+        begin = sum(len(line) for line in lines[:start_line-1])
+        bound = sum(len(line) for line in lines[:end_line])
+        offset = int(request.get("char_offset", begin))
+        if not begin <= offset <= bound:
+            raise SkillAccessError("SKILL_CONTEXT_CHARACTER_RANGE_INVALID", f"offset={offset}; range={begin}:{bound}")
+        budget = min(64000, max(2200, int(request.get("max_chars") or 10000)))
+        # Reserve metadata + JSON escaping. The actual serialized page is checked below.
+        source_cap = int(SKILL_FULL_READ_MAX_CHARS if operation == 'full' else SKILL_EXCERPT_MAX_CHARS)
+        limit = min(source_cap, max(1,budget-2000))
+        # Prefer complete Markdown sections. An oversized section is split at
+        # a paragraph/line; a single oversized line keeps exact char offsets.
+        line_offsets = [0]
+        for line in lines:
+            line_offsets.append(line_offsets[-1] + len(line))
+        headings = _heading_index(content) if operation == 'resource' else snapshot.get('heading_index') or []
+        section_ends = [line_offsets[int(h['start_line'])-1] for h in headings]
+        def page_end(cap):
+            if cap >= bound:
+                return bound
+            candidates = [p for p in section_ends if offset < p <= cap]
+            if candidates:
+                return max(candidates)
+            paragraph = content.rfind('\n\n', offset, cap)
+            if paragraph >= offset:
+                return paragraph + 2
+            newline = content.rfind('\n', offset, cap)
+            return newline + 1 if newline >= offset else cap
+        stop = page_end(min(bound,offset+limit))
+        def projected(end):
+            text = content[offset:end]
+            more = end < bound
+            continuation = {**request,"snapshot_id":snapshot["snapshot_id"],"char_offset":end} if more else None
+            if continuation: continuation.pop("refresh_resource", None)
+            if continuation and operation == "resource":
+                continuation["resource_content_hash"] = extra["resource_content_hash"]
+            return {**extra, "total_lines":total, "source_start_char":offset,"source_end_char":end,
+                "requested_start_line":start_line,"requested_end_line":end_line,
+                "has_more":more,"next_request":continuation,"body_delivered":bool(text),
+                "status":"PARTIAL" if more else "COMPLETE",
+                "starts_mid_line":offset>0 and content[offset-1:offset]!='\n',
+                "ends_mid_line":end<len(content) and content[end-1:end]!='\n'}
+        while True:
+            metadata = projected(stop)
+            exact = content[offset:stop]
+            row = {"skill_id":snapshot["skill_id"],"snapshot_id":snapshot["snapshot_id"],
+                "exact_text":exact, "request_spec":dict(request), **metadata}
+            if len(json.dumps(row,ensure_ascii=False))+500 <= budget: break
+            if stop-offset <= 1:
+                raise SkillAccessError("SKILL_CONTEXT_METADATA_TOO_LARGE", "Use shorter request metadata with the returned snapshot and character range.")
+            stop = page_end(offset+max(1,(stop-offset)//2))
+        actual_start = content[:offset].count('\n')+1
+        actual_end = content[:max(offset,stop-1)].count('\n')+1
+        return self._store_excerpt(state,snapshot=snapshot,request=request,request_id=request_id,
+            exact_text=content[offset:stop],start_line=actual_start,end_line=actual_end,extra=metadata)
 
     def serve_context_request(
         self,
@@ -1587,6 +1629,7 @@ class SkillAccessService:
         decision: Mapping[str, Any],
         *,
         runtime_envelope: Mapping[str, Any],
+        max_new_chars: Optional[int] = None,
     ) -> tuple[Dict[str, Any], Dict[str, Any]]:
         state = normalize_skill_access_state(value)
         request = validate_skill_decision(decision)
@@ -1633,7 +1676,7 @@ class SkillAccessService:
             "skill_ids": requested_skill_ids,
             "state_revision": runtime["task_revision"],
         })
-        if rounds > int(MAX_SKILL_CONTEXT_ROUNDS_PER_INVOCATION):
+        if occurrences > int(MAX_SKILL_CONTEXT_ROUNDS_PER_INVOCATION):
             result = {
                 "decision_result": SKILL_CONTEXT_RESULT,
                 "request_id": request_id,
@@ -1651,11 +1694,9 @@ class SkillAccessService:
                 requested_skill_ids,
                 task_revision=runtime["task_revision"],
                 request_id=request_id,
+                include_provider_excerpt=False,
             )
-            results = [
-                self._serve_one(state, item, request_id)
-                for item in request["requests"]
-            ]
+            results = self._serve_batch(state, request['requests'], request_id, max_new_chars)
             for item in results:
                 excerpt_id = str(item.get("excerpt_id") or "")
                 excerpt = state["excerpts"].get(excerpt_id)
@@ -1682,7 +1723,7 @@ class SkillAccessService:
             status = (
                 "REQUIRES_NARROWING"
                 if any(str(item.get("status") or "") == "REQUIRES_NARROWING" for item in results)
-                else "COMPLETE"
+                else "PARTIAL" if any(item.get("has_more") for item in results) else "COMPLETE"
             )
             result = {
                 "decision_result": SKILL_CONTEXT_RESULT,
@@ -2286,11 +2327,14 @@ def _material_record_from_descriptor(
             "coverage": {
                 "kind": (
                     "full"
-                    if str(excerpt.get("operation") or "") == "full"
+                    if str(excerpt.get("operation") or "") == "full" and not excerpt.get("has_more") and int(excerpt.get("source_start_char") or 0) == 0
                     else "range"
                 ),
                 "start_line": int(excerpt.get("start_line") or 1),
                 "end_line": int(excerpt.get("end_line") or 1),
+                **({"start_char":int(excerpt["source_start_char"]),"end_char":int(excerpt["source_end_char"]),
+                    "starts_mid_line":bool(excerpt.get("starts_mid_line")),"ends_mid_line":bool(excerpt.get("ends_mid_line"))}
+                   if "source_start_char" in excerpt else {}),
             },
         }
         if resource_snapshot_id:
@@ -3584,3 +3628,69 @@ def stale_node_result(
         "consumes_execution_retry": False,
         "execute": False,
     }
+
+
+def authorised_task_skill_selection(
+    access_state: Mapping[str, Any],
+    proposal: Mapping[str, Any],
+) -> list[str]:
+    """Return the only task Skill set authorised by one reviewed proposal."""
+    access = normalize_skill_access_state(access_state)
+    candidate_id = str(proposal.get("candidate_skill_id") or "")
+    candidate_snapshot_id = str(
+        proposal.get("candidate_snapshot_id") or ""
+    )
+    candidate_ref_scope = str(
+        proposal.get("candidate_ref_scope") or "task"
+    ).lower()
+    candidate_ref_target = str(
+        proposal.get("candidate_ref_target_step_id") or ""
+    )
+    scope = str(proposal.get("requested_scope") or "").lower()
+    relation = str(proposal.get("relation") or "").lower()
+    if scope != "task" or relation not in {"supplement", "replace"}:
+        raise SkillAccessError(
+            "SKILL_BINDING_TASK_SELECTION_INVALID",
+            f"scope={scope or '<missing>'}; relation={relation or '<missing>'}",
+        )
+    candidate_refs = [
+        item for item in access.get("selected_skill_refs") or []
+        if isinstance(item, Mapping)
+        and str(item.get("skill_id") or "") == candidate_id
+        and str(item.get("snapshot_id") or "") == candidate_snapshot_id
+        and str(item.get("status") or "") == "candidate"
+        and str(item.get("scope") or "task") == candidate_ref_scope
+        and (
+            candidate_ref_scope == "task"
+            or str(item.get("target_step_id") or "")
+            == candidate_ref_target
+        )
+        and not str(item.get("candidate_disposition") or "")
+    ]
+    if len(candidate_refs) != 1:
+        raise SkillAccessError(
+            "SKILL_BINDING_CANDIDATE_UNAVAILABLE",
+            f"candidate_refs={len(candidate_refs)}",
+        )
+    active_refs = [
+        item for item in access.get("selected_skill_refs") or []
+        if isinstance(item, Mapping)
+        and str(item.get("status") or "") == "active"
+        and str(item.get("scope") or "task") == "task"
+    ]
+    active_ids = list(dict.fromkeys(
+        str(item.get("skill_id") or "")
+        for item in active_refs
+        if str(item.get("skill_id") or "")
+    ))
+    if relation == "replace":
+        if len(active_refs) != 1:
+            raise SkillAccessError(
+                "SKILL_REPLACEMENT_TARGET_AMBIGUOUS",
+                f"active_targets={len(active_refs)}",
+            )
+        replaced_id = str(active_refs[0].get("skill_id") or "")
+        active_ids = [item for item in active_ids if item != replaced_id]
+    if candidate_id not in active_ids:
+        active_ids.append(candidate_id)
+    return active_ids

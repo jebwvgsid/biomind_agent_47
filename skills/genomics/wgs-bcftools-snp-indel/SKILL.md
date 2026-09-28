@@ -1,21 +1,25 @@
 ---
 name: wgs-bcftools-snp-indel
-description: Call short-read WGS SNPs and InDels with bcftools mpileup and call, then filter, split SNP/InDel VCFs, index, and summarize. Use for fast lightweight resequencing variant calling on small or medium cohorts when GATK GVCF joint genotyping is unnecessary or unavailable. Do not present it as equivalent to the GATK workflow for high-confidence large cohorts.
-version: "1.0.0"
-tags: [WGS, bcftools, mpileup, SNP, InDel, lightweight, variant-calling]
-legacy_ids: [bcftools-snp-indel, wgs-bcftools, samtools-bcftools-variant]
-task_types: [wgs_snp_indel_calling]
-stage_tags: [bcftools_mpileup, variant_filtering]
-inputs: [reference_fasta, sorted_bam, bam_list]
-outputs: [raw_vcf, filtered_vcf, filtered_snp_vcf, filtered_indel_vcf, stats]
-runtime:
-  default_env: bio_bcftools
-  env_runner: bash
-  language: bash
-  packages: [bcftools, samtools, htslib]
-  capabilities: [mpileup, variant-calling, vcf-filtering]
-  healthcheck: bash -lc "bcftools --version >/dev/null && samtools --version >/dev/null"
+description: Call short-read WGS SNPs and InDels with bcftools mpileup and call, then filter, split SNP/InDel VCFs,
+  index, and summarize. Use for fast lightweight resequencing variant calling on small or medium cohorts when GATK
+  GVCF joint genotyping is unnecessary or unavailable. Do not present it as equivalent to the GATK workflow for
+  high-confidence large cohorts.
+metadata:
+  version: 1.0.0
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # WGS bcftools SNP/InDel Calling
 

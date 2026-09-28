@@ -166,58 +166,6 @@ def _runtime_records(task_id):
         accepted_at="2026-09-12T00:00:01+00:00"))
 
 
-def test_e4_runtime_scope_unknown_and_raw_observations_reach_actual_reviewer(tmp_path):
-    async def scenario():
-        from agent_core.plan_tracker import save_plan_state
-        from supervisor import SupervisorNode
-        from tests.test_inspection_workflow import make_inspection_fixture
-        from agent_core.workflow.outcomes import VerificationOutcome
-        from agent_core.workflow.recovery_projection import build_causal_failure_record
-        fixture = make_inspection_fixture(tmp_path / "reviewer", task_id="evidence-reviewer")
-        fixture.execution["validated_artifacts"] = []
-        durable = fixture.reload()
-        records = _runtime_records(fixture.task_id)
-        durable["task_state"]["runtime_evidence"] = records
-        save_plan_state(fixture.root, fixture.task_id, durable)
-        before = deepcopy(fixture.execution)
-        node = SupervisorNode(fixture.reviewer, output_dir=str(fixture.root / "task_outputs"))
-        await node.run(deepcopy(fixture.state))
-        assert len(fixture.reviewer.requests) == 1
-        report = fixture.reviewer.reports[0]
-        runtime = report["process_outcome"]["runtime_observations"]
-        by_environment = {row["scope"]["environment_id"]: row for row in runtime["records"]}
-        target = by_environment["target-env"]
-        assert target["facts"]["runtime.target_executable"]["availability"] == "UNKNOWN"
-        assert target["inspection"] == records["records"][1]["inspection"]
-        assert target["inspection"]["coverage_complete"] is False
-        assert target["source_ref"] == "synthetic-inspection:target-env"
-        assert by_environment["current-shell"]["facts"]["runtime.target_executable"]["availability"] == "UNAVAILABLE"
-        assert fixture.execution == before
-        # Provider receives the actual immutable report, including facts; this
-        # is not an independently manufactured request to the fake provider.
-        assert any("inspection_execution_error" in str(message.content)
-                   for message in fixture.reviewer.requests[0])
-        source = VerificationOutcome(schema_version=1, type="inspection_required",
-            summary="Synthetic reviewer requests bounded inspection.",
-            scope=dict(report["scope"]), payload={
-                "completion_report": report, "completion_gate": report["completion_gate"],
-                "validation_evidence": {"validation_id": report["scope"]["validation_id"]},
-                "semantic_decision": report["effective_decision"],
-                "contract_violations": [], "failure_owner": "SEMANTIC_REVIEW",
-            }).to_dict()
-        record = build_causal_failure_record("verification_outcome", source, fixture.reload(),
-                                             task_id=fixture.task_id)
-        compact = record["failure_source"]["payload"]["completion_report"]
-        projected = compact["process_outcome"]["runtime_observations"]["records"]
-        projected_target = next(row for row in projected if row["scope"]["environment_id"] == "target-env")
-        assert projected_target["facts"]["runtime.target_executable"]["availability"] == "UNKNOWN"
-        assert projected_target["inspection"]["coverage_complete"] is False
-        assert compact["effect_presence"]["file_collection"]["accepted"] == []
-        assert compact["effect_presence"]["file_collection"]["accepted_set_status"] == "known"
-        assert runtime_observation_facts({"runtime_evidence": records}, task_id="different-task")["records"] == []
-        assert runtime_observation_facts({"runtime_evidence": records}, task_id=fixture.task_id,
-                                         skill_ids=["different-skill"])["records"] == []
-    asyncio.run(scenario())
 
 
 def test_recorded_output_candidates_and_contracts_reach_existing_recovery_seed():

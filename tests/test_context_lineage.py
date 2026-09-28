@@ -22,8 +22,6 @@ from agent_core.plan_tracker import (
     save_plan_state,
 )
 from agent_core.recovery import ExecutionRecord, RecoveryStateStore
-from agent_core.router import classify_task_mode
-from bio_agents import BioAnalystAgent
 
 
 class _FakeLLM:
@@ -94,53 +92,7 @@ class ContextLineageSnapshotTests(unittest.TestCase):
             with self.assertRaises(SnapshotConflictError):
                 store.start_call([HumanMessage(content="different prompt")], metadata)
 
-    def test_shared_agent_wrapper_snapshots_the_actual_final_messages(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            agent = BioAnalystAgent.__new__(BioAnalystAgent)
-            agent.data_path = tmpdir
-            agent.llm = _FakeLLM("generated action")
-            agent.llm_timeout_seconds = 5
-            agent.llm_readonly_timeout_seconds = 5
-            agent._latest_llm_call_refs = {}
-            messages = [SystemMessage(content="final system"), HumanMessage(content="final user")]
-            response = asyncio.run(agent._ainvoke_llm(
-                messages,
-                stage="generate",
-                task_id="task-a",
-                task_mode="managed",
-                trace_metadata={"call_kind": "generate", "step_id": "step-1"},
-            ))
-            self.assertEqual(response.content, "generated action")
-            snapshots = ContextLineageStore(tmpdir, "task-a").list_snapshots()
-            self.assertEqual(len(snapshots), 1)
-            request = json.loads(Path(snapshots[0]["request_payload_ref"]).read_text(encoding="utf-8"))
-            self.assertEqual(request["messages"], [
-                {"role": "system", "content": "final system"},
-                {"role": "human", "content": "final user"},
-            ])
-            self.assertEqual(snapshots[0]["status"], "completed")
-            self.assertEqual(agent._latest_llm_call_refs["task-a"][0]["call_kind"], "generate")
 
-    def test_task_router_uses_the_same_snapshot_store(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            llm = _FakeLLM(json.dumps({
-                "schema_version": 1,
-                "request_kind": "execute",
-                "execution_scope": "managed",
-                "managed_intent_explicit": True,
-                "retrieval_mode": "kb",
-                "confidence": 0.9,
-                "reason": "workflow",
-            }))
-            decision = asyncio.run(classify_task_mode(
-                llm,
-                "run analysis",
-                data_path=tmpdir,
-                task_id="task-a",
-            ))
-            self.assertEqual(decision["task_mode"], "managed")
-            snapshot = ContextLineageStore(tmpdir, "task-a").list_snapshots()[0]
-            self.assertEqual(snapshot["call_kind"], "task_router")
 
 
 class FinalizeArtifactTests(unittest.TestCase):

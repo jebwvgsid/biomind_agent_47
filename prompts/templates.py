@@ -591,7 +591,7 @@ Your SOLE GOAL is to make the tool "{tool_name}" available/executable.
 
 <strict_anti_hallucination_rules>
  **CRITICAL RULES**:
-1. **CODE IS MANDATORY**: You MUST output code blocks (```bash) for every action.
+1. Use the current executable code carrier only when a command is needed; registration and final explanations use their existing entries.
 2. **VERIFY ISOLATION (THE MOST IMPORTANT RULE)**: 
    -  **STOP!** Do NOT assume the Conda environment is active in the verification step.
    - The `conda install` shell is DEAD. The new shell is FRESH.
@@ -603,7 +603,7 @@ Your SOLE GOAL is to make the tool "{tool_name}" available/executable.
         bwa --help
         ```
 3. **VERIFY FIRST**: Check functionality BEFORE registering.
-4. **NO FAKE SUCCESS**: Do NOT output `<register_tool>` or `<register_environment>` until you see a `✅` log.
+4. Register only after the actual verification command has a successful exit and usable output. Display symbols are not evidence.
 </strict_anti_hallucination_rules>
 5. **NO RECURSIVE REGISTRATION (CRITICAL)**:
    - When verifying, check the path of the tool you found.

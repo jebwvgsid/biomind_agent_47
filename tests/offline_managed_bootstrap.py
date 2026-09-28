@@ -3,7 +3,7 @@
 Synthetic configuration and inert environment detection are test inputs.
 PlanTracker, CAS, compilation, approval, graph and provider wrapper stay real.
 """
-import ast,sys,os,types,json,hashlib,logging,tempfile,shlex
+import ast,sys,os,types,json,hashlib,logging,tempfile,shlex,stat
 from pathlib import Path
 C=Path(sys.argv.pop(1)).resolve()
 if not str(C).startswith('/tmp/'):
@@ -12,13 +12,53 @@ os.chdir(C);sys.dont_write_bytecode=True
 sys.path[:]=[str(C)]+[p for p in sys.path if '/03.毕设/' not in p]
 os.environ['PYTEST_DISABLE_PLUGIN_AUTOLOAD']='1';os.environ['BIOMIND_WIKI_ENABLED']='0';os.environ['LOG_LEVEL']='CRITICAL'
 RUNROOT=Path(tempfile.mkdtemp(prefix='managed-bootstrap-',dir=os.environ['TMPDIR']))
+RESTORE_MODE=len(sys.argv)==3 and sys.argv[1]=='--context-restore'
+OFFLINE_RESTORE_PROCESSES={}
 OFFLINE_ALLOWED_SCRIPT_PATHS=set()
+OFFLINE_ALLOWED_COMMANDS={}
 OFFLINE_ALLOWED_SCRIPT_ENVIRONMENTS={}
+REGISTERED_PROCESS_STARTS=[]
+def restore_descriptor(value):
+ p=Path(value)
+ scratch=Path(os.environ['TMPDIR']).resolve()
+ if not p.is_absolute() or p!=p.resolve() or not p.is_relative_to(scratch) or p.name!='restore-fixture.json' or not stat.S_ISREG(p.stat().st_mode):
+  raise RuntimeError('OFFLINE_RESTORE_DESCRIPTOR_DENIED')
+ return p
+
+if RESTORE_MODE:
+ # A fresh interpreter does not inherit the outer launcher's audit hooks.
+ # Apply its same bounded read scope before importing any application module.
+ allowed_roots=(C,Path(os.environ['TMPDIR']).resolve(),Path(sys.prefix).resolve(),
+                Path('/tmp/biomind-cli-deps'),Path('/usr/lib'),Path('/usr/share'),Path('/usr/local/lib'))
+ allowed_exact={Path('/dev/null'),Path('/dev/urandom'),Path('/etc/localtime'),
+                Path('/etc/mime.types'),Path('/etc/ssl/certs/ca-certificates.crt')}
+ def restore_read_guard(event,args):
+  if event=='open' and isinstance(args[0],(str,bytes)):
+   p=Path(os.fsdecode(args[0])).resolve()
+   if p.is_relative_to(Path('/proc')):raise PermissionError('CLI_OFFLINE_PROCESS_METRICS_UNAVAILABLE')
+   if p.name.startswith('.env') or p.name in {'启动.sh','.netrc','.gitconfig'}:raise RuntimeError('CLI_OFFLINE_PROTECTED_READ')
+   if (args[2] or 0)&getattr(os,'O_DIRECTORY',0) and any(base.is_relative_to(p) for base in allowed_roots):return
+   if p not in allowed_exact and not any(p.is_relative_to(base) for base in allowed_roots):raise RuntimeError('CLI_OFFLINE_READ_OUTSIDE_EXPORT: '+str(p))
+  if event=='sqlite3.connect' and args[0]!=':memory:' and not Path(str(args[0])).resolve().is_relative_to(Path(os.environ['TMPDIR']).resolve()):
+   raise RuntimeError('CLI_OFFLINE_ORIGINAL_DATABASE_DENIED')
+ sys.addaudithook(restore_read_guard)
+
 def guard(event,args):
+ if event=='subprocess.Popen':
+  command=args[1]
+  exact=OFFLINE_RESTORE_PROCESSES.get(tuple(command)) if isinstance(command,(list,tuple)) else None
+  expected_env={'PATH':'/usr/bin:/bin','LC_ALL':'C.UTF-8','TMPDIR':os.environ['TMPDIR']}
+  if exact and len(command)==5 and list(command[:4])==[sys.executable,str(C/'tests/offline_managed_bootstrap.py'),str(C),'--context-restore'] and args[0]==sys.executable and str(args[2])==str(C) and exact=={'cwd':str(C),'env':expected_env} and args[3]==expected_env:
+   descriptor=restore_descriptor(command[4])
+   REGISTERED_PROCESS_STARTS.append({'kind':'context_restore','cwd':str(C),'descriptor':str(descriptor),'command_sha256':hashlib.sha256(json.dumps(command).encode()).hexdigest()});return
  if event=='subprocess.Popen' and args[1]==['/bin/bash','--noprofile','--norc','-c','printf "%s|%s|%s|%s" "$0" "$1" "$2" "$3"','_','db','fasta','gtf'] and args[3]=={'PATH':'/usr/bin:/bin','LC_ALL':'C.UTF-8'}:return
  if event=='subprocess.Popen' and args[1][:2]==['/bin/sh','-c'] and len(args[1])==3:
+  exact=OFFLINE_ALLOWED_COMMANDS.get(args[1][2])
+  if exact and str(args[2])==exact['cwd'] and args[3]==exact['env'] and Path(exact['cwd']).resolve().is_relative_to(Path(os.environ['TMPDIR']).resolve()):
+   REGISTERED_PROCESS_STARTS.append({'cwd':str(args[2]),'command_sha256':hashlib.sha256(args[1][2].encode()).hexdigest()});return
   command=shlex.split(args[1][2])
-  if len(command)==2 and command[0]=='bash' and command[1] in OFFLINE_ALLOWED_SCRIPT_PATHS and args[3]==OFFLINE_ALLOWED_SCRIPT_ENVIRONMENTS.get(command[1], {'PATH':'/usr/bin:/bin','LC_ALL':'C.UTF-8'}) and Path(command[1]).resolve().is_relative_to(Path(os.environ['TMPDIR']).resolve()):return
+  if len(command)==2 and command[0]=='bash' and command[1] in OFFLINE_ALLOWED_SCRIPT_PATHS and args[3]==OFFLINE_ALLOWED_SCRIPT_ENVIRONMENTS.get(command[1], {'PATH':'/usr/bin:/bin','LC_ALL':'C.UTF-8'}) and Path(command[1]).resolve().is_relative_to(Path(os.environ['TMPDIR']).resolve()):
+   REGISTERED_PROCESS_STARTS.append({'cwd':str(args[2]),'command_sha256':hashlib.sha256(args[1][2].encode()).hexdigest()});return
  if event=='subprocess.Popen' and len(args[1])==4 and args[1][:3]==['/bin/bash','--noprofile','--norc'] and args[1][3] in OFFLINE_ALLOWED_SCRIPT_PATHS and Path(args[1][3]).resolve().is_relative_to(Path(os.environ['TMPDIR']).resolve()) and args[3]==OFFLINE_ALLOWED_SCRIPT_ENVIRONMENTS.get(args[1][3], {'PATH':'/usr/bin:/bin','LC_ALL':'C.UTF-8'}):
   return  # Explicitly registered tiny fixture; no ambient shell environment.
  if event=='subprocess.Popen' and ((args[1]==['bash','-n'] and not os.environ.get('BASH_ENV')) or (args[1] in [['/usr/bin/bash','--noprofile','--norc','-n'], ['/bin/bash','--noprofile','--norc','-n']] and args[3]=={'PATH':'/usr/bin:/bin','LC_ALL':'C.UTF-8'})):
@@ -35,6 +75,26 @@ def guard(event,args):
  if event in {'os.mkdir','os.remove','os.rename','os.rmdir'} and isinstance(args[0],(str,bytes)):
   if not str(Path(os.fsdecode(args[0])).absolute()).startswith('/tmp/'):raise RuntimeError('OFFLINE_MUTATION_DENIED')
 sys.addaudithook(guard)
+if RESTORE_MODE:
+ descriptor=restore_descriptor(sys.argv[2])
+ if Path(__file__).resolve()!=C/'tests/offline_managed_bootstrap.py':raise RuntimeError('OFFLINE_RESTORE_ENTRY_DENIED')
+ manifest=json.loads((C/'export_manifest.json').read_text())
+ for name,expected in manifest['files'].items():
+  p=C/name
+  if p.resolve()!=p or not p.is_relative_to(C):raise RuntimeError('OFFLINE_RESTORE_EXPORT_DENIED')
+  if p.relative_to(C).parts[0]=='config':continue  # Configuration is replaced below, never read/imported.
+  if hashlib.sha256(p.read_bytes()).hexdigest()!=expected:raise RuntimeError('OFFLINE_RESTORE_EXPORT_CHANGED')
+ data=json.loads(descriptor.read_text())
+ for key in ('data_path','skills_root','small'):
+  p=Path(data[key])
+  if not p.is_absolute() or p!=p.resolve() or not p.is_relative_to(Path(os.environ['TMPDIR']).resolve()):raise RuntimeError('OFFLINE_RESTORE_INPUT_DENIED')
+ if Path(data['data_path'])!=descriptor.parent:raise RuntimeError('OFFLINE_RESTORE_ROOT_DENIED')
+ # Match the parent fixture's pipe wakeup and offline character estimator.
+ from tests.cli_repair_support import install_pipe_wakeup
+ install_pipe_wakeup()
+ token_stub=types.ModuleType('tiktoken')
+ def unavailable(*args,**kwargs):raise RuntimeError('Offline fixture uses the existing character estimator')
+ token_stub.get_encoding=unavailable;token_stub.encoding_for_model=unavailable;sys.modules['tiktoken']=token_stub
 exports={}
 # Configuration source may be present for outer manifest verification. It is
 # never inspected/imported inside the guarded application test interpreter.
@@ -126,6 +186,10 @@ if os.environ.get('BIOMIND_OFFLINE_FATAL_FILE'):
  from tests.cli_fatal_plugin import PersistentFatal
  plugins.append(PersistentFatal(Path(os.environ['BIOMIND_OFFLINE_FATAL_FILE'])))
 code=pytest.main(sys.argv[1:],plugins=plugins)
+support=sys.modules.get('tests.react_v3.support')
+(result_path.parent/(result_path.stem+'-metrics.json')).write_text(json.dumps({'registered_formal_process_starts':REGISTERED_PROCESS_STARTS,
+ 'captured_scripted_provider_requests':getattr(support,'PROVIDER_MEASUREMENTS',[]),
+ 'real_api_tokens':'NOT_MEASURED','real_api_cost':'NOT_MEASURED','cache':'NOT_MEASURED'},indent=2))
 if traceback_after > 0:
  faulthandler.cancel_dump_traceback_later()
 os.write(1, ('\nPYTEST_EXIT_CODE='+str(code)+'\nRESULTS='+str(result_path)+'\n').encode())

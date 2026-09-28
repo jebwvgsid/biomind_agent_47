@@ -91,3 +91,18 @@ def repair_source_view(evidence: dict) -> dict:
     if legacy and not re.search(r"(?m)^\s*def\s+(?:emit_effect_evidence|_emit_declared_rows)\s*\(", legacy):
         return {"model_authored_code": legacy, "code_basis": "legacy_generated_source_may_be_excerpt"}
     return {"model_authored_code": "", "code_basis": "draft_unavailable_inspect_original_generate_response"}
+
+
+def controlled_generate_payload(raw: str, *, managed: bool) -> str:
+    """A plain diagnostic is an explicit stop, never evidence of completion.
+
+    Structured candidates and completion declarations keep their existing
+    parser/admission gates. Malformed structured input remains repairable.
+    """
+    import json
+    text = str(raw or '').strip()
+    if managed and text and not text.startswith(('{', '[', '<', '```')):
+        return json.dumps({'type': 'blocked', 'reason': (
+            'No explicit executable or evidence-backed completion candidate was submitted. '
+            'Saved diagnostic: ' + text)[:8000]}, ensure_ascii=False)
+    return raw

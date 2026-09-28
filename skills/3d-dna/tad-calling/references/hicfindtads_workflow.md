@@ -7,7 +7,7 @@ Use this reference when a user asks for a full TAD calling workflow, has many sa
 For 1-3 samples, repeated `--sample` is readable:
 
 ```bash
-python scripts/call_tads.py \
+python "${SKILL_DIR}/scripts/call_tads.py" \
   --sample sampleA /data/sampleA.mcool \
   --sample sampleB /data/sampleB.mcool \
   --resolution-bp 40000 \
@@ -26,7 +26,7 @@ sampleC	/data/sampleC.mcool
 Run:
 
 ```bash
-python scripts/call_tads.py \
+python "${SKILL_DIR}/scripts/call_tads.py" \
   --sample-sheet samples.tsv \
   --resolution-bp 40000 \
   --out-root TADs/HiCExplorer

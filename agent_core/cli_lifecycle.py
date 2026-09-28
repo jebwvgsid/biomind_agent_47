@@ -1,4 +1,5 @@
-"""Display projections of supplied receipts. No state loading or business decisions."""
+"""Display projections and explicit exception archives; no business state loading."""
+import asyncio
 import json
 import re
 
@@ -218,6 +219,9 @@ def _stop_text(stop, code):
         prefix = f'连续 {rounds} 轮' if type(rounds) is int and rounds > 0 else '恢复调查'
         return prefix + '未取得可记录进展，达到停止条件；自动纠错已停止（' + code + '）。'
     descriptions = {
+        'GENERATE_STOP_REQUESTED': '模型提交 blocked，已停止自动修复；任务未完成',
+        'GENERATE_REPAIR_BUDGET_EXHAUSTED': '候选修正次数已耗尽，未再次启动被拒绝的候选',
+        'GENERATE_IDENTICAL_CANDIDATE_EXHAUSTED': '相同候选重复被拒绝，已停止自动修复',
         'RECOVERY_BUDGET_EXHAUSTED': '恢复调查次数预算已耗尽，自动纠错已停止',
         'RECOVERY_RESOURCE_LIMIT': '恢复调查累计资源达到上限，自动纠错已停止',
         'RECOVERY_PROVIDER_TRANSPORT_FAILED': '恢复请求传输失败，已结束本次自动调查',
@@ -226,6 +230,10 @@ def _stop_text(stop, code):
 
 
 def terminal_text(status, facts):
+    if status == 'request_ended' and facts.get('request_finish'):
+        from agent_core.terminal_facts import finish_update
+        return '本次请求已结束\n' + finish_update(facts['request_finish'])['messages'][0].content
+
     stop = facts.get('stop_reason') or {}
     origin = facts.get('origin') or facts.get('primary_cause') or {}
     rows = [f"任务已停止 · {status}" if status != 'completed' else '任务正式完成']
@@ -245,6 +253,30 @@ def terminal_text(status, facts):
     cause, identity_issue = _cause_text(facts, origin)
     if status != 'completed':
         rows.append('原始问题：' + cause)
+        provider = facts.get('provider_cause') or stop.get('provider_cause') or {}
+        if provider:
+            error = provider.get('error') or {}
+            rows.append('模型请求失败：' + _brief(provider.get('service') or '服务未记录')
+                + ' · ' + _brief(provider.get('model') or '模型未记录')
+                + ' · HTTP ' + str(provider.get('http_status_code'))
+                + ' · ' + _brief(error.get('code') or error.get('type'))
+                + '；可重试=' + str(provider.get('retryable')) + '。')
+            rows.append('供应商原因：' + _brief(error.get('message'), 1200))
+            previous = facts.get('provider_previous_execution') or {}
+            if previous:
+                rows.append('已有终态命令回执：' + _brief(previous.get('attempt_id'))
+                    + '；rc=' + str(previous.get('returncode')) + '；' + _brief(previous.get('receipt_ref'), 240)
+                    + '。回执保留；命令完成不等于步骤核验/Commit完成。')
+        causal = facts.get('causal_execution') or {}
+        causal_rc = causal.get('returncode', origin.get('returncode'))
+        if type(causal_rc) is int:
+            rows.append('原始执行返回码：' + str(causal_rc) + '。')
+        latest = facts.get('latest_failure') or {}
+        candidate = facts.get('current_candidate') or {}
+        current_code = latest.get('error_code') or latest.get('code') or candidate.get('reason_code')
+        if current_code and current_code != origin.get('error_code'):
+            rows.append('当前修复障碍：' + _brief(current_code)
+                        + ('；候选尚未执行。' if candidate.get('execution_started') is False else '。'))
         for finding in facts.get('unresolved_findings') or []:
             if not isinstance(finding, dict):
                 continue
@@ -347,3 +379,142 @@ def cancellation_receipt_text(receipt, provider_record, active_process_groups):
     # An empty local registry is not a receipt for arbitrary remote jobs.
     parts.append('以上为本地回执，未声明远端任务已终止')
     return '；'.join(parts) + '。'
+
+
+def expected_user_cancellation(error, *, task_id, request_scope,
+                               cancellation_receipt, owner_state):
+    """Classify only an explicitly attributed, scoped local cancellation.
+
+    This projection neither catches exceptions nor changes runtime outcome.
+    An unknown failure during cancellation remains a failure.
+    """
+    from collections.abc import Mapping
+    if not isinstance(error, asyncio.CancelledError):
+        return False
+    receipt, owner = cancellation_receipt or {}, owner_state or {}
+    scope = request_scope if isinstance(request_scope, Mapping) else {}
+    recorded = receipt.get('scope') or {}
+    if not (task_id and receipt.get('receipt_id') and receipt.get('task_id') == task_id
+            and receipt.get('initiator_kind') == 'user' and receipt.get('source_evidence')
+            and recorded.get('task_id') == task_id and scope.get('task_id') == task_id
+            and owner.get('task_id') == task_id and owner.get('cancel_requested') is True
+            and not str(receipt.get('status') or '').startswith('not_committed')):
+        return False
+    return all(recorded.get(key) == value for key, value in scope.items()
+               if value is not None and key in {
+                   'task_id', 'task_revision', 'planning_epoch_id', 'plan_id',
+                   'plan_version', 'task_semantic_hash'})
+
+
+def archive_runtime_exception(directory, error, *, task_id, request_scope,
+                              cancellation_receipt=None, owner_state=None,
+                              fallback_state=None, cleanup_refs=None, source='runtime'):
+    """Write a full sanitized chain without locals to a caller-owned directory.
+
+    The caller supplies current receipts and decides whether to re-raise. This
+    helper never treats archive success as process/provider cleanup evidence.
+    """
+    import os
+    import tempfile
+    import traceback
+    import uuid
+    from datetime import datetime, timezone
+    from pathlib import Path
+    from agent_core.cli_display import safe_public_text
+
+    expected = expected_user_cancellation(error, task_id=task_id,
+        request_scope=request_scope, cancellation_receipt=cancellation_receipt,
+        owner_state=owner_state)
+    # capture_locals=False also avoids leaking environment/configuration values.
+    full_traceback = ''.join(traceback.TracebackException.from_exception(
+        error, capture_locals=False).format(chain=True))
+    record = {
+        'schema_version': 1, 'task_id': task_id, 'source': source,
+        'recorded_at': datetime.now(timezone.utc).isoformat(),
+        'exception_type': type(error).__module__ + '.' + type(error).__qualname__,
+        'expected_user_cancellation': expected,
+        'request_scope': request_scope,
+        'cancellation_receipt': cancellation_receipt or {},
+        'owner_state': owner_state or {}, 'fallback_state': fallback_state or {},
+        'cleanup_refs': cleanup_refs or {},
+        'traceback': safe_public_text(full_traceback),
+    }
+    temporary = None
+    try:
+        target_dir = Path(directory)
+        target_dir.mkdir(parents=True, exist_ok=True)
+        destination = target_dir / ('exception-' + uuid.uuid4().hex + '.json')
+        # Sanitize values before serialization: redacting serialized JSON can
+        # remove its quotes and make an otherwise complete archive unreadable.
+        def sanitized(value):
+            if isinstance(value, dict):
+                return {str(key): ('[REDACTED]' if re.fullmatch(
+                    r'(?i)(?:api[_-]?key|access[_-]?token|refresh[_-]?token|token|password|passwd|secret)', str(key))
+                    else sanitized(item)) for key, item in value.items()}
+            if isinstance(value, (list, tuple)):
+                return [sanitized(item) for item in value]
+            if isinstance(value, (str, bytes)):
+                return safe_public_text(value)
+            if value is None or isinstance(value, (bool, int, float)):
+                return value
+            return safe_public_text(str(value))
+        wire = json.dumps(sanitized(record), ensure_ascii=False, indent=2)
+        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', dir=target_dir,
+                                         prefix='.exception-', delete=False) as stream:
+            temporary = Path(stream.name)
+            stream.write(wire + '\n')
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, destination)
+        return {'status': 'saved', 'expected_user_cancellation': expected,
+                'diagnostic_ref': str(destination),
+                'display_text': ('已按用户请求取消；清理状态见回执。' if expected else
+                                 '运行发生异常；完整诊断已归档。') + ' 诊断：' + str(destination)}
+    except Exception as archive_error:
+        if temporary is not None:
+            try:
+                temporary.unlink(missing_ok=True)
+            except OSError:
+                pass
+        return {'status': 'failed', 'expected_user_cancellation': expected,
+                'diagnostic_ref': '', 'archive_error_type': type(archive_error).__name__,
+                'archive_error': safe_public_text(str(archive_error)),
+                'display_text': '异常诊断归档失败；不能确认已保存完整异常。'}
+
+
+def task_request_projection(data_path, task_id):
+    """Read one displayed task only, without migration, model, DB or state writes."""
+    import json
+    import re
+    from pathlib import Path
+    from agent_core.request_state import current_finish
+    unknown = {'request': 'UNKNOWN', 'plan': 'UNKNOWN'}
+    if not isinstance(task_id, str) or not re.fullmatch(r'[A-Za-z0-9_][A-Za-z0-9_.-]{0,159}', task_id):
+        return unknown
+    path = Path(data_path) / 'task_outputs' / task_id / 'plan_state.json'
+    try:
+        with path.open('r', encoding='utf-8') as stream:
+            state = json.load(stream)
+        if not isinstance(state, dict) or state.get('task_id') != task_id:
+            return unknown
+        finish = current_finish(state)
+        task = state.get('task_state') or {}
+        if task.get('execution_architecture') == 'llm_tools_v4':
+            notes = task.get('work_plan') or {}
+            todos = notes.get('todos') or []
+            active = [r for r in (state.get('provenance_state') or {}).get('attempts', {}).values()
+                      if r.get('status') in {'STARTING','RUNNING','UNKNOWN_AFTER_CRASH'}]
+            return {'request': str(finish['status'])+'/'+str(finish.get('model_outcome','UNKNOWN')) if finish else str(task.get('status') or 'UNKNOWN'),
+                    'plan': 'model_report' if notes else 'optional',
+                    'completed_todos': sum(r.get('status') == 'completed' for r in todos),
+                    'total_todos': len(todos), 'unsettled_resources': len({str(r.get('attempt_id') or r.get('run_ref')) for r in active} | {str(r.get('run_ref') or r.get('attempt_id')) for r in (finish.get('facts') or {}).get('causal_summary', {}).get('runs', []) if r.get('terminal') is not True})}
+        steps = state.get('steps') or []
+        plan = ('completed' if all(r.get('status') == 'done' for r in steps) else 'incomplete') if steps else 'UNKNOWN'
+        request = (str(finish['status']) + '/' + str(finish.get('model_outcome', 'UNKNOWN'))
+                   if finish else str((state.get('task_state') or {}).get('status') or 'UNKNOWN'))
+        done = {row.get('step_id') for row in steps if row.get('status') == 'done'}
+        receipts = (state.get('task_state') or {}).get('step_commit_receipts') or {}
+        committed = {row.get('step_id') for row in receipts.values() if isinstance(row,dict) and row.get('step_id') in done}
+        return {'request': request, 'plan': plan, 'committed_steps': len(committed), 'total_steps': len(steps)}
+    except (OSError, ValueError, TypeError, KeyError, AttributeError):
+        return unknown

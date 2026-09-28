@@ -169,6 +169,27 @@ class GenerateCapabilityScopedPromptTests(unittest.TestCase):
         self.assertNotIn("Build only the approved", prompt)
         self.assertNotIn("Annotate the approved VCF", prompt)
 
+    def test_observation_only_script_block_contains_effect_evidence_abi(self) -> None:
+        capability_id = (
+            "genomics.snpeff_annotation.check_contig_compatibility"
+        )
+        prompt = self._prompt_from_resolution(
+            self._resolve_snpeff(capability_id),
+            goal="compare current input contig identifiers",
+            protocol="script_block_v1",
+        )
+
+        self.assertIn('"observation_id":"contigs_compatible"', prompt)
+        self.assertIn('"predicate_id":"genomics.snpeff.contigs_compatible.v1"', prompt)
+        self.assertIn('"expected":true', prompt)
+        self.assertIn('"failure_disposition":"correction_required"', prompt)
+        self.assertIn('"kind":"plan_contains_any_execution_capability"', prompt)
+        self.assertIn("BIOMIND_EFFECT_EVIDENCE_JSON=<json>", prompt)
+        self.assertIn("A `false` observation value is valid", prompt)
+        self.assertIn("Do not create a marker file", prompt)
+        self.assertIn("outputless executable block", prompt)
+
+
     def test_skill_manager_projection_contains_only_selected_capability(self) -> None:
         capability_id = "genomics.snpeff_annotation.build_database"
         projection = project_action_runtime_for_provider(

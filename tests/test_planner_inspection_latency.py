@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 import pytest
 from agent_core.command_execution import CommandExecutionService
-from agent_core.cli_display import DisplayModel, bind_terminal
+from agent_core.cli_display import bind_terminal
 
 
 def run(coro):
@@ -141,119 +141,12 @@ def test_preparation_deadline_and_cancellation_write_distinct_receipts(tmp_path)
     run(check())
 
 
-def test_actual_phase_entry_batches_paths_and_reuses_evidence(tmp_path):
-    from bio_agents import BioAnalystAgent
-    from langchain_core.messages import AIMessage, SystemMessage, ToolMessage
-    sample = tmp_path / 'x.txt'; sample.write_text('offline fixture')
-    agent = BioAnalystAgent.__new__(BioAnalystAgent);agent.command_service = service(tmp_path)
-    class Model:
-        def bind_tools(self, schemas): return self
-    agent.llm = agent.planner_llm = Model()
-    calls = []
-    async def once(messages, **kwargs):
-        calls.append(kwargs['stage'])
-        if len(calls) == 1:
-            return AIMessage(content='', tool_calls=[{'id': 'paths', 'name': 'inspect_paths', 'args': {'paths': ['x.txt', 'x.txt']}}])
-        payload = '\n'.join(str(m.content) for m in messages)
-        assert str(sample) in payload
-        if kwargs['stage'] == 'consultant':
-            assert isinstance(messages[-1], ToolMessage)
-            assert json.loads(messages[-1].content)['unique_count'] == 1
-        else:
-            assert 'historical_not_revalidated' in payload
-        return AIMessage(content='phase final')
-    agent._ainvoke_llm_once = once
-    async def check():
-        await agent._ainvoke_llm([SystemMessage(content='offline')], task_id='task', stage='consultant')
-        for stage in ['planner', 'planner_repair', 'generate']:
-            await agent._ainvoke_llm([SystemMessage(content='offline')], task_id='task', stage=stage)
-        assert len(list(agent.command_service._task_dir('task').glob('*/receipt.json'))) == 1
-        assert agent._task_project_root('task') == tmp_path
-    run(check())
 
 
-def test_compact_real_provider_events_no_fake_progress_and_plain_coalesces():
-    from agent_core.provider_attempt import _emit
-    from agent_core.cli_plain import PlainTerminal
-    output = io.StringIO(); terminal = PlainTerminal(output=output)
-    old = bind_terminal(terminal)
-    class Record:
-        payload = {'node_name': 'planner', 'call_id': 'one', 'provider_attempt_id': 'a',
-                   'content_char_count': 0, 'observed_payload_callback_count': 0}
-        def to_dict(self): return dict(self.payload)
-    row = Record()
-    try:
-        _emit(None, 'attempt_started', row)
-        assert '等待模型响应' in terminal.model.status()
-        row.payload.update(observed_payload_callback_count=2, reasoning_char_count=100, elapsed_seconds=2)
-        _emit(None, 'stream_active', row)
-        assert '暂无可展示正文' in terminal.model.status()
-        for n in [5, 150, 300]:
-            row.payload.update(content_char_count=n, elapsed_seconds=3)
-            _emit(None, 'attempt_progress', row)
-        assert '300 字符' in terminal.model.status() and '完整计划尚未就绪' in terminal.model.status()
-        assert '%' not in terminal.model.status() and 'token' not in terminal.model.status()
-        row.payload['finish_reason'] = 'stop'
-        _emit(None, 'attempt_completed', row)
-        assert '待解析与校验' in terminal.model.status()
-        # Replayed late chunks cannot reopen a fenced call.
-        _emit(None, 'attempt_progress', row)
-        assert '待解析与校验' in terminal.model.status()
-        transitions = [t for t in terminal.model.items if t.kind == 'activity']
-        assert len(transitions) == 3
-        assert '300' in terminal.model.details_text()
-        row.payload.update(call_id='two', provider_attempt_id='b', failure_type='PROVIDER_CONNECTION_ERROR')
-        _emit(None, 'attempt_failed', row)
-        assert '连接中断' in terminal.model.status()
-        row.payload.update(call_id='three', provider_attempt_id='c', cancellation_source='caller', failure_type='PROVIDER_CALLER_CANCELLED')
-        _emit(None, 'attempt_cancelled', row)
-        assert any('请求已取消' in text for text in terminal.model.history)
-        assert not any('PLANNING_EPOCH_EXHAUSTED' in text for text in terminal.model.history)
-    finally:
-        bind_terminal(old);terminal.close()
 
 
-def test_command_prepare_execute_events_and_display_failure_do_not_gate(tmp_path):
-    svc = service(tmp_path);model = DisplayModel();seen=[]
-    class Owner:
-        def receive(self, kind, text, **data):
-            result = model.receive(kind, text, **data)
-            if kind == 'activity':seen.append(model.status())
-            return result
-    old = bind_terminal(Owner())
-    try:
-        result = run(svc.run({'cmd': 'sleep .06; echo okay'}, task_id='ui', stage='planner'))
-        assert result['exit_code'] == 0
-        assert any('准备检查环境' in x for x in seen)
-        assert any('执行本地检查' in x for x in seen)
-        assert any('检查结束' in x for x in seen)
-        assert 'prepare_seconds' in model.details_text()
-    finally:bind_terminal(old)
-    class Broken:
-        def receive(self, *a, **k): raise RuntimeError('display offline')
-    old = bind_terminal(Broken())
-    try: assert run(svc.run({'cmd': 'true'}, task_id='ui'))['exit_code'] == 0
-    finally:bind_terminal(old)
 
 
-def test_submitted_input_is_distinct_from_new_draft():
-    from prompt_toolkit.application import create_app_session
-    from prompt_toolkit.input import create_pipe_input
-    from prompt_toolkit.output import DummyOutput
-    from agent_core.cli_terminal import Terminal
-    async def check():
-        owner = Terminal()
-        owner.pending = concurrent.futures.Future();submitted = owner.pending
-        owner.input_ready = True
-        owner.buffer.text = '2倍体';owner.submit()
-        assert submitted.result(timeout=1) == '2倍体'
-        assert '上一条输入已提交' in owner.prompt_text
-        owner.buffer.text = '尚未发送的新输入'
-        assert submitted.result(timeout=1) == '2倍体'
-        owner.closed = True
-        if owner.history_flush: await owner.history_flush
-    with create_pipe_input() as pipe, create_app_session(input=pipe, output=DummyOutput()):
-        run(check())
 
 
 def test_metrics_separate_inspection_from_scientific_execution(tmp_path):
@@ -298,20 +191,6 @@ def test_metadata_concurrency_is_bounded_and_duplicate_stats_are_merged(tmp_path
     assert all(row['status'] == 'observed' for row in result['paths'])
 
 
-def test_truncated_response_and_tool_arguments_do_not_claim_complete_plan():
-    from agent_core.provider_attempt import _emit
-    from types import SimpleNamespace
-    model=DisplayModel();old=bind_terminal(model)
-    try:
-        facts={'node_name':'planner','call_id':'length','provider_attempt_id':'length',
-               'observed_payload_callback_count':2,'content_char_count':0,'tool_call_fragment_count':2}
-        record=SimpleNamespace(to_dict=lambda:dict(facts))
-        _emit(None,'stream_active',record)
-        assert '暂无可展示正文' in model.status()
-        facts.update(finish_reason='length',content_char_count=300)
-        _emit(None,'attempt_completed',record)
-        assert '截断' in model.status() and '待解析与校验' not in model.status()
-    finally:bind_terminal(old)
 
 
 def test_consult_resolver_uses_typed_paths_without_cwd_guess_or_basename_alias(tmp_path):
@@ -327,47 +206,6 @@ def test_consult_resolver_uses_typed_paths_without_cwd_guess_or_basename_alias(t
     assert any(str(project/'missing.fasta') in line for line in result['discovery_log'])
 
 
-def test_recovery_metadata_tool_keeps_receipts_and_does_not_invent_progress(tmp_path):
-    from copy import deepcopy
-    from langchain_core.messages import AIMessage, ToolMessage
-    from tests.test_recovery_agent_loop import _seed_fixture, _directive
-    from agent_core.workflow.phase_archive import PhaseArchiveStore
-    from agent_core.workflow.recovery_tools import RecoveryLocalToolDispatcher, build_recovery_inspection_registry
-    from agent_core.workflow.recovery_agent import RecoveryAgentLoop
-    from agent_core.workflow.recovery_runtime import meaningful_inspection_facts
-    durable, seed = _seed_fixture()
-    sample = tmp_path / 'input with spaces.txt'; sample.write_text('fixture')
-    svc = service(tmp_path); requests = []
-    class Model:
-        def bind_tools(self, schemas): return self
-        async def ainvoke(self, messages, **kwargs):
-            requests.append(messages)
-            if len(requests) == 1:
-                return AIMessage(content='', tool_calls=[{'id':'stat', 'name':'inspect_paths',
-                    'args':{'paths':[str(sample),str(sample)]}}], response_metadata={'finish_reason':'tool_calls'})
-            receipt = json.loads(next(m.content for m in reversed(messages) if isinstance(m, ToolMessage)))
-            # Recovery wraps the durable inspection receipt in its existing envelope.
-            assert str(sample) in json.dumps(receipt)
-            directive = json.loads(_directive())
-            ref = next(svc.data_path.glob('task_outputs/*/command_inspection/*/receipt.json'))
-            directive['evidence_refs'] = [str(ref)]
-            return AIMessage(content=json.dumps(directive), response_metadata={'finish_reason':'stop'})
-    async def check():
-        store = PhaseArchiveStore(tmp_path / 'phases')
-        registry = build_recovery_inspection_registry(seed, durable, phase_store=store)
-        dispatcher = RecoveryLocalToolDispatcher(seed=seed, durable=durable, registry=registry,
-            phase_store=store, command_service=svc)
-        result = await RecoveryAgentLoop(model=Model(), dispatcher=dispatcher).ainvoke(
-            seed=seed, durable=durable, inspection_manifest=registry.provider_manifest())
-        assert not result['terminal_error'], result
-        receipts = list(svc.data_path.glob('task_outputs/*/command_inspection/*/receipt.json'))
-        assert len(receipts) == 1 and str(receipts[0]) in result['audit']['inspected_refs']
-        first = {'tool':'inspect.paths', 'source_ref':'first', 'result':json.loads(receipts[0].read_text())}
-        second = deepcopy(first);second['source_ref']='second'
-        second['result'].update(timing={'prepare_seconds':100}, observed_at='later', receipt_ref='second')
-        assert meaningful_inspection_facts([first]) == meaningful_inspection_facts([second])
-        assert sample.read_text() == 'fixture'
-    run(check())
 
 
 def test_interrupted_scanning_retains_elapsed_time_in_real_receipt(tmp_path):

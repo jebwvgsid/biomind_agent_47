@@ -1,62 +1,28 @@
 ---
 name: enrichment-analysis
-description: >
-  Perform professional functional enrichment analysis for gene sets from RNA-seq
-  DEG, single-cell marker genes, WGCNA modules, GWAS candidate genes, pangenome
-  genes, expanded gene families, proteomics, and custom omics workflows. Use
-  when Codex needs GO, KEGG/KO, Reactome/Plant Reactome, MapMan, InterPro/Pfam,
-  eggNOG/COG/KOG, ORA, GSEA, compareCluster-style group enrichment, or custom
-  TERM2GENE enrichment with species-aware database selection, gene ID mapping
-  QC, and background-universe validation.
+description: 'Perform professional functional enrichment analysis for gene sets from RNA-seq DEG, single-cell marker
+  genes, WGCNA modules, GWAS candidate genes, pangenome genes, expanded gene families, proteomics, and custom omics
+  workflows. Use when Codex needs GO, KEGG/KO, Reactome/Plant Reactome, MapMan, InterPro/Pfam, eggNOG/COG/KOG, ORA,
+  GSEA, compareCluster-style group enrichment, or custom TERM2GENE enrichment with species-aware database selection,
+  gene ID mapping QC, and background-universe validation.
+
+  '
 metadata:
-  version: "1.0.0"
-  legacy_ids:
-    - go-kegg-enrichment
-    - functional-enrichment
-    - gene-set-enrichment
-  tags:
-    - enrichment
-    - GO
-    - KEGG
-    - KO
-    - GSEA
-    - ORA
-    - TERM2GENE
-    - clusterProfiler
-    - fgsea
-    - eggNOG
-    - InterPro
-    - WGCNA
-    - DEG
-    - marker-genes
-    - GWAS-candidate-genes
-  task_types:
-    - functional_enrichment
-  inputs:
-    - foreground_gene_list
-    - ranked_gene_list
-    - background_gene_universe
-    - annotation_table
-    - term2gene
-  outputs:
-    - input_qc
-    - mapped_ids
-    - enrichment_results
-    - enrichment_plots
-    - report
-    - reproduce
-  runtime:
-    env_runner: Rscript or conda run -n dmr_r Rscript
-    language:
-      - python
-      - R
-    packages:
-      required:
-        - base R for ORA
-      optional:
-        - fgsea for GSEA
-        - ggplot2 for enhanced plots
+  version: 1.0.0
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # Enrichment Analysis
 
@@ -134,14 +100,14 @@ Do not default to the whole genome unless the experiment genuinely tested the wh
 2. Verify the execution environment. Python QC scripts use only the standard library. For the R wrapper, prefer a working existing R runner:
 
 ```bash
-Rscript --version || conda run -n dmr_r Rscript --version || conda run -n rna_env Rscript --version
+Rscript --version || Rscript --version || Rscript --version
 ```
 
 If no R runner is available, run the Python QC/build steps and write `blocked_report.md` with the missing R dependency.
 3. If no `TERM2GENE` exists but an annotation table is available, build it:
 
 ```bash
-python skills/enrichment-analysis/scripts/build_term2gene_from_annotation.py \
+python "${SKILL_DIR}/scripts/build_term2gene_from_annotation.py" \
   --annotation gene_function.tsv \
   --gene-column gene_id \
   --term-columns GO,KO,PFAM,INTERPRO \
@@ -152,7 +118,7 @@ python skills/enrichment-analysis/scripts/build_term2gene_from_annotation.py \
 4. Run input QC before enrichment:
 
 ```bash
-python skills/enrichment-analysis/scripts/check_enrichment_inputs.py \
+python "${SKILL_DIR}/scripts/check_enrichment_inputs.py" \
   --foreground foreground_genes.tsv \
   --foreground-column gene_id \
   --background background_genes.tsv \
@@ -169,7 +135,7 @@ python skills/enrichment-analysis/scripts/check_enrichment_inputs.py \
 5. Run ORA or GSEA:
 
 ```bash
-Rscript skills/enrichment-analysis/scripts/run_enrichment.R \
+Rscript "${SKILL_DIR}/scripts/run_enrichment.R" \
   --method ora \
   --foreground foreground_genes.tsv \
   --foreground-column gene_id \
@@ -184,7 +150,7 @@ Rscript skills/enrichment-analysis/scripts/run_enrichment.R \
 If bare `Rscript` is not on `PATH`, use a verified environment runner such as:
 
 ```bash
-conda run -n dmr_r Rscript skills/enrichment-analysis/scripts/run_enrichment.R \
+Rscript "${SKILL_DIR}/scripts/run_enrichment.R" \
   --method ora \
   --foreground foreground_genes.tsv \
   --background background_genes.tsv \
@@ -195,7 +161,7 @@ conda run -n dmr_r Rscript skills/enrichment-analysis/scripts/run_enrichment.R \
 For GSEA:
 
 ```bash
-Rscript skills/enrichment-analysis/scripts/run_enrichment.R \
+Rscript "${SKILL_DIR}/scripts/run_enrichment.R" \
   --method gsea \
   --ranked ranked_genes.tsv \
   --ranked-gene-column gene_id \

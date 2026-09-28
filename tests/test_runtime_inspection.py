@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import re
 import tempfile
 import unittest
 from copy import deepcopy
@@ -10,12 +11,29 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from bio_agents import BioAnalystAgent
 from agent_core.runtime_evidence import digest, make_runtime_evidence
 from agent_core.runtime_inspection import (
     BubblewrapRuntimeProbe, InspectionPolicyError, RuntimeInspectionAdapter,
     admitted_healthcheck,
 )
+
+
+def _verified_fixture_paths(detail: str) -> dict[str, str]:
+    """Validate synthetic probe paths without constructing a legacy Agent."""
+    resolved = {}
+    for raw_line in str(detail or "").splitlines():
+        match = re.fullmatch(r"\s*([A-Z][A-Z0-9_]{1,63})=(/[^\r\n]+?)\s*", raw_line)
+        if not match:
+            continue
+        key, raw_path = match.groups()
+        path = Path(raw_path).expanduser()
+        try:
+            valid = path.is_dir() or (path.is_file() and path.stat().st_size > 0)
+        except OSError:
+            valid = False
+        if valid:
+            resolved[key] = str(path.resolve())
+    return resolved
 
 
 class _Process:
@@ -83,7 +101,7 @@ class RuntimeInspectionTests(unittest.IsolatedAsyncioTestCase):
         self.probe = BubblewrapRuntimeProbe(process_factory=self.leaf, bwrap_path=str(self.bwrap))
         self.adapter = RuntimeInspectionAdapter(SimpleNamespace(conda_root=self.root / "conda"), self.skills,
             scope_provider=lambda _skill: deepcopy(self.subject),
-            path_validator=BioAnalystAgent._verified_runtime_paths,
+            path_validator=_verified_fixture_paths,
             probe=self.probe, clock=lambda: "2026-09-07T10:00:00+00:00")
 
     def request(self):

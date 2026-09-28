@@ -1,145 +1,65 @@
-"""Typed workflow boundaries used by incremental graph migrations."""
+"""Lazy access to retained workflow evidence types and profiling helpers.
 
-from agent_core.workflow.step_worker import (
-    STEP_OUTCOME_SCHEMA_VERSION,
-    STEP_REQUEST_SCHEMA_VERSION,
-    STEP_WORKER_BACKEND_ENV,
-    StepOutcome,
-    StepOutcomeType,
-    StepRequest,
-    StepWorkerBackend,
-    StepWorkerContractError,
-    TypedStubStepWorkerBackend,
-    build_step_request,
-    fail_closed_step_outcome,
-    get_step_worker_backend,
-    invoke_step_worker,
-    plan_review_destination,
-    resolve_step_worker_backend_name,
-    route_step_worker_outcome,
-)
-from agent_core.workflow.pi_rpc import (
-    PI_PACKAGE_NAME,
-    PI_PINNED_VERSION,
-    PI_RPC_BACKEND_NAME,
-    PI_TERMINAL_TOOL_NAME,
-    PiRpcConfig,
-    PiRpcError,
-    PiRpcProcess,
-    PiSessionBinding,
-    PiStepWorkerBackend,
-)
-from agent_core.workflow.outcomes import (
-    OUTCOME_SCHEMA_VERSION,
-    WORKFLOW_ROUTING_SCHEMA_LEGACY,
-    WORKFLOW_ROUTING_SCHEMA_TYPED,
-    CommitStepOutcome,
-    TriageOutcome,
-    ConsultantOutcome,
-    PlannerOutcome,
-    PlanReviewOutcome,
-    AskUserOutcome,
-    InstallSubagentOutcome,
-    ResumeState,
-    ExecuteOutcome,
-    FinalAuditOutcome,
-    GenerateOutcome,
-    OutcomeContractError,
-    RecoveryOutcome,
-    StrictOutcome,
-    VerificationOutcome,
-    workflow_routing_schema_version,
-    bind_workflow_routing_schema_for_task,
-    route_blind_state_projection,
-)
-from agent_core.workflow.typed_node import profile_typed_node
-from agent_core.workflow.commit_step import CommitStep, commit_step_harness_error
-from agent_core.workflow.runtime_graph import (
-    build_schema2_production_graph,
-    build_schema2_runtime_graph,
-    route_commit_step_outcome,
-    route_execute_outcome,
-    route_final_audit_outcome,
-    route_generate_outcome,
-    route_recovery_outcome,
-    route_verification_outcome,
-)
-from agent_core.workflow.verifier import TypedSupervisor, verification_harness_error
-from agent_core.workflow.execution import (
-    TypedExecute,
-    TypedGenerate,
-    execute_harness_error,
-    generate_harness_error,
-)
-from agent_core.workflow.recovery_runtime import TypedRecovery, recovery_harness_error
-from agent_core.workflow.final_audit import TypedFinalAudit, final_audit_harness_error
+Executable legacy graph adapters have been physically retired.  These exports
+preserve saved outcome formats without loading a model or a second agent loop.
+"""
+from importlib import import_module
 
-__all__ = [
-    "STEP_OUTCOME_SCHEMA_VERSION",
-    "STEP_REQUEST_SCHEMA_VERSION",
-    "STEP_WORKER_BACKEND_ENV",
-    "PI_PACKAGE_NAME",
-    "PI_PINNED_VERSION",
-    "PI_RPC_BACKEND_NAME",
-    "PI_TERMINAL_TOOL_NAME",
-    "OUTCOME_SCHEMA_VERSION",
-    "WORKFLOW_ROUTING_SCHEMA_LEGACY",
-    "WORKFLOW_ROUTING_SCHEMA_TYPED",
-    "PiRpcConfig",
-    "PiRpcError",
-    "PiRpcProcess",
-    "PiSessionBinding",
-    "PiStepWorkerBackend",
-    "CommitStepOutcome",
-    "TriageOutcome",
-    "ConsultantOutcome",
-    "PlannerOutcome",
-    "PlanReviewOutcome",
-    "AskUserOutcome",
-    "InstallSubagentOutcome",
-    "ResumeState",
-    "CommitStep",
-    "ExecuteOutcome",
-    "FinalAuditOutcome",
-    "GenerateOutcome",
-    "OutcomeContractError",
-    "RecoveryOutcome",
-    "StrictOutcome",
-    "VerificationOutcome",
-    "StepOutcome",
-    "StepOutcomeType",
-    "StepRequest",
-    "StepWorkerBackend",
-    "StepWorkerContractError",
-    "TypedStubStepWorkerBackend",
-    "build_step_request",
-    "fail_closed_step_outcome",
-    "get_step_worker_backend",
-    "invoke_step_worker",
-    "plan_review_destination",
-    "resolve_step_worker_backend_name",
-    "route_step_worker_outcome",
-    "route_commit_step_outcome",
-    "route_generate_outcome",
-    "route_execute_outcome",
-    "route_verification_outcome",
-    "commit_step_harness_error",
-    "profile_typed_node",
-    "TypedSupervisor",
-    "TypedExecute",
-    "TypedGenerate",
-    "execute_harness_error",
-    "generate_harness_error",
-    "TypedRecovery",
-    "recovery_harness_error",
-    "TypedFinalAudit",
-    "final_audit_harness_error",
-    "build_schema2_runtime_graph",
-    "build_schema2_production_graph",
-    "route_recovery_outcome",
-    "route_final_audit_outcome",
-    "verification_harness_error",
-    "workflow_routing_schema_version",
-    "bind_workflow_routing_schema_for_task",
-    "route_blind_state_projection",
-]
+_EXPORTS = {'OUTCOME_SCHEMA_VERSION': ('agent_core.workflow.outcomes', 'OUTCOME_SCHEMA_VERSION'),
+ 'WORKFLOW_ROUTING_SCHEMA_LEGACY': ('agent_core.workflow.outcomes', 'WORKFLOW_ROUTING_SCHEMA_LEGACY'),
+ 'WORKFLOW_ROUTING_SCHEMA_TYPED': ('agent_core.workflow.outcomes', 'WORKFLOW_ROUTING_SCHEMA_TYPED'),
+ 'CommitStepOutcome': ('agent_core.workflow.outcomes', 'CommitStepOutcome'),
+ 'TriageOutcome': ('agent_core.workflow.outcomes', 'TriageOutcome'),
+ 'ConsultantOutcome': ('agent_core.workflow.outcomes', 'ConsultantOutcome'),
+ 'PlannerOutcome': ('agent_core.workflow.outcomes', 'PlannerOutcome'),
+ 'PlanReviewOutcome': ('agent_core.workflow.outcomes', 'PlanReviewOutcome'),
+ 'AskUserOutcome': ('agent_core.workflow.outcomes', 'AskUserOutcome'),
+ 'InstallSubagentOutcome': ('agent_core.workflow.outcomes', 'InstallSubagentOutcome'),
+ 'ResumeState': ('agent_core.workflow.outcomes', 'ResumeState'),
+ 'ExecuteOutcome': ('agent_core.workflow.outcomes', 'ExecuteOutcome'),
+ 'FinalAuditOutcome': ('agent_core.workflow.outcomes', 'FinalAuditOutcome'),
+ 'GenerateOutcome': ('agent_core.workflow.outcomes', 'GenerateOutcome'),
+ 'OutcomeContractError': ('agent_core.workflow.outcomes', 'OutcomeContractError'),
+ 'RecoveryOutcome': ('agent_core.workflow.outcomes', 'RecoveryOutcome'),
+ 'StrictOutcome': ('agent_core.workflow.outcomes', 'StrictOutcome'),
+ 'VerificationOutcome': ('agent_core.workflow.outcomes', 'VerificationOutcome'),
+ 'workflow_routing_schema_version': ('agent_core.workflow.outcomes', 'workflow_routing_schema_version'),
+ 'bind_workflow_routing_schema_for_task': ('agent_core.workflow.outcomes',
+                                           'bind_workflow_routing_schema_for_task'),
+ 'route_blind_state_projection': ('agent_core.workflow.outcomes', 'route_blind_state_projection'),
+ 'profile_typed_node': ('agent_core.workflow.typed_node', 'profile_typed_node')}
+
+__all__ = ['OUTCOME_SCHEMA_VERSION',
+ 'WORKFLOW_ROUTING_SCHEMA_LEGACY',
+ 'WORKFLOW_ROUTING_SCHEMA_TYPED',
+ 'CommitStepOutcome',
+ 'TriageOutcome',
+ 'ConsultantOutcome',
+ 'PlannerOutcome',
+ 'PlanReviewOutcome',
+ 'AskUserOutcome',
+ 'InstallSubagentOutcome',
+ 'ResumeState',
+ 'ExecuteOutcome',
+ 'FinalAuditOutcome',
+ 'GenerateOutcome',
+ 'OutcomeContractError',
+ 'RecoveryOutcome',
+ 'StrictOutcome',
+ 'VerificationOutcome',
+ 'profile_typed_node',
+ 'workflow_routing_schema_version',
+ 'bind_workflow_routing_schema_for_task',
+ 'route_blind_state_projection']
+
+def __getattr__(name):
+    if name not in _EXPORTS:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    module_name, symbol = _EXPORTS[name]
+    value = getattr(import_module(module_name), symbol)
+    globals()[name] = value
+    return value
+
+
+def __dir__():
+    return sorted(set(globals()) | set(__all__))

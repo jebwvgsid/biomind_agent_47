@@ -1,5 +1,9 @@
 from __future__ import annotations
 import re
+import os
+import hashlib
+import tempfile
+import fcntl
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence
@@ -125,6 +129,39 @@ class CoreMemoryStore:
 
     def read_core(self, project_id: Optional[str] = None, max_chars: int = 9000, snapshot_id: Optional[str] = None) -> str:
         return self.load_snapshot(project_id, snapshot_id=snapshot_id).prompt_text(max_chars=max_chars)
+
+    def update_profile(self, content, *, operation='append', expected_hash=None, path=None):
+        """CAS local edit of the one active preference source, not a second copy."""
+        path = Path(path) if path is not None else self.user_profile
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.with_name('.'+path.name+'.lock').open('a') as lock:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+            before = path.read_text(encoding='utf-8') if path.exists() else ''
+            actual = hashlib.sha256(before.encode()).hexdigest()
+            content = redact_secrets(str(content))
+            if operation == 'append':
+                after = before if content.strip() in before else before.rstrip()+'\n'+content.strip()+'\n'
+            elif operation in {'replace','forget'}:
+                if expected_hash is None: raise ValueError('PREFERENCE_EDIT_REQUIRES_READ_VERSION')
+                if operation == 'forget':
+                    if not content: raise ValueError('FORGET_REQUIRES_EXACT_PREFERENCE_TEXT')
+                    after = before.replace(content, '', 1)
+                else: after = content
+            else: raise ValueError('UNKNOWN_PREFERENCE_OPERATION')
+            if before == after:return {'status':'noop','content_hash':actual,'absolute_path':str(path.resolve())}
+            if expected_hash is not None and expected_hash != actual:raise ValueError('PREFERENCE_VERSION_CONFLICT:'+actual)
+            fd, temporary = tempfile.mkstemp(prefix='.'+path.name+'.', dir=str(path.parent))
+            try:
+                with os.fdopen(fd,'w',encoding='utf-8') as handle:
+                    handle.write(after);handle.flush();os.fsync(handle.fileno())
+                # Cooperating writers use the lock; detect intervening manual edits too.
+                if (path.read_text(encoding='utf-8') if path.exists() else '') != before:
+                    raise ValueError('PREFERENCE_EXTERNAL_EDIT_CONFLICT')
+                os.replace(temporary,path)
+            finally:
+                if os.path.exists(temporary):os.unlink(temporary)
+            self._snapshots.clear()
+            return {'status':'written','content_hash':hashlib.sha256(after.encode()).hexdigest(), 'absolute_path':str(path.resolve())}
 
     def apply_patch(self, patch: Dict[str, Any], default_project_id: Optional[str] = None) -> None:
         fallback_project_id = self._resolve_project_id(default_project_id)

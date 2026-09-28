@@ -23,7 +23,7 @@ class GroupMetadata(list):
 
 
 def event(stage, **values):
-    print('BIOMIND_CHECK_PROGRESS=' + json.dumps({
+    print(json.dumps({
         'stage': stage, 'observed_at': datetime.now(timezone.utc).isoformat(),
         **values}, ensure_ascii=False), file=sys.stderr, flush=True)
 
@@ -96,7 +96,7 @@ def check(samples, resolution, *, query=query_groups):
                 root_resolution = getattr(groups, 'root_resolution', None)
                 effective_target = '/' if '/' in normalized and root_resolution == resolution else target
                 present = effective_target in normalized
-                row.update(groups=normalized, target_group=effective_target, present=present,
+                row.update(groups=normalized, target_group=effective_target, present=present, root_resolution=int(root_resolution) if root_resolution is not None else None,
                            status='present' if present else 'absent')
                 if normalized == ['/'] and (root_resolution is None or str(root_resolution) == 'null'):
                     row.update(present=None, status='resolution_undefined')
@@ -117,7 +117,7 @@ def check(samples, resolution, *, query=query_groups):
             row['query_seconds'] = time.monotonic() - started
             cache[key] = row
             event('query_completed', resource=handle, status=row['status'], elapsed_seconds=row['query_seconds'])
-        rows.append({'resource_handle': handle, **cache[key]})
+        rows.append({'resource_handle': handle, 'path':str(Path(path).absolute()), **cache[key]})
     return {'checker_version': VERSION, 'resolution_bp': resolution,
             'ok': all(row['status'] == 'present' for row in rows), 'inputs': rows,
             'query_count': len(cache), 'scientific_validation': 'NOT_PERFORMED'}
@@ -126,25 +126,41 @@ def check(samples, resolution, *, query=query_groups):
 def main(argv=None):
     event('python_started')
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--input', nargs=2, action='append', required=True, metavar=('HANDLE', 'PATH'))
+    source=parser.add_mutually_exclusive_group(required=True)
+    source.add_argument('--input', nargs=2, action='append', metavar=('HANDLE', 'PATH'))
+    source.add_argument('--input-manifest', help='JSON file containing the explicit input_manifest descriptor; one file per row')
     parser.add_argument('--resolution-bp', type=int, required=True)
-    parser.add_argument('--observation', required=True, help='Exact declared observation handle from the current action contract')
+    parser.add_argument('--observation', help='Optional legacy declared observation handle; omit for current plain JSON receipt')
     args = parser.parse_args(argv)
-    if len(args.input) > 64 or len({x[0] for x in args.input}) != len(args.input):
+    if args.input and (len(args.input) > 64 or len({x[0] for x in args.input}) != len(args.input)):
         parser.error('requires at most 64 uniquely named approved input handles')
+
+    if args.input_manifest:
+        from input_manifest import parse_input_manifest
+        descriptor=json.loads(Path(args.input_manifest).read_text())
+        view=parse_input_manifest(Path(descriptor['path']).read_bytes(),descriptor)
+        counts={s:sum(r['sample']==s for r in view['rows']) for s in view['samples']}
+        inputs=[]
+        for row in view['rows']:
+            if len(row['files'])!=1:parser.error('resolution requires one matrix file per manifest row')
+            inputs.append((row['sample'] if counts[row['sample']]==1 else row['row_id'],next(iter(row['files'].values()))))
+    else:
+        inputs=args.input
     started = time.monotonic()
     import h5py  # noqa: F401
     import cooler  # noqa: F401
     event('imports_completed', elapsed_seconds=time.monotonic() - started)
-    result = check(args.input, args.resolution_bp)
+    results=[check(inputs[offset:offset+64],args.resolution_bp) for offset in range(0,len(inputs),64)]
     # Use the existing emitter. This source location is relative to the registered
     # Skill installation, never a guessed checkout name or an input directory.
-    sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
-    from agent_core.step_effects import emit_observation
-    print(json.dumps(result, ensure_ascii=False), flush=True)
-    print(emit_observation(args.observation, result), flush=True)
-    event('observation_emitted', ok=result['ok'])
-    return 0 if result['ok'] else 1
+
+    for result in results:
+        print(json.dumps(result, ensure_ascii=False), flush=True)
+        if args.observation:
+            print(json.dumps({'label': args.observation, 'value': result}, ensure_ascii=False), flush=True)
+    ok=all(result['ok'] for result in results)
+    event('observation_emitted',ok=ok)
+    return 0 if ok else 1
 
 
 if __name__ == '__main__':

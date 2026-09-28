@@ -14,7 +14,7 @@ from tests.test_preflight_recovery_audit import save
 
 
 def test_F25_frozen_report_before_publication_is_not_delivery_failure():
-    from agent_core.workflow.managed_stop import report_delivery_status
+    from agent_core.terminal_facts import report_delivery_status
     assert report_delivery_status({})=='not_attempted'
     assert report_delivery_status({'report.md':{'status':'not_attempted'}})=='not_attempted'
     assert report_delivery_status({'report.md':{'status':'failed'}})=='failed'
@@ -141,23 +141,3 @@ def test_F21_causal_reference_does_not_choose_last_consumed():
     assert current_generation_causal_reference(bad)['status']=='UNKNOWN'
 
 
-def test_F22_two_failure_parents_exclude_input_and_foreign_history():
-    from agent_core.workflow.managed_stop import _associated_attempts
-    scope={'task_id':'new','plan_id':'p','plan_version':'v','step_id':'prepare'}
-    def packet(attempt,step='prepare',task='new'):
-        return {'task_id':task,'step_id':step,'plan_spec_ref':{'plan_id':'p','plan_version':'v'},'attempt_ref':attempt,
-            'incident_id':'incident-'+attempt,'action_ref':'retry-action' if attempt=='second' else 'other'}
-    state={**scope,'steps':[{'step_id':'prepare','status':'failed'}],
-        'provenance_state':{'attempts':{name:{**scope,'attempt_id':name,'returncode':rc} for name,rc in [('first',7),('second',8),('input',0),('foreign',9)]}},
-        'task_state':{'causal_failure_packets':{},'typed_recovery_receipts':{},'consumed_failure_packet_refs':{}}}
-    task=state['task_state']
-    for name,step,tid in [('first','prepare','new'),('input','input','new'),('foreign','prepare','foreign-task')]:
-        p=packet(name,step,tid);ref='packet:'+name;decision='decision:'+name
-        task['causal_failure_packets'][ref]={'failure_packet':p}
-        task['typed_recovery_receipts'][decision]={'failure_packet_ref':ref,'incident_id':p['incident_id'],'directive':{'action':'retry_step'},
-            'execution_envelope':{'action_id':'retry-action','source_scope':{**scope,'task_id':tid,'step_id':step,'attempt_id':name}}}
-        task['consumed_failure_packet_refs'][ref]={'decision_id':decision}
-    result=_associated_attempts(state,packet('second'),'packet:second')
-    assert [(r['attempt_id'],r['returncode']) for r in result]==[('first',7),('second',8)],result
-    assert result[0]['use']=='historical_diagnostic' and result[1]['use']=='current_failure'
-    save('F22-two-failures',{'associated_attempts':result,'excluded':['input','foreign']})

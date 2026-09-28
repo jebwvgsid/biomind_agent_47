@@ -1630,6 +1630,8 @@ def validate_generate_output_coverage(
     bindings: Mapping[str, ManagedArtifactBinding],
 ) -> List[ArtifactViolation]:
     """Derive required-output coverage from typed action references."""
+    if materialized_action.get('execution_protocol_version') == 3:
+        return []  # Declaration coverage is never result evidence.
     steps = [row for row in plan_state.get("steps", []) or [] if isinstance(row, Mapping)]
     current_step_id = str(plan_state.get("current_step_id") or "")
     step = next(

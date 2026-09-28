@@ -1,24 +1,21 @@
 ---
-name: scRNA Environment Bootstrap
-description: 准备和验证单细胞转录组 Seurat 基础运行环境。用于 Seurat 对象构建、10x 数据读取、单细胞 QC 和基础可视化前的环境检查或首次安装。Use when the task is to provision or verify a reusable R environment for scRNA-seq workflows.
-tags: [single-cell, scRNA, Seurat, environment, QC, 单细胞]
-task_types: [single_cell_rnaseq]
-stage_tags: [environment_check]
-inputs: [conda_environment]
-outputs: [verified_scrna_runtime]
-when_to_use:
-  - Workflow stage is environment_check.
-  - User asks to provision or verify the reusable scRNA R environment.
-when_not_to_use: [Bulk RNA-seq analysis]
-legacy_ids: [scrna-env-bootstrap]
-runtime:
-  default_env: bio_scrna_core
-  env_runner: conda run -n bio_scrna_core Rscript
-  language: r
-  packages: [Seurat, Matrix, yaml, ggplot2, patchwork, dplyr]
-  capabilities: [scrna-env, scrna-ingest, scrna-qc]
-  install_tool: '<install_tool env="bio_scrna_core">scrna-env-bootstrap_r</install_tool>'
+name: bootstrap
+description: 准备和验证单细胞转录组 Seurat 基础运行环境。用于 Seurat 对象构建、10x 数据读取、单细胞 QC 和基础可视化前的环境检查或首次安装。Use when the task is to
+  provision or verify a reusable R environment for scRNA-seq workflows.
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # scRNA Environment Bootstrap
 
@@ -27,35 +24,19 @@ single-cell analysis begins.
 
 ## Rules
 
-- Reuse `bio_scrna_core` whenever it already satisfies the required packages.
-- If the environment is missing or broken, delegate installation with:
-  `<install_tool env="bio_scrna_core">scrna-env-bootstrap_r</install_tool>`
-- After installation, verify with the script below instead of assuming the
-  environment is ready.
-- Do not create sample-specific environments.
-- Plan and execution order must be:
-  1. Run the verification script first.
-  2. If verification fails, delegate installation to the install subagent.
-  3. Re-run the verification script.
-- Do not inline package-manager installation commands as the main analysis step
-  for this skill.
+Use an existing R environment with the packages in references/dependencies.md.
+An existing successful registration can be reused without repeating checks.
+Run this verification script when environment setup or a changed dependency is
+actually the user's task. A failed check reports the missing package; it does
+not authorize installation. Present the target environment and exact changes
+and obtain explicit user permission before installing. Do not create sample-specific
+environments or run scientific analysis from this dependency-check method.
 
 ## Quick Start
 
 ```bash
-conda run -n bio_scrna_core Rscript scripts/check_scrna_env.R
+Rscript "${SKILL_DIR}/scripts/check_scrna_env.R"
 ```
-
-## Fallback Install Protocol
-
-If verification fails, emit exactly:
-
-```text
-<install_tool env="bio_scrna_core">scrna-env-bootstrap_r</install_tool>
-```
-
-Then wait for installation and registration to complete before running the
-verification script again.
 
 ## Expected Output
 

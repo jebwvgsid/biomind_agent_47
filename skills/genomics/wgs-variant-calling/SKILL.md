@@ -1,35 +1,23 @@
 ---
 name: wgs-variant-calling
-description: Generate and validate WGS resequencing variant calling workflows from FASTQ/BAM through GATK gVCF, GenomicsDBImport, joint genotyping, VCF merge/filtering, PLINK LD pruning/PCA, SNP counting, and optional ANNOVAR-style SNP annotation. Use for large or many-sample genomes where intervals must be planned from FASTA .fai; keep chromosomes/contigs at or below 500 Mb unsplit and split only larger sequences unless the user overrides the threshold.
-metadata:
-  renderer:
-    legacy_only: true
-    execution_contract: legacy_renderer_v1
-    renderer_id: genomics.gatk_wgs
-    entrypoint: scripts/render_gatk_wgs_scripts.py
-    runner: controller_python
-    manifest_filename: manifest.json
-    manifest_type: renderer_artifact_contract
-    schema_version: 3
-    composite_step: true
-  outputs:
-    - {output_id: interval_plan, default_filename: intervals.tsv, format: tsv}
-    - {output_id: cohort_vcf, default_filename: cohort.vcf.gz, format: vcf_gz}
-    - {output_id: filtered_snp_vcf, default_filename: filtered.snp.vcf.gz, format: vcf_gz}
-    - {output_id: pca_results, default_filename: cohort.eigenvec, format: tsv}
-    - {output_id: snp_counts, default_filename: snp_counts.tsv, format: tsv}
-    - {output_id: report, default_filename: report.md, format: markdown}
-    - {output_id: reproduce_script, default_filename: reproduce.sh, format: bash}
-  generate:
-    required_bindings:
-      - {name: reference_fasta, required: true, required_for_execution: true, owner: user, user_input_required: true, aliases: [ref, fasta]}
-      - {name: sample_bam_list, required: true, required_for_execution: true, owner: user, user_input_required: true}
-    execution_guidance:
-      - Generate executable actions directly from the approved Plan; never invoke the legacy render_gatk_wgs_scripts.py Renderer in V2.
-      - Derive interval boundaries from the verified FASTA index and preserve FASTA order across calling and joint genotyping.
-      - For multi-stage work, generate one current-step action at a time and declare every approved produced output_id at its managed path.
-      - Treat ploidy, filters, containers, and annotation database identifiers as project parameters rather than taxonomy-derived defaults.
+description: Generate and validate WGS resequencing variant calling workflows from FASTQ/BAM through GATK gVCF,
+  GenomicsDBImport, joint genotyping, VCF merge/filtering, PLINK LD pruning/PCA, SNP counting, and optional ANNOVAR-style
+  SNP annotation. Use for large or many-sample genomes where intervals must be planned from FASTA .fai; keep chromosomes/contigs
+  at or below 500 Mb unsplit and split only larger sequences unless the user overrides the threshold.
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # WGS Variant Calling
 
@@ -46,33 +34,34 @@ Aliases and trigger phrases: `gatk-wgs`, `wgs-gatk`, `resequencing-variant-calli
 - Generate scripts first, inspect them, then submit to the scheduler or run them. Do not execute a full many-sample WGS pipeline in one opaque command.
 - Keep comments off line-continuation lines in Bash commands; `\ # comment` breaks PLINK/GATK commands.
 - Treat all paths, containers, species labels, annotation database names, ploidy, and filtering thresholds as project parameters unless the user explicitly provides them.
-- If key biological parameters must not be guessed, unknown ploidy stays in the existing unresolved handoff and the same Plan's question dependency. No HaplotypeCaller/corresponding filters before the current user decision; ordinary Plan approval does not fill it. Generate passes the explicitly confirmed value as `--sample-ploidy`; do not rely on a legacy helper's implicit caller default.
+- If key biological parameters must not be guessed, ask the user when ploidy is unknown. No HaplotypeCaller/corresponding filters before the current user decision; ordinary execution approval does not fill it. Pass the explicitly confirmed value as `--sample-ploidy`; do not rely on a legacy helper's implicit caller default.
 
 
-## Generate-Owned Execution (V2)
+## Execution boundary
 
-Generate is the sole V2 action/script producer. It may call the interval-plan
-utility as a normal approved operation, or emit the documented GATK commands
-directly. It must preserve the Plan's canonical output IDs and paths and must
-not invoke the legacy renderer or use its manifest as output authority.
+Use the interval helper and documented GATK CLI sequence below from the project
+working directory. Keep current input/output paths and inspect generated commands
+before execution. The optional renderer writes scripts; writing scripts is not
+running science or authorization to run them. No BioMind private action protocol
+is required by the native commands.
 
 ## Reusable Operations
 
 Generate interval files from a FASTA index:
 
 ```bash
-python skills/genomics/wgs-variant-calling/scripts/make_gatk_interval_plan.py \
+python "${SKILL_DIR}/scripts/make_gatk_interval_plan.py" \
   --fai reference.fa.fai \
   --out-prefix intervals/wgs \
   --max-interval-bp 500000000
 ```
 
-The following Renderer invocation is retained only as a
-`legacy_renderer_v1`/maintainer reference; it is not an active V2 command:
+The optional script renderer can prepare commands for review without running GATK:
 
 ```bash
-python skills/genomics/wgs-variant-calling/scripts/render_gatk_wgs_scripts.py \
+python "${SKILL_DIR}/scripts/render_gatk_wgs_scripts.py" \
   --sample-bam-list sample_bam.list \
+  --sample-ploidy "${SAMPLE_PLOIDY}" \
   --intervals-tsv intervals/wgs.intervals.tsv \
   --ref /abs/path/reference.fa \
   --container /abs/path/tools.sif \
@@ -82,8 +71,9 @@ python skills/genomics/wgs-variant-calling/scripts/render_gatk_wgs_scripts.py \
 When rendering annotation commands, pass project-specific annotation settings instead of relying on defaults:
 
 ```bash
-python skills/genomics/wgs-variant-calling/scripts/render_gatk_wgs_scripts.py \
+python "${SKILL_DIR}/scripts/render_gatk_wgs_scripts.py" \
   --sample-bam-list sample_bam.list \
+  --sample-ploidy "${SAMPLE_PLOIDY}" \
   --intervals-tsv intervals/wgs.intervals.tsv \
   --ref /abs/path/reference.fa \
   --container /abs/path/tools.sif \
@@ -93,11 +83,10 @@ python skills/genomics/wgs-variant-calling/scripts/render_gatk_wgs_scripts.py \
   --annovar-buildver project_reference_or_annotation_release
 ```
 
-In explicit legacy mode the renderer writes `00.preflight.sh`,
+The renderer writes `00.preflight.sh`,
 `step1.HaplotypeCaller.sh`, `step2.GenomicsDBImport.sh`,
 `step3.GenotypeGVCFs.sh`, `step4.MergeVcfs.sh`, `step5.FilterSNPs.sh`,
-`step6.Plink_LD_PCA.sh`, and `step7.SNP_counts.sh`. V2 Generate may use the
-underlying command sequence as reference but owns its typed action itself.
+`step6.Plink_LD_PCA.sh`, and `step7.SNP_counts.sh`. Review the underlying command sequence and supply explicit scientific parameters before execution.
 
 ## Recommended Workflow
 
@@ -107,7 +96,7 @@ underlying command sequence as reference but owns its typed action itself.
 3. Build `sample_bam.list` with two columns. Prefer:
    `sample<TAB>/abs/path/sample_mapping.sorted.markdup.bam`.
 4. Run `make_gatk_interval_plan.py` on `reference.fa.fai`.
-5. Have Generate emit the approved current-step action and inspect the command before Execute.
+5. Prepare and review the concrete command with current project paths before execution.
 6. Execute in order: HaplotypeCaller gVCF, GenomicsDBImport, GenotypeGVCFs, MergeVcfs, SNP filtering, PLINK LD/PCA, SNP counts, then optional annotation.
 
 ## FASTQ Mapping Template
@@ -173,7 +162,7 @@ Annotation database selection is project-specific:
 - If the user provides an existing ANNOVAR database, use its documented `buildver`, `dbtype`, and database directory exactly.
 - If taxonomy or annotation source is unclear, inspect filenames/metadata when available and ask for the annotation source instead of guessing.
 - Keep `refGene` only when using the `gff3ToGenePred` route. Use another `dbtype` only when the provided database requires it.
-- The legacy helper does not default `--annovar-buildver`. In V2, use an already resolved project-specific `ANNOVAR_BUILDVER` in the Generate-owned action. If it is a genuinely missing user-owned required fact, route through Consultant; do not guess it.
+- The legacy helper does not default `--annovar-buildver`. Use an explicitly resolved project-specific `ANNOVAR_BUILDVER`. If it is a genuinely missing user-owned required fact, ask the user; do not guess it.
 
 Minimum command pattern for a custom GFF3/FASTA-derived database:
 

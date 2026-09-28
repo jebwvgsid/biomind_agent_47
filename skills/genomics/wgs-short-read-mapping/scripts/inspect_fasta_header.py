@@ -4,23 +4,20 @@ import argparse
 import json
 import sys
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
-from agent_core.approved_resource_locator import open_approved_resource
-from agent_core.inspection_readers import inspect_fasta_header, ReadLimits
-from agent_core.step_effects import emit_observation
+from inspection_readers import inspect_fasta_header, ReadLimits
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--path", required=True, help="Exact approved reference binding; plain FASTA only")
-    parser.add_argument("--observation-id", required=True)
+    parser.add_argument("--observation-id", help="Optional result label")
     parser.add_argument("--header-bytes", type=int, default=4096)
     parser.add_argument("--input-bytes", type=int, default=8192)
     parser.add_argument("--seconds", type=float, default=2.0)
     args = parser.parse_args(argv)
     try:
         limits = ReadLimits(input_bytes=args.input_bytes, line_bytes=args.header_bytes, seconds=args.seconds)
-        with open_approved_resource(Path(args.path)) as stream:
+        with Path(args.path).open("rb") as stream:
             value = inspect_fasta_header(stream, limits=limits)
     except (OSError, ValueError) as exc:
         code = ("READ_PERMISSION_DENIED" if isinstance(exc, PermissionError) else
@@ -31,7 +28,7 @@ def main(argv=None):
     if value["status"] == "error":
         print(json.dumps(value, ensure_ascii=False), file=sys.stderr)
         return 2
-    print(emit_observation(args.observation_id, value), flush=True)
+    print(json.dumps(value, ensure_ascii=False), flush=True)
     return 0
 
 

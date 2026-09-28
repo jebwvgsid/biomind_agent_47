@@ -7,7 +7,6 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from bio_agents import _observed_runtime_executables
 from agent_core.action_runtime import build_exact_action_environment
 from agent_core.controller_audit import (
     ExecutableScriptBlock,
@@ -629,29 +628,6 @@ class RuntimeAndScriptContractTests(unittest.TestCase):
             "/usr/bin/java",
         )
 
-    def test_runtime_identity_projection_understands_python_and_r_env_reads(self):
-        expected = {"executables": {"java": "/verified/java"}}
-        bindings = {"JAVA_BIN": "/verified/java"}
-        cases = (
-            (
-                "Python",
-                'import os, subprocess\nsubprocess.run([os.environ["JAVA_BIN"], "-version"])',
-            ),
-            (
-                "R",
-                'system2(Sys.getenv("JAVA_BIN"), "-version")',
-            ),
-        )
-        for language, source in cases:
-            with self.subTest(language=language):
-                observed = _observed_runtime_executables(
-                    expected,
-                    bindings,
-                    approved_script=source,
-                    language=language,
-                    approved_runner="/verified/python-runner",
-                )
-                self.assertEqual(observed["java"], "/verified/java")
 
 
 if __name__ == "__main__":

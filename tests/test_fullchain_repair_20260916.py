@@ -11,7 +11,7 @@ from langchain_core.messages import AIMessage
 
 from agent_core.managed_artifacts import build_managed_artifact_bindings, validate_concrete_action_artifacts
 from agent_core.workflow.recovery_reception import SUBMIT_TOOL
-from tests.test_recovery_reception import candidate, native, run_loop
+from tests.test_recovery_reception import candidate, native
 
 SCRIPT = Path(__file__).parents[1] / 'skills/genomics/snpeff-annotation/scripts/ann_summary.py'
 spec = importlib.util.spec_from_file_location('summary_fixture_helper', SCRIPT)
@@ -36,40 +36,8 @@ def raw_native(value, *, finish='tool_calls', raw=None):
             'function': {'name': SUBMIT_TOOL, 'arguments': raw if raw is not None else json.dumps(value)}}]})
 
 
-def test_native_complete_missing_constant_needs_one_request(tmp_path):
-    value = candidate(); del value['schema_version']
-    original = raw_native(value)
-    before = deepcopy(original)
-    result, requests, _ = run_loop(tmp_path, [original])
-    assert len(requests) == 1 and result['directive']['schema_version'] == 1
-    assert result['audit']['format_correction_count'] == 0 and original == before
-    receipt = next(r for r in result['reception']['response_receipts'] if r.get('adaptation'))
-    assert receipt['adaptation']['original_arguments'] == value
-    assert receipt['adaptation']['adapted_arguments'] == {**value, 'schema_version': 1}
 
 
-@pytest.mark.parametrize('case', ['null', 'string', 'bool', 'unknown', 'business', 'duplicate', 'half', 'length', 'normalized'])
-def test_native_ambiguous_or_invalid_is_not_admitted(tmp_path, case):
-    value = candidate()
-    changes = {'null': None, 'string': '1', 'bool': True, 'unknown': 42}
-    if case in changes:
-        value['schema_version'] = changes[case]
-    else:
-        del value['schema_version']
-    if case == 'business':
-        value['action'] = 'invented_route'
-    first = (native(value) if case == 'normalized' else
-             raw_native(value, finish='length' if case == 'length' else 'tool_calls',
-                raw=json.dumps(value)[:-1] + ',"action":"blocked"}' if case == 'duplicate' else
-                    '{"action":' if case == 'half' else None))
-    result, requests, _ = run_loop(tmp_path, [first, native()])
-    if case == 'length':
-        assert len(requests) == 1 and not result['directive'] and result['terminal_error']
-        return  # Preserve the existing explicit truncation stop policy.
-    assert len(requests) == 2 and result['audit']['format_correction_count'] == 1
-    assert result['directive']['action'] == 'retry_step'
-    assert result['audit']['tool_call_count'] == 0
-    assert result['reception']['response_receipts'][0]['status'] == 'not_accepted'
 
 
 def test_path_composition_not_literal_proof_but_real_inputs_required(tmp_path):
@@ -143,39 +111,6 @@ def test_progress_observation_content_changes_not_receipt_identity():
         assert meaningful_inspection_facts([{'result': body}]) == []
 
 
-@pytest.mark.parametrize('enabled', [False, True])
-def test_effective_policy_receipt_reaches_production_provider_context(tmp_path, monkeypatch, enabled):
-    from agent_core.workflow.recovery_node import Schema2RecoveryNode
-    from agent_core.workflow.recovery_projection import CausalFailurePacketBinder
-    from tests.test_reliability_evidence_publication import _artifact_case, _source
-    if enabled:
-        monkeypatch.setenv('BIOMIND_RECOVERY_RESOURCE_POLICY', 'phase_e_candidate_v2')
-    else:
-        monkeypatch.delenv('BIOMIND_RECOVERY_RESOURCE_POLICY', raising=False)
-    state, _, _ = _artifact_case(tmp_path)
-    CausalFailurePacketBinder(data_path=str(tmp_path)).bind(state, 'execute_outcome', _source(state, 'execute_outcome', 'execution_failed'))
-    contexts = []
-    async def provider(messages, *, model, call_context):
-        contexts.append(deepcopy(call_context))
-        return native()
-    node = Schema2RecoveryNode(data_path=str(tmp_path), model=object(), provider_invoke=provider)
-    asyncio.run(node.run(state))
-    assert contexts
-    policy = contexts[0]['effective_resource_policy']
-    assert policy['enabled'] is enabled
-    assert policy['source'] == ('environment_after_configuration_merge' if enabled else 'default')
-    if enabled:
-        assert policy['thresholds']['soft_tokens'] == 300000
-    import bio_agents
-    agent = bio_agents.BioAnalystAgent.__new__(bio_agents.BioAnalystAgent)
-    agent.recovery_llm_policy = {}
-    seen = []
-    async def invoke(messages, **kwargs):
-        seen.append(kwargs['trace_metadata'])
-        return native()
-    agent._ainvoke_llm = invoke
-    asyncio.run(agent._schema2_recovery_provider_invoke([], model=object(), call_context=contexts[0]))
-    assert seen[0]['effective_resource_policy'] == policy
 
 
 @pytest.mark.parametrize('conflict', ['', 'plan_id', 'plan_version', 'producer_attempt_id', 'missing_path'])

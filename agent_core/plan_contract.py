@@ -436,6 +436,8 @@ def structured_plan_candidate_diagnostics(
     payload: Mapping[str, Any],
 ) -> List[Dict[str, Any]]:
     """Validate the shared structured Plan body without semantic inference."""
+    if is_simple_plan(payload):
+        return simple_plan_diagnostics(payload)
     diagnostics: List[Dict[str, Any]] = []
     from agent_core.plan_bindings import plan_uses_resource_uses
     uses_v3 = plan_uses_resource_uses(payload)
@@ -838,6 +840,8 @@ def parse_planner_outcome_envelope(
                 "received_excerpt": _canonical_json(value)[:500],
             },
         )
+    if isinstance(value.get('steps'), list) and (not value.get('metadata') or is_simple_plan(value)):
+        value = {'outcome_type': SUBMIT_PLAN_FOR_REVIEW, **prepare_simple_plan(value)}
     outcome_type = str(value.get("outcome_type") or "").strip()
     legacy = False
     if not outcome_type and allow_legacy_plan and isinstance(value.get("steps"), list):
@@ -963,11 +967,41 @@ def candidate_artifact_ref_keys(
     authoritative_bindings: Optional[Mapping[str, Mapping[str, Any]]] = None,
 ) -> Tuple[Dict[str, ArtifactRefKey], List[Dict[str, Any]]]:
     """Resolve explicit Plan usage into typed keys without allocating IDs."""
-    validate_plan_candidate_control_fields(candidate)
+    keys, usage, errors = _collect_candidate_artifact_ref_keys(
+        candidate, candidate_scope_id=candidate_scope_id,
+        authoritative_handles=authoritative_handles,
+        authoritative_bindings=authoritative_bindings,
+    )
+    if errors:
+        # Preserve the strict resolver API for callers that expect an exception.
+        raise errors[0]
+    return keys, usage
+
+
+def _collect_candidate_artifact_ref_keys(
+    candidate: Mapping[str, Any],
+    *,
+    candidate_scope_id: str,
+    authoritative_handles: Mapping[str, str],
+    authoritative_bindings: Optional[Mapping[str, Mapping[str, Any]]] = None,
+) -> Tuple[Dict[str, ArtifactRefKey], List[Dict[str, Any]], List[PlannerCandidateError]]:
+    """Collect independent identity errors without allocating or repairing refs.
+
+    Invalid declarations never become usable keys. References to such declarations
+    are deferred, rather than reported as new unknown-resource failures. Callers
+    must reject the whole candidate if any error is returned.
+    """
+    try:
+        validate_plan_candidate_control_fields(candidate)
+    except PlannerCandidateError as exc:
+        return {}, [], [exc]
+    errors: List[PlannerCandidateError] = []
     declarations: Dict[str, Dict[str, Any]] = {}
+    seen_refs: set[str] = set()
+    invalid_refs: set[str] = set()
     for index, raw in enumerate(candidate.get("proposed_artifacts", []) or []):
         if not isinstance(raw, Mapping):
-            raise PlannerCandidateError(
+            errors.append(PlannerCandidateError(
                 "PROPOSED_ARTIFACT_INVALID",
                 f"$.proposed_artifacts[{index}]",
                 "must be an object",
@@ -976,10 +1010,11 @@ def candidate_artifact_ref_keys(
                     "received_type": _wire_type(raw),
                     "received_excerpt": _canonical_json(raw)[:500],
                 },
-            )
+            ))
+            continue
         local_ref = str(raw.get("local_ref") or "").strip()
         if not _PLAN_LOCAL_REF_RE.fullmatch(local_ref):
-            raise PlannerCandidateError(
+            errors.append(PlannerCandidateError(
                 "LOCAL_REF_INVALID",
                 f"$.proposed_artifacts[{index}].local_ref",
                 local_ref or "missing",
@@ -989,9 +1024,11 @@ def candidate_artifact_ref_keys(
                     "received_excerpt": _canonical_json(raw.get("local_ref"))[:500],
                     "machine_evidence": {"required_namespace": "plan.*"},
                 },
-            )
-        if local_ref in declarations:
-            raise PlannerCandidateError(
+            ))
+            invalid_refs.add(local_ref)
+            continue
+        if local_ref in seen_refs:
+            errors.append(PlannerCandidateError(
                 "LOCAL_REF_DUPLICATE",
                 f"$.proposed_artifacts[{index}].local_ref",
                 local_ref,
@@ -999,7 +1036,10 @@ def candidate_artifact_ref_keys(
                     "observed_identity": {"handle": local_ref},
                     "machine_evidence": {"duplicate_local_ref": local_ref},
                 },
-            )
+            ))
+            invalid_refs.add(local_ref)
+            continue
+        seen_refs.add(local_ref)
         local_name = local_ref.removeprefix("plan.")
         semantic_view = (
             dict(raw.get("semantic_view") or {})
@@ -1059,7 +1099,7 @@ def candidate_artifact_ref_keys(
                 if direction == "output"
                 else {}
             )
-            raise PlannerCandidateError(
+            errors.append(PlannerCandidateError(
                 code,
                 f"$.proposed_artifacts[{index}].local_ref",
                 local_ref,
@@ -1073,10 +1113,11 @@ def candidate_artifact_ref_keys(
                         "authoritative_direction": direction,
                     },
                 },
-            )
+            ))
+            invalid_refs.add(local_ref)
         contract = raw.get("artifact_contract")
         if not isinstance(contract, Mapping):
-            raise PlannerCandidateError(
+            errors.append(PlannerCandidateError(
                 "ARTIFACT_CONTRACT_INVALID",
                 f"$.proposed_artifacts[{index}].artifact_contract",
                 "must be an object",
@@ -1085,8 +1126,10 @@ def candidate_artifact_ref_keys(
                     "received_type": _wire_type(contract, missing="artifact_contract" not in raw),
                     "received_excerpt": _canonical_json(contract)[:500],
                 },
-            )
-        declarations[local_ref] = deepcopy(dict(raw))
+            ))
+            invalid_refs.add(local_ref)
+        if local_ref not in invalid_refs:
+            declarations[local_ref] = deepcopy(dict(raw))
 
     keys: Dict[str, ArtifactRefKey] = {
         str(handle): ArtifactRefKey.authoritative(str(identity))
@@ -1095,6 +1138,7 @@ def candidate_artifact_ref_keys(
     keys.update({
         local_ref: ArtifactRefKey.candidate_local(candidate_scope_id, local_ref)
         for local_ref in declarations
+        if local_ref not in invalid_refs
     })
     usage: List[Dict[str, Any]] = []
     for step_index, step in enumerate(candidate.get("steps", []) or []):
@@ -1111,7 +1155,9 @@ def candidate_artifact_ref_keys(
             ref = str(raw_ref or "")
             key = keys.get(ref)
             if key is None:
-                raise PlannerCandidateError(
+                if ref in invalid_refs:
+                    continue
+                errors.append(PlannerCandidateError(
                     "ARTIFACT_REFERENCE_UNKNOWN",
                     f"$.steps[{step_index}].{path}",
                     ref,
@@ -1128,7 +1174,8 @@ def candidate_artifact_ref_keys(
                             "known_handles": sorted(keys),
                         },
                     },
-                )
+                ))
+                continue
             if relation == "mutate":
                 continue  # State/availability semantics come from the explicit mutation.
             usage.append({
@@ -1143,7 +1190,9 @@ def candidate_artifact_ref_keys(
         ref = str(row.get("output_ref") or "")
         key = keys.get(ref)
         if key is None or key.kind != "authoritative":
-            raise PlannerCandidateError(
+            if ref in invalid_refs:
+                continue
+            errors.append(PlannerCandidateError(
                 "TASK_OUTPUT_REFERENCE_UNKNOWN",
                 f"$.task_output_materializations[{index}].output_ref",
                 ref,
@@ -1162,8 +1211,8 @@ def candidate_artifact_ref_keys(
                         ),
                     },
                 },
-            )
-    return keys, usage
+            ))
+    return keys, usage, errors
 
 
 def validate_candidate_graph_and_flow(
@@ -1667,7 +1716,9 @@ def validate_planner_candidate_deterministically(
     """Run the shared schema/identity path and, by default, dataflow admission.
 
     Production schema-2 admission uses ``validate_dataflow=False`` for its
-    first, side-effect-free structure/identity pass.  It then resolves exact
+    first, side-effect-free structure/identity/action pass. Independent errors
+    are returned together; invalid bindings never feed dependent dataflow checks.
+    It then resolves exact
     handles, compiles capability effects, and runs ``compile_plan_dataflow``
     once over that compiled view.  The default remains ``True`` for callers
     that intentionally use this function as the complete compatibility gate.
@@ -1698,20 +1749,27 @@ def validate_planner_candidate_deterministically(
             }
             for item in structure
         ]
-    try:
-        ref_keys, usage = candidate_artifact_ref_keys(
-            candidate,
-            candidate_scope_id=candidate_scope_id,
-            authoritative_handles=authoritative_handles,
-            authoritative_bindings=authoritative_bindings,
-        )
-    except PlannerCandidateError as exc:
+    ref_keys, usage, ref_errors = _collect_candidate_artifact_ref_keys(
+        candidate,
+        candidate_scope_id=candidate_scope_id,
+        authoritative_handles=authoritative_handles,
+        authoritative_bindings=authoritative_bindings,
+    )
+    independent_issues = []
+    for exc in ref_errors:
         diagnostic = exc.to_diagnostic()
         diagnostic.update({
             "validator_id": "plan_artifact_refs",
             "repair_target": str(exc.field_path or "$"),
         })
-        return {}, [], [diagnostic]
+        independent_issues.append(diagnostic)
+    from agent_core.step_effects import independent_step_effect_diagnostics
+    independent_issues.extend(independent_step_effect_diagnostics(candidate, capability_registry))
+    # Invalid declarations cannot supply a trustworthy resource registry. An
+    # unknown use, however, does not invalidate other declared resources: let
+    # the binding pass diagnose those independent uses in the same response.
+    if any(exc.code != "ARTIFACT_REFERENCE_UNKNOWN" for exc in ref_errors):
+        return {}, [], independent_issues
     try:
         from agent_core.plan_bindings import (
             PlanBindingError,
@@ -1736,13 +1794,21 @@ def validate_planner_candidate_deterministically(
             }
         )
         if diagnostic.get("validation_issues"):
-            return ref_keys, usage, list(diagnostic["validation_issues"])
+            resource_issues = list(diagnostic["validation_issues"])
+            # Resource lookup independently knows the exact use location. Keep
+            # its richer diagnostic once rather than duplicating an unknown-ref
+            # error from the identity pass at that same field.
+            covered = {row.get("field_path") for row in resource_issues}
+            return ref_keys, usage, [row for row in independent_issues
+                if row.get("field_path") not in covered] + resource_issues
         diagnostic.setdefault("owner", "planner")
         diagnostic.setdefault("validator_id", "plan_resource_bindings")
         diagnostic.setdefault("field_path", "$.proposed_artifacts")
         diagnostic.setdefault("repair_target", diagnostic["field_path"])
         diagnostic.setdefault("disposition", "PROTOCOL_INVALID")
-        return ref_keys, usage, [diagnostic]
+        return ref_keys, usage, independent_issues + [diagnostic]
+    if independent_issues:
+        return {}, [], independent_issues
     if resource_bindings_out is not None:
         resource_bindings_out.update(deepcopy(resource_bindings))
     issues = (
@@ -2376,3 +2442,208 @@ def approved_step_validation_level(plan_state: Mapping[str, Any], step_id: str =
         _, step = current_plan_step_with_index(dict(plan_state))
     level = str((step or {}).get("validation_level") or "basic")
     return level if level in {"basic", "artifact", "scientific"} else "basic"
+
+
+# Versioned execution-plan reader. Historical v1/v2 contracts remain readable;
+# fresh plans use descriptions and explicit dependency references only.
+SIMPLE_PLAN_CONTRACT = 'structured_plan_v3'
+
+# Host-owned, reversible admission policy switch. Plan text and persisted
+# metadata cannot enable or disable it. Parsing, identity, authority and runtime
+# evidence checks remain active when these admission policies are detached.
+PLAN_ADMISSION_POLICY_ENABLED = False
+
+
+def plan_admission_policy_enabled() -> bool:
+    return PLAN_ADMISSION_POLICY_ENABLED
+
+
+def is_simple_plan(value: Mapping[str, Any]) -> bool:
+    document = value.get('plan_document') or value
+    metadata = document.get('metadata') or {}
+    return metadata.get('planner_contract') == SIMPLE_PLAN_CONTRACT
+
+
+def executable_plan_reference():
+    """The readable work-v3 reference, shared by tools and parser tests."""
+    return {
+        'plan_admission_policy': 'enabled' if plan_admission_policy_enabled() else 'detached',
+        'admission': ('Plan admission policies are enabled.' if plan_admission_policy_enabled() else
+                      'Plan content admission policies are detached. This is a suggested executable format, not machine acceptance of Plan claims. Parsing, dependency identity, authorization, CAS and approval remain required; actual execution/result verification still applies.'),
+        'example': {
+            'goal': 'Confirm the declared input provides the required resolution.',
+            'inputs': [{'sample': 'leaf', 'path': '/absolute/leaf.mcool'}],
+            'parameters': {'resolution_bp': 40000},
+            'steps': [{'description': 'Use the adopted runtime and registered resolution helper to check the exact input group; this does not establish balance or finish TAD calling.',
+                       'dependencies': [], 'outputs': [], 'validation': {'kind': 'resolution'}}],
+        },
+        'usage': 'Example paths and 40000 are illustrative: retain the actual user input, parameter and scope. Descriptions express goals/methods; do not turn every scientific requirement into a machine rule. Keep existing supported machine checks. Internal IDs, status, revision and hashes are host-owned.',
+        'dependencies': 'Explicit step IDs or 1-based step numbers; omitted IDs are assigned by the host.',
+        'descriptive_checks': 'Write natural-language validation as a string or {"description": "the complete requirement"}, without kind. Generate then submits assessment with actual evidence. kind selects an implemented machine check, not a label for custom prose; observation is only for its documented observation records. An assessment cannot override a failed machine check.',
+        'natural_language_example': {
+            'plan': {'goal': 'Explain the recorded results and their limits.',
+                     'steps': [{'description': 'Read the actual result table and explain whether it supports the requested conclusion.',
+                                'outputs': [], 'validation': {'description': 'The conclusion must agree with the observed rows and disclose what was not checked.'}}]},
+            'submit_step_result': {'message': 'Explain the conclusion supported by the evidence actually read.',
+                                   'assessment': {'status': 'satisfied',
+                                                  'evidence': ['<actual evidence_id or eligible attempt_id>'],
+                                                  'not_checked': ['Scientific properties not established by the recorded evidence']}},
+            'usage': 'The evidence placeholder is illustrative, not a usable ID. Use IDs returned by actual tools in the current task/step scope; a historical attempt is usable only after host source checks. Unsatisfied or unknown conclusions do not complete the step.',
+        },
+        'declared_output_checks': [
+            {'path': '/authorized/output/40000/tad_preflight.tsv', 'role': 'tad_preflight'},
+            {'path': '/authorized/output/40000/tad_run_summary.tsv', 'role': 'tad_run_summary'},
+            {'path': '/authorized/output/40000/leaf_domains.bed', 'format': 'bed'},
+        ],
+        'output_checks_usage': 'These are optional output declarations, not additional steps. Replace illustrative paths, sample and resolution with the actual task values. The host reads the declared files: tad_preflight checks exact samples, matrix paths, resolution, balanced and status; tad_run_summary checks samples, resolution, status and return_code; bed checks interval structure. Keep descriptive requirements and assessment for conclusions beyond those checks; file presence is not scientific success.',
+        'stage_status_boundary': 'role=stage_status is a scientific table: format parsing and declared scientific evidence apply, not framework step_id uniqueness or done vocabulary. Only output.validation.kind=stage_status selects the strict internal step snapshot interface. A requested host export additionally selects producer_owner=request_finish in the formal output contract. Finish preserves scientific files and never fills a missing one with an internal table.',
+        'output_freshness': 'A historical scientific snapshot remains valid as time advances. If a later step must deliver a refreshed final table, declare the same scientific output/schema in that step with output.validation.freshness=current_step. Gate then requires that step production/version evidence, not an older accepted file. validation.allow_empty=true is only for explicitly permitted empty results; machine/scientific checks remain applicable.',
+        'outputs': 'Execution resolves authorized exact paths, exact existing declared references, and the explicit {sample} template. Known executable output paths must be concrete at submission: replace {out_root} and other arbitrary root placeholders with the confirmed absolute root. There is no arbitrary root interpolation. Existing deferred exact references and {sample} discovery remain deferred until bound, never usable as unresolved paths. A genuinely literal filename with braces uses literal=true; shell command text is not a Plan path template.',
+        'resolution': 'Suggested machine rule: validation contains kind, optional description/execution_env. The verifier reads resolution from Plan.parameters.resolution_bp and exact sample/path relationships from inputs or input_manifest. Additional retained fields are not automatically machine-checked.',
+        'editing': 'For a carrier/root change or trailing text, read the whole current draft using next_offset_chars, then patch_draft_file(content=complete_text). Small edits use old_text/new_text. Both retain current-draft CAS.',
+    }
+
+
+def plan_exception_issues(exc, *, field_path='$', value=None):
+    """Preserve structured contract/path errors; JSON syntax is its own layer."""
+    if getattr(exc, 'issues', None):
+        return deepcopy(exc.issues)
+    if isinstance(exc, json.JSONDecodeError):
+        return [{'code': 'PLAN_JSON_INVALID', 'field_path': '$', 'reason': exc.msg,
+                 'message': str(exc), 'line': exc.lineno, 'column': exc.colno, 'offset': exc.pos,
+                 'alternative': 'Read the complete draft and replace it with one JSON object, without fences or trailing prose.'}]
+    issue = deepcopy(getattr(exc, 'issue', None) or {})
+    issue.setdefault('code', getattr(exc, 'code', 'PLAN_CONTRACT_INVALID'))
+    issue.setdefault('field_path', getattr(exc, 'field_path', field_path))
+    issue.setdefault('value', value)
+    issue.setdefault('reason', str(exc))
+    issue.setdefault('message', str(exc))
+    return [issue]
+
+
+def raise_plan_diagnostics(issues, candidate=None):
+    first = issues[0]
+    error = PlannerCandidateError(first['code'], first['field_path'], first.get('reason') or first.get('message') or 'Invalid Plan')
+    error.issues = deepcopy(issues)
+    if candidate is not None:
+        error.partial_candidate = candidate
+    raise error
+
+
+def prepare_simple_plan(payload: Mapping[str, Any]) -> Dict[str, Any]:
+    """Parse runnable structure; optionally apply retained admission policies."""
+    if not isinstance(payload, Mapping):
+        raise PlannerCandidateError('PLAN_OBJECT_REQUIRED', '$', 'Expected an object')
+    result = deepcopy(dict(payload))
+    issues = []
+    def issue(code, path, value, reason, alternative):
+        issues.append({'code': code, 'field_path': path, 'value': deepcopy(value),
+                       'reason': reason, 'alternative': alternative})
+    for name, kind in (('path_bindings', dict), ('output_contracts', list), ('parameters', dict),
+                       ('metadata', dict), ('inputs', list), ('input_manifest', dict)):
+        if name in result and not isinstance(result[name], kind):
+            issue('PLAN_'+name.upper()+'_INVALID', '$.'+name, result[name],
+                  'Expected '+kind.__name__, 'Use the object/array shape in read_draft_file(contract=true).')
+    rows = payload.get('steps')
+    if not isinstance(rows, list) or not rows:
+        issue('PLAN_STEPS_REQUIRED', '$.steps', rows, 'Expected a non-empty array', 'Declare at least one descriptive step.')
+        raise_plan_diagnostics(issues)
+    steps, aliases, duplicated = [], {}, set()
+    for ordinal, raw in enumerate(rows, 1):
+        row = {'description': raw} if isinstance(raw, str) else deepcopy(raw)
+        path = f'$.steps[{ordinal-1}]'
+        if not isinstance(row, dict):
+            issue('PLAN_STEP_INVALID', path, raw, 'Expected a description or object', 'Use a description string or a step object.')
+            steps.append({})
+            continue
+        description = row.get('description') or row.get('title')
+        if not isinstance(description, str) or not description.strip():
+            issue('PLAN_DESCRIPTION_REQUIRED', path+'.description', description, 'Expected a non-empty description', 'Describe this step in natural language.')
+            description = ''
+        identity = str(row.get('step_id') or row.get('id') or f'step_{ordinal}')
+        if identity in aliases:
+            duplicated.add(identity)
+            issue('PLAN_STEP_DUPLICATE', path+'.id', identity, 'Step identity is duplicated', 'Omit IDs or use distinct explicit IDs.')
+        aliases[identity] = identity
+        row.update(step_id=identity, title=description.strip(), description=description.strip(), status='pending')
+        row.pop('id', None)
+        for name in ('outputs', 'inputs'):
+            if name in row and not isinstance(row[name], list):
+                issue('PLAN_STEP_'+name.upper()+'_INVALID', path+'.'+name, row[name], 'Expected an array', 'Use an array of explicit input/output declarations.')
+        for key in ('action', 'next_step', 'route', 'approved', 'execution_protocol_version'):
+            if key in row:
+                if not isinstance(row.get('extension_notes', {}), dict):
+                    row['extension_notes'] = {'original': row['extension_notes']}
+                row.setdefault('extension_notes', {})[key] = row.pop(key)
+        steps.append(row)
+    for index, step in enumerate(steps):
+        if not step: continue
+        refs = step.get('dependencies', step.get('depends_on', []))
+        if not isinstance(refs, list):
+            issue('PLAN_DEPENDENCIES_INVALID', f'$.steps[{index}].dependencies', refs, 'Expected an array', 'Use explicit step IDs or 1-based step numbers.')
+            step['dependencies'] = []
+            step['depends_on'] = []
+            continue
+        resolved = []
+        for position, ref in enumerate(refs):
+            target = steps[ref-1].get('step_id') if type(ref) is int and 1 <= ref <= len(steps) else aliases.get(ref) if isinstance(ref, str) else None
+            if target is None or target in duplicated:
+                issue('PLAN_DEPENDENCY_MISSING', f'$.steps[{index}].dependencies[{position}]', ref, 'Dependency is missing or ambiguous', 'Use an unambiguous existing step ID or 1-based number.')
+            else: resolved.append(target)
+        step['dependencies'] = list(dict.fromkeys(resolved))
+        step['depends_on'] = list(step['dependencies'])
+    # A missing edge does not hide an independently established cycle. Only
+    # unique known vertices/edges participate; ambiguous IDs are never guessed.
+    visiting, visited, cycles = set(), set(), set()
+    indexed = {row['step_id']: row for row in steps if row and row['step_id'] not in duplicated}
+    positions = {row['step_id']: index for index, row in enumerate(steps) if row}
+    def visit(identity):
+        if identity in visiting:
+            cycles.add(identity); return
+        if identity in visited: return
+        visiting.add(identity)
+        for dep in indexed[identity].get('dependencies', []):
+            if dep in indexed: visit(dep)
+        visiting.remove(identity); visited.add(identity)
+    for identity in indexed: visit(identity)
+    for identity in sorted(cycles):
+        issue('PLAN_DEPENDENCY_CYCLE', f'$.steps[{positions[identity]}].dependencies', indexed[identity]['dependencies'],
+              'Dependency cycle involving '+identity, 'Remove the cyclic dependency; do not imply order from prose.')
+    from agent_core.work_validation import validation_diagnostics
+    # Preserve declarations verbatim while policy is paused. In particular an
+    # unfamiliar machine rule is not relabelled as a successful/natural-language
+    # check: its actual execution verifier still has to understand it.
+    if plan_admission_policy_enabled():
+        errors, notes = validation_diagnostics(steps)
+    else:
+        errors = []
+        notes = [{'field_path': f'$.steps[{index}].validation',
+                  'status': 'not_evaluated', 'description': deepcopy(rule)}
+                 for index, step in enumerate(steps)
+                 if (rule := step.get('validation')) and
+                 (not isinstance(rule, dict) or 'kind' not in rule)]
+    for error in errors:
+        # Supply legal structure without silently weakening an explicit check.
+        error = deepcopy(error)
+        error.setdefault('reason', 'Unsupported or incomplete machine-check structure')
+        error.setdefault('alternative', 'Read read_draft_file(contract=true); preserve the scientific requirement and use only the selected check kind supported fields.')
+        match = re.fullmatch(r'\$\.steps\[(\d+)\]\.validation(?:\.(\w+))?', error.get('field_path',''))
+        if match:
+            value = steps[int(match[1])].get('validation')
+            error.setdefault('value', value.get(match[2]) if match[2] and isinstance(value,dict) else value)
+        issues.append(error)
+    result['validation_not_evaluated'] = notes
+    result['steps'] = steps
+    if isinstance(result.get('metadata', {}), dict):
+        result['metadata'] = {**result.get('metadata', {}), 'schema_version': 3, 'planner_contract': SIMPLE_PLAN_CONTRACT}
+    if issues:
+        raise_plan_diagnostics(issues, candidate=result)
+    return result
+
+
+def simple_plan_diagnostics(payload):
+    try:
+        prepare_simple_plan(payload)
+        return []
+    except PlannerCandidateError as exc:
+        return plan_exception_issues(exc)

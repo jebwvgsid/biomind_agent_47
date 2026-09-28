@@ -498,14 +498,4 @@ def write_report(path: str | Path, lines: Sequence[str]) -> None:
     path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
 
 
-def repo_root_from_script(script_path: str | Path) -> Path:
-    path = Path(script_path).resolve()
-    for parent in path.parents:
-        if (parent / "skills").is_dir() and (parent / "agent_core").is_dir():
-            return parent
-    return path.parents[3]
 
-
-def prepend_common_path(script_file: str) -> None:
-    # Kept for wrappers that import this module through copied scripts.
-    os.environ.setdefault("BIOMIND_GWAS_COMMON", str(Path(script_file).resolve().parent))

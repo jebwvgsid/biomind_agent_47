@@ -22,15 +22,16 @@ Requirements:
   Optional for --plot-lengths: matplotlib
 
 Install delegation:
-  <install_tool env="hicexplore">hicexplorer</install_tool>
-  <install_tool env="hicexplore">cooler</install_tool>
-  <install_tool env="hicexplore">matplotlib</install_tool>
+  ask the user before installing the required dependency: hicexplorer
+  ask the user before installing the required dependency: cooler
+  ask the user before installing the required dependency: matplotlib
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
+import json
 import math
 import os
 import re
@@ -106,6 +107,36 @@ def expected_output_paths(out_prefix: Path) -> Dict[str, Path]:
 def core_outputs_exist(out_prefix: Path) -> bool:
     paths = expected_output_paths(out_prefix)
     return paths["boundaries_bed"].is_file() and paths["domains_bed"].is_file() and paths["score_bedgraph"].is_file()
+
+
+def existing_paths(paths: Sequence[Path]) -> List[Path]:
+    # A dangling symlink is still an occupied target; do not follow or replace it.
+    return sorted({path for path in paths if path.exists() or path.is_symlink()})
+
+
+def sample_output_conflicts(out_prefix: Path) -> List[Path]:
+    paths = list(expected_output_paths(out_prefix).values())
+    paths.extend([Path(f"{out_prefix}.hicFindTADs.log"), Path(f"{out_prefix}.cooler_balance.log")])
+    if out_prefix.parent.is_dir():
+        # Includes HiCExplorer's z-score cache (also URI-derived directory
+        # names), without guessing a force/cleanup option for that tool.
+        paths.extend(path for path in out_prefix.parent.glob(out_prefix.name + "_*")
+                     if path.name != "tad_preflight.tsv")
+    return existing_paths(paths)
+
+
+def summary_output_paths(out_dir: Path, plot_lengths: bool) -> List[Path]:
+    names = ["tad_domains_long.tsv", "tad_boundaries_long.tsv", "tad_domain_stats.tsv", "tad_run_summary.tsv"]
+    if plot_lengths:
+        names.append("tad_domain_lengths.png")
+    return [out_dir / name for name in names]
+
+
+def require_unoccupied(paths: Sequence[Path]) -> None:
+    conflicts = existing_paths(paths)
+    if conflicts:
+        raise FileExistsError("OUTPUT_CONFLICT: existing results/logs/cache retained; select a new output location: "
+                              + ", ".join(map(str, conflicts)))
 
 
 # Return a short list of files near an output prefix for diagnostics.
@@ -222,19 +253,18 @@ def summarize_domains(sample: str, resolution_bp: int, domains: List[Dict[str, o
 # Write a list of dictionaries as TSV.
 def write_tsv(path: Path, rows: List[Dict[str, object]], columns: Sequence[str]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write("\t".join(columns) + "\n")
-        for row in rows:
-            values = [str(row.get(col, "")) for col in columns]
-            handle.write("\t".join(values) + "\n")
+    with path.open("x", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=columns, dialect="excel-tab", extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(rows)
     print(f"[INFO] saved: {path}")
 
 
 # Print a saved message for native output files that HiCExplorer created.
-def report_native_outputs(out_prefix: Path) -> None:
+def report_native_outputs(out_prefix: Path, *, existing: bool = False) -> None:
     for path in expected_output_paths(out_prefix).values():
         if path.exists():
-            print(f"[INFO] saved: {path}")
+            print(f"[INFO] {'existing source' if existing else 'saved'}: {path}")
 
 
 # Return a tail of a log file for concise error messages.
@@ -251,7 +281,7 @@ def import_cooler():
         import cooler
     except ImportError as exc:
         print(f"[ERROR] missing dependency: {exc}")
-        print('[ERROR] delegate installation with: <install_tool env="hicexplore">cooler</install_tool>')
+        print('[ERROR] delegate installation with: ask the user before installing the required dependency: cooler')
         sys.exit(1)
     return cooler
 
@@ -339,6 +369,16 @@ def read_sample_sheet(path: str) -> List[Dict[str, object]]:
 # Collect samples from repeated --sample and optional sample sheet.
 def collect_samples(args: argparse.Namespace) -> List[Dict[str, object]]:
     rows: List[Dict[str, object]] = []
+    if getattr(args,'input_manifest',None):
+
+        from input_manifest import parse_input_manifest
+        descriptor=json.loads(Path(args.input_manifest).read_text())
+        view=parse_input_manifest(Path(descriptor['path']).read_bytes(),descriptor)
+        for item in view['rows']:
+            if set(item['files'])!={'matrix'}:
+                raise ValueError('TAD input manifest must explicitly select one matrix file per sample; no lane merging is inferred')
+            rows.append({'sample':item['sample'],'matrix':item['files']['matrix'],
+                'resolution_bp':None,'source':view['path']})
     for sample_sheet in args.sample_sheet or []:
         rows.extend(read_sample_sheet(sample_sheet))
     for sample, matrix in args.sample or []:
@@ -368,7 +408,7 @@ def ensure_input_file(matrix: str) -> None:
 def ensure_hicfindtads_available() -> None:
     if shutil.which("hicFindTADs") is None:
         print("[ERROR] hicFindTADs not found on PATH")
-        print('[ERROR] delegate installation with: <install_tool env="hicexplore">hicexplorer</install_tool>')
+        print('[ERROR] delegate installation with: ask the user before installing the required dependency: hicexplorer')
         sys.exit(1)
 
 
@@ -435,7 +475,7 @@ def import_matplotlib():
         import matplotlib.pyplot as plt
     except ImportError as exc:
         print(f"[ERROR] matplotlib is required for --plot-lengths: {exc}")
-        print('[ERROR] delegate installation with: <install_tool env="hicexplore">matplotlib</install_tool>')
+        print('[ERROR] delegate installation with: ask the user before installing the required dependency: matplotlib')
         sys.exit(1)
     return plt
 
@@ -466,7 +506,7 @@ def build_hicfindtads_command(matrix_uri: str, out_prefix: Path, args: argparse.
 def run_command(cmd: Sequence[str], log_path: Path) -> int:
     log_path.parent.mkdir(parents=True, exist_ok=True)
     print(f"[INFO] running: {' '.join(cmd)}")
-    with log_path.open("w", encoding="utf-8") as log_handle:
+    with log_path.open("x", encoding="utf-8") as log_handle:
         completed = subprocess.run(cmd, stdout=log_handle, stderr=subprocess.STDOUT, text=True)
     print(f"[INFO] saved: {log_path}")
     return int(completed.returncode)
@@ -490,7 +530,8 @@ def plot_domain_lengths(rows: List[Dict[str, object]], out_path: Path, dpi: int)
         ax.set_xlabel("TAD length (bp)")
         ax.set_ylabel("Count")
     fig.tight_layout()
-    fig.savefig(out_path, dpi=dpi)
+    with out_path.open("xb") as handle:
+        fig.savefig(handle, format="png", dpi=dpi)
     plt.close(fig)
     print(f"[INFO] saved: {out_path}")
 
@@ -502,7 +543,6 @@ def process_sample(row: Dict[str, object], args: argparse.Namespace) -> Tuple[Di
     safe = safe_label(sample)
     resolution_dir = Path(args.out_root) / str(resolution_bp)
     out_prefix = resolution_dir / safe
-    out_prefix.parent.mkdir(parents=True, exist_ok=True)
     matrix_uri = build_matrix_uri(matrix, resolution_bp)
     log_path = Path(f"{out_prefix}.hicFindTADs.log")
     cmd = build_hicfindtads_command(matrix_uri, out_prefix, args)
@@ -524,9 +564,18 @@ def process_sample(row: Dict[str, object], args: argparse.Namespace) -> Tuple[Di
         return run_status, [], [], summarize_domains(sample, resolution_bp, [], 0)
 
     should_run = not args.stats_only
+    existing_status = "read_existing" if args.stats_only else "reused"
     if args.skip_existing and core_outputs_exist(out_prefix):
         print(f"[INFO] skipping existing sample={sample}: {out_prefix}")
         should_run = False
+
+    if should_run:
+        conflicts = sample_output_conflicts(out_prefix)
+        if conflicts:
+            run_status.update({"status":"failed", "message":"OUTPUT_CONFLICT: retained existing results/logs/cache: "
+                               + ", ".join(map(str, conflicts))})
+            return run_status, [], [], summarize_domains(sample, resolution_bp, [], 0)
+    out_prefix.parent.mkdir(parents=True, exist_ok=True)
 
     if should_run and not args.skip_balance_check:
         ok, message = check_cooler_balance(matrix_uri, args.weight_name)
@@ -578,7 +627,10 @@ def process_sample(row: Dict[str, object], args: argparse.Namespace) -> Tuple[Di
         run_status.update({"status": "failed", "message": message})
         return run_status, [], [], summarize_domains(sample, resolution_bp, [], 0)
 
-    report_native_outputs(out_prefix)
+    if should_run:
+        report_native_outputs(out_prefix)
+    else:
+        report_native_outputs(out_prefix, existing=True)
     paths = expected_output_paths(out_prefix)
     domains = parse_domains_bed(paths["domains_bed"], sample, resolution_bp)
     boundaries = parse_boundaries_bed(paths["boundaries_bed"], sample, resolution_bp)
@@ -588,11 +640,13 @@ def process_sample(row: Dict[str, object], args: argparse.Namespace) -> Tuple[Di
         print(f"[WARN] no boundaries parsed for sample={sample}: {paths['boundaries_bed']}")
 
     stats = summarize_domains(sample, resolution_bp, domains, len(boundaries))
-    run_status.update({"status": "success", "message": "ok"})
+    run_status.update({"status": "success" if should_run else existing_status,
+                       "message": "ok" if should_run else "Existing files read only; no hicFindTADs execution or new scientific provenance."})
     return run_status, domains, boundaries, stats
 
 
 def preflight_samples(samples: Sequence[Dict[str, object]], args: argparse.Namespace, out_dir: Path) -> List[Dict[str, object]]:
+    require_unoccupied([out_dir / "tad_preflight.tsv"])
     rows: List[Dict[str, object]] = []
     for row in samples:
         sample = str(row["sample"])
@@ -651,6 +705,7 @@ Sample sheet TSV columns:
         default=None,
         help="TSV/CSV sample sheet with required columns sample,matrix and optional resolution_bp. Repeat to merge sheets.",
     )
+    parser.add_argument('--input-manifest',help='JSON descriptor of the existing explicitly mapped matrix input list')
     parser.add_argument(
         "--resolution-bp",
         type=int,
@@ -694,8 +749,8 @@ Sample sheet TSV columns:
     parser.add_argument(
         "--auto-balance",
         action=argparse.BooleanOptionalAction,
-        default=True,
-        help="Automatically run cooler balance on samples whose weight column is missing or has no finite values before TAD calling.",
+        default=False,
+        help="Opt in to writing the approved effective matrix URI: run cooler balance on samples whose weight column is missing or has no finite values before TAD calling.",
     )
     parser.add_argument(
         "--preflight-only",
@@ -719,9 +774,14 @@ Sample sheet TSV columns:
         help="Skip hicFindTADs for samples whose core output files already exist, then parse them.",
     )
     parser.add_argument(
+        "--summary-out-dir",
+        default=None,
+        help="With --stats-only/--skip-existing, write new summary tables directly in this unoccupied directory. Native inputs remain under --out-root/RESOLUTION; no files are overwritten.",
+    )
+    parser.add_argument(
         "--force",
         action="store_true",
-        help="Allow rerunning even when outputs exist. Existing files may be overwritten by HiCExplorer.",
+        help="Request execution instead of --skip-existing. Does not overwrite existing outputs/logs or clear/reuse caches; choose a new output location on conflict.",
     )
     parser.add_argument(
         "--dry-run",
@@ -776,11 +836,35 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
         sys.exit(1)
 
     if args.force and args.skip_existing:
-        print("[WARN] both --force and --skip-existing were set; --force takes precedence")
+        print("[WARN] --force requests execution instead of --skip-existing; existing-file/cache protection still applies")
         args.skip_existing = False
+    if args.summary_out_dir and (args.preflight_only or not (args.stats_only or args.skip_existing)):
+        print("[ERROR] --summary-out-dir requires --stats-only or --skip-existing and is not a preflight output location")
+        sys.exit(2)
+    for extra in args.extra_arg or []:
+        option = extra.split("=", 1)[0]
+        managed = ("--outPrefix", "--matrix", "--TAD_sep_score_prefix")
+        if (option.startswith(("-m", "-o")) or
+                (option.startswith("--") and any(flag.startswith(option) for flag in managed))):
+            print("[ERROR] --extra-arg may not override sample/output bindings or enable cache reuse; use --sample/--out-root and a new location")
+            sys.exit(2)
 
     out_dir = Path(args.out_root) / str(resolutions[0])
-    out_dir.mkdir(parents=True, exist_ok=True)
+    summary_dir = Path(args.summary_out_dir) if args.summary_out_dir else out_dir
+    try:
+        if args.preflight_only:
+            require_unoccupied([out_dir / "tad_preflight.tsv"])
+        elif not args.dry_run:
+            # Check every intended write before the first sample can launch or
+            # truncate any previous evidence. Existing preflight is unrelated.
+            require_unoccupied(summary_output_paths(summary_dir, args.plot_lengths))
+            for row in samples:
+                prefix = out_dir / safe_label(str(row["sample"]))
+                if not args.stats_only and not (args.skip_existing and core_outputs_exist(prefix)):
+                    require_unoccupied(sample_output_conflicts(prefix))
+    except FileExistsError as exc:
+        print(f"[ERROR] {exc}")
+        sys.exit(2)
 
     if args.preflight_only:
         preflight_rows = preflight_samples(samples, args, out_dir)
@@ -793,7 +877,8 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
             sys.exit(1)
         return
 
-    if not args.stats_only and not args.dry_run:
+    if (not args.stats_only and not args.dry_run
+            and any(not (args.skip_existing and core_outputs_exist(out_dir / safe_label(str(row['sample'])))) for row in samples)):
         ensure_hicfindtads_available()
 
     run_rows: List[Dict[str, object]] = []
@@ -801,7 +886,6 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
     all_boundaries: List[Dict[str, object]] = []
     stats_rows: List[Dict[str, object]] = []
     success = 0
-    skipped = 0
 
     for row in samples:
         run_status, domains, boundaries, stats = process_sample(row, args)
@@ -810,47 +894,53 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
         all_boundaries.extend(boundaries)
         stats_rows.append(stats)
 
-        if run_status["status"] in {"success", "dry_run"}:
+        if run_status["status"] == "success":
             success += 1
-        else:
-            skipped += 1
-            if args.fail_fast:
-                break
+        elif run_status["status"] == "failed" and args.fail_fast:
+            break
+
+    failed_rows = [row for row in run_rows if row.get("status") == "failed"]
+    reused = sum(row['status'] == 'reused' for row in run_rows)
+    read_existing = sum(row['status'] == 'read_existing' for row in run_rows)
+    skipped = len(samples) - len(run_rows)
+    if args.dry_run:
+        print(f"[INFO] dry-run summary: samples={len(samples)}, executed=0, files_written=0")
+        return
 
     # AGENT-EDITABLE: summary output schema - add project-specific columns here if needed.
     write_tsv(
-        out_dir / "tad_domains_long.tsv",
+        summary_dir / "tad_domains_long.tsv",
         all_domains,
         ["sample", "resolution_bp", "chr", "start", "end", "id", "length", "source_file"],
     )
     write_tsv(
-        out_dir / "tad_boundaries_long.tsv",
+        summary_dir / "tad_boundaries_long.tsv",
         all_boundaries,
         ["sample", "resolution_bp", "chr", "start", "end", "id", "separation_score", "source_file"],
     )
     write_tsv(
-        out_dir / "tad_domain_stats.tsv",
+        summary_dir / "tad_domain_stats.tsv",
         stats_rows,
         ["sample", "resolution_bp", "count", "max_length", "min_length", "mean_length", "median_length", "total_length", "n_boundaries"],
     )
     write_tsv(
-        out_dir / "tad_run_summary.tsv",
+        summary_dir / "tad_run_summary.tsv",
         run_rows,
         ["sample", "resolution_bp", "matrix", "out_prefix", "balanced", "status", "return_code", "message"],
     )
 
     if args.plot_lengths:
-        plot_domain_lengths(all_domains, out_dir / "tad_domain_lengths.png", args.dpi)
+        plot_domain_lengths(all_domains, summary_dir / "tad_domain_lengths.png", args.dpi)
 
     print(
-        f"[INFO] summary: samples={len(samples)}, success={success}, skipped={skipped}, "
+        f"[INFO] summary: samples={len(samples)}, success={success}, failed={len(failed_rows)}, "
+        f"skipped={skipped}, reused={reused}, read_existing={read_existing}, "
         f"resolution_bp={resolutions[0]}, domains={len(all_domains)}, boundaries={len(all_boundaries)}"
     )
-    failed_rows = [row for row in run_rows if row.get("status") not in {"success", "dry_run"}]
-    if success == 0 and not args.dry_run:
+    if success + reused + read_existing == 0:
         print("[ERROR] all samples failed")
         sys.exit(1)
-    if failed_rows and not args.dry_run and not args.allow_partial_success:
+    if failed_rows and not (args.allow_partial_success and success):
         failed_samples = ", ".join(str(row.get("sample", "")) for row in failed_rows)
         print(f"[ERROR] failed sample(s): {failed_samples}")
         sys.exit(1)

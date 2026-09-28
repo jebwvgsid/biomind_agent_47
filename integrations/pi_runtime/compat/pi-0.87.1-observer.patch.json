@@ -1,0 +1,75 @@
+{
+  "package": "@earendil-works/pi-coding-agent",
+  "originalVersion": "0.87.1",
+  "runtimeLabel": "0.87.1+biomind-observer.2",
+  "files": [
+    {
+      "path": "dist/core/model-runtime.js",
+      "originalSha256": "bae3c3feb7928c7702c3d98a3454660bee1647064dd449472fc6308c354fbc25",
+      "patchedSha256": "53e4c1fdccab69c9d4b49162b8b9a94ede1f3b5e1c35dc9ed77e3726bd3778d1",
+      "replacements": [
+        {
+          "before": "return prepared.provider.stream(prepared.model, transcript, prepared.options)",
+          "after": "if ((process.env.BIOMIND_PI_CANARY_LEDGER || process.env.BIOMIND_PI_CANARY_SCENARIO) && !this[Symbol.for(\"biomind.pi.usage-observer.v1\")]) throw new Error(\"BIOMIND_CANARY_OBSERVER_REQUIRED\"); return this[Symbol.for(\"biomind.pi.usage-observer.v1\")] ? this[Symbol.for(\"biomind.pi.usage-observer.v1\")](prepared.model, prepared.options, (observedOptions) => prepared.provider.stream(prepared.model, transcript, observedOptions)) : prepared.provider.stream(prepared.model, transcript, prepared.options)"
+        },
+        {
+          "before": "return prepared.provider.streamSimple(prepared.model, transcript, prepared.options)",
+          "after": "if ((process.env.BIOMIND_PI_CANARY_LEDGER || process.env.BIOMIND_PI_CANARY_SCENARIO) && !this[Symbol.for(\"biomind.pi.usage-observer.v1\")]) throw new Error(\"BIOMIND_CANARY_OBSERVER_REQUIRED\"); return this[Symbol.for(\"biomind.pi.usage-observer.v1\")] ? this[Symbol.for(\"biomind.pi.usage-observer.v1\")](prepared.model, prepared.options, (observedOptions) => prepared.provider.streamSimple(prepared.model, transcript, observedOptions)) : prepared.provider.streamSimple(prepared.model, transcript, prepared.options)"
+        },
+        {
+          "before": "return prepared.provider.fetchDeferred(prepared.model, handle, prepared.options)",
+          "after": "if ((process.env.BIOMIND_PI_CANARY_LEDGER || process.env.BIOMIND_PI_CANARY_SCENARIO) && !this[Symbol.for(\"biomind.pi.usage-observer.v1\")]) throw new Error(\"BIOMIND_CANARY_OBSERVER_REQUIRED\"); return this[Symbol.for(\"biomind.pi.usage-observer.v1\")] ? this[Symbol.for(\"biomind.pi.usage-observer.v1\")](prepared.model, prepared.options, (observedOptions) => prepared.provider.fetchDeferred(prepared.model, handle, observedOptions)) : prepared.provider.fetchDeferred(prepared.model, handle, prepared.options)"
+        }
+      ]
+    },
+    {
+      "path": "dist/core/model-registry.js",
+      "originalSha256": "fcf9ff03e38256579555bde4884542e5f14e306dc44fdb2e5eee1e27002898d3",
+      "patchedSha256": "b16d0749e3679f2335fbef31e145d49416de63a7408334e94c496b86463cfc8c",
+      "replacements": [
+        {
+          "before": "    /** Reload models.json asynchronously.",
+          "after": "    /** BioMind 0.87.1 local compatibility hook; no provider replacement. */\n    setBioMindUsageObserver(observer) { this.runtime[Symbol.for(\"biomind.pi.usage-observer.v1\")] = observer; }\n    /** Reload models.json asynchronously."
+        }
+      ]
+    },
+    {
+      "path": "dist/bundle/chunks/chunk-OJP47DM6.js",
+      "originalSha256": "81c81a21ec81e84200205f561687408ff5e3738fbbbb3c2a6c186b348d376020",
+      "patchedSha256": "69f57978f86a78b57d35948d3041134dbc49deae886a0dedfef1c6d860671fe7",
+      "replacements": [
+        {
+          "before": "return prepared.provider.stream(prepared.model,transcript,prepared.options)",
+          "after": "if ((process.env.BIOMIND_PI_CANARY_LEDGER || process.env.BIOMIND_PI_CANARY_SCENARIO) && !this[Symbol.for(\"biomind.pi.usage-observer.v1\")]) throw new Error(\"BIOMIND_CANARY_OBSERVER_REQUIRED\"); return this[Symbol.for(\"biomind.pi.usage-observer.v1\")] ? this[Symbol.for(\"biomind.pi.usage-observer.v1\")](prepared.model, prepared.options, (observedOptions) => prepared.provider.stream(prepared.model,transcript,observedOptions)) : prepared.provider.stream(prepared.model,transcript,prepared.options)"
+        },
+        {
+          "before": "return prepared.provider.streamSimple(prepared.model,transcript,prepared.options)",
+          "after": "if ((process.env.BIOMIND_PI_CANARY_LEDGER || process.env.BIOMIND_PI_CANARY_SCENARIO) && !this[Symbol.for(\"biomind.pi.usage-observer.v1\")]) throw new Error(\"BIOMIND_CANARY_OBSERVER_REQUIRED\"); return this[Symbol.for(\"biomind.pi.usage-observer.v1\")] ? this[Symbol.for(\"biomind.pi.usage-observer.v1\")](prepared.model, prepared.options, (observedOptions) => prepared.provider.streamSimple(prepared.model,transcript,observedOptions)) : prepared.provider.streamSimple(prepared.model,transcript,prepared.options)"
+        },
+        {
+          "before": "return prepared.provider.fetchDeferred(prepared.model,handle,prepared.options)",
+          "after": "if ((process.env.BIOMIND_PI_CANARY_LEDGER || process.env.BIOMIND_PI_CANARY_SCENARIO) && !this[Symbol.for(\"biomind.pi.usage-observer.v1\")]) throw new Error(\"BIOMIND_CANARY_OBSERVER_REQUIRED\"); return this[Symbol.for(\"biomind.pi.usage-observer.v1\")] ? this[Symbol.for(\"biomind.pi.usage-observer.v1\")](prepared.model, prepared.options, (observedOptions) => prepared.provider.fetchDeferred(prepared.model,handle,observedOptions)) : prepared.provider.fetchDeferred(prepared.model,handle,prepared.options)"
+        },
+        {
+          "before": "constructor(runtime){this.runtime=runtime}refresh(options)",
+          "after": "constructor(runtime){this.runtime=runtime}setBioMindUsageObserver(observer){this.runtime[Symbol.for(\"biomind.pi.usage-observer.v1\")]=observer}refresh(options)"
+        },
+        {
+          "before": "(undici.install?.(),installedGlobalFetch=globalThis.fetch)}var build_exports={}",
+          "after": "(undici.install?.(),installedGlobalFetch=globalThis.fetch);globalThis[Symbol.for(\"biomind.pi.http-dispatcher.v1\")] = Object.freeze({ fetch: installedGlobalFetch, dispatcher, dispatch: dispatcher.dispatch, getGlobalDispatcher: undici.getGlobalDispatcher });}var build_exports={}"
+        }
+      ]
+    },
+    {
+      "path": "dist/core/http-dispatcher.js",
+      "originalSha256": "f9aa2c81b0a5958ffba6368506f24c9b202904c234ada19494cdc9c4a1d0e97b",
+      "patchedSha256": "1f26c9e603ee1174423e6e2c6eaaca7df5f5468023db2acae74b8e497832af7b",
+      "replacements": [
+        {
+          "before": "        installedGlobalFetch = globalThis.fetch;\n    }\n}",
+          "after": "        installedGlobalFetch = globalThis.fetch;\n    }\n    globalThis[Symbol.for(\"biomind.pi.http-dispatcher.v1\")] = Object.freeze({ fetch: installedGlobalFetch, dispatcher, dispatch: dispatcher.dispatch, getGlobalDispatcher: undici.getGlobalDispatcher });\n}"
+        }
+      ]
+    }
+  ]
+}

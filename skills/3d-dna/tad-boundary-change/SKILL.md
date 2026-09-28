@@ -1,28 +1,25 @@
 ---
-name: tad-boundary-change-analysis
-description: "Summarize changed, shared, gained/lost, and shifted TAD boundaries across samples from existing HiCExplorer TAD outputs or generic boundary BED/TSV files. Use when the user asks for TAD\u8fb9\u754c\u6539\u53d8\u7edf\u8ba1, TAD\u8fb9\u754c\u53d8\u5316, boundary gain/loss, boundary shift, shared/unique TAD boundaries, pairwise TAD boundary comparison, or downstream statistics after TAD calling without rerunning hicFindTADs."
+name: tad-boundary-change
+description: Summarize changed, shared, gained/lost, and shifted TAD boundaries across samples from existing HiCExplorer
+  TAD outputs or generic boundary BED/TSV files. Use when the user asks for TAD边界改变统计, TAD边界变化, boundary gain/loss,
+  boundary shift, shared/unique TAD boundaries, pairwise TAD boundary comparison, or downstream statistics after
+  TAD calling without rerunning hicFindTADs.
 metadata:
-  version: "1.0.0"
-  tags: [TAD, TAD-boundary, boundary-change, "TAD\u8fb9\u754c", "\u8fb9\u754c\u6539\u53d8", HiCExplorer, cool, mcool, resolution, boundary_tol]
-  task_types: [chromatin_contact_tad]
-  stage_tags: [boundary_change]
-  inputs: [tad_boundaries]
-  outputs: [boundary_change_tables, boundary_change_plots]
-  when_to_use:
-    - Workflow stage is boundary_change.
-    - User needs shared, shifted, gained, or lost TAD boundary summaries.
-  when_not_to_use: [TAD calling from raw matrices, differential TAD testing]
-  legacy_ids: [genomics/chromatin/tad-boundary-change, tad-boundary-change, tad-boundary-statistics, "TAD\u8fb9\u754c\u6539\u53d8\u7edf\u8ba1", "TAD\u8fb9\u754c\u53d8\u5316"]
-  runtime:
-    default_env: hicexplore
-    env_runner: conda run -n hicexplore python
-    language: python
-    packages: []
-    optional_packages: [cooler]
-    capabilities: [tad-boundary-change, boundary-shift, boundary-gain-loss, optional-cooler-resolution]
-    healthcheck: conda run -n hicexplore python skills/3d-dna/tad-boundary-change/scripts/summarize_tad_boundary_changes.py --help
-    fallback_runner: python
+  version: 1.0.0
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # TAD Boundary Change Analysis
 
@@ -33,7 +30,7 @@ Use this skill after TAD calling to compare boundary positions between samples. 
 The main script is:
 
 ```bash
-python skills/3d-dna/tad-boundary-change/scripts/summarize_tad_boundary_changes.py --help
+python "${SKILL_DIR}/scripts/summarize_tad_boundary_changes.py" --help
 ```
 
 ## Relationship To Existing TAD Skills
@@ -69,7 +66,7 @@ If resolution cannot be determined, pass `--resolution-bp` or explicit `--bounda
 Compare two HiCExplorer boundary BED files:
 
 ```bash
-python skills/3d-dna/tad-boundary-change/scripts/summarize_tad_boundary_changes.py \
+python "${SKILL_DIR}/scripts/summarize_tad_boundary_changes.py" \
   --sample leaf TADs/HiCExplorer/40000/leaf_boundaries.bed \
   --sample bud TADs/HiCExplorer/40000/bud_boundaries.bed \
   --resolution-bp 40000 \
@@ -79,7 +76,7 @@ python skills/3d-dna/tad-boundary-change/scripts/summarize_tad_boundary_changes.
 Use the combined output from `tad-calling`:
 
 ```bash
-python skills/3d-dna/tad-boundary-change/scripts/summarize_tad_boundary_changes.py \
+python "${SKILL_DIR}/scripts/summarize_tad_boundary_changes.py" \
   --boundaries-long TADs/HiCExplorer/40000/tad_boundaries_long.tsv \
   --out-dir TADs/HiCExplorer/40000/boundary_changes
 ```
@@ -87,7 +84,7 @@ python skills/3d-dna/tad-boundary-change/scripts/summarize_tad_boundary_changes.
 Infer samples from a HiCExplorer output directory:
 
 ```bash
-python skills/3d-dna/tad-boundary-change/scripts/summarize_tad_boundary_changes.py \
+python "${SKILL_DIR}/scripts/summarize_tad_boundary_changes.py" \
   --tad-out-dir TADs/HiCExplorer/40000 \
   --comparison leaf bud \
   --out-dir TADs/HiCExplorer/40000/boundary_changes
@@ -96,7 +93,7 @@ python skills/3d-dna/tad-boundary-change/scripts/summarize_tad_boundary_changes.
 Use a manifest for portable workflows:
 
 ```bash
-python skills/3d-dna/tad-boundary-change/scripts/summarize_tad_boundary_changes.py \
+python "${SKILL_DIR}/scripts/summarize_tad_boundary_changes.py" \
   --sample-sheet boundary_samples.tsv \
   --comparison control treatment \
   --out-dir results/tad_boundary_changes
@@ -144,33 +141,15 @@ Read `references/output_schema.md` before changing output columns.
 
 Prefer the shared TAD/HiCExplorer environment `hicexplore` so TAD calling, differential TAD, boundary statistics, and future Hi-C heatmap skills reuse one environment.
 
-Verify first. If this succeeds, do not install anything:
-
-```bash
-conda run -n hicexplore python skills/3d-dna/tad-boundary-change/scripts/summarize_tad_boundary_changes.py --help
-```
-
-If `hicexplore` is missing but this boundary-only task has `--resolution-bp`, a full `sample.mcool::/resolutions/N` URI, a numeric TAD output folder, or explicit `--boundary-tol-bp`, use the current Python as a fallback:
-
-```bash
-python skills/3d-dna/tad-boundary-change/scripts/summarize_tad_boundary_changes.py --help
-```
-
-If automatic `.cool/.mcool` resolution inference is required and `cooler` is missing, do not install directly. Add `cooler` to the shared environment:
-
-```text
-<install_tool env="hicexplore">cooler</install_tool>
-```
-
-If the broader workflow will also run TAD calling, differential TAD, or Hi-C heatmaps, initialize/fix the same shared environment instead of making a separate boundary-statistics environment:
-
-```text
-<install_tool env="hicexplore">hicexplorer</install_tool>
-<install_tool env="hicexplore">cooler</install_tool>
-<install_tool env="hicexplore">matplotlib</install_tool>
-```
-
-After any installer delegation, re-run the verification command before running data.
+Reuse a successful registration covering the required capabilities without routine
+health checks across stages or resume. Use its real prefix and launcher. If the
+registration lacks coverage or location, inspect only that gap through configured
+roots and known prefixes; ask for the location if still unresolved. A boundary-only
+workflow with explicit resolution/tolerance may use its registered Python runtime.
+A broader Skill workflow does not authorize extra analysis or installation.
+Missing dependencies follow the task policy: stop when blocked; otherwise obtain
+specific target/package/change approval through the controlled installer. Verify
+new installation changes before recording success. Do not install from Skill tags.
 
 `cooler` is optional for this script and is only needed to infer binsize from a single-resolution `.cool` file or to list resolutions from a plain `.mcool` without `::/resolutions/N`. If the user does not want to touch environments, prefer one of these:
 

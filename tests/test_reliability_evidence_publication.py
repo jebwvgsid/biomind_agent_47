@@ -35,7 +35,6 @@ from agent_core.workflow.outcomes import (
     CommitStepOutcome, ExecuteOutcome, InstallSubagentOutcome, VerificationOutcome,
 )
 from agent_core.workflow.phase_archive import PhaseArchiveStore
-from agent_core.workflow.recovery_node import Schema2RecoveryNode
 from agent_core.workflow.recovery_projection import (
     CausalFailurePacketBinder, is_recovery_failure_source, project_recovery_seed,
     recovery_source_kind,
@@ -43,7 +42,7 @@ from agent_core.workflow.recovery_projection import (
 from agent_core.workflow.recovery_tools import (
     RecoveryLocalToolDispatcher, RecoveryToolError, build_recovery_inspection_registry,
 )
-from tests.test_inspection_workflow import make_inspection_fixture, _tag_json
+from tests.test_inspection_workflow import _tag_json
 
 
 VERIFICATION_TYPES = (
@@ -270,150 +269,8 @@ def _exact_material(message):
     return metadata, body.split("\n---END EXACT SOURCE BODY---\n", 1)[0]
 
 
-def test_real_completion_gate_rejection_carries_exact_objects_into_actual_recovery_requests(tmp_path):
-    async def scenario():
-        fixture = make_inspection_fixture(tmp_path, claimed_value=None, execution_returncode=17)
-        durable = fixture.reload()
-        skill_text, snapshot, service = _select_visible_skill(tmp_path, durable)
-        execution = fixture.execution
-        execution["effect_evidence"]["parser_receipt"] = structured_effect_parse_receipt(
-            execution["raw_stdout"], execution["declared_step_effect"])
-        durable = fixture.reload()
-        record_provenance_event(durable, "execution_finished", {
-            "attempt_id": execution["attempt_id"], "execution_record": execution})
-        save_plan_state(str(tmp_path), fixture.task_id, durable)
-        fixture.state["pending_action"] = {
-            key: deepcopy(execution[key]) for key in
-            ("action_id", "step_id", "plan_id", "plan_version", "command_role", "purpose")}
-        update = await fixture.new_supervisor()(deepcopy(fixture.state))
-        fixture.state.update(update)
-        outcome = update["verification_outcome"]
-        assert outcome["type"] == "rejected", outcome
-        assert recovery_source_kind("verification_outcome", outcome) == "completion_gate_outcome"
-        assert outcome["payload"]["validation_evidence"]["status"] == "INVALID"
-        assert outcome["payload"]["completion_report"]["completion_gate"]["passed"] is False
-        durable, seed, registry, dispatcher = _reopen(tmp_path, fixture.task_id)
-        rows = _object_rows(registry)
-        expected = {kind: _read_complete(dispatcher, row) for kind, row in rows.items() if row["readable"]}
-        assert expected["completion_report"] == outcome["payload"]["completion_report"]
-        assert expected["validation"] == outcome["payload"]["validation_evidence"]
-        assert expected["script"]["scripts"]["code"] == execution["code"]
-        assert expected["execution"]["execution"]["raw_stdout"] == execution["raw_stdout"]
-        assert expected["parser_receipt"]["parser_receipt"] == execution["effect_evidence"]["parser_receipt"]
-        assert expected["action"]["action"] == fixture.state["pending_action"]
-        assert expected["task_context"]["task_spec"] == canonical_task_spec_for_state(durable)
-        assert expected["plan"]["approved_plan"] == durable["current_plan"]["plan_spec"]
-        model = EvidenceRoundTripModel()
-        result = await Schema2RecoveryNode(data_path=str(tmp_path), model=model,
-            skill_service=service, context_compaction_enabled=False).run(fixture.state)
-        # A trusted, admitted semantic stop uses the blocked DTO across sources.
-        assert result["recovery_outcome"]["type"] == "blocked", json.dumps(result, ensure_ascii=False)
-        assert result["recovery_outcome"]["payload"]["reason_code"] == "OFFLINE_RECORDED_FAILURE_UNRESOLVED"
-        assert len(model.requests) == 2
-        for request in model.requests:
-            found = {}
-            skills = []
-            for message in request:
-                if getattr(message, "name", "") == "inherited_recovery_evidence":
-                    meta, body = _exact_material(message)
-                    kind = meta["object_kind"]
-                    assert json.loads(body) == expected[kind]
-                    assert meta["source_ref"] == rows[kind]["ref_id"]
-                    assert meta["source_digest"] == rows[kind]["digest"]
-                    assert meta["content_hash"].removeprefix("sha256:") == hashlib.sha256(body.encode()).hexdigest()
-                    found[kind] = meta
-                if getattr(message, "name", "") == "inherited_skill_material":
-                    meta, body = _exact_material(message)
-                    skills.append((meta, body))
-            assert set(found) == {"execution", "script", "action", "task_context", "plan",
-                                  "completion_report", "parser_receipt", "validation", "semantic_decision"}
-            assert any(body == skill_text and meta["snapshot_id"] == snapshot["snapshot_id"] for meta, body in skills)
-        messages = [json.loads(str(m.content)) for m in model.requests[1] if getattr(m, "type", "") == "tool"]
-        assert len(messages) == 3
-        for tool_message in messages:
-            assert not tool_message.get("error"), tool_message
-            body = tool_message["result"]
-            assert body["source_ref"] == rows[body["object_kind"]]["ref_id"]
-            assert body["content"], "Actual next model request must contain the reader result"
-        (tmp_path / "provider-evidence-receipt.json").write_text(json.dumps({
-            "source_kind": "completion_gate_outcome", "outcome": outcome,
-            "inspection_manifest": registry.provider_manifest(),
-            "provider_requests": [[{"type": m.type, "name": getattr(m, "name", None), "content": m.content}
-                                   for m in request] for request in model.requests],
-        }, ensure_ascii=False, indent=2))
-    asyncio.run(scenario())
 
 
-@pytest.mark.parametrize("mode", ["plain", "gzip", "unsupported", "permission", "foreign_ref", "path_injection"])
-def test_artifact_reader_results_and_failures_reach_next_actual_model_request(tmp_path, monkeypatch, mode):
-    async def scenario():
-        state, paths, expected_text = _artifact_case(tmp_path)
-        source = _source(state, "execute_outcome", "execution_failed")
-        CausalFailurePacketBinder(data_path=str(tmp_path)).bind(state, "execute_outcome", source)
-        durable, seed, registry, dispatcher = _reopen(tmp_path, state["task_id"])
-        manifest = [row for row in registry.provider_manifest() if row["kind"] == "artifact"]
-        # Match the real approved canonical locator, not a hand-made provider ref.
-        by_path = {str(locator.get("path")): ref for ref, locator in registry._locators.items()
-                   if any(row["ref_id"] == ref for row in manifest)}
-        role = "compressed" if mode == "gzip" else "unsupported" if mode == "unsupported" else "plain"
-        ref = by_path[str(paths[role])]
-        arguments = {"ref_id": ref, "representation": "gzip_text" if mode == "gzip" else "text"}
-        expected_error = None
-        hits = []
-        if mode == "unsupported":
-            expected_error = "READ_REPRESENTATION_UNSUPPORTED"
-        elif mode == "permission":
-            expected_error = "ARTIFACT_PERMISSION_DENIED"
-            import agent_core.workflow.recovery_tools as module
-            real_open = module.open_approved_resource
-            def deny_input(path, *args, **kwargs):
-                if Path(path) == paths["plain"]:
-                    hits.append(str(path))
-                    raise PermissionError("COUNTED_OFFLINE_READER_PERMISSION_DENIAL")
-                return real_open(path, *args, **kwargs)
-            monkeypatch.setattr(module, "open_approved_resource", deny_input)
-        elif mode == "foreign_ref":
-            arguments["ref_id"] = "artifact:other-task-resource"
-            expected_error = "INSPECTION_REF_NOT_DECLARED"
-        elif mode == "path_injection":
-            arguments["canonical_path"] = str(paths["compressed"])
-            expected_error = "ARTIFACT_AUTHORITY_ARGUMENT_FORBIDDEN"
-        calls = [{"id": "actual-artifact-read", "name": "artifact_read", "args": arguments, "type": "tool_call"}]
-        model = EvidenceRoundTripModel(calls)
-        result = await Schema2RecoveryNode(data_path=str(tmp_path), model=model,
-            context_compaction_enabled=False).run(state)
-        # A trusted, admitted semantic stop uses the blocked DTO across sources.
-        assert result["recovery_outcome"]["type"] == "blocked", json.dumps(result, ensure_ascii=False)
-        assert result["recovery_outcome"]["payload"]["reason_code"] == "OFFLINE_RECORDED_FAILURE_UNRESOLVED"
-        assert len(model.requests) == 2
-        received = [json.loads(str(m.content)) for m in model.requests[1] if getattr(m, "type", "") == "tool"]
-        assert len(received) == 1
-        message = received[0]
-        stop = result["recovery_outcome"]["payload"]["inspection_stop"]
-        assert stop["publication_failures"] == []
-        if mode in {"plain", "gzip"}:
-            assert stop["technical_classification"] == "inspection_unresolved"
-        if expected_error:
-            assert message["error"]["code"] == expected_error, message
-            assert not message.get("result"), message
-        else:
-            assert not message.get("error"), message
-            read = message["result"]
-            assert read["ref_id"] == ref
-            assert read["content"] == expected_text.rstrip("\n")
-            assert read["inspection"]["representation"] == ("gzip" if mode == "gzip" else "plain")
-            assert read["inspection"]["full_scientific_validation"] is False
-        if mode == "permission":
-            assert hits == [str(paths["plain"])]
-        fresh = load_plan_state(str(tmp_path), state["task_id"])
-        assert fresh["current_task"] == durable["current_task"]
-        assert fresh["current_plan"] == durable["current_plan"]
-        assert fresh["current_step_id"] == seed.failure_packet.step_id
-        (tmp_path / ("artifact-reader-" + mode + ".json")).write_text(json.dumps({
-            "arguments": arguments, "ToolMessage_in_actual_next_request": message,
-            "permission_fault_hits": hits, "ref": ref, "scope": {"task_id": seed.failure_packet.task_id, "step_id": seed.failure_packet.step_id, "attempt_id": seed.failure_packet.attempt_ref},
-        }, indent=2))
-    asyncio.run(scenario())
 
 
 def test_dependency_prelaunch_without_attempt_publishes_absence_honestly(tmp_path):

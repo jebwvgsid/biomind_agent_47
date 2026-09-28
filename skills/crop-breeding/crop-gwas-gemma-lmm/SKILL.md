@@ -1,28 +1,24 @@
 ---
 name: crop-gwas-gemma-lmm
-description: >
-  Execute crop GWAS with GEMMA kinship and linear mixed models from PLINK
-  genotype data, phenotype vectors, and optional covariates or PCs. Use for
-  rigorous single-population kinship-aware association testing; do not use for
-  GAPIT3/rMVP model comparison or PAV/SV matrix GWAS.
-metadata:
-  tags: [crop-breeding, GWAS, GEMMA, LMM, kinship]
-  task_types: [crop_gwas]
-  stage_tags: [gemma_lmm_gwas]
-  inputs: [bfile, pfile, phenotype_table, trait, covariates]
-  outputs: [summary_stats, lead_snps, lambda_gc, candidate_genes, gwas_report]
-  runtime:
-    default_env: crop_gwas_cli
-    env_runner: conda run -n crop_gwas_cli python
-    language: python
-    packages: [pandas, numpy, scipy, matplotlib, plink2, gemma]
-    capabilities: [crop-gwas-gemma, kinship-lmm]
-    healthcheck: conda run -n crop_gwas_cli python skills/crop-breeding/crop-gwas-gemma-lmm/scripts/run_gemma_lmm.py --help
-    install_policy: prefer-declared
-    install_commands:
-      - mamba create -n crop_gwas_cli -c conda-forge -c bioconda python=3.11 pandas numpy scipy matplotlib plink2 gemma -y
-      - conda create -n crop_gwas_cli -c conda-forge -c bioconda python=3.11 pandas numpy scipy matplotlib plink2 gemma -y
+description: 'Execute crop GWAS with GEMMA kinship and linear mixed models from PLINK genotype data, phenotype vectors,
+  and optional covariates or PCs. Use for rigorous single-population kinship-aware association testing; do not use
+  for GAPIT3/rMVP model comparison or PAV/SV matrix GWAS.
+
+  '
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # Crop GWAS GEMMA LMM
 
@@ -30,7 +26,7 @@ Use this operation skill after genotype QC when the analysis needs a classical
 kinship-aware linear mixed model.
 
 ```bash
-conda run -n crop_gwas_cli python skills/crop-breeding/crop-gwas-gemma-lmm/scripts/run_gemma_lmm.py \
+python "${SKILL_DIR}/scripts/run_gemma_lmm.py" \
   --bfile work/qc/genotypes_qc \
   --phenotype phenotype.txt \
   --trait flowering_time \

@@ -1,28 +1,28 @@
 ---
-name: nanopore-modkit-pileup
-description: >
-  Generate Oxford Nanopore 5mC/5hmC methylation bedMethyl, modBAM QC summary,
-  probability-threshold QC, bigWig tracks, and optional plant CG/CHG/CHH context
-  annotation from aligned, coordinate-sorted, indexed modBAM files with MM/ML
-  tags using modkit. Use when the user asks for ONT 5mC methylation detection,
-  modkit pileup, modBAM tag checks, bedMethyl generation, 5mC bigWig tracks,
-  plant methylation contexts, CG/CHG/CHH annotation, or methylation benchmarking.
-  Do not use for POD5 raw-signal basecalling or 6mA open-chromatin prediction.
-version: "1.1.0"
-tags: [nanopore, methylation, modkit, modBAM, MM, ML, 5mC, 5hmC, C+m, C+h, bedMethyl, bigWig, CG, CHG, CHH, plant-methylation]
-legacy_ids: [modkit-methylation-pileup, modkit-pileup, nanopore-5mc-pileup, 5mC-pileup, plant-5mC-pileup, modkit检测植物5mC, 植物5mC, 生成CG_CHG_CHH_bigWig, 纳米孔甲基化检测]
-task_types: [methylation_nanopore]
-stage_tags: [modkit_pileup, methylation_qc, methylation_track]
-inputs: [aligned_indexed_modbam, reference_fasta, sample_name, output_directory, optional_regions_bed]
-outputs: [bedmethyl_bgzip, bedmethyl_tabix, modkit_summary_tsv, probability_qc, methylation_bigwig, optional_cg_chg_chh_table]
-runtime:
-  default_env: bio_modkit
-  env_runner: bash
-  language: bash
-  packages: [modkit, samtools, htslib, python]
-  capabilities: [modbam-preflight, modkit-pileup, bedmethyl-bigwig, plant-context-annotation]
-  healthcheck: bash -lc "modkit --version && samtools --version >/dev/null && tabix --version >/dev/null"
+name: modkit-pileup
+description: 'Generate Oxford Nanopore 5mC/5hmC methylation bedMethyl, modBAM QC summary, probability-threshold
+  QC, bigWig tracks, and optional plant CG/CHG/CHH context annotation from aligned, coordinate-sorted, indexed modBAM
+  files with MM/ML tags using modkit. Use when the user asks for ONT 5mC methylation detection, modkit pileup, modBAM
+  tag checks, bedMethyl generation, 5mC bigWig tracks, plant methylation contexts, CG/CHG/CHH annotation, or methylation
+  benchmarking. Do not use for POD5 raw-signal basecalling or 6mA open-chromatin prediction.
+
+  '
+metadata:
+  version: 1.1.0
+compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
+
+
+## 资源定位与依赖
+
+使用当前 Agent 的标准技能发现与文件读取能力加载本文件。`scripts/`、`references/`、
+`assets/` 相对本 SKILL.md 的实际目录；输入、输出和样本清单相对本次分析项目。
+命令中的 `${SKILL_DIR}` 必须先设为实际技能目录的绝对路径；该变量不由宿主自动提供。
+例如，从已加载位置解析目录后，以带引号的脚本绝对路径执行，保持工作目录为分析项目，
+不要在技能安装目录写结果。跨技能资源按其实际目录定位；分享完整技能包时保留目录结构。
+软件和参考数据库来自已有环境或用户显式提供的位置。依赖见
+[dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
+本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
 # Nanopore Modkit 5mC Pileup
 
@@ -151,7 +151,7 @@ Create separate tracks for 5hmC (`--mod-code h`) and 5mC (`--mod-code m`) when b
 For plant and crop methylomes, do not default to CpG-only. First generate all-cytosine 5mC bedMethyl, then annotate strand-aware context:
 
 ```bash
-python skills/epigenomics/methylation/modkit-pileup/scripts/annotate_plant_context.py \
+python "${SKILL_DIR}/scripts/annotate_plant_context.py" \
   --bedmethyl "${OUTDIR}/bedmethyl/${SAMPLE}.5mC.bedmethyl.gz" \
   --reference "${REFERENCE_FASTA}" \
   --output "${OUTDIR}/bedmethyl/${SAMPLE}.5mC.CG_CHG_CHH.bedmethyl.tsv.gz"

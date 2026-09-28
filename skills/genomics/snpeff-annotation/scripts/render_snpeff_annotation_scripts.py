@@ -533,7 +533,7 @@ def artifact_manifest(args: argparse.Namespace, scripts: dict[str, list[str]], o
     producer = Path(__file__).name
     step_id = str(args.producer_step_id or "")
     generated_at = datetime.now(timezone.utc).isoformat()
-    producer_action_id = str(os.environ.get("BIOMIND_ACTION_ID") or "")
+    producer_action_id = str(getattr(args, "producer_label", "") or "")
     script_ids = {
         "00.preflight.sh": "snpeff_runtime_preflight_script",
         "01.prepare_custom_database.sh": "snpeff_database_prepare_script",
@@ -694,6 +694,8 @@ def render_script_bundle(args: argparse.Namespace, custom: bool) -> dict[str, li
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Render snpEff annotation scripts")
+    parser.add_argument("--task-label", default="", help="Optional portable project label in the receipt")
+    parser.add_argument("--producer-label", default="", help="Optional invocation label in the receipt")
     parser.add_argument("--vcf", required=True, help="Input VCF/VCF.GZ to annotate")
     parser.add_argument("--genome-version", required=True, help="snpEff database key; must match config/data directory")
     parser.add_argument("--outdir", default="snpeff_annotation", help="Directory for rendered scripts")
@@ -769,14 +771,14 @@ def main() -> int:
         "manifest_type": "renderer_artifact_contract",
         "producer": Path(__file__).name,
         "producer_step_id": str(args.producer_step_id or ""),
-        "producer_action_id": str(os.environ.get("BIOMIND_ACTION_ID") or ""),
-        "task_id": str(os.environ.get("BIOMIND_TASK_ID") or ""),
+        "producer_action_id": str(getattr(args, "producer_label", "") or ""),
+        "task_id": str(getattr(args, "task_label", "") or ""),
         "generated_at": generated_at,
         "renderer": {"id": "genomics.snpeff_annotation", "version": 3},
         "provenance": {
-            "task_id": str(os.environ.get("BIOMIND_TASK_ID") or ""),
+            "task_id": str(getattr(args, "task_label", "") or ""),
             "step_id": str(args.producer_step_id or ""),
-            "producer_action_id": str(os.environ.get("BIOMIND_ACTION_ID") or ""),
+            "producer_action_id": str(getattr(args, "producer_label", "") or ""),
             "input_fingerprint": input_fingerprint,
             "runtime_fingerprint": runtime_fingerprint,
             "options_fingerprint": options_fingerprint,

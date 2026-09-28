@@ -11,11 +11,13 @@ import ast
 import re
 import shlex
 import signal
+import socket
+from datetime import datetime, timezone
 import tempfile
 import time
 from io import StringIO
 from pathlib import Path
-from typing import Tuple, Dict, Any, Optional, Callable, Mapping
+from typing import Sequence, Tuple, Dict, Any, Optional, Callable, Mapping
 
 from execution.profiling import get_current_node, get_current_profiler, get_current_task_id, timestamp_now
 from execution.runtime_contract import (
@@ -142,58 +144,42 @@ def _watchdog_command_class(command: str) -> str:
     return ""
 
 
+def _process_identity(pid):
+    """Host and kernel creation identity; no PID-only claim after restart."""
+    try:
+        body = Path('/proc') / str(int(pid)) / 'stat'
+        fields = body.read_text().rsplit(')', 1)[1].split()
+        return {'hostname': socket.gethostname(), 'process_start_ticks': int(fields[19])}
+    except (OSError, ValueError, IndexError):
+        return {'hostname': socket.gethostname(), 'process_start_ticks': None}
+
+
 def _collect_process_tree_cpu_ticks(root_pid: int) -> Optional[int]:
-    """Return cumulative utime+stime ticks for a Linux process tree."""
-    proc_root = "/proc"
-    if os.name == "nt" or not os.path.isdir(proc_root):
+    """Bounded sampling of the registered launcher and its visible descendants.
+
+    Missing/denied/changing process identities produce unknown. We never scan
+    all of /proc or treat an incomplete tree as a measured zero-CPU interval.
+    """
+    if os.name == 'nt':
         return None
-
-    processes: Dict[int, Tuple[int, int]] = {}
-    for name in os.listdir(proc_root):
-        if not name.isdigit():
-            continue
-        stat_path = os.path.join(proc_root, name, "stat")
-        try:
-            with open(stat_path, "r", encoding="utf-8", errors="replace") as handle:
-                stat = handle.read()
-        except OSError:
-            continue
-        end_comm = stat.rfind(")")
-        if end_comm < 0:
-            continue
-        fields = stat[end_comm + 2 :].split()
-        if len(fields) < 15:
-            continue
-        try:
-            pid = int(name)
-            ppid = int(fields[1])
-            utime = int(fields[11])
-            stime = int(fields[12])
-        except (TypeError, ValueError):
-            continue
-        processes[pid] = (ppid, utime + stime)
-
-    if root_pid not in processes:
-        return None
-
-    children: Dict[int, list[int]] = {}
-    for pid, (ppid, _) in processes.items():
-        children.setdefault(ppid, []).append(pid)
-
-    total = 0
-    stack = [root_pid]
-    seen = set()
-    while stack:
-        pid = stack.pop()
+    todo, seen, total = [int(root_pid)], set(), 0
+    while todo and len(seen) < 256:
+        pid = todo.pop()
         if pid in seen:
             continue
         seen.add(pid)
-        item = processes.get(pid)
-        if not item:
-            continue
-        total += item[1]
-        stack.extend(children.get(pid, []))
-    return total
+        try:
+            path = Path('/proc') / str(pid)
+            before = (path / 'stat').read_text().rsplit(')', 1)[1].split()
+            children = (path / 'task' / str(pid) / 'children').read_text().split()
+            after = (path / 'stat').read_text().rsplit(')', 1)[1].split()
+            if before[19] != after[19]:
+                return None
+            total += int(after[11]) + int(after[12])
+            todo.extend(int(value) for value in children)
+        except (OSError, ValueError, IndexError):
+            return None
+    return total if not todo else None
 
 
 async def _read_stream_chunks(
@@ -225,6 +211,7 @@ async def _read_stream_chunks(
         capture.feed(chunk)
         if log_handle is not None:
             log_handle.write(chunk)
+            log_handle.flush()
         if display_copy is not None:
             _feed_display_copy(display_copy, chunk)
         progress["last_output_at"] = time.monotonic()
@@ -237,41 +224,26 @@ async def _read_stream_chunks(
 
 
 async def _terminate_process_tree(process: asyncio.subprocess.Process, *, short_check=False) -> None:
-    if short_check and os.name != "nt":
-        # Opt-in for nested short checks. The shell leader may already have
-        # exited while a descendant still holds its pipes. Its original pgid
-        # remains the owned spawn pid, so do not rediscover it through the leader.
+    # The spawn used start_new_session. Keep that owned PGID even if its shell
+    # leader has exited; querying os.getpgid on a recycled PID is not authority.
+    if os.name != 'nt':
+        expected = getattr(process, '_biomind_creation_identity', {})
+        current = _process_identity(process.pid)
+        if (expected.get('process_start_ticks') is not None and current.get('process_start_ticks') is not None
+                and expected['process_start_ticks'] != current['process_start_ticks']):
+            raise RuntimeError('PROCESS_CREATION_IDENTITY_CHANGED; no signal sent')
         with contextlib.suppress(ProcessLookupError):
             os.killpg(process.pid, signal.SIGTERM)
-        deadline = time.monotonic() + 1.0
-        while time.monotonic() < deadline:
-            try:
-                os.killpg(process.pid, 0)
-            except ProcessLookupError:
-                break
-            await asyncio.sleep(0.025)
+        deadline = time.monotonic() + (1.0 if short_check else 5.0)
+        while process.returncode is None and time.monotonic() < deadline:
+            await asyncio.sleep(.025)
         with contextlib.suppress(ProcessLookupError):
             os.killpg(process.pid, signal.SIGKILL)
-        with contextlib.suppress(asyncio.TimeoutError):
-            await asyncio.wait_for(process.wait(), timeout=1.0)
-        return
-    if process.returncode is not None:
-        return
-    if os.name != "nt":
-        with contextlib.suppress(ProcessLookupError, PermissionError, OSError):
-            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
-        deadline = time.monotonic() + 5
-        while process.returncode is None and time.monotonic() < deadline:
-            await asyncio.sleep(0.05)
-        if process.returncode is not None:
-            return
-        with contextlib.suppress(ProcessLookupError, PermissionError, OSError):
-            os.killpg(os.getpgid(process.pid), signal.SIGKILL)
-    else:
+    elif process.returncode is None:
         process.kill()
     deadline = time.monotonic() + 2
     while process.returncode is None and time.monotonic() < deadline:
-        await asyncio.sleep(0.05)
+        await asyncio.sleep(.025)
 
 
 def terminate_active_processes() -> int:
@@ -285,7 +257,7 @@ def terminate_active_processes() -> int:
     for pid in list(_ACTIVE_PROCESS_GROUPS):
         try:
             if os.name != "nt":
-                os.killpg(os.getpgid(pid), signal.SIGTERM)
+                os.killpg(pid, signal.SIGTERM)
             else:
                 os.kill(pid, signal.SIGTERM)
             stopped += 1
@@ -347,6 +319,12 @@ async def _notify_lifecycle(
     *, display_context: Mapping[str, Any] | None = None,
 ) -> None:
     scope = _execution_display_scope(display_context)
+    from agent_core.cli_tool_activity import runtime_event
+    if event == 'RUNNING':
+        runtime_event('running', {**payload, 'execution_started': True,
+                                 'execution_attempt_id': scope.get('execution_attempt_id')})
+    elif event == 'PROCESS_EXITED':
+        runtime_event('finalizing', {**payload, 'execution_started': payload.get('pid') is not None})
     if payload.get("pid") is not None:
         scope["pid"] = payload["pid"]
     emit_display("details", f"工具事件 {event}", source="runtime_fact", **scope)
@@ -502,7 +480,7 @@ async def _follow_managed_logs(paths, process, captures, progress, log_handles, 
 
 
 async def run_command(
-    command: str,
+    command: str | list[str],
     timeout=None,
     profile: bool = True,
     lifecycle_callback: Optional[Callable[..., Any]] = None,
@@ -513,13 +491,36 @@ async def run_command(
     capture_log_paths: Mapping[str, str] | None = None,
     display_streams: bool = True,
     short_check: bool = False,
+    cwd: str | Path | None = None,
+    runtime_observation: Optional[Dict[str, Any]] = None,
+    cancel_event=None,
+    original_deadline: float | None = None,
 ) -> Tuple[str, str, int]:
-    """通用 Shell 命令执行器"""
+    """Shell text or direct argv, sharing one process owner and lifecycle.
+
+    Strings use explicit /bin/sh, non-login (the existing POSIX default).
+    Lists never pass through a shell; display quoting is not execution input.
+    """
+    from agent_core.execution_permissions import require_dispatch
+    # short_check adjusts lifecycle/cleanup only; it is not permission.
+    require_dispatch(command,cwd=cwd,env=env)
+    direct_argv = list(command) if isinstance(command, list) else None
+    if direct_argv is not None:
+        if not direct_argv or not direct_argv[0] or any(not isinstance(a,str) or '\x00' in a for a in direct_argv):
+            raise ValueError('EXECUTION_ARGV_INVALID')
+        display_command = shlex.join(direct_argv)
+    elif isinstance(command,str) and command.strip() and '\x00' not in command:
+        display_command = command
+    else:
+        raise ValueError('EXECUTION_COMMAND_REQUIRED')
     global _LAST_EXECUTION_METADATA
     start_time = time.time()
     start_monotonic = time.monotonic()
     started_at = timestamp_now()
     policy = EXECUTION_RUNTIME_POLICY
+    observation = runtime_observation if runtime_observation is not None else {}
+    observation.update(phase='preparing', process_alive=None, last_output_monotonic=start_monotonic)
+    cleanup_limit = max(.05, _env_float(policy.cleanup_timeout_env, policy.cleanup_timeout_default_seconds))
     health_interval = max(
         0.2,
         _env_float(
@@ -549,31 +550,75 @@ async def run_command(
         if type(max_output_bytes) is not int or max_output_bytes <= 0:
             raise ValueError("EXECUTION_OUTPUT_LIMIT_INVALID")
         stream_output_limit = min(stream_output_limit or max_output_bytes, max_output_bytes)
-    command_class = _watchdog_command_class(command)
+    command_class = _watchdog_command_class(display_command)
     stdout_log_handle = None
     stderr_log_handle = None
     stdout_log_path = ""
     stderr_log_path = ""
     log_observation_errors = []
     display_scope = _execution_display_scope(display_context)
+    resource_monitor = None
+    resource_evidence = {}
+    resource_sampling_task = None
+
+    async def drain_streams(tasks):
+        pending = {task for task in tasks if task is not None}
+        drain_started = time.monotonic()
+        while pending:
+            done, pending = await asyncio.wait(pending, timeout=min(.05, cleanup_limit))
+            for task in done:
+                if not task.cancelled() and task.exception() is not None:
+                    log_observation_errors.append({'stage': 'execution.stream_drain', 'error': repr(task.exception())})
+            if pending and time.monotonic()-drain_started >= cleanup_limit:
+                observation.update(cleanup_unconfirmed=True, cleanup_reason='owned_stream_drain_pending', phase='finalizing')
+        observation['cleanup_unconfirmed'] = False
+
+    async def retain_until_reaped(process):
+        # A bounded observer may return unknown, but the executor retains its
+        # streams/transport until the actual process has exited. No second kill
+        # policy or detached background cleanup is introduced here.
+        since = time.monotonic()
+        while process.returncode is None:
+            if time.monotonic()-since >= cleanup_limit:
+                observation.update(cleanup_unconfirmed=True, cleanup_reason='process_exit_unconfirmed', phase='finalizing')
+            await asyncio.sleep(.05)
+        observation.update(process_alive=False, process_exit_code=process.returncode)
+
     try:
+        if cancel_event is not None and cancel_event.is_set():
+            raise asyncio.CancelledError()
+        if original_deadline is not None and time.monotonic() >= original_deadline:
+            stderr_reason = 'TIMEOUT during original execution preparation deadline'
+            result = '', stderr_reason, 124
+            return result
         # 切断 stdin。遇到需要按 y/n 的地方直接报错，拒绝死等。
         popen_kwargs: Dict[str, Any] = {}
         if os.name != "nt":
             popen_kwargs["start_new_session"] = True
-        process = await asyncio.create_subprocess_shell(
-            command,
-            stdin=asyncio.subprocess.DEVNULL,
-            stdout=asyncio.subprocess.PIPE,
+        spawn_options = dict(cwd=str(cwd) if cwd is not None else None,
+            stdin=asyncio.subprocess.DEVNULL, stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
-            env=(
-                {str(key): str(value) for key, value in env.items()}
-                if env is not None
-                else None
-            ),
-            **popen_kwargs,
-        )
+            env={str(key):str(value) for key,value in env.items()} if env is not None else None,
+            **popen_kwargs)
+        if direct_argv is not None:
+            process = await asyncio.create_subprocess_exec(*direct_argv, **spawn_options)
+        else:
+            process = await asyncio.create_subprocess_shell(command, executable='/bin/sh', **spawn_options)
         _ACTIVE_PROCESS_GROUPS.add(process.pid)
+        identity = _process_identity(process.pid)
+        process._biomind_creation_identity = identity
+        observation.update(identity, pid=process.pid, process_alive=True, phase='running', process_started_at=started_at)
+        if not short_check:
+            from execution.resource_evidence import ProcessResourceEvidence
+            try:
+                resource_monitor = ProcessResourceEvidence(process.pid, environment=env if env is not None else os.environ)
+                async def sample_resources():
+                    while process.returncode is None:
+                        await asyncio.sleep(0.5)
+                        resource_monitor.sample()
+                resource_sampling_task = asyncio.create_task(sample_resources())
+            except Exception as exc:
+                resource_evidence = {"root_cause_status": "UNCONFIRMED", "collection_error": type(exc).__name__}
         display_scope["pid"] = process.pid
         try:
             pgid = os.getpgid(process.pid) if os.name != "nt" else process.pid
@@ -583,6 +628,8 @@ async def run_command(
         await _notify_lifecycle(lifecycle_callback, "RUNNING", {
             "pid": process.pid,
             "pgid": pgid,
+            **identity,
+            "original_deadline_at": (datetime.fromtimestamp(time.time()+max(0, original_deadline-time.monotonic()), timezone.utc).isoformat() if original_deadline is not None else None),
             "started_at": started_at,
             "heartbeat_at": timestamp_now(),
         }, display_context=display_scope)
@@ -649,9 +696,26 @@ async def run_command(
         stderr_reason = ""
         early_health_reported = False
 
+        root_exited_at = None
+        last_health_at = start_monotonic
         while True:
+            if cancel_event is not None and cancel_event.is_set():
+                raise asyncio.CancelledError()
+            if process.returncode is not None:
+                observation.update(process_alive=False, process_exit_code=process.returncode, phase='finalizing')
+                root_exited_at = root_exited_at or time.monotonic()
+                if time.monotonic()-root_exited_at >= cleanup_limit:
+                    observation.update(cleanup_unconfirmed=True, cleanup_reason='parent_exited_inherited_pipes')
+            observation['last_output_monotonic'] = progress['last_output_at']
+            observation['stream_bytes_live'] = {'stdout': stdout_capture.total_bytes, 'stderr': stderr_capture.total_bytes}
             watched_tasks = {process_wait_task, output_limit_task, *pending_stream_tasks}
             wait_timeout = health_interval if pending_stream_tasks else min(health_interval, 0.2)
+            if cancel_event is not None:
+                wait_timeout = min(wait_timeout, .2)
+            if process.returncode is not None:
+                wait_timeout = min(wait_timeout, .05)
+            if original_deadline is not None:
+                wait_timeout = min(wait_timeout, max(0, original_deadline-time.monotonic()))
             if wall_timeout > 0:
                 wait_timeout = min(wait_timeout, max(0.0, wall_timeout - (time.monotonic() - start_monotonic)))
             done, _ = await asyncio.wait(
@@ -685,16 +749,22 @@ async def run_command(
                     process_wait_task.cancel()
                 break
             now = time.monotonic()
-            await _notify_lifecycle(lifecycle_callback, "HEARTBEAT", {
-                "pid": process.pid,
-                "pgid": pgid,
-                "heartbeat_at": timestamp_now(),
-            }, display_context=display_scope)
-            cpu_ticks = _collect_process_tree_cpu_ticks(process.pid)
-            if cpu_ticks is not None and last_cpu_ticks is not None and cpu_ticks > last_cpu_ticks:
-                progress["last_cpu_at"] = now
-            if cpu_ticks is not None:
+            if now - last_health_at >= health_interval:
+                await _notify_lifecycle(lifecycle_callback, "HEARTBEAT", {
+                    "pid": process.pid,
+                    "pgid": pgid,
+                    "heartbeat_at": timestamp_now(),
+                }, display_context=display_scope)
+                sampled_identity = _process_identity(process.pid)
+                cpu_ticks = (_collect_process_tree_cpu_ticks(process.pid)
+                    if identity.get('process_start_ticks') is not None
+                    and sampled_identity == identity else None)
+                if cpu_ticks is not None and last_cpu_ticks is not None and cpu_ticks > last_cpu_ticks:
+                    progress["last_cpu_at"] = now
+                observation['cpu_activity'] = ('unknown' if cpu_ticks is None or last_cpu_ticks is None or cpu_ticks < last_cpu_ticks
+                                               else 'observed' if cpu_ticks > last_cpu_ticks else 'no_change_observed')
                 last_cpu_ticks = cpu_ticks
+                last_health_at = now
 
             last_progress_at = max(progress["last_output_at"], progress["last_cpu_at"])
             idle_for = now - last_progress_at
@@ -705,15 +775,18 @@ async def run_command(
                 and idle_for >= early_health_seconds
             ):
                 logger.warning(
-                    "Execution watchdog: command has shown no output or CPU progress for %.1f seconds "
+                    "Execution watchdog policy: no observable output/CPU progress for %.1f seconds "
                     "(class=%s, pid=%s).",
                     idle_for,
                     command_class or "compute_or_unknown",
                     process.pid,
                 )
                 early_health_reported = True
-            if wall_timeout > 0 and now - start_monotonic >= wall_timeout:
+            if ((original_deadline is not None and now >= original_deadline)
+                    or (wall_timeout > 0 and now - start_monotonic >= wall_timeout)):
                 stderr_reason = f"TIMEOUT after {wall_timeout:g} seconds"
+                if original_deadline is not None:
+                    stderr_reason += " (original deadline includes preparation)"
                 await (_terminate_process_tree(process, short_check=True) if short_check
                        else _terminate_process_tree(process))
                 break
@@ -723,24 +796,26 @@ async def run_command(
                 and idle_for >= suspect_stall_seconds
             ):
                 stderr_reason = (
-                    "SUSPECT_STALL: a {kind} command showed no stdout/stderr output and no process-tree "
-                    "CPU progress for {idle:.1f} seconds (elapsed {elapsed:.1f} seconds); terminated "
+                    "SUSPECT_STALL: policy found no observable stdout/stderr or process-tree "
+                    "CPU progress for {idle:.1f} seconds (elapsed {elapsed:.1f} seconds); CPU observation={activity}; terminated "
                     "by BioMind watchdog. Regenerate a bounded, local check or record a truthful blocked "
                     "state instead of retrying the same probe."
-                ).format(kind=command_class, idle=idle_for, elapsed=elapsed)
+                ).format(kind=command_class, idle=idle_for, elapsed=elapsed, activity=observation.get('cpu_activity', 'unknown'))
                 await (_terminate_process_tree(process, short_check=True) if short_check
                        else _terminate_process_tree(process))
                 break
             if stall_timeout > 0 and now - last_progress_at >= stall_timeout:
                 stderr_reason = (
-                    "STALLED: command showed no stdout/stderr output and no process-tree CPU progress "
-                    f"for {idle_for:.1f} seconds; terminated by BioMind watchdog."
+                    "STALLED: no observable stdout/stderr or process-tree CPU progress "
+                    f"for {idle_for:.1f} seconds; CPU observation={observation.get('cpu_activity', 'unknown')}; "
+                    "terminated by configured BioMind policy, not proof of deadlock."
                 )
                 await (_terminate_process_tree(process, short_check=True) if short_check
                        else _terminate_process_tree(process))
                 break
 
-        await asyncio.gather(stdout_task, stderr_task, *([follow_task] if follow_task else []), return_exceptions=True)
+        await drain_streams([stdout_task, stderr_task, follow_task])
+        observation.update(process_alive=False, phase='finalizing', process_exit_code=process.returncode)
         stdout_text = stdout_capture.text("stdout", stdout_log_path)
         stderr_text = stderr_capture.text("stderr", stderr_log_path)
         if stderr_reason:
@@ -752,39 +827,33 @@ async def run_command(
     except asyncio.CancelledError:
         cancellation_observed = True
         if "process" in locals():
-            with contextlib.suppress(Exception):
-                # Python 3.11+ keeps a cancellation count after this exception
-                # is caught. Clear this one pending request just long enough to
-                # reap the process group, then re-raise cancellation below.
-                current_task = asyncio.current_task()
-                uncancel = getattr(current_task, "uncancel", None)
-                if callable(uncancel):
-                    uncancel()
+            current_task = asyncio.current_task()
+            uncancel = getattr(current_task, "uncancel", None)
+            if callable(uncancel):
+                uncancel()
+            try:
                 await (_terminate_process_tree(process, short_check=True) if short_check
                        else _terminate_process_tree(process))
-                reader_tasks = []
-                for task_name in ("stdout_task", "stderr_task"):
-                    task = locals().get(task_name)
-                    if task is not None:
-                        reader_tasks.append(task)
-                if reader_tasks:
-                    await asyncio.wait_for(
-                        asyncio.gather(*reader_tasks, return_exceptions=True),
-                        timeout=2,
-                    )
-                wait_task = locals().get("process_wait_task")
-                if wait_task is not None and not wait_task.done():
-                    wait_task.cancel()
-                limit_task = locals().get("output_limit_task")
-                if limit_task is not None and not limit_task.done():
-                    limit_task.cancel()
+            except Exception as exc:
+                observation['termination_error'] = type(exc).__name__ + ': ' + str(exc)
+            await retain_until_reaped(process)
+            await drain_streams((locals().get('stdout_task'), locals().get('stderr_task'), locals().get('follow_task')))
         raise
     except Exception as e:
+        if "process" not in locals():
+            # Delegation may have started a child before returning its handle.
+            # Do not manufacture a program exit or cleanup from missing metrics.
+            raise
         if "process" in locals():
-            with contextlib.suppress(Exception):
+            try:
                 await (_terminate_process_tree(process, short_check=True) if short_check
                        else _terminate_process_tree(process))
-        result = "", str(e), 1
+            except Exception as cleanup_error:
+                observation['termination_error'] = type(cleanup_error).__name__ + ': ' + str(cleanup_error)
+            await retain_until_reaped(process)
+            await drain_streams((locals().get('stdout_task'), locals().get('stderr_task'), locals().get('follow_task')))
+        observation['executor_observation_error'] = type(e).__name__ + ': ' + str(e)
+        result = "", str(e), process.returncode
         return result
     finally:
         for handle in (stdout_log_handle, stderr_log_handle):
@@ -802,8 +871,17 @@ async def run_command(
         if follower is not None and not follower.done():
             follower.cancel()
             await asyncio.gather(follower, return_exceptions=True)
-        if "process" in locals():
+        if 'process' in locals() and process.returncode is not None and not observation.get('cleanup_unconfirmed'):
             _ACTIVE_PROCESS_GROUPS.discard(process.pid)
+        if resource_sampling_task is not None:
+            resource_sampling_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError, Exception):
+                await resource_sampling_task
+        if resource_monitor is not None:
+            try:
+                resource_evidence = resource_monitor.finish()
+            except Exception as exc:
+                resource_evidence = {"root_cause_status": "UNCONFIRMED", "collection_error": type(exc).__name__}
         if locals().get("cancellation_observed"):
             cancelled_record = {"command": command, "status": "cancelled",
                 "cancellation_source": "caller_unspecified", "started_at": started_at,
@@ -811,7 +889,9 @@ async def run_command(
                 "pid": process.pid if "process" in locals() else None,
                 "process_returncode": process.returncode if "process" in locals() else None,
                 "process_reaped": bool("process" in locals() and process.returncode is not None),
-                "log_observation_errors": log_observation_errors}
+                "log_observation_errors": log_observation_errors,
+                "cleanup_confirmed": not observation.get("cleanup_unconfirmed") and bool("process" in locals() and process.returncode is not None),
+                "resource_evidence": resource_evidence}
             if short_check:
                 cancelled_record.update(_short_check_cleanup_facts(process.pid if "process" in locals() else None))
             with contextlib.suppress(Exception):
@@ -820,15 +900,19 @@ async def run_command(
             logger.info("Execution cancelled: %s", cancelled_record)
         if locals().get("cancellation_observed"):
             _LAST_EXECUTION_METADATA = cancelled_record
+            observation.update(cancelled_record)
         if "result" in locals():
             stdout_value, stderr_value, returncode_value = result
             try:
-                command_argv = shlex.split(command, posix=True)
+                command_argv = direct_argv if direct_argv is not None else None
             except ValueError:
                 command_argv = None
             _LAST_EXECUTION_METADATA = {
-                "command": command,
+                "command": display_command,
                 "argv": command_argv,
+                "execution_carrier": "argv" if direct_argv is not None else "shell",
+                "shell": None if direct_argv is not None else "/bin/sh", "shell_login": False,
+                "resource_evidence": resource_evidence,
                 "log_observation_errors": log_observation_errors,
                 "effective_timeouts": {"wall_seconds": wall_timeout, "wall_source": "argument" if timeout else policy.wall_timeout_env,
                                        "stall_seconds": stall_timeout, "stall_source": policy.stall_timeout_env},
@@ -861,6 +945,8 @@ async def run_command(
                 "stderr_log": stderr_log_path,
                 "stream_output_limit_bytes": stream_output_limit,
             }
+            observation.update(_LAST_EXECUTION_METADATA)
+            observation.update(cleanup_confirmed=not observation.get("cleanup_unconfirmed"), phase="exited")
             if short_check:
                 _LAST_EXECUTION_METADATA.update(_short_check_cleanup_facts(process.pid if "process" in locals() else None))
             with contextlib.suppress(Exception):
@@ -881,7 +967,7 @@ async def run_command(
                 profiler.record_command(
                     task_id=task_id,
                     language="Bash",
-                    code=command,
+                    code=display_command,
                     stdout=stdout,
                     stderr=stderr,
                     returncode=returncode,
@@ -896,6 +982,8 @@ async def run_script_path(
     *,
     expected_sha256: str,
     interpreter: str = "",
+    cwd: str | Path | None = None,
+    arguments: Sequence[str] = (),
     timeout: int | None = None,
     profile: bool = True,
     lifecycle_callback: Optional[Callable[..., Any]] = None,
@@ -919,10 +1007,11 @@ async def run_script_path(
     runner = str(interpreter or "").strip()
     if not runner:
         runner = "python" if path.suffix.lower() == ".py" else "bash"
-    command = f"{shlex.quote(runner)} {shlex.quote(str(path))}"
+    command = [runner, str(path), *map(str, arguments)]
     stdout, stderr, returncode = await run_command(
         command,
         timeout=timeout,
+        cwd=cwd,
         profile=profile,
         lifecycle_callback=lifecycle_callback,
         env=env,
@@ -961,6 +1050,8 @@ async def run_bash_script(
     managed_log_paths: Mapping[str, str] | None = None,
 ) -> Tuple[str, str, int]:
     """Compatibility API using a unique temporary script, never a fixed filename."""
+    from agent_core.execution_permissions import require_dispatch, script_dispatch_context
+    require_dispatch(code)
     start_time = time.time()
     started_at = timestamp_now()
     try:
@@ -979,15 +1070,16 @@ async def run_bash_script(
         
         # 执行时使用 run_command 的健康检查；timeout 作为可选硬性 wall limit。
         digest = hashlib.sha256(Path(filename).read_bytes()).hexdigest()
-        stdout, stderr, returncode = await run_script_path(
-            filename,
-            expected_sha256=digest,
-            interpreter="bash",
-            timeout=timeout,
-            profile=False,
-            env=env,
-            max_output_bytes=max_output_bytes,
-        )
+        with script_dispatch_context(['bash', str(Path(filename).resolve())]):
+            stdout, stderr, returncode = await run_script_path(
+                filename,
+                expected_sha256=digest,
+                interpreter="bash",
+                timeout=timeout,
+                profile=False,
+                env=env,
+                max_output_bytes=max_output_bytes,
+            )
         return stdout, stderr, returncode
     except Exception as e:
         stdout, stderr, returncode = "", str(e), 1
@@ -1017,6 +1109,8 @@ async def run_python_repl(code: str, timeout: int = None) -> Tuple[str, str, int
     在持久化命名空间中执行 Python 代码
     注意：这是模拟 REPL，不是独立的 Python 进程
     """
+    from agent_core.execution_permissions import require_dispatch
+    require_dispatch(code)
     start_time = time.time()
     started_at = timestamp_now()
     old_stdout = sys.stdout
@@ -1074,6 +1168,8 @@ async def run_python_repl(code: str, timeout: int = None) -> Tuple[str, str, int
 
 async def run_r_code(code: str, timeout: int = None) -> Tuple[str, str, int]:
     """执行 R 脚本"""
+    from agent_core.execution_permissions import require_dispatch
+    require_dispatch(code)
     start_time = time.time()
     started_at = timestamp_now()
     script_path = ""

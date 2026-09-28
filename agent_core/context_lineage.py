@@ -446,7 +446,8 @@ def message_payload(message: Any) -> Dict[str, Any]:
 def response_payload(response: Any) -> Dict[str, Any]:
     if isinstance(response, Mapping):
         return dict(response)
-    return message_payload(response)
+    from agent_core.provider_usage import raw_usage
+    return {**message_payload(response), 'raw_provider_usage':raw_usage(response)}
 
 
 def _finalize_message_payload(message: Any) -> Dict[str, Any]:
@@ -6517,56 +6518,8 @@ async def ainvoke_with_snapshot(
     task_id: str,
     metadata: Mapping[str, Any],
 ) -> Tuple[Any, Dict[str, Any]]:
-    """Invoke an LLM while persisting the exact final observable request."""
-    call_metadata = dict(metadata or {})
-    # Cover auxiliary model nodes (triage, legacy judge/corrections, memory)
-    # through the same phase manager. Compactor calls already have bounded,
-    # segmented wire admission and must never recursively compact themselves.
-    kind = str(call_metadata.get("call_kind") or call_metadata.get("node_name") or "llm")
-    if "compaction" not in kind and not call_metadata.get("context_budget_prepared"):
-        from agent_core.workflow.context_compaction import configured_context_policy, model_context_policy, measure_provider_input, model_tool_schema
-        from agent_core.workflow.scoped_context import provider_visible_payload
-        policy = model_context_policy(configured_context_policy(), llm)
-        budget = measure_provider_input({"local_messages": [provider_visible_payload(m) for m in messages],
-            "tool_schema": model_tool_schema(llm)}, policy=policy)
-        call_metadata["context_budget"] = budget.to_dict()
-        if budget.should_compact:
-            if not data_path or not task_id:
-                from agent_core.workflow.context_compaction import ContextCompactionError
-                raise ContextCompactionError("CONTEXT_ARCHIVE_ROOT_REQUIRED")
-            from agent_core.workflow.phase_archive import PhaseArchiveStore
-            from agent_core.workflow.phase_compaction import PhaseContextCompactor
-            async def compact(wire, **kwargs):
-                response, _ = await ainvoke_with_snapshot(llm, wire, data_path=data_path,
-                    task_id=task_id, metadata={"node_name": kind, "call_kind": "context_compaction"})
-                return response
-            manager = PhaseContextCompactor(phase_store=PhaseArchiveStore(data_path),
-                compactor_invoke=compact, policy=policy)
-            prepared = await manager.prepare_messages(messages, model=llm, task_id=task_id,
-                phase=kind, invocation_id=kind + ":" + _digest(str(messages))[:24])
-            messages = list(prepared.messages)
-            call_metadata["context_budget"] = dict(prepared.telemetry)
-    if not data_path or not task_id:
-        return await llm.ainvoke(list(messages)), {}
-    store = ContextLineageStore(data_path, task_id)
-    if not call_metadata.get("call_id"):
-        ordinal = len(store.list_snapshots()) + 1
-        kind = str(call_metadata.get("call_kind") or call_metadata.get("node_name") or "llm")
-        identity = {
-            "task_id": str(task_id),
-            "kind": kind,
-            "ordinal": ordinal,
-            "step_id": call_metadata.get("step_id"),
-            "attempt_id": call_metadata.get("attempt_id"),
-        }
-        call_metadata["call_id"] = f"{_safe_id(kind)}-{ordinal:04d}-{_digest(identity)[:12]}"
-    snapshot = store.start_call(messages, call_metadata)
-    try:
-        response = await llm.ainvoke(list(messages))
-    except BaseException as exc:
-        store.fail_call(snapshot["call_id"], exc)
-        raise
-    return response, store.finish_call(snapshot["call_id"], response)
+    """Retired legacy model boundary; storage and redaction APIs remain available."""
+    raise RuntimeError("LEGACY_MODEL_RUNTIME_RETIRED: dispatch model work through the Pi host")
 
 
 def _read_json(path: str | Path) -> Any:

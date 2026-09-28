@@ -58,19 +58,19 @@ print(record["Count"], record["IdList"])
 查候选 GEO 数据集：
 
 ```bash
-python examples/search_geo.py --term "Saccharum drought RNA-seq" --max-results 10
+python "${SKILL_DIR}/examples/search_geo.py" --term "Saccharum drought RNA-seq" --max-results 10
 ```
 
 从 GSE 找对应 SRA runs：
 
 ```bash
-python examples/geo_to_sra.py --gse GSE147507 --out GSE147507_sra_runs.txt
+python "${SKILL_DIR}/examples/geo_to_sra.py" --gse GSE147507 --out GSE147507_sra_runs.txt
 ```
 
 从 PMID 找关联 GEO 数据：
 
 ```bash
-python examples/geo_from_pubmed.py --pmid 32228226
+python "${SKILL_DIR}/examples/geo_from_pubmed.py" --pmid 32228226
 ```
 
 ## 汇报时应该给用户什么

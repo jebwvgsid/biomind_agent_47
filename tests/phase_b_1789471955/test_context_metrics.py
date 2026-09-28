@@ -5,8 +5,6 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 import pytest
-from agent_core.workflow.recovery_agent import RecoveryAgentLoop
-from agent_core.workflow.recovery_node import Schema2RecoveryNode, _normalize_inherited_materials
 from agent_core.workflow.recovery_projection import _task_ref,_skill_bundle,_dependency_outcomes,_current_step
 from agent_core.workflow.recovery_tools import build_recovery_inspection_registry
 from agent_core.workflow.phase_archive import PhaseArchiveStore
@@ -17,66 +15,6 @@ from tests.phase_b_1789471955.test_causal_history import replay,HISTORY
 
 def sha(value):return hashlib.sha256(value.encode()).hexdigest()
 
-def test_T06_T16_four_episode_production_wire_composition(tmp_path):
-    snapshots=replay(tmp_path);rows=[]
-    class Capture:
-        messages=None
-        async def ainvoke(self,messages):
-            self.messages=list(messages)
-            raise asyncio.CancelledError()
-    for snapshot in snapshots:
-        plan=snapshot['plan']
-        (tmp_path/'task_outputs'/plan['task_id']/'plan_state.json').write_text(json.dumps(plan))
-        # Component replay from saved immutable packets and final plan snapshot.
-        # It is not a historical live graph replay: the older Plan record hashes
-        # differ, and only the synthetic integration fixture tests actual CAS.
-        packet=FailurePacket.from_mapping(plan['task_state']['causal_failure_packets'][snapshot['ref']]['failure_packet'])
-        task_ref=_task_ref(plan,plan['task_id'])
-        step=_current_step(plan,packet.step_id)
-        seed=RecoverySeed(schema_version=1,
-            seed_id='recovery-seed-'+plan['task_state']['causal_failure_packets'][snapshot['ref']]['source_fingerprint'],
-            task_spec_ref=task_ref,plan_spec_ref=packet.plan_spec_ref,failure_packet=packet,
-            current_step=step,selected_skill_bundle=_skill_bundle(plan,task_ref.task_revision,packet.step_id),
-            dependency_outcomes=_dependency_outcomes(plan,step),evidence_refs=packet.evidence_refs)
-        model=Capture();node=Schema2RecoveryNode(data_path=str(tmp_path),model=model)
-        materials=node._initial_inherited_materials(seed=seed,durable=plan)
-        inherited,descriptors=_normalize_inherited_materials(materials,epoch_id='offline-measurement')
-        registry=build_recovery_inspection_registry(seed,plan,phase_store=PhaseArchiveStore(tmp_path))
-        loop=RecoveryAgentLoop(model=model,dispatcher=None)
-        with pytest.raises(asyncio.CancelledError):
-            asyncio.run(loop.ainvoke(seed=seed,durable=plan,inspection_manifest=registry.provider_manifest(),inherited_messages=inherited))
-        assert model.messages and model.messages[0].type=='system'
-        assert len({d['source_ref'] for d in descriptors.values()})==len(descriptors)
-        for m in materials:
-            if m.get('source_ref') in snapshot['bodies']:
-                assert m.get('residency')=='exact',(m.get('object_kind'),m.get('missing_details'))
-            elif m.get('material_kind')=='recovery_evidence':
-                assert m.get('residency')=='externalized' and m.get('missing_details')
-        row={'packet_ref':snapshot['ref'],'attempt_id':seed.failure_packet.attempt_ref,
-            'inspection_refs':list(seed.failure_packet.inspection_refs),'local_history_messages':0,
-            'materials':[{'source_ref':m.get('source_ref'),'object_kind':m.get('object_kind','skill'),
-                'residency':m.get('residency'),'content_hash':m.get('content_hash'),'missing_details':m.get('missing_details'),
-                'body_chars':len(m.get('body') or '')} for m in materials],
-            'messages':[{'role':m.type,'content_chars':len(str(m.content)),
-                'content_sha256':sha(str(m.content)),
-                'local_token_estimate':asdict(ReferenceTokenEstimator().estimate(str(m.content)))} for m in model.messages]}
-        row['new_total_content_chars']=sum(m['content_chars'] for m in row['messages'])
-        rows.append(row)
-    old=[]
-    for path in sorted((HISTORY/'context_trace').glob('recovery_turn-*/request.json')):
-        wire=json.loads(path.read_text());content=wire.get('messages',[])
-        if len(content)>1:
-            old.append((path,content))
-    for row in rows:
-        matches=[(p,m) for p,m in old if row['attempt_id'] in m[1]['content']]
-        assert matches,row['attempt_id']
-        path,messages=matches[0]
-        row['old_first_request']=str(path)
-        row['old_total_content_chars']=sum(len(m['content']) for m in messages)
-        row['old_messages']=[{'role':m['role'],'content_chars':len(m['content']),
-            'content_sha256':sha(m['content'])} for m in messages]
-    assert len({row['messages'][0]['content_sha256'] for row in rows})==1
-    (tmp_path/'four_episode_wire_composition.json').write_text(json.dumps(rows,indent=2))
 
 
 def test_T16_saved_request_prefix_boundaries(tmp_path):

@@ -977,6 +977,150 @@ def _builtin_action_effect(step: Mapping[str, Any]) -> tuple[Dict[str, Any], str
     return effect, f"planner.action_protocol.{action}"
 
 
+def _plan_action_protocol_issues(
+    step: Mapping[str, Any], *, step_index: int
+) -> list[Dict[str, Any]]:
+    """Check a known action/runner contradiction without resolving resources.
+
+    This is deliberately not a blanket ban on capabilities for interactive
+    actions. A domain capability may own an interaction contract; its existing
+    compiler remains responsible for interpreting that contract.
+    """
+    from agent_core.action_runtime import GENERIC_EXECUTION_CAPABILITY_ID
+
+    action = str(step.get("action") or "").strip().lower()
+    capability_id = str(
+        step.get("execution_capability_id") or step.get("capability_id") or ""
+    ).strip()
+    if action != "ask_user" or capability_id != GENERIC_EXECUTION_CAPABILITY_ID:
+        return []
+    capability_field = (
+        "execution_capability_id"
+        if step.get("execution_capability_id")
+        else "capability_id"
+    )
+    return [protocol_invalid_issue(
+        step_id=str(step.get("step_id") or step.get("id") or ""),
+        field_path=f"$.steps[{step_index}].{capability_field}",
+        violation_code="PLAN_ACTION_CAPABILITY_MISMATCH",
+        message=(
+            "ask_user is a built-in interaction action, but this step selects "
+            "the generic Bash/Python executor. Keep action=ask_user and omit "
+            "execution_capability_id and operation; the built-in protocol "
+            "supplies user_input_requested without inventing a side effect."
+        ),
+        expected={
+            "action": "ask_user",
+            "execution_capability_id": "omit",
+            "operation": "omit",
+            "builtin_effect": "user_input_requested",
+        },
+        actual={
+            "action": action,
+            "execution_capability_id": capability_id,
+            "operation": str(step.get("operation") or step.get("operation_id") or ""),
+            "tool": str(step.get("tool") or ""),
+        },
+        contract_source="planner.action_protocol.ask_user",
+        contract_revision=f"step-effect-schema-{STEP_EFFECT_SCHEMA_VERSION}",
+    )]
+
+
+def _unsupported_side_effect_issue(
+    explicit_effect: Mapping[str, Any],
+    *,
+    builtin_side_effect_ids: set[str],
+    step_id: str,
+    field_root: str,
+    capability_id: str,
+) -> Optional[Dict[str, Any]]:
+    """The existing unbound side-effect rule, shared with early diagnostics."""
+    unsupported = [
+        _identity_text(item, field="explicit_side_effects")
+        for item in explicit_effect.get("explicit_side_effects") or []
+        if _identity_text(item, field="explicit_side_effects")
+        not in builtin_side_effect_ids
+        and not (
+            isinstance(item, Mapping)
+            and item.get("evidence_contract") not in (None, "", [], {})
+        )
+    ]
+    if not unsupported:
+        return None
+    return protocol_invalid_issue(
+        step_id=step_id,
+        field_path=f"{field_root}.explicit_side_effects",
+        message=(
+            "Explicit side effects require capability support or an "
+            "inline typed evidence contract."
+        ),
+        violation_code="EXPLICIT_SIDE_EFFECT_UNSUPPORTED",
+        unsupported_effect_ids=unsupported,
+        capability_id=capability_id,
+        actual=deepcopy(explicit_effect["explicit_side_effects"]),
+        expected={
+            "supported_forms": [
+                "selected capability declares this side-effect identity",
+                "inline side-effect object with a typed evidence_contract",
+            ],
+        },
+        contract_source="agent_core.step_effects.compile_step_effect",
+        contract_revision=f"step-effect-schema-{STEP_EFFECT_SCHEMA_VERSION}",
+    )
+
+
+def independent_step_effect_diagnostics(
+    candidate: Mapping[str, Any], capability_registry: Any = None
+) -> list[Dict[str, Any]]:
+    """Return resource-independent issues even when artifact binding fails.
+
+    This does not compile a Plan, infer availability, or create placeholder
+    resource bindings. Only the known generic executor and unbound built-in
+    actions permit an early unsupported-side-effect determination. Domain and
+    unknown capabilities retain the full compiler's existing interpretation.
+    Malformed effect structures remain the structure/compiler owner's job.
+    """
+    from agent_core.action_runtime import GENERIC_EXECUTION_CAPABILITY_ID
+
+    if not isinstance(candidate, Mapping) or not isinstance(candidate.get("steps"), list):
+        return []
+    issues: list[Dict[str, Any]] = []
+    for index, step in enumerate(candidate["steps"]):
+        if not isinstance(step, Mapping):
+            continue
+        issues.extend(_plan_action_protocol_issues(step, step_index=index))
+        capability_id = str(
+            step.get("execution_capability_id") or step.get("capability_id") or ""
+        ).strip()
+        action_effect = _builtin_action_effect(step)
+        if capability_id != GENERIC_EXECUTION_CAPABILITY_ID and not (
+            not capability_id and action_effect is not None
+        ):
+            continue
+        # A supplied effect-bearing contract takes precedence over an early
+        # unsupported-event diagnosis; the full compiler validates it later.
+        if _candidate_contracts(step, capability_registry):
+            continue
+        try:
+            effect = canonical_step_effect(step)
+        except StepEffectProtocolError:
+            continue
+        builtin_ids = set(_entry_map(
+            action_effect[0]["explicit_side_effects"] if action_effect else [],
+            field="explicit_side_effects",
+        ))
+        issue = _unsupported_side_effect_issue(
+            effect,
+            builtin_side_effect_ids=builtin_ids,
+            step_id=str(step.get("step_id") or step.get("id") or ""),
+            field_root=f"$.steps[{index}]",
+            capability_id=capability_id,
+        )
+        if issue:
+            issues.append(issue)
+    return issues
+
+
 def _normalization_receipt(
     code: str,
     *,
@@ -1190,6 +1334,8 @@ def compile_step_effect(
     ``complete`` keys.  It does not mutate the caller's object.
     """
 
+    if isinstance(step, Mapping) and step.get('step_protocol_version') == 3:
+        return {'step': deepcopy(dict(step)), 'effect': None, 'receipt': None, 'issues': [], 'complete': None, 'status': 'not_applicable'}
     if not isinstance(step, Mapping):
         issue = protocol_invalid_issue(
             field_path=f"$.steps[{step_index}]",
@@ -1211,7 +1357,7 @@ def compile_step_effect(
     compiled_step = deepcopy(source_step)
     step_id = str(source_step.get("step_id") or source_step.get("id") or "")
     field_root = f"$.steps[{step_index}]"
-    issues: list[Dict[str, Any]] = []
+    issues = _plan_action_protocol_issues(source_step, step_index=step_index)
     normalizations: list[Dict[str, Any]] = []
     try:
         explicit_effect = _canonicalize_workspace_effects(
@@ -1447,6 +1593,41 @@ def compile_step_effect(
                     field_root=field_root,
                 ))
 
+    # Open capability fields permit Plan-owned mutation declarations, but
+    # naming a transition alone does not equip the runtime to attest it. Catch
+    # this before approval instead of launching a step with zero intents and
+    # discovering the missing receipt only after its filesystem writes.
+    from agent_core.workspace_attestation import workspace_evidence_contract_supported
+    capability_mutation_ids = set(_entry_map(
+        (selected_effect or {}).get("workspace_mutations") or [],
+        field="workspace_mutations",
+    ))
+    for mutation_index, mutation in enumerate(compiled_effect.get("workspace_mutations") or []):
+        identity = _identity_text(mutation, field="workspace_mutations")
+        if identity in capability_mutation_ids:
+            continue
+        evidence_contract = mutation.get("evidence_contract") if isinstance(mutation, Mapping) else None
+        if not workspace_evidence_contract_supported(evidence_contract):
+            issues.append(_issue(
+                "PLAN_WORKSPACE_MUTATION_EVIDENCE_UNSUPPORTED",
+                disposition="REPAIR_REQUIRED",
+                step_id=step_id,
+                field_path=f"{field_root}.step_effect.workspace_mutations[{mutation_index}]",
+                message=(
+                    "The Plan declares a workspace mutation without a supported "
+                    "runtime evidence contract. Declare bounded filesystem "
+                    "postconditions or model new immutable results through outputs."
+                ),
+                workspace_ref=identity,
+                capability_id=capability_id,
+                actual=deepcopy(evidence_contract),
+                expected={
+                    "schema_version": 1,
+                    "collector": "bounded_filesystem_snapshot_v1",
+                    "postconditions": "nonempty supported conditions on relative workspace paths",
+                },
+            ))
+
     if explicit_effect.get("explicit_side_effects") and not selected_contracts:
         builtin_side_effect_ids = set()
         if action_inference is not None:
@@ -1454,41 +1635,20 @@ def compile_step_effect(
                 action_inference[0].get("explicit_side_effects") or [],
                 field="explicit_side_effects",
             ))
-        unsupported_side_effects = [
-            _identity_text(item, field="explicit_side_effects")
-            for item in explicit_effect["explicit_side_effects"]
-            if _identity_text(item, field="explicit_side_effects")
-            not in builtin_side_effect_ids
-            and not (
-                isinstance(item, Mapping)
-                and item.get("evidence_contract") not in (None, "", [], {})
-            )
-        ]
-        if unsupported_side_effects:
-            issues.append(protocol_invalid_issue(
-                step_id=step_id,
-                field_path=f"{field_root}.explicit_side_effects",
-                message=(
-                    "Explicit side effects require capability support or an "
-                    "inline typed evidence contract."
-                ),
-                violation_code="EXPLICIT_SIDE_EFFECT_UNSUPPORTED",
-                unsupported_effect_ids=unsupported_side_effects,
-                capability_id=capability_id,
-                actual=deepcopy(explicit_effect["explicit_side_effects"]),
-                expected={
-                    "supported_forms": [
-                        "selected capability declares this side-effect identity",
-                        "inline side-effect object with a typed evidence_contract",
-                    ],
-                },
-                contract_source="agent_core.step_effects.compile_step_effect",
-                contract_revision=f"step-effect-schema-{STEP_EFFECT_SCHEMA_VERSION}",
-            ))
+        unsupported_issue = _unsupported_side_effect_issue(
+            explicit_effect,
+            builtin_side_effect_ids=builtin_side_effect_ids,
+            step_id=step_id,
+            field_root=field_root,
+            capability_id=capability_id,
+        )
+        if unsupported_issue:
+            issues.append(unsupported_issue)
 
     complete = step_effect_complete(compiled_effect)
     if not complete and not allow_legacy_untyped and not any(
-        issue.get("code") in {
+        issue.get("violation_code") == "PLAN_ACTION_CAPABILITY_MISMATCH"
+        or issue.get("code") in {
             "PLAN_STEP_EFFECT_UNSPECIFIED",
             "PLAN_STEP_ARTIFACT_EFFECT_UNBOUND",
         }
@@ -1581,6 +1741,9 @@ def compile_plan_step_effects(
     nor chooses what workflow node consumes a repairable issue.
     """
 
+    from agent_core.plan_contract import is_simple_plan
+    if is_simple_plan(plan_state):
+        return deepcopy(dict(plan_state)), None, []
     if not isinstance(plan_state, Mapping):
         issue = protocol_invalid_issue(
             field_path="$",
@@ -2114,6 +2277,14 @@ def compile_plan_dataflow(
     that the resource does not exist.
     """
 
+    from agent_core.plan_contract import is_simple_plan, simple_plan_diagnostics, plan_admission_policy_enabled
+    if is_simple_plan(plan_state):
+        issues = simple_plan_diagnostics(plan_state) if validate_dependencies else []
+        return deepcopy(dict(plan_state)), {
+            'validator': 'explicit_step_dependencies',
+            'status': 'invalid' if issues else 'valid' if validate_dependencies else 'not_evaluated',
+            'plan_admission_policy': 'enabled' if plan_admission_policy_enabled() else 'detached',
+        }, issues
     if not isinstance(plan_state, Mapping):
         issue = _dataflow_issue(
             "PLAN_OBJECT_INVALID",
@@ -3473,6 +3644,37 @@ def _single_shell_command(prefix: str) -> bool:
     return not quote and not escaped
 
 
+def _literal_python_launch(args: list[str]) -> list[str]:
+    """Locate Python in a literal direct or narrowly supported conda run call.
+
+    This only identifies which text Python receives on stdin. It grants no
+    environment, executable or action authority and never rewrites the command.
+    """
+    if not args or args[0].rsplit('/', 1)[-1] != 'conda':
+        return args
+    if len(args) < 3 or args[1] != 'run' or any(c in args[0] for c in '$`'):
+        raise ValueError('EFFECT_HELPER_CONDA_RUN_FORM_UNSUPPORTED')
+    index, selected, live = 2, False, False
+    while index < len(args) and args[index].startswith('-'):
+        option = args[index]
+        if option in {'--no-capture-output', '--live-stream'}:
+            live = True
+            index += 1
+        elif option in {'-n', '--name', '-p', '--prefix'}:
+            if selected or index + 1 >= len(args):
+                raise ValueError('EFFECT_HELPER_CONDA_RUN_FORM_UNSUPPORTED')
+            value = args[index + 1]
+            if not value or value.startswith('-') or any(c in value for c in '$`\n'):
+                raise ValueError('EFFECT_HELPER_CONDA_RUN_FORM_UNSUPPORTED')
+            selected = True
+            index += 2
+        else:
+            raise ValueError('EFFECT_HELPER_CONDA_RUN_FORM_UNSUPPORTED')
+    if not selected or not live or index >= len(args):
+        raise ValueError('EFFECT_HELPER_CONDA_RUN_FORM_UNSUPPORTED')
+    return args[index:]
+
+
 def _assert_helper_scope(body: str, language: str, marker_index: int) -> tuple[str, int]:
     if language in {"python", "py"}:
         _assert_python_helper_comment(body, marker_index)
@@ -3493,6 +3695,7 @@ def _assert_helper_scope(body: str, language: str, marker_index: int) -> tuple[s
             args = shlex.split(match[1])
         except ValueError:
             break
+        args = _literal_python_launch(args)
         executable = args[0].rsplit("/", 1)[-1] if args else ""
         closing = next((j for j in range(i + 1, len(lines)) if lines[j] == match[2]), None)
         if args and "$" in args[0] and closing is not None and i < marker_index < closing:
@@ -3537,13 +3740,15 @@ def _helper_diagnostic(body, template, language, *, carrier_source="code"):
         "template_sha256": template.get("template_sha256", "UNKNOWN")}
 
 
-def materialize_effect_template(body: str, template: Mapping[str, Any], *, language: str = "python", carrier_source: str = "code") -> str:
+def materialize_effect_template(body: str, template: Mapping[str, Any], *, language: str = "python", carrier_source: str = "code", protocol_version: int = 3) -> str:
     """Expand one exact marker BEFORE validation, candidate identity and approval.
 
     This is a byte substitution of the already frozen standalone helper, not
     execution, Bash interpretation, or a repair of incomplete provider output.
     Bash/Python syntax checks still validate the resulting complete candidate.
     """
+    if protocol_version != 1:
+        return body  # An old marker in a new script is an ordinary comment.
     lines = body.splitlines(keepends=True)
     markers = [i for i, line in enumerate(lines) if line.rstrip("\r\n") == EFFECT_HELPER_MARKER]
     actual = _helper_diagnostic(body, template, language)
@@ -3559,8 +3764,13 @@ def materialize_effect_template(body: str, template: Mapping[str, Any], *, langu
     if not template.get("available"):
         fail("EFFECT_HELPER_MARKER_REQUIRES_ONE_APPROVED_TEMPLATE", "The current approved helper template is unavailable; marker count is valid.")
     try:
-        _assert_helper_scope(body, language, markers[0])
+        python_source, _ = _assert_helper_scope(body, language, markers[0])
     except ValueError as exc:
+        if str(exc) == "EFFECT_HELPER_CONDA_RUN_FORM_UNSUPPORTED":
+            fail(str(exc), "The heredoc uses conda, but the supported form is literal conda run "
+                 "-n NAME (or -p PREFIX) --no-capture-output python - [script arguments] <<'PY'. "
+                 "Use a fixed environment selector and put the marker inside that heredoc. "
+                 "Keep the approved Bash carrier; environment/capability validation still applies.")
         if str(exc) == "EFFECT_HELPER_PYTHON_EXECUTABLE_NOT_LITERAL":
             fail(str(exc),
                  "The single-quoted heredoc is present, but its executable is a shell variable "
@@ -3568,12 +3778,21 @@ def materialize_effect_template(body: str, template: Mapping[str, Any], *, langu
                  "approved Bash carrier and use the explicit Python executable path followed "
                  "by - <<'PY'; place the marker on its own Python comment line inside it. "
                  "Do not change the approved tool to a Python script block.")
-        fail(str(exc), "The unique marker is outside the supported Python comment scope for the declared carrier.")
+        fail(str(exc), "The marker must be inside the Python body, not an outer Bash comment. "
+             "For approved Bash use a literal Python executable followed by - [arguments] <<'PY', "
+             "or conda run -n NAME --no-capture-output python - [arguments] <<'PY'. "
+             "Keep the approved tool; -c, -m, a script filename and arbitrary launchers are not stdin heredocs.")
     code = str(template.get("python_template") or "")
     if not code or hashlib.sha256(code.encode()).hexdigest() != template.get("template_sha256"):
         raise ValueError("EFFECT_HELPER_TEMPLATE_DIGEST_MISMATCH")
-    if code.rstrip() in body:
-        raise ValueError("EFFECT_HELPER_ALREADY_EXPANDED_WITH_MARKER")
+    try:
+        definitions = {node.name for node in ast.walk(ast.parse(python_source))
+                       if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))}
+    except SyntaxError:
+        definitions = set()  # The ordinary script syntax checker owns this error.
+    if code.rstrip() in body or definitions.intersection({"emit_effect_evidence", "_emit_declared_rows"}):
+        fail("EFFECT_HELPER_ALREADY_EXPANDED_WITH_MARKER",
+             "Remove copied framework serializer definitions; keep the one marker and the actual scientific calculation/facts. The program supplies the current serializer.")
     _check_literal_effect_identities(body, template, language=language, source=carrier_source)
     lines[markers[0]] = code.rstrip() + "\n"
     return "".join(lines)
@@ -3686,6 +3905,8 @@ def _check_literal_effect_identities(body: str, template: Mapping[str, Any], *, 
 def materialize_effect_action(action: Mapping[str, Any], template: Mapping[str, Any]) -> Dict[str, Any]:
     """Materialize the actual native carrier before its approval identity exists."""
     result = deepcopy(dict(action))
+    if result.get('execution_protocol_version', 3) != 1:
+        return result
     selected = executable_carrier(result)
     argv, code, carrier = selected["argv"], selected["code"], selected["inline"]
     declared_language = selected["declared_language"]
@@ -3718,7 +3939,7 @@ def materialize_effect_action(action: Mapping[str, Any], template: Mapping[str, 
     body = argv[carrier[0]] if carrier else code
     language = carrier[1] if carrier else str(result.get("language") or "bash").lower()
     try:
-        expanded = materialize_effect_template(body, template, language=language, carrier_source=source)
+        expanded = materialize_effect_template(body, template, language=language, carrier_source=source, protocol_version=1)
     except EffectHelperError as exc:
         if "location" not in exc.diagnostic:
             exc.diagnostic["actual"] = actual
@@ -3763,6 +3984,7 @@ def declared_effect_emission_contract(approved_snapshot: Mapping[str, Any], step
                     "This contract describes execution stdout facts, not the top-level action response. Follow the current Generate output protocol; never wrap a native action in action_json or a script fence.",
                     "In one Python script or one single-quoted Python heredoc, put the exact marker # BIOMIND_EFFECT_HELPER on its own unindented line. BioMind expands its frozen code before checking and approval. Do not expand or rewrite the helper yourself.",
                     "Native code with this marker must explicitly declare language=python, or use argv=[<published Python interpreter>, '-c', <Python body>]. For Bash use an explicit Bash carrier and one quoted Python heredoc. Do not also put a marker in the outer Bash comments. argv-only is supported. These same carrier rules apply after Recovery and during local correction.",
+                    "Bash helper forms: /explicit/path/to/python - [arguments] <<'PY' or conda run -n NAME (or -p PREFIX) --no-capture-output python - [arguments] <<'PY'. Put the marker inside the heredoc. Preserve the approved tool; conda environment availability remains a separate check. Arbitrary wrappers and Python -c/-m/file modes do not consume this heredoc as Python source.",
                     "Call print(emit_effect_evidence(actual_facts)) with a native Python data object. Pass paths/labels as argv, not Python source interpolation; avoid nested python -c / json.dumps / command substitution / json.loads.",
                     "Supply categorized actual_facts, for example {'produces_observations': {'an exact declared identity': {'value': actual_value}}}, only after performing the real checks or operations. A flat identity map is invalid. Report failed/unknown observations faithfully; claim a successful operation only when it actually succeeded.",
                     "Publication accepts a subset of the approved declarations. Omit artifacts that were not produced; do not create a path or placeholder to publish blocked facts. Omission itself asserts nothing. All supplied identities and required fields remain checked.",

@@ -4,16 +4,13 @@ import argparse
 import json
 import sys
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
-from agent_core.approved_resource_locator import open_approved_resource
-from agent_core.inspection_readers import inspect_stream, ReadLimits, InspectionReadError
-from agent_core.step_effects import emit_observation
+from inspection_readers import inspect_stream, ReadLimits, InspectionReadError
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--path", required=True, help="Exact input path from the approved action binding")
-    parser.add_argument("--observation-id", required=True, help="Explicit identity from the approved StepEffect")
+    parser.add_argument("--observation-id", help="Optional result label")
     parser.add_argument("--records", type=int, default=32)
     parser.add_argument("--input-bytes", type=int, default=1024 * 1024)
     parser.add_argument("--decoded-bytes", type=int, default=65536)
@@ -22,7 +19,7 @@ def main(argv=None):
     try:
         limits = ReadLimits(records=args.records, input_bytes=args.input_bytes,
                             decoded_bytes=args.decoded_bytes, seconds=args.seconds)
-        with open_approved_resource(Path(args.path)) as stream:
+        with Path(args.path).open("rb") as stream:
             value = inspect_stream(stream, representation="fastq_prefix", limits=limits)
     except (OSError, ValueError) as exc:
         code = ("READ_PERMISSION_DENIED" if isinstance(exc, PermissionError) else
@@ -36,7 +33,7 @@ def main(argv=None):
     if value["status"] == "error":
         print(json.dumps(value, ensure_ascii=False), file=sys.stderr)
         return 2
-    print(emit_observation(args.observation_id, value))
+    print(json.dumps(value, ensure_ascii=False))
     return 0
 
 

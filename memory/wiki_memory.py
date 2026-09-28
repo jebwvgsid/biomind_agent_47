@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import hashlib
+import os
+import tempfile
+import fcntl
 import json
 import logging
 import math
@@ -62,8 +65,8 @@ class NullWikiMemoryManager:
     def build_prompt_context(self, *args: Any, **kwargs: Any) -> str:
         return ""
 
-    async def ingest_from_archive(self, *args: Any, **kwargs: Any) -> str:
-        return self.status_text()
+    async def ingest_from_archive(self, *args: Any, **kwargs: Any) -> dict:
+        return {"status": "disabled", "written": [], "errors": []}
 
     def compile_digest(self, *args: Any, **kwargs: Any) -> str:
         return self.status_text()
@@ -127,6 +130,7 @@ TYPE_DIRS = {
 }
 
 ALLOWED_OPS = {
+    "replace_body",
     "create_page",
     "append_section",
     "merge_section_items",
@@ -222,7 +226,7 @@ SKILL_SELECTION_MEMORY_RULES = (
     "method or decision pages.\n"
     "- Merge by canonical skill_id and evidence ref: update existing rows/fields instead of appending duplicates.\n"
 )
-CLAIM_EVIDENCE_PREFIXES = ("raw:", "session_archive:", "task:", "artifact:")
+CLAIM_EVIDENCE_PREFIXES = ("raw:", "session_archive:", "task:", "artifact:", "work:", "task-source:")
 VALID_CLAIM_CONFIDENCE = {"medium", "high"}
 DEFAULT_EMBEDDING_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
 DEFAULT_EMBEDDING_MODEL = "text-embedding-v4"
@@ -396,7 +400,7 @@ class WikiMemoryManager:
             "- None recorded yet.\n\n"
             "## Evidence Policy\n"
             "Every durable factual claim should cite evidence using session_archive:, task:, or artifact: references. "
-            "Historical raw: references may exist in older pages, but new ingest should cite session_archive:<id>. "
+            "Historical raw: references may exist in older pages, but new notes may cite actual task-source:/work: durable public records. "
             "If evidence is missing, conflicting, low-confidence, or stale, route the item to review instead of storing it as a claim.\n"
         )
 
@@ -519,7 +523,7 @@ class WikiMemoryManager:
         project_id: Optional[str] = None,
         limit: int = 20,
         task_id: Optional[str] = None,
-    ) -> str:
+    ) -> dict:
         project_id = self._resolve_project_id(project_id)
         pending = session_archive.pending_for_wiki(
             project_id=project_id,
@@ -527,11 +531,15 @@ class WikiMemoryManager:
             task_id=task_id,
         )
         if not pending:
-            return "No pending wiki events to ingest."
+            return {"status":"noop", "written":[], "errors":[], "model_calls":0}
         if self.llm is None:
-            return "Wiki ingest unavailable: no LLM configured."
+            return {"status":"failed", "written":[], "errors":["NO_MAINTENANCE_MODEL"]}
 
-        batch = pending[: max(1, limit)]
+        excluded = self.excluded_sources(project_id)
+        skipped = [e for e in pending if self._ingest_event_ref(e) in excluded]
+        if skipped: session_archive.mark_wiki_ingested([e.id for e in skipped], project_id=project_id, summary='excluded: no memory use')
+        batch = [e for e in pending if e not in skipped][: max(1, limit)]
+        if not batch: return {'status':'noop','written':[],'errors':[],'model_calls':0}
         archive_records = [event.as_wiki_record() for event in batch]
         event_text = session_archive.format_events_for_wiki_prompt(batch, total_limit=INGEST_EVENT_TEXT_CHAR_LIMIT)
         query = "\n".join(
@@ -617,7 +625,11 @@ Priority rules:
                 },
                 project_id,
             )
-            return "Wiki ingest failed: analyst returned invalid JSON."
+            return {"status":"failed","written":[],"errors":["INVALID_ANALYSIS_JSON"]}
+
+        if not any(analysis_json.get(k) for k in ('wiki_patch_plan','claims','conflicts','research_queries')):
+            session_archive.mark_wiki_ingested([event.id for event in batch], project_id=project_id, summary='No reusable increment')
+            return {'status':'noop','written':[],'errors':[],'model_calls':1}
 
         patch_prompt = f"""Generate a strict JSON wiki patch for BioMind.
 Return JSON only with this shape: {{"operations": [{{"op": "append_log", "message": "..."}}], "ingest_summary": "..."}}.
@@ -659,26 +671,13 @@ SessionArchive event refs:
             return self._ingest_llm_error("patch", exc, batch, project_id)
         patch = _extract_json_object(_content_of(patch_response))
         if not patch:
-            return "Wiki ingest failed: curator returned invalid JSON."
+            return {"status":"failed","written":[],"errors":["INVALID_PATCH_JSON"]}
 
-        applied = self.apply_patch(patch, project_id=project_id)
-        source_summaries = self._ensure_source_summary_pages(archive_records, project_id)
-        if source_summaries:
-            self._rebuild_index_page()
-            self._sync_search_index()
-            self.compile_digest(project_id)
-        summary = str(patch.get("ingest_summary") or patch.get("summary") or "Wiki ingest completed.")
-        session_archive.mark_wiki_ingested(
-            [event.id for event in batch],
-            project_id=project_id,
-            summary=summary,
-        )
-        return (
-            f"Wiki ingest completed.\n"
-            f"Summary: {summary}\n"
-            f"Operations applied: {applied}\n"
-            f"Source summaries created: {source_summaries}"
-        )
+        result = self.apply_patch_result(patch, project_id=project_id)
+        if result['status'] in {'written','noop'}:
+            session_archive.mark_wiki_ingested([event.id for event in batch], project_id=project_id,
+                summary=str(patch.get('ingest_summary') or result['status']))
+        return {**result, 'model_calls':2}
 
     def _ingest_llm_error(
         self,
@@ -696,7 +695,7 @@ SessionArchive event refs:
             project_id,
         )
         logger.warning("Wiki ingest %s LLM call failed: %s", stage, message)
-        return f"Wiki ingest failed during {stage} LLM call: {message}"
+        return {"status":"failed","written":[],"errors":[f"{stage}: {message}"]}
 
     @staticmethod
     def _ingest_event_ref(item: Any) -> str:
@@ -721,73 +720,261 @@ SessionArchive event refs:
         return issues
 
     def apply_patch(self, patch: Dict[str, Any], project_id: Optional[str] = None) -> int:
-        project_id = self._resolve_project_id(project_id)
-        sanitized = sanitize_value(patch)
-        if not isinstance(sanitized, dict):
-            self._flag_review("Invalid Wiki Patch", "Patch was not a JSON object.", {}, project_id)
-            return 0
-        operations = sanitized.get("operations", [])
-        if isinstance(operations, dict):
-            operations = [operations]
-        if not isinstance(operations, list):
-            self._flag_review("Invalid Wiki Patch", "Patch operations were not a list.", sanitized, project_id)
-            return 0
+        """Legacy count API. New callers must consume apply_patch_result instead."""
+        return self.apply_patch_result(patch, project_id=project_id)['applied']
 
-        applied = 0
-        for operation in operations:
-            if not isinstance(operation, dict):
-                self._flag_review("Invalid Wiki Operation", "Operation was not an object.", {"operation": operation}, project_id)
-                continue
-            op_name = str(operation.get("op") or operation.get("type") or "").strip()
-            if op_name not in ALLOWED_OPS:
-                self._flag_review("Unknown Wiki Operation", f"Unknown operation: {op_name}", operation, project_id)
-                continue
-            if self._operation_requires_review(operation):
-                self._flag_review(
-                    str(operation.get("title") or "Wiki Operation Requires Review"),
-                    str(operation.get("reason") or "Operation was marked low-confidence or conflicting."),
-                    operation,
-                    project_id,
-                )
-                continue
+    @contextmanager
+    def _publication_lock(self):
+        # flock covers read/compare/modify/publish, including separate processes.
+        with (self.wiki_dir / '.publish.lock').open('a') as handle:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
             try:
-                if op_name == "create_page":
-                    self._op_create_page(operation, project_id)
-                elif op_name == "append_section":
-                    self._op_append_section(operation, project_id)
-                elif op_name == "merge_section_items":
-                    self._op_merge_section_items(operation, project_id)
-                elif op_name == "upsert_claims":
-                    self._op_upsert_claims(operation, project_id)
-                elif op_name == "update_frontmatter":
-                    self._op_update_frontmatter(operation, project_id)
-                elif op_name == "update_index":
-                    self._rebuild_index_page()
-                elif op_name == "add_research_queries":
-                    self._op_add_research_queries(operation, project_id)
-                elif op_name == "append_log":
-                    self._append_log(str(operation.get("message") or operation.get("content") or "Wiki patch applied."))
-                elif op_name == "flag_review":
-                    self._flag_review(
-                        str(operation.get("title") or "Wiki Review Item"),
-                        str(operation.get("body") or operation.get("reason") or ""),
-                        operation,
-                        project_id,
-                    )
-                applied += 1
-            except Exception as exc:
-                logger.warning("Wiki patch operation failed: %s", exc)
-                self._flag_review("Wiki Patch Error", str(exc), operation, project_id)
+                yield
+            finally:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
 
-        self._rebuild_index_page()
-        self._sync_search_index()
-        if applied:
-            self.compile_digest(project_id)
-        return applied
+    def scoped_path(self, identifier, project_id):
+        project_id = self._resolve_project_id(project_id)
+        path = self._safe_wiki_path(str(identifier))
+        rel = path.relative_to(self.wiki_dir.resolve())
+        key = _safe_id(project_id)[:48] + '-' + hashlib.sha256(project_id.encode()).hexdigest()[:12]
+        if len(rel.parts) > 2 and rel.parts[1] == key:
+            return path
+        if path.is_file():
+            fm, _ = self._split_frontmatter(path.read_text(encoding='utf-8'))
+            if str(fm.get('project_id') or '') == project_id:
+                return path  # compatible, scoped legacy page; no migration
+        if len(rel.parts) < 2 or rel.parts[0] not in TYPE_DIRS.values():
+            raise ValueError('MEMORY_PAGE_CATEGORY_REQUIRED')
+        return self._safe_wiki_path(str(Path(rel.parts[0], key, *rel.parts[1:])))
+
+    def excluded_sources(self, project_id):
+        with self._connect() as conn:
+            return {r['source_ref'] for r in conn.execute(
+                'SELECT source_ref FROM memory_exclusions WHERE project_id IN (?, ?)',
+                (self._resolve_project_id(project_id), 'global'))}
+
+    def page_record(self, identifier, project_id=None, *, include_inactive=False):
+        scope = self._resolve_project_id(project_id)
+        path = self._safe_wiki_path(str(identifier))
+        if not path.is_file():
+            path = self.scoped_path(identifier, scope)
+        if not path.is_file():
+            return None
+        text = path.read_text(encoding='utf-8')
+        fm, body = self._split_frontmatter(text)
+        page_scope = str(fm.get('project_id') or '')
+        if page_scope not in {scope, 'global'}:
+            return None
+        status = str(fm.get('status') or 'active')
+        sources = _ensure_list(fm.get('sources'))
+        excluded = self.excluded_sources(scope)
+        inactive = status in {'superseded', 'retracted', 'forgotten'} or bool(set(sources) & excluded)
+        if inactive and not include_inactive:
+            return None
+        return {**fm, 'path':self._relative_page_path(path), 'absolute_path':str(path.resolve()),
+            'source_ref':'wiki:' + self._relative_page_path(path), 'project_id':page_scope,
+            'status':status, 'available':not inactive, 'sources':sources, 'content':body,
+            'content_hash':hashlib.sha256(text.encode()).hexdigest(), 'text':text,
+            'links':self._wikilinks(body)}
+
+    def apply_patch_result(self, patch, project_id=None):
+        """One store, structured publication results. Partial batches keep their cursor."""
+        scope = self._resolve_project_id(project_id)
+        patch = sanitize_value(patch)
+        operations = patch.get('operations') if isinstance(patch, dict) else None
+        if not isinstance(operations, list):
+            return {'status':'failed', 'applied':0, 'written':[], 'errors':['OPERATIONS_MUST_BE_LIST']}
+        written, errors, noops = [], [], 0
+        with self._publication_lock():
+            for raw in operations:
+                path = None
+                before = None
+                try:
+                    if not isinstance(raw, dict): raise ValueError('OPERATION_MUST_BE_OBJECT')
+                    op = dict(raw)
+                    name = str(op.get('op') or '')
+                    if name not in ALLOWED_OPS: raise ValueError('UNKNOWN_MEMORY_OPERATION')
+                    if op.get('project_id') not in (None, '', scope): raise ValueError('MEMORY_SCOPE_MISMATCH')
+                    values=op.get('values') or op.get('frontmatter') or {}
+                    if isinstance(values,dict):
+                        if values.get('project_id') not in (None,'',scope):raise ValueError('MEMORY_SCOPE_MISMATCH')
+                        if 'memory_operations' in values:raise ValueError('MEMORY_OPERATION_RECEIPTS_HOST_OWNED')
+                    op['project_id'] = scope
+                    if name in {'create_page','append_section','merge_section_items','upsert_claims','update_frontmatter','replace_body'}:
+                        original = self._resolve_operation_path(op, title=str(op.get('title') or 'note'),
+                            page_type=str(op.get('type') or 'synthesis'))
+                        path = self.scoped_path(self._relative_page_path(original), scope)
+                        op['path'] = self._relative_page_path(path)
+                        before = path.read_bytes() if path.exists() else None
+                        fm, _ = self._split_frontmatter(before.decode() if before is not None else '')
+                        if fm and str(fm.get('project_id') or '') != scope: raise ValueError('MEMORY_SCOPE_MISMATCH')
+                        expected = op.get('expected_hash')
+                        actual = hashlib.sha256(before).hexdigest() if before is not None else ''
+                        incoming_sources = _ensure_list(op.get('sources'))
+                        if set(incoming_sources) & self.excluded_sources(scope):
+                            noops += 1; continue
+                        # Never revive a retracted page by replaying an old source/operation.
+                        if fm.get('status') in {'forgotten','retracted','superseded'} and name != 'update_frontmatter':
+                            noops += 1; continue
+                        operation_id = str(op.get('operation_id') or hashlib.sha256(json.dumps(
+                            {k:v for k,v in op.items() if k != 'expected_hash'},sort_keys=True,ensure_ascii=False).encode()).hexdigest())
+                        if operation_id in _ensure_list(fm.get('memory_operations')):
+                            index_pending = False
+                            try: self._repair_unchanged_index(op['path'], scope, actual)
+                            except Exception: index_pending = True
+                            written.append({'path':op['path'],'absolute_path':str(path), 'source_ref':'wiki:'+op['path'],
+                                'content_hash':actual, 'replayed':True, 'index_pending':index_pending})
+                            continue
+                        if expected is not None and expected != actual: raise ValueError('MEMORY_VERSION_CONFLICT:'+actual)
+                        if before is not None:
+                            _, old_body = self._split_frontmatter(before.decode())
+                            text = self._operation_text(op).strip()
+                            no_new_sources = set(incoming_sources) <= set(_ensure_list(fm.get('sources')))
+                            if no_new_sources and not op.get('claims') and not op.get('task_semantics') and ((name == 'create_page' and old_body.strip() == ('# '+str(op.get('title') or 'Untitled Wiki Page')+'\n\n'+text).strip())
+                                or (name == 'replace_body' and old_body.strip() == text)
+                                or (name == 'update_frontmatter' and all(fm.get(k)==v for k,v in (op.get('values') or op.get('frontmatter') or {}).items()))):
+                                noops += 1
+                                pending=False
+                                try:self._repair_unchanged_index(op['path'],scope,actual)
+                                except Exception:pending=True
+                                if pending:written.append({'path':op['path'],'source_ref':'wiki:'+op['path'],'replayed':True,'index_pending':True})
+                                continue
+                            if name=='append_section' and no_new_sources and not op.get('task_semantics'):
+                                section=re.search(r'^## '+re.escape(str(op.get('section') or 'Updates'))+r'\n(?P<body>.*?)(?=^## |\Z)',old_body,re.M|re.S)
+                                if section and text and {line.strip().lower() for line in text.splitlines()} <= {line.strip().lower() for line in section.group('body').splitlines()}:
+                                    noops += 1
+                                    pending=False
+                                    try:self._repair_unchanged_index(op['path'],scope,actual)
+                                    except Exception:pending=True
+                                    if pending:written.append({'path':op['path'],'source_ref':'wiki:'+op['path'],'replayed':True,'index_pending':True})
+                                    continue
+                        self._publication_expected = {str(path):actual}
+                        self._publication_operation = ''
+                        if self._operation_requires_review(op):
+                            raise ValueError('EXPLICIT_REVIEW_REQUIRED')
+                        getattr(self, '_op_' + name)(op, scope)
+                        final_fm, final_body = self._split_frontmatter(path.read_text(encoding='utf-8'))
+                        final_fm['memory_operations'] = self._merge_lists(final_fm.get('memory_operations'), [operation_id])
+                        self._write_page(path, final_fm, final_body)
+                        record = self.page_record(op['path'], scope, include_inactive=True)
+                        if record and record['status'] == 'forgotten':
+                            with self._connect() as conn:
+                                for source in set(record['sources'] + [record['source_ref']]):
+                                    conn.execute('INSERT OR IGNORE INTO memory_exclusions VALUES (?, ?, ?)',(scope, source, _now()))
+                                conn.commit()
+                        index_pending = False
+                        try: self.refresh_pages([op['path']])
+                        except Exception as exc:
+                            index_pending = True
+                            logger.warning('Memory body published; index_pending: %s', exc)
+                        written.append({'path':op['path'],'absolute_path':str(path),'source_ref':'wiki:'+op['path'],
+                            'content_hash':record['content_hash'] if record else '', 'index_pending':index_pending,
+                            'status':record['status'] if record else 'unavailable'})
+                    elif name == 'update_index':
+                        self._sync_search_index(); self._rebuild_index_page(); noops += 1
+                    elif name == 'append_log':
+                        self._append_log(str(op.get('message') or op.get('content') or '')); noops += 1
+                    elif name == 'add_research_queries':
+                        self._op_add_research_queries(op, scope); noops += 1
+                    else:
+                        self._flag_review(str(op.get('title') or 'Review'), str(op.get('body') or ''), op, scope)
+                        errors.append('DEFERRED_REVIEW')
+                except Exception as exc:
+                    errors.append(redact_secrets(str(exc)))
+                    if path and path.exists() and path.read_bytes() != before:
+                        written.append({'path':self._relative_page_path(path), 'absolute_path':str(path),
+                            'source_ref':'wiki:'+self._relative_page_path(path), 'index_pending':True, 'partial':True,
+                            'content_hash':hashlib.sha256(path.read_bytes()).hexdigest()})
+                finally:
+                    self._publication_expected = {}; self._publication_operation = ''
+        changed = [w for w in written if not w.get('replayed')]
+        status = ('partial' if written else 'failed') if errors else ('written' if changed else 'noop')
+        return {'status':status, 'applied':len(changed), 'written':written, 'errors':errors,
+            'noop_count':noops, 'index_pending':any(w.get('index_pending') for w in written)}
+
+    def _repair_unchanged_index(self, path, scope, content_hash):
+        record=self.page_record(path,scope)
+        with self._connect() as conn:
+            row=conn.execute('SELECT content_hash FROM wiki_pages WHERE path=?',(path,)).fetchone()
+        if (record is None and row is not None) or (record is not None and (row is None or row['content_hash']!=content_hash)):
+            self.refresh_pages([path])
+
+    def refresh_pages(self, paths):
+        """Explicit incremental repair; search never scans or mutates the index."""
+        pages = self._all_pages(paths=paths, include_inactive=True)
+        by_path = {p['path']:p for p in pages}
+        with self._connect() as conn:
+            for path in paths:
+                page = by_path.get(path)
+                if page and page.get('status') not in {'superseded','retracted','forgotten'} and not (
+                    set(page['sources']) & self.excluded_sources(page['project_id'])):
+                    self._upsert_search_page(conn, page)
+                else: self._delete_search_page(conn, path)
+            conn.commit()
+        for scope in {p['project_id'] for p in pages}:
+            self.compile_digest(scope)
+        if self._embedding_enabled():
+            for scope in {p['project_id'] for p in pages}:
+                self._sync_page_embeddings(scope, [p for p in pages if p['project_id']==scope and p.get('status') not in {'superseded','retracted','forgotten'}])
+
+    def discover_projects(self, query='', *, limit=6, offset=0):
+        """Read existing indexed scopes, including private/unassigned knowledge.
+
+        No session scan, new index, execution-root rebinding or cached candidates.
+        Every returned page must still match its indexed version and exclusions.
+        """
+        limit = max(1, min(int(limit), 24)); offset = max(0, int(offset))
+        query = str(query).strip().lower()
+        terms = re.findall(r'[a-z0-9_-]+|[\u4e00-\u9fff]+', query)
+        tokens = set(terms)
+        for term in terms:
+            if re.search(r'[\u4e00-\u9fff]', term):
+                tokens.update(term[i:i+2] for i in range(len(term)-1))
+        clauses = ' OR '.join('(lower(title) LIKE ? OR lower(content) LIKE ?)' for _ in tokens)
+        parameters = [v for term in sorted(tokens) for v in ('%'+term+'%', '%'+term+'%')]
+        with self._connect() as conn:
+            rows = conn.execute('SELECT path,title,project_id,content_hash,updated_at FROM wiki_pages' +
+                (' WHERE '+clauses if clauses else '') + ' ORDER BY updated_at DESC,path', parameters).fetchall()
+            roots = {}
+            for row in conn.execute('SELECT root,project_id FROM memory_project_roots ORDER BY root'):
+                roots.setdefault(row['project_id'], []).append(row['root'])
+        scopes = {}
+        for indexed in rows:
+            scope = indexed['project_id']
+            try: page = self.page_record(indexed['path'], scope)
+            except (OSError, ValueError): continue
+            if not page or page['content_hash'] != indexed['content_hash']: continue
+            if page['source_ref'] in self.excluded_sources(scope): continue
+            row = scopes.setdefault(scope, dict(project_id=scope,
+                scope_kind='unassigned' if scope == 'default' else 'task_private' if scope.startswith('task-') else 'global' if scope == 'global' else 'project',
+                recorded_roots=roots.get(scope, [])[:3], titles=[], source_refs=[], source_versions={},
+                last_recorded_at=indexed['updated_at'] or None,
+                time_meaning='index record time, not current path verification',
+                role='historical_discovery_not_execution_evidence'))
+            if len(row['source_refs']) < 3:
+                row['source_refs'].append(page['source_ref'])
+                row['source_versions'][page['source_ref']] = page['content_hash']
+                row['titles'].append(str(indexed['title'] or '')[:240])
+        candidates = list(scopes.values())
+        selected = candidates[offset:offset+limit]
+        return {'hits':selected, 'offset':offset, 'has_more':offset+limit < len(candidates),
+            'next_offset':offset+limit if offset+limit < len(candidates) else None,
+            'coverage':'Current valid Wiki index only; archive-only tasks require source=archive.'}
+
+    def navigation(self, project_id=None, max_chars=2500):
+        scope = self._resolve_project_id(project_id)
+        rows = self.search('', scope, top_k=24)
+        if not rows: return ''
+        lines = ['Memory navigation (historical references, not current execution evidence):']
+        for row in rows:
+            line = '- ' + str(row['title']) + ' | ' + row['source_ref'] + ' | ' + row['status']
+            if len('\n'.join(lines)) + len(line) > max_chars: break
+            lines.append(line)
+        return '\n'.join(lines)
 
     def search(self, query: str, project_id: Optional[str] = None, top_k: int = 6) -> List[Dict[str, Any]]:
         project_id = self._resolve_project_id(project_id)
-        self._sync_search_index()
         query = query.strip()
         if not query:
             hits = self._recent_pages(project_id, top_k)
@@ -800,7 +987,19 @@ SessionArchive event refs:
                 vector_hits = self._vector_search(query, project_id, top_k * 2)
             hits = self._rrf_fuse([lexical_hits, vector_hits], top_k * 2) if vector_hits else lexical_hits
         expanded = self._expand_hits(hits, project_id, top_k)
-        return [hit.as_dict() for hit in expanded[:top_k]]
+        result = []
+        for hit in expanded:
+            page = self.page_record(hit.path, project_id)
+            if page is None: continue
+            # An externally edited file is unavailable until explicit refresh;
+            # never return stale index text as current file content.
+            with self._connect() as conn:
+                row = conn.execute('SELECT content_hash FROM wiki_pages WHERE path=?',(hit.path,)).fetchone()
+            if row is None or row['content_hash'] != page['content_hash']: continue
+            result.append({**hit.as_dict(), **{k:page[k] for k in
+                ('absolute_path','source_ref','project_id','status','content_hash')}})
+            if len(result) >= top_k: break
+        return result
 
     def build_prompt_context(
         self,
@@ -810,9 +1009,6 @@ SessionArchive event refs:
         top_k: int = 5,
     ) -> str:
         parts: List[str] = []
-        purpose = self.read_purpose()
-        if purpose:
-            parts.append(f"<wiki_purpose>\n{purpose}\n</wiki_purpose>")
         hits = self.search(query, project_id=project_id, top_k=top_k)
         if hits:
             parts.append(self.format_hits(hits, title="Retrieved Wiki Memory"))
@@ -824,112 +1020,25 @@ SessionArchive event refs:
         return _clip(self.purpose_file.read_text(encoding="utf-8", errors="replace"), max_chars)
 
     def compile_digest(self, project_id: Optional[str] = None) -> str:
+        """Explicit short navigation rebuild. No second knowledge/summary store."""
         project_id = self._resolve_project_id(project_id)
-        pages = self._all_pages(project_id=project_id)
-        claims = self._flatten_claims(pages, project_id)
-        communities = self.compile_communities(project_id)
-        self._sync_page_embeddings(project_id, pages)
-        review_count = self._review_count(project_id)
-        page_groups: Dict[str, List[Dict[str, str]]] = {}
-        for page in pages:
-            page_groups.setdefault(str(page.get("type") or "unknown"), []).append({
-                "path": str(page.get("path") or ""),
-                "title": str(page.get("title") or ""),
-                "updated_at": str(page.get("updated_at") or ""),
-            })
-        for group in page_groups.values():
-            group.sort(key=lambda item: item["title"].lower())
-
-        high_confidence = [
-            {
-                "id": claim["id"],
-                "text": claim["text"],
-                "page": claim["page"],
-                "evidence": claim["evidence"][:3],
-            }
-            for claim in claims
-            if str(claim.get("confidence")).lower() == "high"
-            and str(claim.get("status")).lower() not in {"deprecated", "rejected", "superseded"}
-        ][:8]
-        community_items = communities.get("communities") if isinstance(communities, dict) else []
-        if not isinstance(community_items, list):
-            community_items = []
-        page_metrics = communities.get("pages") if isinstance(communities, dict) else {}
-        if not isinstance(page_metrics, dict):
-            page_metrics = {}
-        low_cohesion = [
-            item for item in community_items
-            if isinstance(item, dict) and "low_cohesion" in _ensure_list(item.get("warnings"))
-        ]
-        bridge_pages = [
-            {
-                "path": str(path),
-                "title": str(info.get("title") or ""),
-                "type": str(info.get("type") or ""),
-                "bridge_score": int(info.get("bridge_score") or 0),
-            }
-            for path, info in page_metrics.items()
-            if isinstance(info, dict) and int(info.get("bridge_score") or 0) >= 2
-        ]
-        bridge_pages.sort(key=lambda item: (-item["bridge_score"], item["title"].lower(), item["path"]))
-        knowledge_pages = [
-            {
-                "path": str(page.get("path") or ""),
-                "title": str(page.get("title") or ""),
-                "type": str(page.get("type") or ""),
-                "updated_at": str(page.get("updated_at") or ""),
-            }
-            for page in pages
-            if str(page.get("type") or "").lower() in {"entity", "concept"}
-        ][:12]
-        top_communities = [
-            {
-                "community_id": str(item.get("community_id") or ""),
-                "size": int(item.get("size") or 0),
-                "cohesion": float(item.get("cohesion") or 0.0),
-                "core_pages": item.get("core_pages") or [],
-                "warnings": _ensure_list(item.get("warnings")),
-            }
-            for item in community_items[:5]
-            if isinstance(item, dict)
-        ]
-
-        digest = {
-            "project_id": project_id,
-            "updated_at": _now(),
-            "page_count": len(pages),
-            "claim_count": len(claims),
-            "review_count": review_count,
-            "research_query_count": self._research_query_count(project_id),
-            "community_count": len(community_items),
-            "low_cohesion_count": len(low_cohesion),
-            "entity_count": len(page_groups.get("entity", [])),
-            "concept_count": len(page_groups.get("concept", [])),
-            "bridge_pages": bridge_pages[:5],
-            "top_communities": top_communities,
-            "page_types": {key: len(value) for key, value in sorted(page_groups.items())},
-            "pages": page_groups,
-            "knowledge_pages": knowledge_pages,
-            "high_confidence_claims": high_confidence,
-            "usage": "Use wiki search/page retrieval for evidence; this digest is only a compact index.",
-        }
-
-        compiled_at = str(digest["updated_at"])
-        cache_dir = self.cache_project_dir(project_id)
-        cache_dir.mkdir(parents=True, exist_ok=True)
-        self.digest_path(project_id).write_text(
-            json.dumps(digest, ensure_ascii=False, indent=2, default=str) + "\n",
-            encoding="utf-8",
-        )
-        with self.claims_index_path(project_id).open("w", encoding="utf-8") as handle:
-            for claim in claims:
-                handle.write(json.dumps(claim, ensure_ascii=False, default=str) + "\n")
-        synced = self.sync_project_index_fields(project_id, pages=pages, compiled_at=compiled_at)
-        return (
-            f"Wiki digest compiled for project {project_id}: "
-            f"{len(pages)} page(s), {len(claims)} claim(s), {review_count} review item(s).\n"
-            f"{synced}"
-        )
+        rows = self.search('', project_id, top_k=24)
+        digest = {'project_id':project_id, 'page_count':len(rows),
+            'count_note':'navigation window, not a whole-library census',
+            'pages':[{'title':r['title'],'path':r['path'],'source_ref':r['source_ref'],
+                'status':r['status'],'content_hash':r['content_hash']} for r in rows],
+            'usage':'Short historical navigation only; search/read for conditions and source evidence.'}
+        path = self.digest_path(project_id);path.parent.mkdir(parents=True,exist_ok=True)
+        rendered = json.dumps(digest,ensure_ascii=False,indent=2)+'\n'
+        if not path.exists() or path.read_text(encoding='utf-8') != rendered:
+            fd, temporary = tempfile.mkstemp(prefix='.digest.',dir=str(path.parent))
+            try:
+                with os.fdopen(fd,'w',encoding='utf-8') as handle:
+                    handle.write(rendered);handle.flush();os.fsync(handle.fileno())
+                os.replace(temporary,path)
+            finally:
+                if os.path.exists(temporary):os.unlink(temporary)
+        return f"Wiki navigation compiled for project {project_id}: {len(rows)} reference(s)."
 
     def sync_project_index_fields(
         self,
@@ -969,35 +1078,18 @@ SessionArchive event refs:
         return self.cache_project_dir(project_id) / "communities.json"
 
     def read_claims_index(self, project_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        # Old cache files remain historical artifacts. Resolve current files so
+        # forgotten/superseded claims cannot survive in a stale derived cache.
         project_id = self._resolve_project_id(project_id)
-        path = self.claims_index_path(project_id)
-        if not path.exists():
-            return self._flatten_claims(self._all_pages(project_id=project_id), project_id)
-        claims: List[Dict[str, Any]] = []
-        for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                data = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            if isinstance(data, dict):
-                claims.append(data)
-        return claims
+        with self._connect() as conn:
+            paths = [r['path'] for r in conn.execute(
+                "SELECT path FROM wiki_pages WHERE project_id IN (?, 'global')",(project_id,))]
+        return self._flatten_claims(self._all_pages(project_id=project_id,paths=paths),project_id)
 
     def read_communities(self, project_id: Optional[str] = None) -> Dict[str, Any]:
-        project_id = self._resolve_project_id(project_id)
-        path = self.community_path(project_id)
-        if not path.exists():
-            return self.compile_communities(project_id)
-        try:
-            data = json.loads(path.read_text(encoding="utf-8", errors="replace"))
-        except (OSError, json.JSONDecodeError):
-            return self.compile_communities(project_id)
-        if not isinstance(data, dict):
-            return self.compile_communities(project_id)
-        return data
+        # Explicit inspection only, never called by search. Rebuild from active
+        # pages so an old community cache cannot revive withdrawn material.
+        return self.compile_communities(self._resolve_project_id(project_id))
 
     def compile_communities(self, project_id: Optional[str] = None) -> Dict[str, Any]:
         project_id = self._resolve_project_id(project_id)
@@ -1102,13 +1194,13 @@ SessionArchive event refs:
         return "\n".join(parts)
 
     def _resolve_project_id(self, project_id: Optional[str] = None) -> str:
-        return _safe_id(project_id or self.default_project_id)
+        value = str(project_id or self.default_project_id)
+        safe = _safe_id(value)
+        return safe if safe==value else safe[:48]+'-'+hashlib.sha256(value.encode()).hexdigest()[:12]
 
-    def read_page(self, identifier: str) -> str:
-        path = self._find_page(identifier)
-        if not path:
-            return f"Wiki page not found: {identifier}"
-        return path.read_text(encoding="utf-8")
+    def read_page(self, identifier: str, project_id=None, *, include_inactive=False) -> str:
+        page = self.page_record(identifier, project_id, include_inactive=include_inactive)
+        return page['text'] if page else f"Wiki page unavailable: {identifier}"
 
     def read_review_queue(self) -> str:
         return self.review_pending.read_text(encoding="utf-8")
@@ -1130,6 +1222,10 @@ SessionArchive event refs:
                 )
                 """
             )
+            conn.execute('CREATE TABLE IF NOT EXISTS memory_exclusions (project_id TEXT, source_ref TEXT, created_at TEXT, PRIMARY KEY(project_id,source_ref))')
+            conn.execute('CREATE TABLE IF NOT EXISTS memory_project_roots (root TEXT, project_id TEXT, PRIMARY KEY(root,project_id))')
+            conn.execute('CREATE TABLE IF NOT EXISTS memory_profile_sources (content_hash TEXT, source_ref TEXT, PRIMARY KEY(content_hash,source_ref))')
+            conn.execute('CREATE TABLE IF NOT EXISTS memory_sources_processed (project_id TEXT, source_ref TEXT, content_hash TEXT, status TEXT, PRIMARY KEY(project_id,source_ref,content_hash))')
             self._ensure_wiki_pages_columns(conn)
             conn.execute(
                 """
@@ -1322,9 +1418,7 @@ SessionArchive event refs:
 
     def _operation_requires_review(self, operation: Dict[str, Any]) -> bool:
         confidence = str(operation.get("confidence") or "").strip().lower()
-        if confidence == "low":
-            return True
-        return bool(operation.get("requires_review") or operation.get("conflict") or operation.get("stale"))
+        return bool(operation.get("requires_review"))
 
     def _op_create_page(self, operation: Dict[str, Any], default_project_id: str) -> None:
         title = str(operation.get("title") or "Untitled Wiki Page").strip()
@@ -1432,6 +1526,15 @@ SessionArchive event refs:
             str(operation.get("project_id") or default_project_id),
             fallback_evidence=_ensure_list(operation.get("sources")),
         )
+
+    def _op_replace_body(self, operation, default_project_id):
+        path = self._resolve_operation_path(operation)
+        if 'expected_hash' not in operation: raise ValueError('REPLACE_REQUIRES_READ_VERSION')
+        if not path.is_file(): raise ValueError('MEMORY_PAGE_MISSING')
+        fm, _ = self._split_frontmatter(path.read_text(encoding='utf-8'))
+        fm['sources'] = self._merge_lists(fm.get('sources'), operation.get('sources'))
+        fm['updated_at'] = _now()
+        self._write_page(path, fm, self._operation_text(operation))
 
     def _op_update_frontmatter(self, operation: Dict[str, Any], default_project_id: str) -> None:
         path = self._resolve_operation_path(operation)
@@ -1602,6 +1705,9 @@ SessionArchive event refs:
 
     def _safe_wiki_path(self, raw_path: str) -> Path:
         raw = redact_secrets(raw_path).replace("\\", "/").strip()
+        if raw.startswith('wiki:'): raw = raw[5:]
+        if Path(raw).is_absolute():
+            raw = str(Path(raw).resolve().relative_to(self.wiki_dir.resolve()))
         raw = re.sub(r"^/+","", raw)
         if raw.startswith("wiki/"):
             raw = raw[5:]
@@ -1619,7 +1725,6 @@ SessionArchive event refs:
             path.relative_to(self.wiki_dir.resolve())
         except ValueError as exc:
             raise ValueError(f"Wiki page path escapes wiki directory: {raw_path}") from exc
-        path.parent.mkdir(parents=True, exist_ok=True)
         return path
 
     def _page_path(self, rel_path: str) -> Path:
@@ -1758,7 +1863,7 @@ SessionArchive event refs:
         if not evidence:
             return {}, "Wiki claim missing evidence."
         if not all(self._valid_evidence_ref(item) for item in evidence):
-            return {}, "Wiki claim evidence must reference session_archive:, task:, artifact:, or a historical raw: source."
+            return {}, "Wiki claim evidence must reference an actual session_archive:, task-source:, work:, task:, artifact:, or historical raw: source."
 
         claim_id = str(raw_claim.get("id") or "").strip()
         if not claim_id:
@@ -1838,10 +1943,28 @@ SessionArchive event refs:
 
     def _write_page(self, path: Path, frontmatter: Dict[str, Any], body: str) -> None:
         frontmatter = dict(frontmatter)
-        frontmatter.setdefault("updated_at", _now())
-        rendered = self._render_frontmatter(frontmatter) + "\n" + body.strip() + "\n"
+        frontmatter.setdefault('updated_at', _now())
+        operation_id = getattr(self, '_publication_operation', '')
+        if operation_id:
+            frontmatter['memory_operations'] = self._merge_lists(frontmatter.get('memory_operations'), [operation_id])
+        rendered = self._render_frontmatter(frontmatter) + '\n' + body.strip() + '\n'
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(rendered, encoding="utf-8")
+        expected = getattr(self, '_publication_expected', {}).get(str(path))
+        current = hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else ''
+        if expected is not None and current != expected:
+            raise ValueError('MEMORY_EXTERNAL_EDIT_CONFLICT:'+current)
+        fd, temporary = tempfile.mkstemp(prefix='.'+path.name+'.', dir=str(path.parent))
+        try:
+            with os.fdopen(fd, 'w', encoding='utf-8') as handle:
+                handle.write(rendered); handle.flush(); os.fsync(handle.fileno())
+            current = hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else ''
+            if expected is not None and current != expected:
+                raise ValueError('MEMORY_EXTERNAL_EDIT_CONFLICT:'+current)
+            os.replace(temporary, path)
+        finally:
+            if os.path.exists(temporary): os.unlink(temporary)
+        if expected is not None:
+            self._publication_expected[str(path)] = hashlib.sha256(rendered.encode()).hexdigest()
 
     def _split_frontmatter(self, text: str) -> Tuple[Dict[str, Any], str]:
         if not text.startswith("---\n"):
@@ -1961,7 +2084,7 @@ SessionArchive event refs:
             encoding="utf-8",
         )
 
-    def _all_pages(self, project_id: Optional[str] = None, include_system: bool = False) -> List[Dict[str, Any]]:
+    def _all_pages(self, project_id: Optional[str] = None, include_system: bool = False, *, paths=None, include_inactive=False) -> List[Dict[str, Any]]:
         pages: List[Dict[str, Any]] = []
         skip = set()
         if not include_system:
@@ -1971,7 +2094,7 @@ SessionArchive event refs:
                 self.overview_file.resolve(),
                 self.review_pending.resolve(),
             }
-        for path in sorted(self.wiki_dir.rglob("*.md")):
+        for path in ([self._safe_wiki_path(p) for p in paths] if paths is not None else sorted(self.wiki_dir.rglob("*.md"))):
             if path.resolve() in skip:
                 continue
             try:
@@ -1981,7 +2104,10 @@ SessionArchive event refs:
             content_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
             frontmatter, body = self._split_frontmatter(text)
             page_project = str(frontmatter.get("project_id") or "")
-            if project_id and page_project and page_project != _safe_id(project_id):
+            if project_id and page_project not in {_safe_id(project_id), "global"}:
+                continue
+            if not include_inactive and (str(frontmatter.get('status') or 'active') in {'superseded','retracted','forgotten'}
+                    or bool(set(_ensure_list(frontmatter.get('sources'))) & self.excluded_sources(page_project))):
                 continue
             title = str(frontmatter.get("title") or self._heading_title(body) or path.stem)
             pages.append({
@@ -1989,6 +2115,7 @@ SessionArchive event refs:
                 "title": title,
                 "type": str(frontmatter.get("type") or "unknown"),
                 "project_id": page_project,
+                "status": str(frontmatter.get("status") or "active"),
                 "entity_type": str(frontmatter.get("entity_type") or ""),
                 "concept_type": str(frontmatter.get("concept_type") or ""),
                 "definition": str(frontmatter.get("definition") or ""),
@@ -2187,7 +2314,7 @@ SessionArchive event refs:
                     FROM wiki_pages_fts
                     JOIN wiki_pages p ON p.path = wiki_pages_fts.path
                     WHERE wiki_pages_fts MATCH ?
-                      AND (p.project_id = ? OR p.project_id = '')
+                      AND (p.project_id = ? OR p.project_id = 'global')
                     ORDER BY rank
                     LIMIT ?
                     """,
@@ -2212,7 +2339,7 @@ SessionArchive event refs:
         hits: List[WikiSearchHit] = []
         with self._connect() as conn:
             rows = conn.execute(
-                "SELECT * FROM wiki_pages WHERE project_id = ? OR project_id = ''",
+                "SELECT * FROM wiki_pages WHERE project_id = ? OR project_id = 'global'",
                 (_safe_id(project_id),),
             ).fetchall()
         for row in rows:
@@ -2235,7 +2362,7 @@ SessionArchive event refs:
     def _recent_pages(self, project_id: str, limit: int) -> List[WikiSearchHit]:
         with self._connect() as conn:
             rows = conn.execute(
-                "SELECT * FROM wiki_pages WHERE project_id = ? OR project_id = '' ORDER BY updated_at DESC LIMIT ?",
+                "SELECT * FROM wiki_pages WHERE project_id = ? OR project_id = 'global' ORDER BY updated_at DESC LIMIT ?",
                 (_safe_id(project_id), limit),
             ).fetchall()
         return [self._hit_from_row(row, 1.0) for row in rows]
@@ -2393,7 +2520,6 @@ SessionArchive event refs:
         project_id = self._resolve_project_id(project_id)
         if not query.strip() or not self._embedding_enabled():
             return []
-        self._sync_page_embeddings(project_id, self._all_pages(project_id=project_id))
         query_vector = self._embed_text(query)
         if query_vector is None:
             return []
@@ -2407,7 +2533,7 @@ SessionArchive event refs:
                 WHERE e.project_id = ?
                   AND e.model = ?
                   AND e.dimensions = ?
-                  AND (p.project_id = ? OR p.project_id = '')
+                  AND (p.project_id = ? OR p.project_id = 'global')
                 """,
                 (project_id, self._embedding_model(), self._embedding_dimensions(), project_id),
             ).fetchall()
@@ -2464,30 +2590,18 @@ SessionArchive event refs:
         return dot / (left_norm * right_norm)
 
     def _expand_hits(self, hits: List[WikiSearchHit], project_id: str, top_k: int) -> List[WikiSearchHit]:
-        if not hits:
-            return []
-        by_path = {hit.path: hit for hit in hits}
-        pages = self._all_pages(project_id=project_id)
-        graph_scores = self._graph_related_scores(hits, pages)
-        pages_by_path = {str(page.get("path") or ""): page for page in pages}
-        community_bonus = self._community_expansion_bonus(hits, graph_scores, project_id)
-        for path, graph_score in graph_scores.items():
-            if graph_score < 1.5 or path in by_path:
-                continue
-            page = pages_by_path.get(path)
-            if not page:
-                continue
-            by_path[path] = WikiSearchHit(
-                path=path,
-                title=str(page.get("title") or ""),
-                page_type=str(page.get("type") or ""),
-                score=graph_score + community_bonus.get(path, 0.0),
-                text=_clip(str(page.get("content") or ""), 1200),
-                sources=_ensure_list(page.get("sources")),
-            )
-        ordered = list(by_path.values())
-        ordered.sort(key=lambda hit: hit.score, reverse=True)
-        return ordered[: max(top_k, len(hits))]
+        # Do not expand every shared-source derivative into the same request.
+        # Explicit page links remain available through read_memory.
+        result, seen_paths, seen_sources = [], set(), set()
+        for hit in hits:
+            if hit.path in seen_paths or (hit.sources and set(hit.sources) <= seen_sources): continue
+            live=self.page_record(hit.path, project_id)
+            if live is None:continue
+            with self._connect() as conn:
+                indexed=conn.execute('SELECT content_hash FROM wiki_pages WHERE path=?',(hit.path,)).fetchone()
+            if indexed is None or indexed['content_hash']!=live['content_hash']:continue
+            seen_paths.add(hit.path); seen_sources.update(hit.sources); result.append(hit)
+        return result
 
     def _graph_related_scores(
         self,

@@ -2,7 +2,7 @@
 set -euo pipefail
 usage(){ echo "Usage: run_plink2_qc.sh --pfile prefix --phenotype phenotype.tsv --out outdir [--geno 0.1 --mind 0.1 --maf 0.05 --hwe 1e-6 --max-alleles 2 --ld-prune '50 5 0.2']"; }
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-repo_root="$(cd -- "${script_dir}/../../../.." && pwd)"
+crop_dir="$(cd -- "${script_dir}/../.." && pwd)"
 pfile=""; phenotype=""; out=""; geno=0.1; mind=0.1; maf=0.05; hwe=1e-6; max_alleles=2; ld_prune=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -20,6 +20,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 [[ -n "$pfile" && -n "$phenotype" && -n "$out" ]] || { usage >&2; exit 2; }
-cmd=(python "${repo_root}/skills/crop-breeding/crop-gwas-qc-plink2-vcftools/scripts/run_crop_gwas_qc.py" --pfile "$pfile" --phenotype "$phenotype" --outdir "$out" --geno "$geno" --mind "$mind" --maf "$maf" --hwe "$hwe" --max-alleles "$max_alleles")
+cmd=(python "${crop_dir}/crop-gwas-qc-plink2-vcftools/scripts/run_crop_gwas_qc.py" --pfile "$pfile" --phenotype "$phenotype" --outdir "$out" --geno "$geno" --mind "$mind" --maf "$maf" --hwe "$hwe" --max-alleles "$max_alleles")
 [[ -n "$ld_prune" ]] && cmd+=(--ld-prune "$ld_prune")
 exec "${cmd[@]}"
