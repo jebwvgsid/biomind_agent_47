@@ -177,12 +177,24 @@ def source_provenance(records: list[dict]) -> dict:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--output', required=True, type=Path)
-    parser.add_argument('--version', default='0.1.0-candidate.20260928')
+    parser.add_argument('--version', help='Explicit candidate package version override; default: BioMind runtime package.json version')
     parser.add_argument('--only', choices=['skills', 'extension', 'both'], default='both')
     args = parser.parse_args()
+    version = args.version
+    if version is None:
+        try:
+            manifest = json.loads((RUNTIME / 'package.json').read_text(encoding='utf-8'))
+            version = manifest['version']
+            if manifest.get('name') != 'biomind-pi-runtime':
+                raise ValueError('Unexpected manifest')
+        except (OSError, ValueError, KeyError, TypeError):
+            parser.error('Product version manifest is missing or invalid')
+    # Bound the filename/display token without introducing a SemVer implementation.
+    if not isinstance(version, str) or not re.fullmatch(r'[A-Za-z0-9.+-]{1,128}', version):
+        parser.error('Candidate version must be a nonempty version token')
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
-    common = {'version': args.version, 'private': True, 'license': 'UNLICENSED', 'keywords': ['pi-package']}
+    common = {'version': version, 'private': True, 'license': 'UNLICENSED', 'keywords': ['pi-package']}
     records = []
     if args.only in {'skills', 'both'}:
         resources = skills_resources()

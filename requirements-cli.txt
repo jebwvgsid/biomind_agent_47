@@ -1,4 +1,9 @@
 # The production CLI is the Pi runtime in integrations/pi_runtime.
 # Its dependencies are pinned by package.json and package-lock.json there.
-# No additional Python terminal package is required.
+# Direct dependencies of the current Python domain and nonsecret launch bridge.
+# Verified with Python 3.12.12; this is not a lock of transitive dependencies.
+langchain-core==1.2.7
+packaging==25.0
+python-dotenv==1.1.1
+# pytest is a test dependency, not a product requirement. No Python TUI is needed.
 # This file does not uninstall packages from an existing Python environment.

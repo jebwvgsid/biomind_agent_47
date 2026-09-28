@@ -29,6 +29,66 @@ class PiEntryError(RuntimeError):
     """An explicit Pi request cannot start; never fall back to legacy."""
 
 
+def _metadata_token(value: object) -> str | None:
+    """A bounded display token, not a second version parser or authority."""
+    return value if isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9.+-]{1,128}", value) else None
+
+
+def _version_metadata(path: Path) -> dict:
+    with path.open(encoding="utf-8") as stream:
+        value = json.loads(stream.read(65537))
+    if not isinstance(value, dict):
+        raise ValueError("Expected manifest object")
+    return value
+
+
+def _source_commit(repository: Path) -> str:
+    # An exported installation can be inside an unrelated project repository.
+    # Require its own marker before consulting Git, and verify the returned root.
+    if not (repository / ".git").exists():
+        return "unknown"
+    environment = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+    environment["GIT_OPTIONAL_LOCKS"] = "0"
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repository), "rev-parse", "--show-toplevel", "--verify", "HEAD"],
+            capture_output=True, text=True, check=True, timeout=1, env=environment,
+        )
+        lines = result.stdout.strip().splitlines()
+        if (len(lines) == 2 and Path(lines[0]).resolve() == repository
+                and re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", lines[1])):
+            return lines[1]
+    except (OSError, ValueError, subprocess.SubprocessError):
+        pass
+    return "unknown"
+
+
+def product_version(runtime: Path | None = None) -> str:
+    """Read declared identity offline; do not inspect worktrees or installed Pi."""
+    runtime = (runtime if runtime is not None else RUNTIME).resolve()
+    try:
+        package = _version_metadata(runtime / "package.json")
+        version = _metadata_token(package.get("version"))
+        if package.get("name") != "biomind-pi-runtime" or version is None:
+            raise ValueError("Invalid product manifest")
+    except (OSError, ValueError):
+        raise PiEntryError("Product version manifest is missing or invalid") from None
+    dependencies = package.get("dependencies")
+    declared = (_metadata_token(dependencies.get("@earendil-works/pi-coding-agent"))
+                if isinstance(dependencies, dict) else None) or "unknown"
+    expected = "unknown"
+    try:
+        patch = _version_metadata(runtime / "compat" / "pi-0.87.1-observer.patch.json")
+        if patch.get("package") == "@earendil-works/pi-coding-agent" and patch.get("originalVersion") == declared:
+            expected = _metadata_token(patch.get("runtimeLabel")) or "unknown"
+    except (OSError, ValueError):
+        pass
+    return (f"BioMind {version}\n"
+            f"Source: {_source_commit(runtime.parent.parent)}; worktree: not checked\n"
+            f"Pi declared: {declared}\n"
+            f"Pi patch expected: {expected}; verification: not checked")
+
+
 def select_engine(argv: Sequence[str]) -> tuple[str, list[str]]:
     """Remove just --engine, leaving legacy's argument parsing unchanged."""
     remaining: list[str] = []
@@ -59,6 +119,7 @@ def select_engine(argv: Sequence[str]) -> tuple[str, list[str]]:
 
 def pi_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="BioMind — Pi runtime")
+    parser.add_argument("--version", action="store_true", help="Show declared product/source identity offline; no worktree or patch verification")
     parser.add_argument("command", nargs="?", choices=("interactive",), default="interactive")
     parser.add_argument("--project-dir", type=Path, default=Path.cwd())
     parser.add_argument("--pi-mode", choices=("interactive", "json"), default="interactive")
@@ -147,6 +208,9 @@ def build_pi_command(args: argparse.Namespace, *, environment: Mapping[str, str]
 def launch_pi(argv: Sequence[str], *, execute: Callable = os.execv) -> int:
     args = pi_parser().parse_args(list(argv))
     try:
+        if args.version:
+            print(product_version())
+            return 0
         command, project = build_pi_command(args)
         selection = (json.loads(command[command.index("--model-selection") + 1])
                      if "--model-selection" in command else None)
