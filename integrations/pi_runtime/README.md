@@ -122,6 +122,22 @@ this project and its descendants, with private/protected paths excluded and
 separate host-issued read-only sources such as Skills. `/permissions` explains
 the current project boundary and how to change it; it does not grant access.
 There is no unified per-input read-only/per-output writable directory setting.
+Consult and Generate both expose Pi's `ls`, `find`, and `grep`; `rg` is an alias
+of `grep` with identical parameters. `ls` lists directory entries, `find` matches
+filename/path globs, and `grep` searches text before `read` loads full context.
+The adapter reuses Pi schemas, renderers, listing/glob result formatting and the
+native ripgrep implementation. Directory metadata and each searched file use
+BioMind's existing read authorization. Native grep receives an authorized open
+file descriptor, so its subprocess cannot traverse an unchecked directory.
+Search respects `.gitignore`/`.ignore` within the search root (and `.rgignore`
+for grep), skips protected paths, links, `.git` and `node_modules`, and reports
+incomplete scans. It does not import global or ancestor ignore files outside
+the search root. Listing is bounded to 4096 inspected entries/256 KiB per
+directory; recursive search to 10000 entries. Grep scans at most 1000 files,
+32 MiB per file and 128 MiB total, with a 30-second tool deadline. Large skipped
+files require bounded inspection through `run_command`. Readable directory
+grants are reused; discovering files does not grant access or enable shell tools.
+
 `BIOMIND_COMMAND_READ_ROOTS` belongs to the command service and does not expand
 the ordinary `file_stat`/`read` boundary. Changing the project directory does not
 approve commands or writes; verify relative input/output paths when restarting.

@@ -1,5 +1,6 @@
 /** BioMind's sole Pi extension. Native CLI, SDK and tests load this module. */
 import { nativeRead } from '../native-read.js';
+import { DISCOVERY_TOOLS, discoveryDefinition, nativeDiscovery, type DirectorySnapshot } from '../native-discovery.js';
 import { nativeMutation } from '../native-mutation.js';
 import { filterNativeContextFiles, currentNativeProjectContext } from '../native-context.js';
 import path from 'node:path';
@@ -141,7 +142,7 @@ export function projectHistory(messages: AgentMessage[], branch: readonly Sessio
   });
 }
 
-const READ_TOOLS = ['ask_user', 'handoff_generate', 'select_environment', 'inspect_run', 'wait_run', 'read_run_log', 'cancel_run', 'file_stat', 'read', 'memory_search', 'memory_read'];
+const READ_TOOLS = [...DISCOVERY_TOOLS, 'ask_user', 'handoff_generate', 'select_environment', 'inspect_run', 'wait_run', 'read_run_log', 'cancel_run', 'file_stat', 'read', 'memory_search', 'memory_read'];
 const GENERATE_TOOLS = [...READ_TOOLS.filter(name => name !== 'handoff_generate'), 'update_plan', 'run_command', 'install_tool', 'write', 'edit', 'memory_write'];
 const CONSULT_RULES = `当前阶段：Consult。普通咨询可直接答复并结束本次请求；需要执行时调用 handoff_generate 一次，由同一会话继续进入 Generate。`;
 const GENERATE_RULES = `当前阶段：Generate。交接已经完成，你现在负责执行原用户任务。依据当前请求的 goal、manifest、原始输入及工具回执，使用可用工具继续推进已获授权的工作。
@@ -154,6 +155,7 @@ const DOMAIN_RULES = `你是 BioMind 生信助手。缺少关键选择时用 ask
 已注册环境按显式注册名直接使用；只有实际依赖错误才诊断。安装需实际授权，偏好不等于授权。长作业观察现有 run_ref，不重复启动，不用模型轮询充当界面心跳。
 多样本传 TXT/TSV/CSV 清单路径，执行时读取。保留明确工作目录与合法 argv/shell 调用。退出码、文件存在或 agent_settled 不代表科学结论。
 Skills 由 Pi 原生目录发现，用 read 按实际 Skill 路径读取正文及相对其 baseDir 的 references/scripts；/skill:name 是用户显式调用。read 的 offset/limit 按行计数。脚本资源路径相对 Skill，输入输出和工作目录仍属于分析项目。
+目录浏览用 ls，按文件名/路径模式定位用 find，搜索文本内容用 grep（rg 为同参数别名），再用 read 阅读具体文件和上下文。搜索仍使用当前读取权限；结果有截断/跳过提示时不能称已完整搜索。大型二进制及结构化数据继续通过受控 run_command 处理。
 输出只引用真实文件路径；纯咨询无需文件。禁止假造产物或把服务器路径当成客户端已下载文件。`;
 
 export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
@@ -445,6 +447,54 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
       pi.registerTool({ name, label: name, description, parameters, executionMode: 'sequential',
         ...toolRenderers(name),
         async execute(id, args, signal, _update, ctx) { return reply(await execute(id, asObject(args), signal, ctx)); },
+      } as ToolDefinition);
+    }
+    // Both metadata and Pi content reads use the same live Pi resource registry.
+    // Trusted directories are host-derived and never part of a model schema.
+    async function authorizeRead(ctx: ExtensionContext, absolutePath: string, id: string, signal?: AbortSignal,
+      method: 'files.read_authorize' | 'files.list' = 'files.read_authorize') {
+      const ownerSession = sessionId(ctx), ownerRequest = current(ctx).requestId;
+      const checkOwner = () => {
+        signal?.throwIfAborted();
+        if (sessionId(ctx) !== ownerSession || current(ctx).requestId !== ownerRequest) throw new Error('STALE_READ_OWNER');
+      };
+      checkOwner();
+      const skillDirs = pi.getCommands().filter(command => command.source === 'skill')
+        .map(command => path.dirname(command.sourceInfo.path));
+      const trustedSkillDirs: string[] = [];
+      let target = absolutePath;
+      for (const directory of skillDirs) {
+        const canonical = await realpath(directory).catch(() => undefined);
+        if (!canonical) continue;
+        trustedSkillDirs.push(canonical);
+        if (absolutePath.startsWith(directory + path.sep)) {
+          const resolved = await realpath(absolutePath);
+          if (!resolved.startsWith(canonical + path.sep)) throw new Error('SKILL_RESOURCE_OUTSIDE_ROOT');
+          target = resolved;
+        }
+      }
+      checkOwner();
+      const receipt = asObject(await withApproval(ctx, method,
+        { path: target, call_id: id, trusted_skill_dirs: trustedSkillDirs }, id, signal,
+        async (method, params) => {
+          checkOwner();
+          const result = await client(ctx).hostCall(method, params, { signal, requestId: ownerRequest });
+          checkOwner(); return result;
+        }));
+      checkOwner(); return { ...receipt, requested_path: absolutePath };
+    }
+    for (const kind of DISCOVERY_TOOLS) {
+      pi.registerTool({ ...discoveryDefinition(kind, process.cwd()), executionMode: 'sequential',
+        async execute(id, args, signal, update, ctx) {
+          const ownerSession = sessionId(ctx), ownerRequest = current(ctx).requestId;
+          const result = await nativeDiscovery(kind, ctx.cwd, {
+            list: async (filename, activeSignal) => await authorizeRead(ctx, filename, id, activeSignal, 'files.list') as unknown as DirectorySnapshot,
+            authorize: (filename, activeSignal) => authorizeRead(ctx, filename, id, activeSignal),
+          }).execute(id, args, signal, update, ctx);
+          signal?.throwIfAborted();
+          if (sessionId(ctx) !== ownerSession || current(ctx).requestId !== ownerRequest) throw new Error('STALE_READ_OWNER');
+          return result;
+        },
       } as ToolDefinition);
     }
     // Reuse Pi's schema, renderer, paging, image handling and errors. Only file

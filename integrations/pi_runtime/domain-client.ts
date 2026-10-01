@@ -35,7 +35,7 @@ export const DOMAIN_TRANSPORT_LIMITS = Object.freeze({ frameBytes: MAX_FRAME_BYT
   reservedControlBytes: 1024 * 1024 });
 const CONTROL_METHODS = new Set(['hello', 'request.cancel', 'shutdown', 'approval.decide', 'exec.cancel',
   'exec.status', 'session.lifecycle', 'archive.status']);
-const HOST_METHODS = new Set(['files.read_authorize', 'files.mutation_snapshot', 'files.mutation_replay', 'request.begin', 'request.cancel', 'shutdown', 'approval.decide', 'settings.update',
+const HOST_METHODS = new Set(['files.list', 'files.read_authorize', 'files.mutation_snapshot', 'files.mutation_replay', 'request.begin', 'request.cancel', 'shutdown', 'approval.decide', 'settings.update',
   'memory.maintenance.prepare', 'memory.maintenance.apply', 'archive.append', 'archive.status']);
 interface Pending { resolve(value: unknown): void; reject(error: Error): void; cleanup(): void }
 

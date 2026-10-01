@@ -29,8 +29,9 @@ from memory.core_store import CoreMemoryStore
 from memory.wiki_memory import WikiMemoryManager
 from memory.patch_validator import redact_secrets
 from .registry import RegistryView, registry_path as resolve_registry_path
+from .discovery import list_directory
 
-HOST_METHODS = frozenset({'files.read_authorize','files.mutation_snapshot','files.mutation_replay','request.begin','request.cancel','approval.decide','settings.update','shutdown',
+HOST_METHODS = frozenset({'files.list','files.read_authorize','files.mutation_snapshot','files.mutation_replay','request.begin','request.cancel','approval.decide','settings.update','shutdown',
                          'memory.maintenance.prepare','memory.maintenance.apply','archive.append','archive.status'})
 
 
@@ -354,6 +355,10 @@ class DomainService:
             return self.files.read(args,task_id=self.task_id)
         if method=='files.stat':
             return self.files.stat(p,task_id=self.task_id)
+        if method=='files.list':
+            self._host(host_token)
+            self._ensure_request()
+            return list_directory(self, p)
         if method=='files.read_authorize':
             self._host(host_token)
             return self.files.stat(p,task_id=self.task_id,trusted_skill_dirs=p.get('trusted_skill_dirs',()))
