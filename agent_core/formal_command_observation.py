@@ -166,7 +166,8 @@ class FormalCommandObserver(InspectionOwnerMixin):
         digest = hashlib.sha256(_canonical(arguments).encode()).hexdigest()
         # Wait before allocating a process owner/deadline. The original tool
         # call remains active; Generate never polls an approval as a command.
-        if not intent_path.is_file():
+        native = getattr(self.service, '_execution_profile', 'protected') == 'native'
+        if not intent_path.is_file() and not native:
             from agent_core.execution_permissions import authorize_command
             await authorize_command(self.service, arguments, task_id=task_id, call_id=call_id)
             started = time.monotonic()
@@ -189,14 +190,15 @@ class FormalCommandObserver(InspectionOwnerMixin):
                 if self.active_runs(task_id, None):
                     return self._refusal('PRIOR_INSPECTION_REQUIRES_RECONCILIATION')
                 from execution.script_validation import explicit_script_diagnostic
-                diagnostic = explicit_script_diagnostic(arguments)
+                diagnostic = None if native else explicit_script_diagnostic(arguments)
                 if diagnostic:
                     return diagnostic
                 # Actual targets are independent of editable notes. The same
                 # check runs again under exclusive owned preparation.
                 from agent_core.work_plan import action_targets
                 try:
-                    action_targets(load_plan_state(self.data_path, task_id), arguments, self.service.project_for_task(task_id))
+                    if not native:
+                        action_targets(load_plan_state(self.data_path, task_id), arguments, self.service.project_for_task(task_id))
                 except ValueError as exc:
                     return {**self._refusal(str(exc)), 'execution_started': False, 'phase': 'action_admission'}
                 policy = EXECUTION_RUNTIME_POLICY
@@ -227,6 +229,8 @@ class FormalCommandObserver(InspectionOwnerMixin):
 
     async def _drive_formal(self, owner):
         from agent_core.action_runtime import execute_formal_command, PrelaunchAdmissionRejected
+        if getattr(self.service, '_execution_profile', 'protected') == 'native':
+            from agent_core.native_command import execute_native_command as execute_formal_command
         from agent_core.execution_permissions import PermissionDenied
         owner.metrics['launch_delegated'] = False
         try:

@@ -479,7 +479,25 @@ async def _follow_managed_logs(paths, process, captures, progress, log_handles, 
         await asyncio.sleep(0.2)
 
 
-async def run_command(
+async def run_command(command, *args, **kwargs):
+    """Protected public entry: the original live dispatch permit is mandatory."""
+    from agent_core.execution_permissions import require_dispatch
+    return await _run_command(command, *args, _dispatch_check=require_dispatch, **kwargs)
+
+
+async def _run_native_command(command, *, check_intent, **kwargs):
+    """Host-selected adapter; shares all process, log, timeout and cleanup code.
+
+    check_intent validates the frozen profile and durable owner immediately
+    before launch. It is supplied by the managed adapter, never a tool field.
+    """
+    def native_dispatch(*_args, **_kwargs):
+        check_intent()
+        return {'payload': {'kind': 'native_command'}}
+    return await _run_command(command, _dispatch_check=native_dispatch, **kwargs)
+
+
+async def _run_command(
     command: str | list[str],
     timeout=None,
     profile: bool = True,
@@ -495,13 +513,14 @@ async def run_command(
     runtime_observation: Optional[Dict[str, Any]] = None,
     cancel_event=None,
     original_deadline: float | None = None,
+    *, _dispatch_check,
 ) -> Tuple[str, str, int]:
     """Shell text or direct argv, sharing one process owner and lifecycle.
 
     Strings use explicit /bin/sh, non-login (the existing POSIX default).
     Lists never pass through a shell; display quoting is not execution input.
     """
-    from agent_core.execution_permissions import require_dispatch
+    require_dispatch = _dispatch_check
     # short_check adjusts lifecycle/cleanup only; it is not permission.
     require_dispatch(command,cwd=cwd,env=env)
     direct_argv = list(command) if isinstance(command, list) else None
@@ -600,6 +619,7 @@ async def run_command(
             stderr=asyncio.subprocess.PIPE,
             env={str(key):str(value) for key,value in env.items()} if env is not None else None,
             **popen_kwargs)
+        require_dispatch(command,cwd=cwd,env=env)
         if direct_argv is not None:
             process = await asyncio.create_subprocess_exec(*direct_argv, **spawn_options)
         else:
