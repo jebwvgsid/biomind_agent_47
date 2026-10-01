@@ -1,0 +1,13 @@
+{
+  "tests_run": 5,
+  "success": true,
+  "failures": [],
+  "errors": [],
+  "scope": "current dirty Python, temporary synthetic project; no model/science/install",
+  "protected_registry_execution": {
+    "test": "tests/test_registered_runtime_reuse.py::test_formal_command_consumes_persisted_registration_without_model_env",
+    "status": "PASS",
+    "pytest_output": "1 passed in 0.92s",
+    "scope": "temporary synthetic registry/prefix; real protected execution and permission flow"
+  }
+}

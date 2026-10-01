@@ -1,0 +1,108 @@
+{
+  "registries": [
+    {
+      "path": "/public/home/liusiqi/03.毕设/Biomind_v1/software_registry.json",
+      "sha256": "fdfa475d181f0a50f864bbda60d9b9477bf35fe2c422808c4781644d597c4a96",
+      "mtime": 1781331666.0,
+      "sections": {
+        "tools": 1,
+        "environments": 1
+      },
+      "relevant_records": {},
+      "rna_text_occurrences": 0
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/agent_shim/software_registry.json",
+      "sha256": "12abeceb17f8c1f9cf20dd8640354f765bc3b125b4949dc5102fc4ad7cea68a3",
+      "mtime": 1790698434.0,
+      "sections": {
+        "tools": 13,
+        "environments": 24
+      },
+      "relevant_records": {
+        "environments:hicexplore": {
+          "env": "hicexplore",
+          "language": "python",
+          "packages": [
+            "hicexplorer",
+            "cooler",
+            "matplotlib"
+          ],
+          "capabilities": [
+            "tad-calling",
+            "hicfindtads",
+            "cooler-preflight",
+            "tad-boundary-change",
+            "boundary-shift",
+            "boundary-gain-loss",
+            "optional-cooler-resolution",
+            "differential-tad",
+            "hicdifferentialtad",
+            "bidirectional-tad-comparison",
+            "differential-compartment",
+            "compartment-switch",
+            "transition-summary"
+          ],
+          "status": "success",
+          "skill_ids": [
+            "3d-dna/tad-calling",
+            "3d-dna/tad-boundary-change",
+            "3d-dna/differential-tad",
+            "3d-dna/differential-compartment"
+          ],
+          "bound_tools": [],
+          "registered_at": "2026-06-17T09:51:33.979977",
+          "last_verified_at": "2026-06-26T16:34:43.461699"
+        }
+      },
+      "rna_text_occurrences": 1
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/Biomind_v1/skills/.skill_runtime_registry.json",
+      "sha256": "1d3251488f5cab352140b20222cd99dd36bca2225dce12856051e8d3f2c45692",
+      "mtime": 1790698315.0,
+      "sections": {
+        "skills": 43
+      },
+      "relevant_records": {
+        "skills:3d-dna/tad-calling": {
+          "env": "hicexplore",
+          "env_runner": "conda run -n hicexplore python",
+          "language": "python",
+          "packages": [
+            "hicexplorer",
+            "cooler",
+            "matplotlib"
+          ],
+          "capabilities": [
+            "tad-calling",
+            "hicfindtads",
+            "cooler-preflight",
+            "tad-boundary-change",
+            "boundary-shift",
+            "boundary-gain-loss",
+            "optional-cooler-resolution",
+            "differential-tad",
+            "hicdifferentialtad",
+            "bidirectional-tad-comparison",
+            "differential-compartment",
+            "compartment-switch",
+            "transition-summary"
+          ],
+          "status": "success",
+          "last_verified_at": "2026-06-26T16:34:43.461699"
+        }
+      },
+      "rna_text_occurrences": 1
+    }
+  ],
+  "inventory": {
+    "path": "/public/home/liusiqi/.conda/environments.txt",
+    "sha256": "dfc898b84289b5ca3c9569f19d6dd3a7898455adde0745afb5c79749c77d173f",
+    "relevant_prefixes": [
+      "/public/home/liusiqi/anaconda3/envs/hicexplore",
+      "/public/home/liusiqi/anaconda3/envs/rna_env"
+    ]
+  },
+  "historical_limit": "current bytes/mtime and inventory do not establish task-time registration or task-time actual registry override"
+}

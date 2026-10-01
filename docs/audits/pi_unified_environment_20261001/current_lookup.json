@@ -1,0 +1,60 @@
+{
+  "/public/home/liusiqi/03.毕设/Biomind_v1/software_registry.json": {
+    "rna": {
+      "availability": "UNKNOWN",
+      "reason": "REGISTERED_RUNTIME_NOT_FOUND",
+      "prefix": null,
+      "healthcheck": null
+    },
+    "Rscript_only": {
+      "availability": "UNKNOWN",
+      "reason": "REGISTERED_RUNTIME_TARGET_MISSING",
+      "prefix": null,
+      "healthcheck": null
+    },
+    "enrichment": {
+      "availability": "UNKNOWN",
+      "reason": "SKILL_RUNTIME_NOT_REGISTERED",
+      "via": "DomainService.select_environment(skill_id=enrichment-analysis)"
+    },
+    "tad": {
+      "availability": "AVAILABLE",
+      "reason": "REGISTERED_RUNTIME_REUSED",
+      "prefix": "/public/home/liusiqi/anaconda3/envs/hicexplore",
+      "healthcheck": "not_run"
+    }
+  },
+  "/public/home/liusiqi/03.毕设/agent_shim/software_registry.json": {
+    "rna": {
+      "availability": "UNKNOWN",
+      "reason": "REGISTERED_RUNTIME_NOT_FOUND",
+      "prefix": null,
+      "healthcheck": null
+    },
+    "Rscript_only": {
+      "availability": "UNKNOWN",
+      "reason": "REGISTERED_RUNTIME_TARGET_MISSING",
+      "prefix": null,
+      "healthcheck": null
+    },
+    "enrichment": {
+      "availability": "UNKNOWN",
+      "reason": "SKILL_RUNTIME_NOT_REGISTERED",
+      "via": "DomainService.select_environment(skill_id=enrichment-analysis)"
+    },
+    "tad": {
+      "availability": "AVAILABLE",
+      "reason": "REGISTERED_RUNTIME_REUSED",
+      "prefix": "/public/home/liusiqi/anaconda3/envs/hicexplore",
+      "healthcheck": "not_run"
+    }
+  },
+  "skill_enrichment_resolution": {
+    "status": "unregistered",
+    "skill_id": "enrichment-analysis",
+    "record": {},
+    "registration_keys": [],
+    "reason_code": "SKILL_RUNTIME_NOT_REGISTERED"
+  },
+  "subprocess_probe_count": 0
+}

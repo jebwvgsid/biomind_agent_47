@@ -1,0 +1,73 @@
+{
+  "tests_run": 7,
+  "witness_assertions_passed": true,
+  "observations": {
+    "mock_failures": {
+      "install_exit_7": "execution_failed",
+      "failed_install_new_record": false,
+      "second_save_failure": "PermissionError; persisted verified row has no prefix",
+      "partial_side_effects_rolled_back": false
+    },
+    "mock_install": {
+      "status": "registered",
+      "fresh_session": "AVAILABLE",
+      "dispatches": [
+        {
+          "code": "SYNTHETIC_INSTALL",
+          "env_supplied": false
+        },
+        {
+          "code": "SYNTHETIC_VERIFY",
+          "env_supplied": false
+        }
+      ],
+      "role": "consult (direct backend; Pi UI activation tested separately)",
+      "limit": "controlled executor proves wiring, not actual package verification; target env not enforced"
+    },
+    "inventory": {
+      "inventory_only": "REGISTERED_RUNTIME_NOT_FOUND",
+      "duplicate_name": "REGISTERED_RUNTIME_LOCATION_AMBIGUOUS"
+    },
+    "metadata_limits": {
+      "unknown_requirement_returns": "AVAILABLE + requirements_status=unknown",
+      "requirements_prefix_honored": false,
+      "tool_only_query": "REGISTERED_RUNTIME_TARGET_MISSING",
+      "missing_file": "empty view (no file created)",
+      "malformed_pi": "JSONDecodeError",
+      "malformed_legacy": "empty registry",
+      "default_path": "install_root/software_registry.json"
+    },
+    "register_existing": {
+      "subprocesses": 0,
+      "downloads": 0,
+      "new_environment_created": false,
+      "temporary_shim_written": true,
+      "authority": "same temporary registry",
+      "new_reader": "AVAILABLE",
+      "healthcheck": "not_run",
+      "limit": "shim generated but not executed; no real software touched"
+    },
+    "registration_writes": {
+      "update_drops": [
+        "prefix",
+        "env_runner"
+      ],
+      "two_stale_writers": "last writer loses other registration",
+      "real_install_or_download": false
+    },
+    "selection_managed": {
+      "selection": "AVAILABLE",
+      "healthcheck": "not_run",
+      "subprocesses_during_selection": 0,
+      "same_task_records_before_execution": 1,
+      "second_session": "AVAILABLE",
+      "managed_without_env_name_exit_code": 127,
+      "managed_with_env_name_exit_code": 0,
+      "persisted_selection_automatically_consumed": false,
+      "registered_env_runner_applied": false,
+      "note": "native run_command needs explicit env_name; prefix then applied; env_runner/R_LIBS_USER not materialized",
+      "fresh_process": "AVAILABLE:not_run"
+    }
+  },
+  "meaning": "reproduces current behavior, including shortcomings; not future acceptance PASS"
+}

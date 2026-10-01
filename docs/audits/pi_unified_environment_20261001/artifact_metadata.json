@@ -1,0 +1,272 @@
+[
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/01.三维基因组/BM-3DDNA-TAD-MEDIUM-005/output/TADs/HiCExplorer/40000/bud.hicFindTADs.log",
+    "size": 555,
+    "mtime": 1790842226.0,
+    "sha256": "5641475f206ee909faa2bdeb3a3e633a12368205ef8e6f0a0b210925098998f7"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/01.三维基因组/BM-3DDNA-TAD-MEDIUM-005/output/TADs/HiCExplorer/40000/bud_boundaries.bed",
+    "size": 58017,
+    "mtime": 1790842226.0,
+    "sha256": "3eaf6dd47ae9b0d2e7239b59d8204f4fd68c77e9c9fe869c98d6a654403f7d79"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/01.三维基因组/BM-3DDNA-TAD-MEDIUM-005/output/TADs/HiCExplorer/40000/bud_boundaries.gff",
+    "size": 165790,
+    "mtime": 1790842226.0,
+    "sha256": "674ac72d6314da76815d1014d4068b4b1d3c7e2894875e97fe7fa15197cb0fa7"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/01.三维基因组/BM-3DDNA-TAD-MEDIUM-005/output/TADs/HiCExplorer/40000/bud_domains.bed",
+    "size": 97969,
+    "mtime": 1790842226.0,
+    "sha256": "3657f7fb74990cc5a7a627d1b0f1117dde12c12b8dda612f69ded5e535ddeff6"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/01.三维基因组/BM-3DDNA-TAD-MEDIUM-005/output/TADs/HiCExplorer/40000/bud_score.bedgraph",
+    "size": 774926,
+    "mtime": 1790842226.0
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/01.三维基因组/BM-3DDNA-TAD-MEDIUM-005/output/TADs/HiCExplorer/40000/bud_tad_score.bm",
+    "size": 841170,
+    "mtime": 1790842216.0
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/01.三维基因组/BM-3DDNA-TAD-MEDIUM-005/output/TADs/HiCExplorer/40000/leaf.hicFindTADs.log",
+    "size": 555,
+    "mtime": 1790842041.0,
+    "sha256": "835df5b99ccb85afb4b35693174b5d00c2f94259864f56c640f6a0d697128fd4"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/01.三维基因组/BM-3DDNA-TAD-MEDIUM-005/output/TADs/HiCExplorer/40000/leaf_boundaries.bed",
+    "size": 58829,
+    "mtime": 1790842041.0,
+    "sha256": "3945ec8084b07d27d48f9bb6dc14998973adafa6dbafe4515af3eb482b05b2f1"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/01.三维基因组/BM-3DDNA-TAD-MEDIUM-005/output/TADs/HiCExplorer/40000/leaf_boundaries.gff",
+    "size": 168154,
+    "mtime": 1790842041.0,
+    "sha256": "a578e79623109d53af714fbb7bf21f2634f14bab818e53047a8abcc2c4e26190"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/01.三维基因组/BM-3DDNA-TAD-MEDIUM-005/output/TADs/HiCExplorer/40000/leaf_domains.bed",
+    "size": 99376,
+    "mtime": 1790842041.0,
+    "sha256": "693bd775a3c5bcf6cf2759dc09e4093109ee94dac6445f04c254c9b6f61da32d"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/01.三维基因组/BM-3DDNA-TAD-MEDIUM-005/output/TADs/HiCExplorer/40000/leaf_score.bedgraph",
+    "size": 780365,
+    "mtime": 1790842041.0
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/01.三维基因组/BM-3DDNA-TAD-MEDIUM-005/output/TADs/HiCExplorer/40000/leaf_tad_score.bm",
+    "size": 848043,
+    "mtime": 1790842024.0
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/01.三维基因组/BM-3DDNA-TAD-MEDIUM-005/output/TADs/HiCExplorer/40000/tad_boundaries_long.tsv",
+    "size": 485945,
+    "mtime": 1790842229.0
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/01.三维基因组/BM-3DDNA-TAD-MEDIUM-005/output/TADs/HiCExplorer/40000/tad_domain_stats.tsv",
+    "size": 238,
+    "mtime": 1790842229.0,
+    "sha256": "91db673b91f2af3ef486f68cbaea4c229ce2452026a4c1c5450c0fbb49b45f66"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/01.三维基因组/BM-3DDNA-TAD-MEDIUM-005/output/TADs/HiCExplorer/40000/tad_domains_long.tsv",
+    "size": 469350,
+    "mtime": 1790842229.0
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/01.三维基因组/BM-3DDNA-TAD-MEDIUM-005/output/TADs/HiCExplorer/40000/tad_preflight.tsv",
+    "size": 571,
+    "mtime": 1790841884.0,
+    "sha256": "36d7872a5be8e8f6152d339948bcc8b2cf232a7103b158daf198161de26e055a"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/01.三维基因组/BM-3DDNA-TAD-MEDIUM-005/output/TADs/HiCExplorer/40000/tad_run_summary.tsv",
+    "size": 775,
+    "mtime": 1790842229.0,
+    "sha256": "b07088218cae1eef283217ebb3eb08769bc0658b7f24d259fbeb1d4368375b66"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/01.三维基因组/BM-3DDNA-TAD-MEDIUM-005/output/TADs/HiCExplorer/report.md",
+    "size": 7284,
+    "mtime": 1790842242.0,
+    "sha256": "41c40593e6a3c2fabf04a0d673509483bef30cce3898cb4b9b0d4d8025ad100a"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/01.三维基因组/BM-3DDNA-TAD-MEDIUM-005/output/TADs/HiCExplorer/reproduce.sh",
+    "size": 1688,
+    "mtime": 1790842246.0,
+    "sha256": "b4a44fec4cef6fc78bdf1c84fb8200fcc0f52e9e3a5f210d4252eb3c1093e2dc"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/01.三维基因组/BM-3DDNA-TAD-MEDIUM-005/output/TADs/HiCExplorer/stage_status.tsv",
+    "size": 894,
+    "mtime": 1790842246.0,
+    "sha256": "87d91b83b5dfb7fa6a805445b8d92e9a1d08eb5c3db14256a7dc2b9dd566ed58"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/08.功能富集/BM-REMAIN-ENRICH-019__medium/output/duplicate_ids.tsv",
+    "size": 18,
+    "mtime": 1790843216.0,
+    "sha256": "d9dd7b92cf6fb3b9858098244e4d2d458cf6bf98cad22673d7c95f6245ccf29f"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/08.功能富集/BM-REMAIN-ENRICH-019__medium/output/enrichment_plots.pdf",
+    "size": 4477,
+    "mtime": 1790843217.0,
+    "sha256": "1fadf03db4e43767e78bd09b8eed345b53c8f0b58144011edc871be9eba7a0d9"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/08.功能富集/BM-REMAIN-ENRICH-019__medium/output/enrichment_plots.png",
+    "size": 14716,
+    "mtime": 1790843217.0,
+    "sha256": "d9422b7eaa851156a21480f325d9da2eb80af9f5ae1cd762bba308f6e5812977"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/08.功能富集/BM-REMAIN-ENRICH-019__medium/output/enrichment_results.filtered.tsv",
+    "size": 335,
+    "mtime": 1790843217.0,
+    "sha256": "ed1a624f7beba05c4a1266357a6e1cf4d01e587decbe4283678299f310489985"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/08.功能富集/BM-REMAIN-ENRICH-019__medium/output/enrichment_results.tsv",
+    "size": 1055,
+    "mtime": 1790843217.0,
+    "sha256": "c7ccee0477b8baf590c91c02038a3e52a774a7c41478f4d768763eee9a950d56"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/08.功能富集/BM-REMAIN-ENRICH-019__medium/output/gsea_blocked_note.md",
+    "size": 1627,
+    "mtime": 1790843199.0,
+    "sha256": "169673edd010814f81d936b2459ff3b347c0e72ec7d6bb517febe19ad683c810"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/08.功能富集/BM-REMAIN-ENRICH-019__medium/output/input_qc.tsv",
+    "size": 1392,
+    "mtime": 1790843216.0,
+    "sha256": "5d33401fbbda51bb1e7664db0782adcd518ff583641ff928be9de73c9080d952"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/08.功能富集/BM-REMAIN-ENRICH-019__medium/output/mapped_ids.tsv",
+    "size": 750,
+    "mtime": 1790843216.0,
+    "sha256": "1e57431f0cf3a3bf0d754f7b40f13728f0509f0c329b18716e35c5f3fc889cb1"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/08.功能富集/BM-REMAIN-ENRICH-019__medium/output/ora/enrichment_plots.pdf",
+    "size": 4477,
+    "mtime": 1790843217.0,
+    "sha256": "1fadf03db4e43767e78bd09b8eed345b53c8f0b58144011edc871be9eba7a0d9"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/08.功能富集/BM-REMAIN-ENRICH-019__medium/output/ora/enrichment_plots.png",
+    "size": 14716,
+    "mtime": 1790843217.0,
+    "sha256": "d9422b7eaa851156a21480f325d9da2eb80af9f5ae1cd762bba308f6e5812977"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/08.功能富集/BM-REMAIN-ENRICH-019__medium/output/ora/enrichment_results.filtered.tsv",
+    "size": 335,
+    "mtime": 1790843216.0,
+    "sha256": "ed1a624f7beba05c4a1266357a6e1cf4d01e587decbe4283678299f310489985"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/08.功能富集/BM-REMAIN-ENRICH-019__medium/output/ora/enrichment_results.tsv",
+    "size": 1055,
+    "mtime": 1790843216.0,
+    "sha256": "c7ccee0477b8baf590c91c02038a3e52a774a7c41478f4d768763eee9a950d56"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/08.功能富集/BM-REMAIN-ENRICH-019__medium/output/ora/report.md",
+    "size": 1716,
+    "mtime": 1790843217.0,
+    "sha256": "428efa7268aaf491accfeb34e61fef96f2203610e288c37b56356cd64b7ce39e"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/08.功能富集/BM-REMAIN-ENRICH-019__medium/output/ora/reproduce.sh",
+    "size": 1216,
+    "mtime": 1790843217.0,
+    "sha256": "12d6866c72b1d9e274284b6a845fc243cc0731f068bb9fe124a1a3ccf99f970d"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/08.功能富集/BM-REMAIN-ENRICH-019__medium/output/report.md",
+    "size": 9350,
+    "mtime": 1790843214.0,
+    "sha256": "dc03878c546d34035296824bc587057d8d4c6fc57de35dbd952484b2fa0c0880"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/08.功能富集/BM-REMAIN-ENRICH-019__medium/output/reproduce.sh",
+    "size": 3234,
+    "mtime": 1790843202.0,
+    "sha256": "e22b7bf6046e4817c7b93f2c3e57f469f70feb828645c561116e074b1a6367a7"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/08.功能富集/BM-REMAIN-ENRICH-019__medium/output/stage_status.tsv",
+    "size": 1404,
+    "mtime": 1790843199.0,
+    "sha256": "a5cad68af798ab8302be1c00cd72477bb68fd0905e375752d0a7d0094c6c4a50"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/08.功能富集/BM-REMAIN-ENRICH-019__medium/output/term2gene.tsv",
+    "size": 3078,
+    "mtime": 1790843216.0,
+    "sha256": "1423abdcb09653a9894e8de5cfb20e435be27d48b2b79eb5bcd5c7310f5782c2"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/08.功能富集/BM-REMAIN-ENRICH-019__medium/output/unmapped_ids.tsv",
+    "size": 15,
+    "mtime": 1790843216.0,
+    "sha256": "b2c55e7b43ce376d0d9adda80672e3a8dc113b363664dfca7f9a671b17dc5324"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/08.功能富集/BM-REMAIN-ENRICH-019__medium/output/work/qc/duplicate_ids.tsv",
+    "size": 18,
+    "mtime": 1790843216.0,
+    "sha256": "d9dd7b92cf6fb3b9858098244e4d2d458cf6bf98cad22673d7c95f6245ccf29f"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/08.功能富集/BM-REMAIN-ENRICH-019__medium/output/work/qc/input_qc.tsv",
+    "size": 1392,
+    "mtime": 1790843216.0,
+    "sha256": "5d33401fbbda51bb1e7664db0782adcd518ff583641ff928be9de73c9080d952"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/08.功能富集/BM-REMAIN-ENRICH-019__medium/output/work/qc/mapped_ids.tsv",
+    "size": 750,
+    "mtime": 1790843216.0,
+    "sha256": "1e57431f0cf3a3bf0d754f7b40f13728f0509f0c329b18716e35c5f3fc889cb1"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/08.功能富集/BM-REMAIN-ENRICH-019__medium/output/work/qc/unmapped_ids.tsv",
+    "size": 15,
+    "mtime": 1790843216.0,
+    "sha256": "b2c55e7b43ce376d0d9adda80672e3a8dc113b363664dfca7f9a671b17dc5324"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/08.功能富集/BM-REMAIN-ENRICH-019__medium/output/work/term2gene.tsv",
+    "size": 3078,
+    "mtime": 1790843216.0,
+    "sha256": "1423abdcb09653a9894e8de5cfb20e435be27d48b2b79eb5bcd5c7310f5782c2"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/08.功能富集/BM-REMAIN-ENRICH-019__medium/output/work/term2gene_summary.tsv",
+    "size": 316,
+    "mtime": 1790843216.0,
+    "sha256": "035f03deeb7e8ddc792c1069738963c78bf919a1931ca756f2331c41dc7c504b"
+  },
+  {
+    "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/08.功能富集/BM-REMAIN-ENRICH-019__medium/output/work/term2name_built.tsv",
+    "size": 350,
+    "mtime": 1790843216.0,
+    "sha256": "2e607bea47c8fc8b3524d3a42ba092f1c555134aef229d428cc71f685e3cda37"
+  }
+]

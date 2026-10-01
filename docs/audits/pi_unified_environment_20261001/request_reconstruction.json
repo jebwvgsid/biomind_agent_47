@@ -1,0 +1,45 @@
+{
+  "layer": "current installed Pi built-in openai-completions serializer + in-memory fake fetch, all sockets forbidden",
+  "historical_messages_through_line": 50,
+  "historical_message_count": 20,
+  "serialized_message_count": 20,
+  "serialized_body_bytes": 139699,
+  "system_chars": 51399,
+  "tools": [
+    "ask_user",
+    "bash",
+    "cancel_run",
+    "edit",
+    "file_stat",
+    "find",
+    "grep",
+    "handoff_generate",
+    "inspect_run",
+    "ls",
+    "memory_read",
+    "memory_search",
+    "probe_command",
+    "read",
+    "read_run_log",
+    "run_command",
+    "select_environment",
+    "wait_run",
+    "write"
+  ],
+  "duplicate_tool_names": [],
+  "tool_definition_bytes": 12858,
+  "message_chars_by_role": {
+    "system": 52012,
+    "user": 1949,
+    "assistant": 3980,
+    "tool": 61068
+  },
+  "registry_rule_present": false,
+  "skill_body_occurrences": 1,
+  "limits": [
+    "historical raw HTTP body not saved",
+    "current skills/preferences/native system rules and synthetic cwd/request metadata used",
+    "does not establish exact historical activation or prompt bytes",
+    "byte/character counts are not tokens or savings estimates"
+  ]
+}

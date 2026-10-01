@@ -1,0 +1,137 @@
+{
+  "native": {
+    "active_tools": [
+      "ask_user",
+      "bash",
+      "cancel_run",
+      "edit",
+      "file_stat",
+      "find",
+      "grep",
+      "handoff_generate",
+      "inspect_run",
+      "ls",
+      "memory_read",
+      "memory_search",
+      "probe_command",
+      "read",
+      "read_run_log",
+      "run_command",
+      "select_environment",
+      "wait_run",
+      "write"
+    ],
+    "selection_succeeded": true,
+    "bash_after_selection_failed": true,
+    "install_tool_active": false,
+    "system_chars": 15853,
+    "explicit_registry_first_rule": false,
+    "no_default_healthcheck_rule": true,
+    "model_requests": 3,
+    "domain_methods": [
+      "request.status",
+      "request.begin",
+      "request.begin",
+      "context.snapshot",
+      "environments.select",
+      "request.begin",
+      "context.snapshot",
+      "request.begin",
+      "context.snapshot",
+      "context.snapshot",
+      "context.snapshot"
+    ],
+    "meaning": "script forces tool order; does not prove natural model choice; synthetic Domain result + real native bash"
+  },
+  "protected": {
+    "active_tools": [
+      "ask_user",
+      "cancel_run",
+      "file_stat",
+      "find",
+      "grep",
+      "handoff_generate",
+      "inspect_run",
+      "ls",
+      "memory_read",
+      "memory_search",
+      "probe_command",
+      "read",
+      "read_run_log",
+      "request_path_access",
+      "rg",
+      "select_environment",
+      "wait_run"
+    ],
+    "registry_first_rule": true,
+    "model_requests": 1
+  },
+  "after_handoff": {
+    "install_tool_active": true,
+    "model_requests": 2,
+    "context_edit_count": 3
+  },
+  "bash": {
+    "update_count": 3,
+    "updates": [
+      {
+        "ms": 0,
+        "chars": 14
+      },
+      {
+        "ms": 4,
+        "chars": 57
+      },
+      {
+        "ms": 205,
+        "chars": 60
+      }
+    ],
+    "plain_pipeline_resolved": true,
+    "pipefail_rejected": true,
+    "export_does_not_persist": true,
+    "timeout_error": "Error: Command timed out after 0.1 seconds",
+    "note": "tool timestamps are synthetic, not historical UI timing; cancellation descendant test covered by existing Python test"
+  },
+  "source_dist_comparison": {
+    "method": "in-memory transpileModule, no build/install or source/dist writes; current dirty TS included",
+    "files": [
+      {
+        "file": "host",
+        "transpile_equals_dist_ignoring_map_comment": true
+      },
+      {
+        "file": "native-workflow",
+        "transpile_equals_dist_ignoring_map_comment": true
+      },
+      {
+        "file": "stage-context",
+        "transpile_equals_dist_ignoring_map_comment": true
+      },
+      {
+        "file": "execution-profile",
+        "transpile_equals_dist_ignoring_map_comment": true
+      },
+      {
+        "file": "domain-client",
+        "transpile_equals_dist_ignoring_map_comment": true
+      },
+      {
+        "file": "model-config",
+        "transpile_equals_dist_ignoring_map_comment": true
+      },
+      {
+        "file": "native-session",
+        "transpile_equals_dist_ignoring_map_comment": true
+      },
+      {
+        "file": "extensions/biomind",
+        "transpile_equals_dist_ignoring_map_comment": true
+      },
+      {
+        "file": "tests/extension-harness",
+        "transpile_equals_dist_ignoring_map_comment": true
+      }
+    ]
+  }
+}

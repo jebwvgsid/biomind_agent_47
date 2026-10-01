@@ -1,0 +1,464 @@
+{
+  "head": "077b64e5bf879ea582043b3a7c7b8fe61c0ed3c2",
+  "branch": "refactor/consultant-controller-authority",
+  "initial_status_sha256": "8e9086671d44504de70c0d6999d1c237b288be52b6acde90578bb709745d297f",
+  "initial_entries": 5112,
+  "initial_staged": 0,
+  "tracked_dirty": [
+    " M agent_core/action_runtime.py",
+    " M agent_core/cli_activity.py",
+    " M agent_core/command_execution.py",
+    " M agent_core/consultation_state.py",
+    " M agent_core/execution_permissions.py",
+    " M agent_core/formal_artifact_resolver.py",
+    " M agent_core/formal_command_observation.py",
+    " M agent_core/pi_entry.py",
+    " M agent_core/registered_runtime.py",
+    " M agent_core/skill_manager.py",
+    " M agent_core/skill_runtime_metadata.py",
+    " M agent_core/state.py",
+    " M agent_core/work_outputs.py",
+    " M agent_core/work_plan.py",
+    " M agent_core/workflow/recovery_reception.py",
+    " M agent_core/workspace_files.py",
+    " M benchmarks/biomind_agent_benchmark/README.md",
+    " M bin/biomind",
+    " D docs/audits/architecture/RECOVERY_CONTEXT_CURRENT.md",
+    " D docs/audits/architecture/RECOVERY_PHASE_CONTEXT_CURRENT.md",
+    " D docs/audits/architecture/context_memory_and_compression_contract.md",
+    " D docs/audits/architecture/controller_front_half_retirement_20260903.md",
+    " D docs/audits/architecture/controller_runtime_migration_20260903.md",
+    " D docs/audits/architecture/generic_semantic_constraint_retirement_highlight_migration_audit_20260818.md",
+    " D docs/audits/architecture/global_prompt_context_lifecycle.md",
+    " D docs/audits/architecture/managed_artifact_preexecution_boundary_audit_20260825.md",
+    " D docs/audits/architecture/node_prompt_payload_matrix.tsv",
+    " D docs/audits/architecture/node_provider_context_matrix_20260820.tsv",
+    " D docs/audits/architecture/open_world_highlighted_requirements_migration_report_20260819.md",
+    " D docs/audits/architecture/pi_migration_rpc_poc_20260903.md",
+    " D docs/audits/architecture/pi_migration_stepworker_boundary_20260903.md",
+    " D docs/audits/architecture/planner_constraint_provenance_projection_audit_20260818.md",
+    " D docs/audits/architecture/planner_context_reentry_prompt_regression_audit_20260820.md",
+    " D docs/audits/architecture/planner_pending_snapshot_reentry_fix_report_20260819.md",
+    " D docs/audits/architecture/planner_request_component_inventory_20260820.tsv",
+    " D docs/audits/architecture/progressive_skill_access_search_and_replan_implementation_report_20260827.md",
+    " D docs/audits/architecture/provider_attempt_session_archive_phase3_implementation_20260826.md",
+    " D docs/audits/architecture/provider_cache_inventory.tsv",
+    " D docs/audits/architecture/provider_stream_session_archive_boundary_audit_20260825.md",
+    " D docs/audits/architecture/recovery_context_component_matrix_20260903.tsv",
+    " D docs/audits/architecture/recovery_context_disclosure_matrix.tsv",
+    " D docs/audits/architecture/recovery_context_engineering_audit_20260903.md",
+    " D docs/audits/architecture/recovery_context_engineering_delta_20260903.md",
+    " D docs/audits/architecture/recovery_progressive_disclosure_contract.md",
+    " D docs/audits/architecture/recovery_progressive_disclosure_history.md",
+    " D docs/audits/architecture/runtime_and_recovery_context_contract.md",
+    " D docs/audits/architecture/schema2_adapter_semantic_coverage_20260903.md",
+    " D docs/audits/architecture/schema2_consultant_agent_loop_20260903.md",
+    " D docs/audits/architecture/semantic_history_authority_matrix.tsv",
+    " D docs/audits/architecture/skill_planning_contract_retirement_audit_20260819.md",
+    " D docs/audits/architecture/skill_planning_contract_retirement_report_20260819.md",
+    " M execution/executor.py",
+    " M integrations/pi_runtime/approval-display.ts",
+    " M integrations/pi_runtime/compat/README.md",
+    " M integrations/pi_runtime/compat/apply-pi-observer.mjs",
+    " M integrations/pi_runtime/compat/pi-0.87.1-observer.patch.json",
+    " M integrations/pi_runtime/domain-client.ts",
+    " M integrations/pi_runtime/domain_adapter/service.py",
+    " M integrations/pi_runtime/extensions/biomind.ts",
+    " M integrations/pi_runtime/host.ts",
+    " M integrations/pi_runtime/model-config.ts",
+    " M integrations/pi_runtime/native-session.ts",
+    " M integrations/pi_runtime/product-ui.ts",
+    " M integrations/pi_runtime/python_service.py",
+    " M integrations/pi_runtime/testing/native-fixture.ts",
+    " M integrations/pi_runtime/testing/native-lifecycle.py",
+    " M integrations/pi_runtime/testing/native-pty.py",
+    " M integrations/pi_runtime/testing/offline-guard.mjs",
+    " M integrations/pi_runtime/testing/scripted-provider.ts",
+    " M integrations/pi_runtime/tests/approval-display.test.ts",
+    " M integrations/pi_runtime/tests/biomind-extension.test.ts",
+    " M integrations/pi_runtime/tests/extension-harness.ts",
+    " M integrations/pi_runtime/tests/handoff-wire.test.ts",
+    " M integrations/pi_runtime/tests/host.test.ts",
+    " M integrations/pi_runtime/tests/model-config.test.ts",
+    " M integrations/pi_runtime/tests/native-mutation.test.ts",
+    " M integrations/pi_runtime/tests/native-skills-read.test.ts",
+    " M integrations/pi_runtime/tests/product-ui.test.ts",
+    " M integrations/pi_runtime/tests/session-persistence.test.ts",
+    " M integrations/pi_runtime/tests/test_authorization_projection.py",
+    " M integrations/pi_runtime/tests/test_python_domain.py",
+    " M integrations/pi_runtime/tests/usage-boundary.test.ts",
+    " M integrations/pi_runtime/tool-display.ts",
+    " M integrations/pi_runtime/usage-observer.ts",
+    " M memory/wiki_memory.py",
+    " M skills/3d-dna/loop-calling/SKILL.md",
+    " M skills/3d-dna/loop-calling/references/dependencies.md",
+    " M skills/3d-dna/loop-calling/scripts/run_mustache_loops.py",
+    " M tests/cli_model_progress_support.py",
+    " M tests/export_cli_v2_fixture.py",
+    " M tests/test_execution_provenance.py",
+    " M tests/test_generate_only_output_contract_v2.py",
+    " M tests/test_loop_calling_preflight.py",
+    " M tests/test_pi_model_config.py",
+    " M tests/test_plan_contract_convergence_v2.py",
+    " M tests/test_plan_dataflow_p1.py",
+    " M tests/test_recovery50000_reference_helper.py",
+    " M tests/test_recovery_tools.py",
+    " M tests/test_registered_runtime_reuse.py",
+    " M tests/test_renderer_manifest.py",
+    " M tests/test_renderer_plan_ownership.py",
+    " M tests/test_run_profiler.py",
+    " M tests/test_runtime_recovery_reporting.py",
+    " M tests/test_scrna_smoke.py",
+    " M tests/test_typed_outcomes.py",
+    " M tests/test_unified_helper_selection.py",
+    " M tests/test_wiki_memory.py"
+  ],
+  "untracked_group_counts": {
+    ".codex_backups/consult_handoff_followup_20260920_160216": 9,
+    ".codex_backups/consult_skill_v2_20260920_151355": 11,
+    ".codex_backups/original_apply_20260919_234657": 36,
+    ".codex_backups/react_finish_20260920_20260920_032919": 42,
+    "agent_core/cli_archive.py": 1,
+    "agent_core/cli_timing.py": 1,
+    "agent_core/pi_benchmark.py": 1,
+    "agent_core/pi_launch_metadata.py": 1,
+    "agent_core/provider_wire_trace.py": 1,
+    "agent_core/runtime_integration.py": 1,
+    "agent_core/workflow": 1,
+    "benchmarks/biomind_agent_benchmark": 224,
+    "docs/acceptance.md": 1,
+    "\"docs/audits": 40,
+    "docs/audits": 731,
+    "docs/current_guidance_and_project_discovery.md": 1,
+    "docs/execution.md": 1,
+    "docs/fixes": 12,
+    "docs/implementation": 715,
+    "\"docs/plans": 2,
+    "docs/runtime_orca.md": 1,
+    "implementation_evidence/20260930_approval_project_followup": 148,
+    "implementation_evidence/20260930_audit_fixes": 262,
+    "implementation_evidence/20260930_permission_scopes": 1604,
+    "\"implementation_evidence/20260930_permission_scopes": 56,
+    "implementation_evidence/20261001_directory_once": 658,
+    "\"implementation_evidence/20261001_directory_once": 69,
+    "implementation_evidence/20261001_native_workflow": 209,
+    "\"implementation_evidence/20261001_native_workflow": 2,
+    "implementation_evidence/BioMind_Pi_native_workflow_20261001.zip": 1,
+    "implementation_evidence/BioMind_Pi_native_workflow_20261001.zip.sha256": 1,
+    "implementation_evidence/consult_skill_v2_20260920": 26,
+    "implementation_evidence/export_original_offline.py": 1,
+    "implementation_evidence/generate_handoff_stop_20260928.md": 1,
+    "implementation_evidence/network_timeout_20260928.md": 1,
+    "implementation_evidence/original_directory_apply_20260919": 6,
+    "implementation_evidence/react_v3_20260920": 13,
+    "implementation_evidence/verify_original_offline.sh": 1,
+    "integrations/pi_runtime": 34,
+    "tests/cli_repair_support.py": 1,
+    "tests/cli_tool_timeline_support.py": 1,
+    "tests/contracts_support.py": 1,
+    "tests/fixtures": 13,
+    "tests/generate_repair": 21,
+    "tests/longrun_export.py": 1,
+    "tests/plan_fix_evidence": 8,
+    "tests/plan_fix_incident_request_scope.json": 1,
+    "tests/plan_fix_support.py": 1,
+    "tests/plan_generate_implementation": 1,
+    "tests/test_benchmark_v3_harness.py": 1,
+    "tests/test_benchmark_v5_1_semantic_lint.py": 1,
+    "tests/test_benchmark_v5_review_assets.py": 1,
+    "tests/test_candidate_carrier_progress.py": 1,
+    "tests/test_consult_memory_storage.py": 1,
+    "tests/test_consult_v2_resolver.py": 1,
+    "tests/test_external_formal_read_protection.py": 1,
+    "tests/test_generate_context_episode.py": 1,
+    "tests/test_generate_relaxed_carrier.py": 1,
+    "tests/test_hash_prompt_policy.py": 1,
+    "tests/test_input_manifest_repair.py": 1,
+    "tests/test_longrun_formal_v2.py": 1,
+    "tests/test_longrun_owner_v2.py": 1,
+    "tests/test_outputfix_tad.py": 1,
+    "tests/test_pi_benchmark_transport.py": 1,
+    "tests/test_pi_project_entry.py": 1,
+    "tests/test_plan_action_protocol.py": 1,
+    "tests/test_plan_admission_diagnostics.py": 1,
+    "tests/test_plan_output_admission_authority.py": 1,
+    "tests/test_planner_protocol_examples.py": 1,
+    "tests/test_report_preservation_fix.py": 1,
+    "tests/test_runtime_integration.py": 1,
+    "tests/test_semantic_completion.py": 1,
+    "tests/test_skill_invocation_validation_policy.py": 1,
+    "tests/test_user_launcher.py": 1,
+    "tests/test_workspace_idempotent_revalidation.py": 1,
+    "tests/test_workspace_mutation_allocation.py": 1,
+    "tests/test_workspace_mutation_provenance.py": 1,
+    "tests/test_workspace_plan_mutation_admission.py": 1,
+    "tests/test_workspace_revalidation_completion.py": 1
+  },
+  "launcher": "/public/home/liusiqi/03.毕设/Biomind_v1/bin/biomind",
+  "files": {
+    "bin/biomind": {
+      "sha256": "e321476a4cb152f3cd3a4316e1e24276ef610cdaf85b06cead34518b95a41488",
+      "size": 488,
+      "mtime": 1790592154.0
+    },
+    "bio_agents.py": {
+      "sha256": "f8b7e4ff7872333996d7984f9f5a26e622695566f5968e7bd4fdce850e62ba33",
+      "size": 285,
+      "mtime": 1790494451.0
+    },
+    "agent_core/pi_entry.py": {
+      "sha256": "a3d93a3e10a351fabf31f6afb75fc450df8a3106747c4cbfc5b57726f9e76e92",
+      "size": 16425,
+      "mtime": 1790826510.0
+    },
+    "agent_core/pi_model_config.py": {
+      "sha256": "e4e6235ffd8549b6263fee9bb0c7b9e4cc63fcb2a4cb6c1aac576361fbc19a54",
+      "size": 10379,
+      "mtime": 1790488559.0
+    },
+    "agent_core/registered_runtime.py": {
+      "sha256": "d2ff36b399575404b346d51dabe7060c976855efb259be975798a27fc850a594",
+      "size": 11476,
+      "mtime": 1790693969.0
+    },
+    "agent_core/skill_runtime_metadata.py": {
+      "sha256": "df504135bedbf58187a52cfd2ed36499187f32075a581dabd17d25cc188a635f",
+      "size": 5166,
+      "mtime": 1790692897.0
+    },
+    "agent_core/action_runtime.py": {
+      "sha256": "ff491bfceb85700f6fd80773f6f6c7835fdf8b8c3eb2d049171043c65912d37c",
+      "size": 99889,
+      "mtime": 1790781803.0
+    },
+    "agent_core/command_execution.py": {
+      "sha256": "58ff4e18aa37c88c87cd60742f82e32a82d46063f82df5adb26cd7b003d72c2e",
+      "size": 86643,
+      "mtime": 1790820755.0
+    },
+    "agent_core/formal_command_observation.py": {
+      "sha256": "6bc102bfe34670f3f3c6086962de45918fb8daf7fe6c303c58526d2a59d956e2",
+      "size": 23668,
+      "mtime": 1790827047.0
+    },
+    "execution/executor.py": {
+      "sha256": "7099113b65b538047f299b91f818b98b2a5641dbcdde9dff1be68338512da2c6",
+      "size": 57923,
+      "mtime": 1790827046.0
+    },
+    "package_manager.py": {
+      "sha256": "c2cadc2d4ee0003e68293849f7b6eefbe32b0aa773633ade95f47351a235c8db",
+      "size": 52763,
+      "mtime": 1790398409.0
+    },
+    "integrations/pi_runtime/python_service.py": {
+      "sha256": "6fad2a94bb396d9b328bb0ad012d2d1e32c9d2bea19ef835331053ddf116b908",
+      "size": 7728,
+      "mtime": 1790826509.0
+    },
+    "integrations/pi_runtime/domain_adapter/service.py": {
+      "sha256": "d29b617c01497daaa46efa3ac3339cf354c631033284f889b7c2f4bc4e464cdf",
+      "size": 63431,
+      "mtime": 1790829349.0
+    },
+    "integrations/pi_runtime/domain_adapter/registry.py": {
+      "sha256": "6a15c9c9e9d858f2cc9bc4882137133c1933b37f319000ff1536afdf2f3dac4d",
+      "size": 3974,
+      "mtime": 1790486764.0
+    },
+    "skills/enrichment-analysis/SKILL.md": {
+      "sha256": "9d4cfc2f2decb1f090e63e56f873fd8b754874b00662b9c0ae385506159bf488",
+      "size": 9882,
+      "mtime": 1790527449.0
+    },
+    "skills/enrichment-analysis/references/dependencies.md": {
+      "sha256": "720ea10394a1cd3eb97753b1d50b74d62be139acc14b8ff84c64d3d11e365222",
+      "size": 866,
+      "mtime": 1790527449.0
+    },
+    "skills/enrichment-analysis/scripts/run_enrichment.R": {
+      "sha256": "4f643465eca5793b157977c44765076ebc780e404ddd0a1d7744a276699f8db2",
+      "size": 12608,
+      "mtime": 1781764239.0
+    },
+    "skills/3d-dna/tad-calling/scripts/call_tads.py": {
+      "sha256": "93076c7ef31b6841432b4b4ee941048fb7cfb6015ea3fbfdb3e6b2d7cb24f8ba",
+      "size": 39239,
+      "mtime": 1790527940.0
+    },
+    "user_preferences.md": {
+      "sha256": "329fe1dbe70c245fcefb481f2e3e7a43e754b1384a11f5ef4fbcdc9629cf2ba0",
+      "size": 1748,
+      "mtime": 1790829655.0
+    },
+    "integrations/pi_runtime/host.ts": {
+      "sha256": "25bf72c8b310216559b600b46b767f33cd900c4a06536ff8722279b575f0edc9",
+      "size": 36456,
+      "mtime": 1790829890.0
+    },
+    "integrations/pi_runtime/dist/host.js": {
+      "sha256": "3ef8f3cd7ce96981ba78fa9028bd4df98ce3ed4533027175d24fe2408d083166",
+      "size": 38766,
+      "mtime": 1790830431.0
+    },
+    "integrations/pi_runtime/native-workflow.ts": {
+      "sha256": "296e1e82e9e14f2479cee7a6f8070dc996c27ec1bfa24b67e8a8da3386cfdd9d",
+      "size": 2546,
+      "mtime": 1790826891.0
+    },
+    "integrations/pi_runtime/dist/native-workflow.js": {
+      "sha256": "7003cdf35e6c0b677c1d52d60af1541f409957595e2ef2735bcbebf25ea10c4b",
+      "size": 2575,
+      "mtime": 1790830431.0
+    },
+    "integrations/pi_runtime/stage-context.ts": {
+      "sha256": "24bd0f2f37b12796eb171013dde5fe02a48f8c67f6472db57f1a320b66a03dc6",
+      "size": 12584,
+      "mtime": 1790751553.0
+    },
+    "integrations/pi_runtime/dist/stage-context.js": {
+      "sha256": "a60ddae621d75ec369c423f3902fd06d12303dd8e39d8ecf222ba7c3593da2bc",
+      "size": 12613,
+      "mtime": 1790830431.0
+    },
+    "integrations/pi_runtime/execution-profile.ts": {
+      "sha256": "7c893dc98cb8d183e757480da1ea7fe9731c8695f211c035d02e9cec6aff0e0f",
+      "size": 2352,
+      "mtime": 1790830296.0
+    },
+    "integrations/pi_runtime/dist/execution-profile.js": {
+      "sha256": "f9e50c41ea5171d6a3d2ffed05c0595e4ae665d1890d59eea323865b0ed92383",
+      "size": 2230,
+      "mtime": 1790830430.0
+    },
+    "integrations/pi_runtime/domain-client.ts": {
+      "sha256": "f72fa3b0408e7c242d58d0e8dfe3df6f2157147d7204453e77398e49c52eb65f",
+      "size": 15509,
+      "mtime": 1790830198.0
+    },
+    "integrations/pi_runtime/dist/domain-client.js": {
+      "sha256": "68f6b6b8051591f526bc89295781540916950038e6ac580034a296e2bb974eaf",
+      "size": 15754,
+      "mtime": 1790830430.0
+    },
+    "integrations/pi_runtime/model-config.ts": {
+      "sha256": "3a0db1cfa26c7cc4dbf6839d1312e518cce3c25d501019700138f0ead26d18c8",
+      "size": 6481,
+      "mtime": 1790606190.0
+    },
+    "integrations/pi_runtime/dist/model-config.js": {
+      "sha256": "04acb99c16ab3b340f344ea28b8fe82b14dfce67c46b6877141d0a978baf5b46",
+      "size": 5980,
+      "mtime": 1790830430.0
+    },
+    "integrations/pi_runtime/native-session.ts": {
+      "sha256": "059ee199eda0442b0fd3a56843a3aa552972ece920adf49922a2e2870a930c6c",
+      "size": 6154,
+      "mtime": 1790751238.0
+    },
+    "integrations/pi_runtime/dist/native-session.js": {
+      "sha256": "8daa74e8b72d86661a485c12e2d31fb029ad36463c5635fd6d989798c8766393",
+      "size": 6458,
+      "mtime": 1790830431.0
+    },
+    "integrations/pi_runtime/extensions/biomind.ts": {
+      "sha256": "4b5a8214fbf960100a05bd0b39dd975718ecfb8aa13d80b4ef3ab9f4feda48f0",
+      "size": 113644,
+      "mtime": 1790829890.0
+    },
+    "integrations/pi_runtime/dist/extensions/biomind.js": {
+      "sha256": "0d616142f37c39c844473bacb9b7e0cb78829a9632d213d0d8b0d0d8105faf84",
+      "size": 122976,
+      "mtime": 1790830431.0
+    },
+    "integrations/pi_runtime/product-ui.ts": {
+      "sha256": "12ccca4c666b88b4dc58b9c7494e3a62d8013bdaf54a2c2f52db5eb363ef4a65",
+      "size": 20767,
+      "mtime": 1790827300.0
+    },
+    "integrations/pi_runtime/dist/product-ui.js": {
+      "sha256": "d45f7d3da863e2c5749e6a3f6aa1215708cf22979bba5773a6ce6a0040b869b0",
+      "size": 20753,
+      "mtime": 1790830431.0
+    },
+    "integrations/pi_runtime/usage-observer.ts": {
+      "sha256": "59153284890b411130416a2e25dc553e0baafb4bb50bae7dc2d99cbd606eadfe",
+      "size": 30204,
+      "mtime": 1790751239.0
+    },
+    "integrations/pi_runtime/dist/usage-observer.js": {
+      "sha256": "e06191ea960a71b90d4ee2959a9d72fbdc25b10ce1047794cb1e1df1fcf438e9",
+      "size": 31704,
+      "mtime": 1790830430.0
+    },
+    "integrations/pi_runtime/node_modules/@earendil-works/pi-coding-agent/dist/core/tools/bash.js": {
+      "sha256": "8acde89e7e1ad7ab013ccbf4b2cbfe847422de46f9451ca796f889ab37fee307",
+      "size": 14017
+    },
+    "integrations/pi_runtime/node_modules/@earendil-works/pi-coding-agent/dist/utils/shell.js": {
+      "sha256": "9874bbe8f6e26dd05029c3487d7789b160e92470696b2168424394f5dd00a34a",
+      "size": 8176
+    },
+    "agent_core/native_command.py": {
+      "sha256": "79db51af6325105ed3f00eac8e5ab4f9cf9b9fa0bae2b07f202a10d9ecdc5bfd",
+      "size": 10359,
+      "mtime": 1790827299.0
+    },
+    "agent_core/execution_profile.py": {
+      "sha256": "9390285f817f9e8cf13803fef962f87f68e757c4cacf85e16eece1d3d9dc2bd3",
+      "size": 4554,
+      "mtime": 1790827047.0
+    },
+    "integrations/pi_runtime/tests/extension-harness.ts": {
+      "sha256": "d67ec3f78f72d159527f0ede250cffaa6669d4947daaafc8314f2f272ce34e70",
+      "size": 12382,
+      "mtime": 1790829386.0
+    },
+    "integrations/pi_runtime/dist/tests/extension-harness.js": {
+      "sha256": "fd6f698616d8a15c6d5c6393a27daf7a24419194d9062df0207ae53cd36b268d",
+      "size": 11991,
+      "mtime": 1790830431.0
+    }
+  },
+  "pi_version": "0.87.1",
+  "patch_label": "0.87.1+biomind-observer.3",
+  "patch_checks": [
+    {
+      "path": "dist/core/model-runtime.js",
+      "sha256": "53e4c1fdccab69c9d4b49162b8b9a94ede1f3b5e1c35dc9ed77e3726bd3778d1",
+      "expected": "53e4c1fdccab69c9d4b49162b8b9a94ede1f3b5e1c35dc9ed77e3726bd3778d1",
+      "matches": true
+    },
+    {
+      "path": "dist/core/model-registry.js",
+      "sha256": "b16d0749e3679f2335fbef31e145d49416de63a7408334e94c496b86463cfc8c",
+      "expected": "b16d0749e3679f2335fbef31e145d49416de63a7408334e94c496b86463cfc8c",
+      "matches": true
+    },
+    {
+      "path": "dist/bundle/chunks/chunk-OJP47DM6.js",
+      "sha256": "69b184da56577dda43d788becb05716547b3831996d97ae54b7030ec44e2423b",
+      "expected": "69b184da56577dda43d788becb05716547b3831996d97ae54b7030ec44e2423b",
+      "matches": true
+    },
+    {
+      "path": "dist/core/http-dispatcher.js",
+      "sha256": "1f26c9e603ee1174423e6e2c6eaaca7df5f5468023db2acae74b8e497832af7b",
+      "expected": "1f26c9e603ee1174423e6e2c6eaaca7df5f5468023db2acae74b8e497832af7b",
+      "matches": true
+    },
+    {
+      "path": "dist/core/extensions/runner.js",
+      "sha256": "f8e6efb5049a3bcb030c0cfadda965f712270a5303d91ad42ce8fe98d4ebad59",
+      "expected": "f8e6efb5049a3bcb030c0cfadda965f712270a5303d91ad42ce8fe98d4ebad59",
+      "matches": true
+    },
+    {
+      "path": "dist/core/agent-session.js",
+      "sha256": "c79179ec645ed922c958e674c6facdb91fe9be5804f1490a352dfbcef5b8a110",
+      "expected": "c79179ec645ed922c958e674c6facdb91fe9be5804f1490a352dfbcef5b8a110",
+      "matches": true
+    }
+  ],
+  "historical_limit": "disk hashes establish the audit-time runtime, not byte identity of historical running processes"
+}

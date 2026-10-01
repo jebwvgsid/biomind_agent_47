@@ -1,0 +1,27 @@
+{
+  "precommit_head": "077b64e5bf879ea582043b3a7c7b8fe61c0ed3c2",
+  "baseline_status_unchanged_excluding_audit_dir": true,
+  "initial_staged_count": 0,
+  "source_dist_metadata_files_verified": 45,
+  "registry_inventory_files_verified": 4,
+  "historical_session_state_files_verified": 4,
+  "artifact_files_verified": 46,
+  "artifact_hash_scope": "files <256000 bytes hashed; others size+mtime only",
+  "content_changes_found": [],
+  "acceptance_rows": 32,
+  "acceptance_status_counts": {
+    "FAIL": 15,
+    "PASS": 11,
+    "NOT_RUN": 6
+  },
+  "git_scope": "only docs/audits/pi_unified_environment_20261001; commit SHA returned in delivery message",
+  "limitations": "same git status does not establish byte identity of every one of the 5112 initial dirty entries; content verification limited to listed baseline files",
+  "guard": {
+    "events": {
+      "guard_ready": 5,
+      "installed_sdk_source_read": 2
+    },
+    "network_attempts": 0,
+    "sensitive_file_attempts": 0
+  }
+}
