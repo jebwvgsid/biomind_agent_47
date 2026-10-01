@@ -4,7 +4,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 
 export type ExecutionProfile = 'native' | 'protected';
-export const DEFAULT_EXECUTION_PROFILE: ExecutionProfile = 'protected';
+export const DEFAULT_EXECUTION_PROFILE: ExecutionProfile = 'native';
 export function executionProfile(value: unknown): ExecutionProfile {
   if (value !== 'native' && value !== 'protected') throw new Error('EXECUTION_PROFILE_INVALID');
   return value;
