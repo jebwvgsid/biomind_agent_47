@@ -34,7 +34,7 @@ enrichment Skill 去除例行版本/import 检查，保留 base-R ORA / GSEA 依
 
 `verify_delta_chain.py` 已在临时目录重建：64 个 A/B/C 补丁还原的 51 个变更文件与当前有效树逐文件 SHA-256 一致，见 `delta-reconstruction.json`。该结果证明变更链可恢复，不等于未携带基线的干净 checkout 可运行。
 
-生产 registry、历史 session、科学结果、软件环境和凭证未纳入代码提交。与本轮无关的数千个档案未打包。提交 SHA 见最终交付清单。
+生产 registry、历史 session、科学结果、软件环境和凭证未纳入代码提交。与本轮无关的数千个档案未打包。提交 SHA 与未完成项见 `delivery.json`。
 
 ## 验证与限制
 

@@ -1,0 +1,68 @@
+{
+  "status": "IMPLEMENTED_WITH_UNRESOLVED_HOST_STABILITY_FINDING",
+  "branch": "refactor/pi-unified-runtime",
+  "audit_commit": "4721cc8e737991b7d6571d5bebfdf47e808b6ba1",
+  "commits": {
+    "A": "4dea4dd494f9c52497ef7efc0c74fd32a74ba0df",
+    "B": "58db8198c309117fd71ea4e0c3543b7b05df09c3",
+    "C": "8a4f53fef8e282c7e81234456e803639bf8dfbc3"
+  },
+  "push_performed": false,
+  "acceptance": {
+    "PASS": 47,
+    "PARTIAL": 1,
+    "partial_id": "A02"
+  },
+  "validation": {
+    "python_target_suite": {
+      "passed": 88,
+      "total": 88
+    },
+    "existing_provenance_negative": {
+      "passed": 1,
+      "deselected": 18
+    },
+    "node_second_whole_suite": {
+      "passed": 166,
+      "total": 173
+    },
+    "node_changed_targets_final_rerun": {
+      "passed": 17,
+      "total": 17
+    },
+    "host_ordinary_limited_rerun": "PASS (five synthetic provider calls)",
+    "host_memory_auto_isolated": "PASS (three synthetic provider calls), earlier unexplained SIGKILL remains",
+    "full_tsc_build": "PASS",
+    "installed_pi_patch_hashes": "6/6 match",
+    "changed_file_delta_reconstruction": "64 patches, 51 effective files match"
+  },
+  "production": {
+    "rna_registration": "completed through the new host metadata entry",
+    "fresh_reader": "AVAILABLE; Popen prohibited",
+    "software_environment_changes": false,
+    "science_reruns": false,
+    "production_process_restarts": false,
+    "original_audit_changes": false
+  },
+  "limits": [
+    {
+      "item": "Intermittent SIGKILL of synthetic host startup",
+      "status": "UNRESOLVED",
+      "blocker": "signal sender/cause unknown; limited ptrace denied in default sandbox; no escalation; successful isolated rerun is not a stability fix",
+      "evidence": "host-signal-observation.json"
+    },
+    {
+      "item": "Clean SHA alone reproduction",
+      "status": "REQUIRES_SAVED_DIRTY_BASELINE",
+      "blocker": "pre-existing 107 tracked changes/deletions and 5005 untracked were not absorbed; dirty-dependent own deltas committed as patch artifacts",
+      "evidence": "baseline-recovery.json;delta-reconstruction.json;deltas/A-staging.json;deltas/B-staging.json;deltas/C-staging.json"
+    },
+    {
+      "item": "Natural model/real software/science/cross-node/slow-NFS experiments",
+      "status": "NOT_RUN",
+      "blocker": "outside this round authorization; no paid model, real installation or scientific rerun"
+    }
+  ],
+  "serializer": "Actual total body bytes increased for both profiles; no token/cost savings claim",
+  "documents": "README.md;REPRODUCE.md;A.md;B.md;C.md;acceptance.tsv;build-C.json"
+}
