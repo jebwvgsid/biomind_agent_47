@@ -1,0 +1,93 @@
+--- a/agent_core/command_execution.py
++++ b/agent_core/command_execution.py
+@@ -283,46 +283,34 @@
+     if hasattr(service, '_refresh_runtime'): service._refresh_runtime()
+     runtime = {Path(p).resolve() for p in getattr(service, 'prefixes', ())}
+     runtime.update(Path(p).resolve() for p in getattr(service, 'path', ()) if Path(p).is_dir())
+-    # Accepted runtime evidence already records host-selected environments.
+-    # Share those same roots with file operations without another health probe.
+-    from agent_core.plan_tracker import load_plan_state
+-    from agent_core.runtime_evidence import project_registered_runtime_scopes
+-    state=load_plan_state(service.data_path,task_id)
+-    accepted,_=project_registered_runtime_scopes(state.get('task_state') or {},task_id=task_id,skill_ids=[])
+-    for row in accepted:
+-        if row.get('runtime_source')=='registered_runtime':
+-            paths=row.get('resolved_runtime_paths') or {}
+-            prefix=paths.get('RESOLVED_ENV_PREFIX') or paths.get('ENV_PREFIX')
+-            if prefix:runtime.add(Path(prefix).resolve())
++    # Registry selection supplies launch facts, never directory authority.
++    # Only host-configured runtime roots, the project, or an existing live
++    # directory grant can supply a selected prefix to protected execution.
++    runtime_grants=[]
+     for key in ('ENV_PREFIX', 'CONDA_PREFIX'):
+-        prefix = (arguments.get('env') or {}).get(key)
+-        if not prefix: continue
+-        candidate = Path(prefix).resolve(strict=True)
+-        known = any(candidate == p or candidate.is_relative_to(p) for p in runtime)
+-        registry = getattr(service, 'runtime_registry', None)
+-        if not known and registry is not None:
+-            # Reuse the successful registration predicate. An env parameter is
+-            # not host provenance and cannot smuggle a data root into mounts.
+-            from agent_core.registered_runtime import registered_runtime_reuse
+-            for name, row in (registry.registry.get('environments') or {}).items():
+-                explicit = (row.get('prefix') or row.get('path') or
+-                    (row.get('resolved_runtime_paths') or {}).get('RESOLVED_ENV_PREFIX'))
+-                if explicit:
+-                    if Path(str(explicit)).resolve() != candidate: continue
+-                elif name != candidate.name or str(candidate) not in registry._registered_prefixes(name, row):
+-                    continue
+-                selected = registered_runtime_reuse(registry, {}, skill_record={}, target_env=name)
+-                if (selected.get('availability') == 'AVAILABLE' and
+-                        Path(selected['selected_candidate']['prefix']).resolve() == candidate):
+-                    known = True; break
++        prefix=(arguments.get('env') or {}).get(key)
++        if not prefix:continue
++        candidate=Path(prefix).resolve(strict=True)
++        known=candidate.is_relative_to(project) or any(candidate==p or candidate.is_relative_to(p) for p in runtime)
+         if not known:
+-            raise FormalProtectionError('unregistered_environment_prefix', path=str(candidate))
++            from agent_core.execution_permissions import active_read_grants, path_grants, digest
++            path_ids={g['grant_id'] for g in path_grants(service,task_id,candidate,'read')}
++            grants=active_read_grants(service.data_path,task_id,project=project)
++            matches=[g for g in grants if g.get('target_kind')=='directory' and g.get('recursive') is True
++                     and (candidate==Path(g['root']) or candidate.is_relative_to(Path(g['root'])))
++                     and (g.get('operation')=='file_read' or g['grant_id'] in path_ids)]
++            if not matches:
++                raise FormalProtectionError('runtime_prefix_permission_required',path=str(candidate),
++                    instruction='Registered location is not directory permission; use the existing path-access approval for this exact runtime prefix.')
++            grant=max(matches,key=lambda g:len(Path(g['root']).parts))
++            ref={'grant_id':grant['grant_id'],'grant_hash':digest(grant),'prefix':str(candidate)}
++            if ref not in runtime_grants:runtime_grants.append(ref)
+         runtime.add(candidate)
+     runtime.add(Path(getattr(service, 'install_dir', Path(__file__).resolve().parents[1])).resolve())
+     runtime = {p for p in runtime if p.is_dir() and p not in {Path('/'), Path('/home'), Path('/public'), Path('/public/home'), Path('/tmp'), Path.home().resolve()}}
+     runtime = {p for p in runtime if not any(p != q and p.is_relative_to(q) for q in runtime)}
+     controls = {data, project / '.biomind', project / '.git'}
+-    return {'project': project, 'data': data, 'runtime': runtime, 'controls': controls,
++    return {'project': project, 'data': data, 'runtime': runtime, 'runtime_grants':runtime_grants, 'controls': controls,
+             'denies': {Path(p).resolve() for p in getattr(service, 'deny_paths', ())}}
+ 
+ 
+@@ -446,7 +434,8 @@
+             'network_policy':'isolated' if isolate_network else 'manual-command-policy',
+             'project': str(project), 'data_path': str(data),
+             'task_read_root': str(data / 'task_outputs' / str(task_id)), 'cwd': str(cwd),
+-            'runtime_roots': sorted(map(str, runtime)), 'write_roots': sorted(map(str, writable)),
++            'runtime_roots': sorted(map(str, runtime)), 'runtime_grants':facts['runtime_grants'],
++            'runtime_grant_task_id':str(task_id), 'write_roots': sorted(map(str, writable)),
+             'control_roots': sorted(map(str, controls)), 'deny_paths': sorted(map(str, denies)),
+             'mount_anchors': mount_anchors,
+             'bwrap_path': str(getattr(service, 'bwrap', '') or shutil.which('bwrap', path='/usr/bin:/bin') or '')}
+@@ -561,6 +550,12 @@
+         observed[str(path)] = identity
+         return ['--bind' if writable else '--ro-bind', '/proc/self/fd/' + str(fd), str(path)]
+     try:
++        if projection.get('runtime_grants'):
++            from agent_core.execution_permissions import active_read_grants, digest, PermissionDenied
++            live={g['grant_id']:g for g in active_read_grants(projection['data_path'],projection['runtime_grant_task_id'],project=projection['project'])}
++            for ref in projection['runtime_grants']:
++                if ref['grant_id'] not in live or digest(live[ref['grant_id']])!=ref['grant_hash']:
++                    raise PermissionDenied('RUNTIME_DIRECTORY_GRANT_REVOKED_OR_CHANGED')
+         # Only reached inside the claimed executor. Reuse the file adapter's
+         # dirfd walk to create precisely the approved missing output, never its
+         # ancestor as a writable mount. The original payload remains immutable.

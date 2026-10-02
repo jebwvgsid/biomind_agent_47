@@ -1,0 +1,268 @@
+{
+  "authority": "/public/home/liusiqi/03.毕设/agent_shim/software_registry.json",
+  "authority_source": {
+    "dotenv_projection": "READ_ALLOWLIST_ONLY",
+    "dotenv_sources": [
+      {
+        "path": "/public/home/liusiqi/03.毕设/Biomind_v1/.env",
+        "fields": [
+          "BIO_SOFTWARE_ROOT",
+          "LLM_BASE_URL",
+          "LLM_DEFAULT_MODEL"
+        ],
+        "projection_sha256": "246a4bfbb948c753f366ad8ca5c8eef18b82e07ebbeb9504998a2a577ec04bf0"
+      }
+    ]
+  },
+  "before": {
+    "environment": null,
+    "tool": null
+  },
+  "preview": {
+    "call_id": "rna-supplement-20261002",
+    "env_name": "rna_env",
+    "prefix": "/public/home/liusiqi/anaconda3/envs/rna_env",
+    "tools": [
+      "Rscript"
+    ],
+    "entries": {
+      "Rscript": "/public/home/liusiqi/anaconda3/envs/rna_env/bin/Rscript"
+    },
+    "packages": [
+      "R",
+      "fgsea"
+    ],
+    "capabilities": [
+      "tool:Rscript",
+      "r-package:fgsea"
+    ],
+    "language": "R",
+    "versions": {
+      "R": "4.5.3"
+    },
+    "source_note": "existing software; historical receipt only",
+    "observation": {
+      "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+      "session_id": "01a0f68c-7b84-70ca-bfcd-d234aa37b81b",
+      "request_id": "db4f89eb-08be-4259-ad79-95411ce778f5",
+      "observed_at": "2026-10-01T08:26:16.342Z",
+      "checks": [
+        "tool:Rscript",
+        "package:R",
+        "package:fgsea"
+      ],
+      "recorded_output": "Rscript (R) version 4.5.3 (2026-03-11)\nfgsea: TRUE",
+      "session_sha256": "23a5f586623f7a94e544da1d32af6ba8e871e7946764eabf5e5dd7048f48ad39",
+      "strength_boundary": "historical tool output; pipeline exit does not independently prove each command; no current probe"
+    }
+  },
+  "real_software_execution": "NOT_RUN",
+  "R_fgsea_recheck": "NOT_RUN",
+  "ORA_TAD_reproduce": "NOT_RUN",
+  "receipt": {
+    "status": "registered",
+    "operation": "created",
+    "env_name": "rna_env",
+    "registration_sources": {
+      "environment_registry": "/public/home/liusiqi/03.毕设/agent_shim/software_registry.json",
+      "source_type": "software_registry"
+    },
+    "registration_receipt": {
+      "committed": true,
+      "changed": true,
+      "registry_path": "/public/home/liusiqi/03.毕设/agent_shim/software_registry.json",
+      "source_type": "software_registry",
+      "durability_warning": ""
+    },
+    "tool_mappings": [
+      {
+        "tool": "Rscript",
+        "committed": true,
+        "changed": true,
+        "registry_path": "/public/home/liusiqi/03.毕设/agent_shim/software_registry.json",
+        "source_type": "software_registry",
+        "durability_warning": "",
+        "derived_paths": [],
+        "derived_errors": []
+      }
+    ],
+    "skill_mapping": {
+      "status": "not_requested"
+    },
+    "shim": {
+      "status": "not_required"
+    },
+    "healthcheck_status": "not_run",
+    "installation_status": "not_run",
+    "record": {
+      "packages": [
+        "R",
+        "fgsea"
+      ],
+      "capabilities": [
+        "tool:Rscript",
+        "r-package:fgsea"
+      ],
+      "language": "R",
+      "versions": {
+        "R": "4.5.3"
+      },
+      "prefix": "/public/home/liusiqi/anaconda3/envs/rna_env",
+      "tools": [
+        "Rscript"
+      ],
+      "entries": {
+        "Rscript": "/public/home/liusiqi/anaconda3/envs/rna_env/bin/Rscript"
+      },
+      "status": "registered",
+      "backend": "local",
+      "host": "ln02",
+      "evidence": {
+        "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+        "session_id": "01a0f68c-7b84-70ca-bfcd-d234aa37b81b",
+        "request_id": "db4f89eb-08be-4259-ad79-95411ce778f5",
+        "observed_at": "2026-10-01T08:26:16.342Z",
+        "checks": [
+          "tool:Rscript",
+          "package:R",
+          "package:fgsea"
+        ],
+        "recorded_output": "Rscript (R) version 4.5.3 (2026-03-11)\nfgsea: TRUE",
+        "session_sha256": "23a5f586623f7a94e544da1d32af6ba8e871e7946764eabf5e5dd7048f48ad39",
+        "strength_boundary": "historical tool output; pipeline exit does not independently prove each command; no current probe",
+        "source": "historical_execution_receipt",
+        "strength": "historically_observed"
+      },
+      "last_verified_at": "2026-10-01T08:26:16.342Z",
+      "capability_evidence": {
+        "tool:Rscript": {
+          "status": "historically_observed",
+          "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+          "observed_at": "2026-10-01T08:26:16.342Z"
+        },
+        "package:R": {
+          "status": "historically_observed",
+          "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+          "observed_at": "2026-10-01T08:26:16.342Z"
+        },
+        "package:fgsea": {
+          "status": "historically_observed",
+          "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+          "observed_at": "2026-10-01T08:26:16.342Z"
+        },
+        "capability:tool:Rscript": {
+          "status": "unknown",
+          "source": "registration_declaration"
+        },
+        "capability:r-package:fgsea": {
+          "status": "unknown",
+          "source": "registration_declaration"
+        }
+      },
+      "env": "rna_env",
+      "registered_at": "2026-10-02T13:20:15.571048",
+      "bound_tools": [
+        "Rscript"
+      ]
+    }
+  },
+  "after": {
+    "environment": {
+      "packages": [
+        "R",
+        "fgsea"
+      ],
+      "capabilities": [
+        "tool:Rscript",
+        "r-package:fgsea"
+      ],
+      "language": "R",
+      "versions": {
+        "R": "4.5.3"
+      },
+      "prefix": "/public/home/liusiqi/anaconda3/envs/rna_env",
+      "tools": [
+        "Rscript"
+      ],
+      "entries": {
+        "Rscript": "/public/home/liusiqi/anaconda3/envs/rna_env/bin/Rscript"
+      },
+      "status": "registered",
+      "backend": "local",
+      "host": "ln02",
+      "evidence": {
+        "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+        "session_id": "01a0f68c-7b84-70ca-bfcd-d234aa37b81b",
+        "request_id": "db4f89eb-08be-4259-ad79-95411ce778f5",
+        "observed_at": "2026-10-01T08:26:16.342Z",
+        "checks": [
+          "tool:Rscript",
+          "package:R",
+          "package:fgsea"
+        ],
+        "recorded_output": "Rscript (R) version 4.5.3 (2026-03-11)\nfgsea: TRUE",
+        "session_sha256": "23a5f586623f7a94e544da1d32af6ba8e871e7946764eabf5e5dd7048f48ad39",
+        "strength_boundary": "historical tool output; pipeline exit does not independently prove each command; no current probe",
+        "source": "historical_execution_receipt",
+        "strength": "historically_observed"
+      },
+      "last_verified_at": "2026-10-01T08:26:16.342Z",
+      "capability_evidence": {
+        "tool:Rscript": {
+          "status": "historically_observed",
+          "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+          "observed_at": "2026-10-01T08:26:16.342Z"
+        },
+        "package:R": {
+          "status": "historically_observed",
+          "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+          "observed_at": "2026-10-01T08:26:16.342Z"
+        },
+        "package:fgsea": {
+          "status": "historically_observed",
+          "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+          "observed_at": "2026-10-01T08:26:16.342Z"
+        },
+        "capability:tool:Rscript": {
+          "status": "unknown",
+          "source": "registration_declaration"
+        },
+        "capability:r-package:fgsea": {
+          "status": "unknown",
+          "source": "registration_declaration"
+        }
+      },
+      "env": "rna_env",
+      "registered_at": "2026-10-02T13:20:15.571048",
+      "bound_tools": [
+        "Rscript"
+      ]
+    },
+    "tool": {
+      "source_executable": "/public/home/liusiqi/anaconda3/envs/rna_env/bin/Rscript",
+      "name": "Rscript",
+      "env": "rna_env",
+      "env_name": "rna_env",
+      "evidence": {
+        "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+        "session_id": "01a0f68c-7b84-70ca-bfcd-d234aa37b81b",
+        "request_id": "db4f89eb-08be-4259-ad79-95411ce778f5",
+        "observed_at": "2026-10-01T08:26:16.342Z",
+        "checks": [
+          "tool:Rscript",
+          "package:R",
+          "package:fgsea"
+        ],
+        "recorded_output": "Rscript (R) version 4.5.3 (2026-03-11)\nfgsea: TRUE",
+        "session_sha256": "23a5f586623f7a94e544da1d32af6ba8e871e7946764eabf5e5dd7048f48ad39",
+        "strength_boundary": "historical tool output; pipeline exit does not independently prove each command; no current probe",
+        "source": "historical_execution_receipt",
+        "strength": "historically_observed"
+      },
+      "status": "registered",
+      "install_time": "2026-10-02T13:20:15.590327",
+      "category": "Manual Registered"
+    }
+  },
+  "unrelated_records_unchanged": true
+}

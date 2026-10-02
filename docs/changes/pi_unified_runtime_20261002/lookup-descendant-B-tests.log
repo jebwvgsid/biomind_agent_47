@@ -1,0 +1,8 @@
+test_exact_metadata_never_executes_candidate_and_is_bounded (__main__.BoundedLocationTests.test_exact_metadata_never_executes_candidate_and_is_bounded) ... Executing <Task pending name='Task-2' coro=<BoundedLocationTests.test_exact_metadata_never_executes_candidate_and_is_bounded() running at /public/home/liusiqi/03.毕设/Biomind_v1/tests/test_runtime_candidates_20261002.py:222> wait_for=<Future pending cb=[Task.task_wakeup()] created at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:448> cb=[_run_until_complete_cb() at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:181] created at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:100> took 1.618 seconds
+ok
+test_slow_metadata_is_killed_at_five_seconds_with_observed_cleanup (__main__.BoundedLocationTests.test_slow_metadata_is_killed_at_five_seconds_with_observed_cleanup) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 6.825s
+
+OK

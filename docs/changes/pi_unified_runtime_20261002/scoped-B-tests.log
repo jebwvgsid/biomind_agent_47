@@ -1,0 +1,17 @@
+test_binding_digest_and_explicit_constraints_cannot_drift (__main__.BindingContracts.test_binding_digest_and_explicit_constraints_cannot_drift) ... ok
+test_frozen_prepared_path_is_not_duplicated (__main__.BindingContracts.test_frozen_prepared_path_is_not_duplicated) ... ok
+test_multiple_scopes_require_reference_even_same_prefix (__main__.BindingContracts.test_multiple_scopes_require_reference_even_same_prefix) ... ok
+test_request_isolation_and_old_records_need_new_selection (__main__.BindingContracts.test_request_isolation_and_old_records_need_new_selection) ... ok
+test_runner_entry_contract_and_environment_overrides (__main__.BindingContracts.test_runner_entry_contract_and_environment_overrides) ... ok
+test_runner_only_and_unknown_selected_requirements_remain_usable (__main__.BindingContracts.test_runner_only_and_unknown_selected_requirements_remain_usable) ... ok
+test_selection_is_no_probe_and_legacy_non_pi_projection_retained (__main__.BindingContracts.test_selection_is_no_probe_and_legacy_non_pi_projection_retained) ... ok
+test_native_bindings_reach_real_child_and_parallel_launches_are_isolated (__main__.RealScopedLaunch.test_native_bindings_reach_real_child_and_parallel_launches_are_isolated) ... Executing <Task pending name='Task-2' coro=<RealScopedLaunch.test_native_bindings_reach_real_child_and_parallel_launches_are_isolated() running at /public/home/liusiqi/03.毕设/Biomind_v1/tests/test_scoped_launch_20261002.py:155> wait_for=<Future pending cb=[Task.task_wakeup()] created at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:448> cb=[_run_until_complete_cb() at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:181] created at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:100> took 0.424 seconds
+ok
+test_protected_registered_external_prefix_does_not_grant_directory (__main__.RealScopedLaunch.test_protected_registered_external_prefix_does_not_grant_directory) ... Executing <Task pending name='Task-35' coro=<RealScopedLaunch.test_protected_registered_external_prefix_does_not_grant_directory() running at /public/home/liusiqi/03.毕设/Biomind_v1/tests/test_scoped_launch_20261002.py:199> wait_for=<Future pending cb=[Task.task_wakeup()] created at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:448> cb=[_run_until_complete_cb() at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:181] created at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:100> took 0.203 seconds
+Executing <Task pending name='formal-observer-attempt-d6d416a63435b185dcfce75c' coro=<FormalCommandObserver._drive_formal() running at /public/home/liusiqi/03.毕设/Biomind_v1/agent_core/formal_command_observation.py:237> wait_for=<Future pending cb=[Task.task_wakeup()] created at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:448> cb=[_wait.<locals>._on_completion() at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/tasks.py:534] created at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/tasks.py:420> took 0.369 seconds
+ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 1.691s
+
+OK

@@ -1,0 +1,271 @@
+--- a/integrations/pi_runtime/domain_adapter/service.py
++++ b/integrations/pi_runtime/domain_adapter/service.py
+@@ -35,7 +35,7 @@
+ HOST_METHODS = frozenset({'files.list','files.read_authorize','files.mutation_snapshot','files.mutation_replay','request.begin','request.cancel','approval.decide','settings.update','shutdown',
+                          'request.pause','request.resume','request.revise','request.status','exec.probe',
+                          'memory.maintenance.prepare','memory.maintenance.apply','archive.append','archive.status',
+-                         'permissions.status','permissions.revoke','permissions.mode'})
++                         'permissions.status','permissions.revoke','permissions.mode','environments.launch','environments.register_observed'})
+ 
+ 
+ class DomainError(ValueError):
+@@ -170,7 +170,7 @@
+               'elapsed_seconds','output_idle_seconds','original_deadline_at','remaining_seconds',
+               'scientific_validation','cancel_requested','stop_requested','task_cancelled','instruction',
+               'wall_timeout_disabled','run_status','run_terminal','truncated','output_projection','observation_only',
+-              'capability_missing','filesystem_protection'}
++              'capability_missing','filesystem_protection','runtime_binding','runtime_diagnostic'}
+         view={k:v for k,v in result.items() if k in keys}
+         # Copy only known diagnostic scalars, never traceback/environment or a
+         # second directory listing. Keep the raw receipt unchanged for replay.
+@@ -332,31 +332,45 @@
+         if not isinstance(value,str) or not value or len(value)>500: raise DomainError('CALL_ID_REQUIRED')
+         return value
+ 
+-    def select_environment(self,requirements,skill_id='',env_name='',*,loaded_skills=None):
++    def _registry_sources(self):
++        return {'environment_registry':str(self.registry.path),'source_type':'software_registry'}
++
++    def select_environment(self,requirements,skill_id='',env_name='',*,loaded_skills=None,runtime_scope=''):
++        self._ensure_request()
+         if isinstance(requirements,list) and all(isinstance(r,str) for r in requirements):requirements={'packages':requirements}
+         if not isinstance(requirements,dict):raise DomainError('ENV_REQUIREMENTS_MUST_BE_OBJECT_OR_PACKAGE_LIST')
++        from agent_core.runtime_evidence import registered_execution_binding
++        if not requirements and not skill_id and not env_name:
++            try:
++                bound=registered_execution_binding(self._state(),runtime_scope=runtime_scope)
++            except ValueError as exc:
++                return {'availability':'UNKNOWN','reason_code':str(exc),'install_required':False,
++                        'registration_sources':self._registry_sources()}
++            if bound:
++                return {'availability':'AVAILABLE','decision':'binding_reused','binding_ref':bound['binding_ref'],
++                        'binding_scope':bound['scope'],'invocation':bound['launch'],'install_required':False,
++                        'healthcheck_status':'not_run','registration_sources':self._registry_sources()}
+         self.registry.reload()
+         identity=self.skills().resolve(skill_id,loaded_skills=loaded_skills) if skill_id else None
+-        if identity and (identity['status']=='ambiguous' or
+-                         identity['status']!='registered' and not (env_name or requirements.get('env') or requirements.get('default_env'))):
++        if identity and identity['status']=='ambiguous':
+             return {'decision':'registry_unresolved','availability':'UNKNOWN','selected_candidate':{},
+                     'candidates':identity.get('candidates',[]),'install_required':False,
+-                    'reason_code':identity['reason_code'],'skill_resolution':identity}
+-        record=identity['record'] if identity else {}
+-        selected=registered_runtime_reuse(self.registry,requirements,skill_record=record,target_env=env_name)
+-        if identity: selected['skill_resolution']={key:value for key,value in identity.items() if key!='record'}
+-        selected['registration_sources']={'environment_registry':str(self.registry.path),
++                    'reason_code':identity['reason_code'],'skill_resolution':identity,
++                    'registration_sources':self._registry_sources()}
++        record=(identity.get('record') or {}) if identity else {}
++        selected=registered_runtime_reuse(self.registry,requirements,skill_record=record,target_env=env_name,
++            trusted_backend='local',trusted_host=os.uname().nodename)
++        if identity:selected['skill_resolution']={key:value for key,value in identity.items() if key!='record'}
++        selected['registration_sources']={**self._registry_sources(),
+             **({'skill_registry':str(self.skills_root/'.skill_runtime_registry.json')} if record else {})}
+         if selected.get('availability')!='AVAILABLE':return selected
+         candidate=selected['selected_candidate'];audit=deepcopy(candidate['audit'])
+-        prefix=Path(candidate['prefix'])
+-        selected['invocation']={'prefix':str(prefix),'python':str(prefix/'bin/python'),
+-            'python_exists':(prefix/'bin/python').is_file(),'healthcheck':'not_run',
+-            'entrypoint_status':'use_explicit_skill_or_user_entry; module/CLI/source_are_distinct',
+-            'vantage':'registry','source_ref':candidate.get('source_ref')}
+-        sid=(identity.get('skill_id') if identity else None) or skill_id or 'registered-environment:'+audit['env'];audit['skill_id']=sid;candidate['audit']=audit
++        launch=deepcopy(candidate['launch_description'])
++        selected['invocation']={**launch,'healthcheck':'not_run','vantage':'registry'}
++        sid=runtime_scope or (identity.get('skill_id') if identity else None) or skill_id or 'registered-environment:'+audit['env']
++        audit['skill_id']=sid;candidate['audit']=audit
+         invalid=(self._state().get('task_state',{}).get('runtime_invalidations') or {}).get(sid)
+-        if invalid and invalid.get('prefix')==candidate['prefix']:
++        if invalid and invalid.get('prefix')==candidate.get('prefix'):
+             selected['historical_execution_error']=deepcopy(invalid)
+         from agent_core.runtime_evidence import make_runtime_evidence,merge_runtime_evidence,runtime_evidence_state,digest as evidence_digest
+         contract=evidence_digest({'requirements':requirements,'registration':record})
+@@ -366,14 +380,143 @@
+         evidence=make_runtime_evidence(audit,task_id=self.task_id,skill_scope=scope,
+             observed_at=datetime.now(timezone.utc).isoformat(),producer='registered_runtime',
+             source_ref=candidate['source_ref'],coverage=candidate['coverage'],inspection_status='not_run')
++        request=self.scope()
+         def update(state):
++            if request_scope(state)!=request:raise DomainError('RUNTIME_REQUEST_CHANGED')
+             task=state.setdefault('task_state',{});old=task.get('runtime_evidence') or {}
+-            # Repeated registry selection is metadata reuse, never a fresh healthcheck.
+-            if any(r.get('source_ref')==evidence['source_ref'] and r.get('scope')==scope for r in old.get('records',[])):return
+-            records=merge_runtime_evidence(old.get('records',[]),[evidence],task_id=self.task_id)
++            existing=next((r for r in old.get('records',[]) if r.get('source_ref')==evidence['source_ref']
++                and r.get('scope')==scope and r.get('acceptance',{}).get('request_scope')==request),None)
++            if existing:return existing['evidence_id']
++            records=merge_runtime_evidence(old.get('records',[]),[evidence],task_id=self.task_id,
++                request_scope=request,launch_description=launch,requirements=requirements)
+             task['runtime_evidence']=runtime_evidence_state(records,prior_revision=old.get('revision',0))
+-        mutate(self.data_root,self.task_id,update)
++            return evidence['evidence_id']
++        selected['binding_ref']=mutate(self.data_root,self.task_id,update)
++        selected['binding_scope']={'request_scope':request,'runtime_scope':sid}
+         return selected
++
++    def _prepare_binding(self,arguments,*,shell='/bin/sh',base_path=None,explicit_only=False):
++        """Resolve request evidence, then interpret its launch once for both entries."""
++        from agent_core.runtime_evidence import registered_execution_binding
++        from agent_core.runtime_launch import prepare_runtime_launch
++        original=deepcopy(arguments)
++        ref=original.pop('binding_ref','') or '';scope=original.pop('runtime_scope','') or ''
++        requirements=original.pop('requirements',{}) or {};env_name=original.pop('env_name','') or ''
++        if not isinstance(requirements,dict):raise DomainError('ENV_REQUIREMENTS_MUST_BE_OBJECT')
++        if env_name and requirements.get('env') not in (None,'',env_name):raise DomainError('REGISTERED_RUNTIME_TARGET_CONFLICT')
++        if env_name:requirements={**requirements,'env':env_name}
++        if explicit_only and not ref:raise DomainError('RUNTIME_BINDING_REF_REQUIRED')
++        if not ref and env_name:
++            choice=self.select_environment(requirements,env_name=env_name,runtime_scope=scope)
++            if choice.get('availability')!='AVAILABLE':
++                return original,None,choice
++            ref=choice['binding_ref']
++        bound=registered_execution_binding(self._state(),binding_ref=ref,runtime_scope=scope,requirements=requirements)
++        if bound is None and requirements and not explicit_only:
++            choice=self.select_environment(requirements,runtime_scope=scope)
++            if choice.get('availability')!='AVAILABLE':return original,None,choice
++            bound=registered_execution_binding(self._state(),binding_ref=choice['binding_ref'],requirements=requirements)
++        if bound is None:return original,None,None
++        command=original.get('argv') or original.get('cmd')
++        launch=prepare_runtime_launch(bound['launch'],command,
++            base_env={'PATH':base_path or os.environ.get('PATH','/usr/bin:/bin'),'LC_ALL':'C.UTF-8'},
++            extra_env=original.get('env') or {},shell=shell)
++        original.pop('cmd',None);original.pop('argv',None)
++        original['argv' if isinstance(launch['command'],list) else 'cmd']=launch['command']
++        original['env']=launch['env']
++        original['_runtime_binding']={'binding_ref':bound['binding_ref'],'scope':bound['scope'],'launch':launch['launch']}
++        return original,original['_runtime_binding'],None
++
++    def launch_environment(self,p):
++        self._ensure_request()
++        if self.execution_profile!='native':raise DomainError('NATIVE_BASH_REQUIRES_NATIVE_PROFILE')
++        if set(p)-{'binding_ref','command','shell','base_path'}:raise DomainError('ENVIRONMENT_LAUNCH_FIELDS_INVALID')
++        import shlex
++        prepared,binding,unavailable=self._prepare_binding({'cmd':p.get('command'),'binding_ref':p.get('binding_ref')},
++            shell=p.get('shell') or '/bin/bash',base_path=p.get('base_path'),explicit_only=True)
++        command=prepared.get('argv') or prepared.get('cmd')
++        return {'command':shlex.join(command) if isinstance(command,list) else command,'command_argv':command if isinstance(command,list) else None,
++                'env':prepared.get('env',{}),'launch':binding,'healthcheck_status':'not_run',
++                'registration_sources':self._registry_sources()}
++
++    def register_environment(self,p,*,observation=None):
++        """Metadata only; model declarations cannot mint execution evidence."""
++        self._ensure_request()
++        allowed={'call_id','env_name','prefix','tools','packages','capabilities','entries','env_runner','runner_argv',
++                 'runtime_env','source_note','evidence_refs','language','versions'}
++        if set(p)-allowed:raise DomainError('ENVIRONMENT_REGISTRATION_FIELDS_INVALID')
++        name=p.get('env_name');prefix=p.get('prefix')
++        if not isinstance(name,str) or not name or not isinstance(prefix,str) or not Path(prefix).is_absolute():
++            raise DomainError('REGISTRATION_IDENTITY_REQUIRED')
++        from package_manager import PackageManager,RegistryError
++        source=self._registry_sources();call=self._call_id(p)
++        if self.execution_profile=='protected':
++            permissions.prepare_path_access(self.commands,self.task_id,
++                [{'path':str(self.registry.path),'access':'read_write','target_kind':'file','recursive':False}],
++                call_id='registration:'+call,purpose='补登记现有软件的元数据，不安装软件')
++        tools=p.get('tools') or []
++        if not isinstance(tools,list) or any(not isinstance(t,str) or not t or Path(t).name!=t or t in {'.','..'} for t in tools):
++            raise DomainError('REGISTRATION_TOOLS_INVALID')
++        prefix=str(Path(prefix).resolve())
++        entries={tool:str(Path(prefix)/'bin'/tool) for tool in tools};entries.update(p.get('entries') or {})
++        if any(not isinstance(v,str) or not Path(v).is_absolute() for v in entries.values()):raise DomainError('REGISTRATION_ENTRY_INVALID')
++        evidence={'source':'registration_declaration','note':str(p.get('source_note') or ''),
++                  'evidence_refs':p.get('evidence_refs') or [],'strength':'declared_not_verified'}
++        record={k:deepcopy(p[k]) for k in ('packages','capabilities','runtime_env','env_runner','runner_argv','language','versions') if k in p}
++        record.update(prefix=prefix,tools=tools,entries=entries,status='registered',backend='local',host=os.uname().nodename,
++                      evidence=evidence)
++        if observation is not None:
++            required={'source_ref','observed_at','session_id','request_id','checks'}
++            if not isinstance(observation,dict) or not required<=set(observation):raise DomainError('HOST_OBSERVATION_INCOMPLETE')
++            # The host alone supplies bounded, previously checked receipts. This
++            # timestamp is evidence time, never upgraded to the registration time.
++            datetime.fromisoformat(observation['observed_at'].replace('Z','+00:00'))
++            record['evidence']={**deepcopy(observation),'source':'historical_execution_receipt','strength':'historically_observed'}
++            record['last_verified_at']=observation['observed_at']
++            record['capability_evidence']={key:{'status':'historically_observed','source_ref':observation['source_ref'],
++                'observed_at':observation['observed_at']} for key in observation['checks']}
++        try:
++            pm=PackageManager.for_registry(self.registry.path)
++            before=pm.get_environment(name)
++            pm.register_environment(name,record=record)
++            main=deepcopy(pm.last_registry_receipt);derived=[]
++            for tool in tools:
++                try:
++                    pm.register_existing_tool(tool,name,prefix=prefix,generate_shim=False,
++                        record={'source_executable':entries[tool]},evidence=record['evidence'])
++                    derived.append({'tool':tool,**deepcopy(pm.last_registry_receipt)})
++                except (OSError,ValueError) as exc:
++                    derived.append({'tool':tool,'committed':False,'error':str(exc)})
++            self.registry.reload()
++            changed=main.get('changed') or any(d.get('changed') for d in derived)
++            return {'status':'partial' if any(not d.get('committed') for d in derived) else 'registered',
++                    'operation':'created' if not before else 'updated' if changed else 'unchanged','env_name':name,
++                    'registration_sources':source,'registration_receipt':main,'tool_mappings':derived,
++                    'skill_mapping':{'status':'not_requested'},'shim':{'status':'not_required'},'healthcheck_status':'not_run',
++                    'installation_status':'not_run','record':deepcopy(self.registry.registry['environments'][name])}
++        except (RegistryError,OSError,ValueError) as exc:
++            return {'status':'registration_failed','error':str(exc),'registration_sources':source,
++                    'installation_status':'not_run','healthcheck_status':'not_run'}
++
++    async def locate_environment(self,p):
++        self._ensure_request()
++        if set(p)-{'requirements'}:raise DomainError('ENVIRONMENT_LOOKUP_FIELDS_INVALID')
++        requirements=p.get('requirements') or {};key=digest(requirements);scope=self.scope()
++        previous=self._state().get('task_state',{}).get('runtime_lookup_attempts',{}).get(key)
++        if previous and previous.get('request_scope')==scope:return {**previous['result'],'replayed':True}
++        started=time.monotonic()
++        try:
++            from .registry import bounded_location_lookup
++            result=await bounded_location_lookup(self,requirements)
++        except asyncio.TimeoutError:
++            result={'status':'timed_out','cleanup':'cleanup_unknown','reason':'metadata lookup did not return a cleanup receipt'}
++        except (OSError,ValueError) as exc:result={'status':'lookup_failed','error':str(exc)}
++        result={**result,'elapsed_seconds':round(time.monotonic()-started,4),'budget':{'max_candidates':3,'item_seconds':5,'total_seconds':15},
++                'registration_sources':self._registry_sources(),'install_required':False,'healthcheck_status':'not_run'}
++        if len(json.dumps(result).encode())>8192:
++            result={'status':'incomplete','reason':'LOOKUP_SUMMARY_LIMIT','max_bytes':8192,'registration_sources':self._registry_sources(),'install_required':False}
++        mutate(self.data_root,self.task_id,lambda state:state.setdefault('task_state',{}).setdefault('runtime_lookup_attempts',{}).update({key:{'request_scope':scope,'result':result}}))
++        return result
+ 
+     def execution_record(self,p):
+         """Explicit bounded projection of this request's existing execution record.
+@@ -444,16 +587,17 @@
+         if self.execution_profile == 'protected' and not probe and self._state().get('task_state',{}).get('intent_admission',{}).get('request_kind')!='execute':
+             raise DomainError('GENERATE_REQUIRED_FOR_EXECUTION')
+         original=deepcopy(p.get('arguments') or {})
+-        for field in ('approved','source','permit','human_required','host_token','access_projection','read_access','grants','mounts','_biomind_probe','profile','execution_profile','disable_sandbox','grant','session','session_id','roots','policy_revision','trusted_roots'):
++        for field in ('approved','source','permit','human_required','host_token','access_projection','read_access','grants','mounts','_biomind_probe','profile','execution_profile','disable_sandbox','grant','session','session_id','roots','policy_revision','trusted_roots','_runtime_binding'):
+             if field in original or field in p: raise DomainError('MODEL_AUTHORITY_FIELD_FORBIDDEN')
+         # Pi's tool description is presentation metadata, not an executable
+         # argument supported by the existing strict formal action contract.
+         original.pop('description',None)
+-        env_name=original.pop('env_name',None)
+-        if env_name:
+-            selected=self.select_environment({'env':env_name},env_name=env_name)
+-            if selected.get('availability')!='AVAILABLE': return {'status':'blocked','error':'REGISTERED_ENVIRONMENT_UNAVAILABLE','selection':selected,'execution_started':False}
+-            original['env']={**original.get('env',{}),'ENV_PREFIX':selected['selected_candidate']['prefix']}
++        try:
++            original,binding,unavailable=self._prepare_binding(original)
++        except ValueError as exc:
++            return {'status':'blocked','error':str(exc),'execution_started':False,'registration_sources':self._registry_sources()}
++        if unavailable:
++            return {'status':'blocked','error':'REGISTERED_ENVIRONMENT_UNAVAILABLE','selection':unavailable,'execution_started':False}
+         if probe:
+             if self._state().get('task_state',{}).get('intent_admission',{}).get('request_kind')!='consult':
+                 raise DomainError('PROBE_REQUIRES_CONSULT')
+@@ -630,9 +774,15 @@
+             return prepare(self,p) if method=='memory.maintenance.prepare' else apply(self,p) if method=='memory.maintenance.apply' else {'status':'unsupported'}
+         if method=='environments.select':
+             if 'loaded_skills' in p:self._host(host_token)
+-            if set(p)-{'requirements','skill_id','env_name','loaded_skills'}:raise DomainError('ENVIRONMENT_QUERY_FIELDS_INVALID')
++            if set(p)-{'requirements','skill_id','env_name','loaded_skills','runtime_scope'}:raise DomainError('ENVIRONMENT_QUERY_FIELDS_INVALID')
+             return self.select_environment(p.get('requirements') or {},p.get('skill_id') or '',p.get('env_name') or '',
+-                loaded_skills=p.get('loaded_skills'))
++                loaded_skills=p.get('loaded_skills'),runtime_scope=p.get('runtime_scope') or '')
++        if method=='environments.launch':return self.launch_environment(p)
++        if method=='environments.register':return self.register_environment(p)
++        if method=='environments.register_observed':
++            values=dict(p);observation=values.pop('observation',None)
++            return self.register_environment(values,observation=observation)
++        if method=='environments.locate':return await self.locate_environment(p)
+         if method=='exec.start': return await self._exec_start(p)
+         if method=='exec.probe': return await self._exec_start(p,probe=True)
+         if method in {'exec.status','exec.wait','exec.read_log'}:

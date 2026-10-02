@@ -1,0 +1,82 @@
+--- a/integrations/pi_runtime/extensions/biomind.ts
++++ b/integrations/pi_runtime/extensions/biomind.ts
+@@ -1,6 +1,7 @@
+ /** BioMind's sole Pi extension. Native CLI, SDK and tests load this module. */
+ import { planStageBoundary, boundaryDrafts, assertStageBoundary, bindHandoff, type StageBoundary } from '../stage-context.js';
+ import { nativeRead } from '../native-read.js';
++import { runtimeBash, type RuntimeBashLaunch } from '../native-bash.js';
+ import { DISCOVERY_TOOLS, discoveryDefinition, nativeDiscovery, type DirectorySnapshot } from '../native-discovery.js';
+ import { nativeMutation } from '../native-mutation.js';
+ import { filterNativeContextFiles, currentNativeProjectContext } from '../native-context.js';
+@@ -164,7 +165,7 @@
+   });
+ }
+ 
+-const READ_TOOLS = [...DISCOVERY_TOOLS, 'request_path_access', 'probe_command', 'ask_user', 'handoff_generate', 'select_environment', 'inspect_run', 'wait_run', 'read_run_log', 'cancel_run', 'file_stat', 'read', 'memory_search', 'memory_read'];
++const READ_TOOLS = [...DISCOVERY_TOOLS, 'request_path_access', 'probe_command', 'ask_user', 'handoff_generate', 'select_environment', 'register_environment', 'inspect_run', 'wait_run', 'read_run_log', 'cancel_run', 'file_stat', 'read', 'memory_search', 'memory_read'];
+ const GENERATE_TOOLS = [...READ_TOOLS.filter(name => !['handoff_generate', 'probe_command'].includes(name)), 'update_plan', 'run_command', 'install_tool', 'write', 'edit', 'memory_write'];
+ const CONSULT_RULES = `Consult 负责在交接前完成本任务必要的输入、环境、Skill、参数确认。优先 read/file_stat/select_environment，明确要求的短程序核查使用 probe_command（只读项目/输入、隔离网络、临时区写入、有时限）。不增加默认 healthcheck。检查受限时说明具体原因，不能伪装 passed。handoff_generate 的 execution 必须列明实际对象、能力、核查、停止条件和缺口；无此类别时使用空数组，不编造。
+ 当前阶段：Consult。普通咨询可直接答复并结束本次请求；需要执行时调用 handoff_generate 一次，由同一会话继续进入 Generate。`;
+@@ -712,6 +713,13 @@
+         async execute(id, args, signal, _update, ctx) { return reply(await execute(id, asObject(args), signal, ctx)); },
+       } as ToolDefinition);
+     }
++    if (native) pi.registerTool(runtimeBash(async (input, signal, ctx) => {
++      const ownerSession = sessionId(ctx), ownerRequest = current(ctx).requestId;
++      const result = await client(ctx).hostCall('environments.launch', input, { signal, requestId: ownerRequest });
++      signal?.throwIfAborted();
++      if (sessionId(ctx) !== ownerSession || current(ctx).requestId !== ownerRequest) throw new Error('STALE_ENVIRONMENT_OWNER');
++      return result as RuntimeBashLaunch;
++    }));
+     // Both metadata and Pi content reads use the same live Pi resource registry.
+     // Trusted directories are host-derived and never part of a model schema.
+     async function authorizeRead(ctx: ExtensionContext, absolutePath: string, id: string, signal?: AbortSignal,
+@@ -835,10 +843,13 @@
+     });
+     register('update_plan', '可选的当前分支工作笔记，不是执行许可或必须产物合同。', OBJECT({ steps: Type.Array(OBJECT({ step: nonempty(), status: Type.Union([Type.Literal('pending'), Type.Literal('in_progress'), Type.Literal('completed')]) })) }),
+       async (_id, args, _signal, ctx) => { const value = current(ctx); publish(ctx, { ...value, plan: args.steps, planSources: exposedSources }); return { plan: args.steps, required_for_execution: false }; });
+-    register('select_environment', '使用已登记环境；可只传已加载 Skill 的名称，显式 env_name 优先。不附带健康检查或安装，未知库存不等于冲突。',
+-      OBJECT({ requirements: Type.Optional(OBJECT({ env: optionalString(), packages: Type.Optional(Type.Array(Type.String())), tools: Type.Optional(Type.Array(Type.String())), capabilities: Type.Optional(Type.Array(Type.String())) })), skill_id: optionalString(), env_name: optionalString() }),
++    const runtimeRequirements = OBJECT({ env: optionalString(), prefix: optionalString(), backend: optionalString(), host: optionalString(),
++      packages: Type.Optional(Type.Array(Type.String())), tools: Type.Optional(Type.Array(Type.String())), capabilities: Type.Optional(Type.Array(Type.String())),
++      versions: Type.Optional(Type.Record(Type.String(), Type.String())) });
++    register('select_environment', '从登记或已加载 Skill 需求选择适用运行时，返回本请求 binding_ref。已有适用登记直接使用，不体检、不安装。约束冲突明确报告；未知保持未知。run_command 可复用唯一适用绑定；环境相关 bash 必须显式传 binding_ref。',
++      OBJECT({ requirements: Type.Optional(runtimeRequirements), skill_id: optionalString(), env_name: optionalString(), runtime_scope: optionalString() }),
+       async (_id, args, signal, ctx) => {
+-        if (Object.keys(args).some(key => !['requirements', 'skill_id', 'env_name'].includes(key))) throw new Error('ENVIRONMENT_QUERY_FIELDS_INVALID');
++        if (Object.keys(args).some(key => !['requirements', 'skill_id', 'env_name', 'runtime_scope'].includes(key))) throw new Error('ENVIRONMENT_QUERY_FIELDS_INVALID');
+         const ownerSession = sessionId(ctx), ownerRequest = current(ctx).requestId;
+         const loaded_skills = pi.getCommands().filter(command => command.source === 'skill')
+           .map(command => ({ name: command.name.replace(/^skill:/, ''), file_path: command.sourceInfo.path }));
+@@ -846,6 +857,15 @@
+         signal?.throwIfAborted();
+         if (sessionId(ctx) !== ownerSession || current(ctx).requestId !== ownerRequest) throw new Error('STALE_ENVIRONMENT_OWNER');
+         return result;
++      });
++    register('register_environment', '补登记已存在的软件位置和声明能力，不下载安装、不健康检查。写入宿主选定权威；source_note/evidence_refs 是声明来源，不将模型声明升级为验证事实。返回软件/派生项各自状态。',
++      OBJECT({ env_name: nonempty(), prefix: nonempty(), packages: Type.Optional(Type.Array(nonempty())), tools: Type.Optional(Type.Array(nonempty())),
++        capabilities: Type.Optional(Type.Array(nonempty())), entries: Type.Optional(Type.Record(Type.String(), Type.String())),
++        runtime_env: Type.Optional(Type.Record(Type.String(), Type.String())), env_runner: optionalString(), runner_argv: Type.Optional(Type.Array(Type.String())),
++        source_note: optionalString(), evidence_refs: Type.Optional(Type.Array(Type.String())) }),
++      async (id, args, signal, ctx) => {
++        const params = { call_id: id, ...args };
++        return native ? invoke(ctx, 'environments.register', params, signal) : withApproval(ctx, 'environments.register', params, id, signal);
+       });
+     const mapping: Array<[string, string, string, TSchema]> = [
+       ['inspect_run', 'exec.status', '查询已有 run_ref 的真实状态；失败作业不等于查询失败。按需用 record=command 读取已记录命令/cwd/环境引用，record=script 和 script_index 读取实际冻结脚本；offset/max_chars 分页，遵守当前请求范围。不触发检查或重跑。', OBJECT({ run_ref: nonempty(), record: Type.Optional(Type.Union([Type.Literal('command'), Type.Literal('script')])), script_index: Type.Optional(Type.Integer({ minimum: 0 })), offset: Type.Optional(Type.Integer({ minimum: 0 })), max_chars: Type.Optional(Type.Integer({ minimum: 1, maximum: 20000 })) })],
+@@ -859,13 +879,13 @@
+     const pathSchema=OBJECT({paths:Type.Array(OBJECT({path:nonempty(),access:Type.Union([Type.Literal('read'),Type.Literal('read_write')]),target_kind:Type.Union([Type.Literal('file'),Type.Literal('directory')]),recursive:Type.Boolean()}),{minItems:1,maxItems:16}),purpose:nonempty(),lifetime:Type.Optional(Type.Union([Type.Literal('request'),Type.Literal('session')]))});
+     if (!native) register('request_path_access','申请数据文件/目录的读取或读写范围。宿主选择最终子集与有效期；不改变项目、输出要求或自动审批模式。',pathSchema,
+       async(id,args,signal,ctx)=>withApproval(ctx,'permissions.propose',{...args,call_id:id},id,signal));
+-    const commandSchema = OBJECT({ cmd: optionalString(), argv: Type.Optional(Type.Array(Type.String(), { minItems: 1 })), workdir: nonempty(), env_name: optionalString(), description: optionalString(),
++    const commandSchema = OBJECT({ cmd: optionalString(), argv: Type.Optional(Type.Array(Type.String(), { minItems: 1 })), workdir: nonempty(), env_name: optionalString(), binding_ref: optionalString(), runtime_scope: optionalString(), requirements: Type.Optional(runtimeRequirements), description: optionalString(),
+       write_paths: Type.Optional(Type.Array(nonempty(),{description:native ? '可选写入意图记录，不授予权限或限制目录视图。' : '本次动作使用的写入文件/目录，相对 workdir；外部范围仍需宿主批准，不改变任务输出要求。'})),
+       read_paths: Type.Optional(Type.Array(nonempty(), { description: native ? '可选输入来源记录，不构造沙箱目录视图。' : '只读输入文件/小目录，相对项目；URI 仅对 :: 前文件授权。目录每次最多 256 项、2 秒、总 512 挂载，private 排除、链接拒绝；启动后新增文件不可见。' })) });
+     register('probe_command', native ? '有时限的本地程序核查；保留观察取消，不提供强制只读或网络隔离。' : 'Consult 必要的短程序核查：项目和输入只读、隔离网络、仅临时区可写，15 秒/64 KiB 输出限制。仍使用宿主授权和原作业观察取消。', commandSchema,
+       async (id, args, signal, ctx) => withApproval(ctx, 'exec.probe', { call_id: id, arguments: args }, id, signal,
+         (method, params) => client(ctx).hostCall(method, params, { signal, requestId: current(ctx).requestId })));
+-    register('run_command', native ? '启动本地托管命令并返回 run_ref；保留持久日志、观察、取消与重连对账，无 BioMind 目录或命令审批。支持 shell 或 argv，计划可选。' : '通过领域执行服务启动一次需持久日志/观察/取消的命令并返回 run_ref；当前受控命令入口，支持 shell 或 argv，计划可选。', commandSchema,
++    register('run_command', (native ? '启动本地托管命令并返回 run_ref；保留持久日志、观察、取消与重连对账，无 BioMind 目录或命令审批。' : '通过领域执行服务启动受控命令并返回 run_ref，保留持久日志、观察和取消。') + '支持 shell 或 argv，计划可选。显式 binding_ref/env_name 使用准确目标；否则复用本请求和 scope 的唯一适用绑定，多绑定须明确指定。无绑定且无运行时要求时保持宿主执行。', commandSchema,
+       async (id, args, signal, ctx) => withApproval(ctx, 'exec.start', { call_id: id, arguments: args }, id, signal));
+     register('install_tool', '提出安装方案并等待原意图确认。验证必须检查目标 prefix 内的准确工具；结构化 executable/python_import/r_package 检查不能由任意 echo 成功替代。安装完成但登记失败时只恢复登记。', OBJECT({ cmd: nonempty(), env_name: nonempty(), description: nonempty(), packages: Type.Optional(Type.Array(Type.String())), prefix: nonempty(),
+       verification_checks: Type.Array(OBJECT({ kind: Type.Union(['executable','python_import','r_package'].map(v => Type.Literal(v))), tool: nonempty(), entry: optionalString(), args: Type.Optional(Type.Array(Type.String())), modules: Type.Optional(Type.Array(nonempty())), packages: Type.Optional(Type.Array(nonempty())) }), { minItems: 1 }),

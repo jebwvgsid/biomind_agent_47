@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 import shlex
 import time
+from copy import deepcopy
 
 from agent_core.command_inspection_owner import _once
 from agent_core.pending_input import mutate
@@ -41,6 +42,10 @@ async def execute_native_command(service, arguments, *, task_id, call_id, stage=
             raise ValueError('NATIVE_REQUEST_NOT_ACTIVE')
         if task.get('status') == 'cancelled' or cancel_event is not None and cancel_event.is_set():
             raise asyncio.CancelledError()
+        if arguments.get('_runtime_binding'):
+            from agent_core.runtime_evidence import registered_execution_binding
+            binding=arguments['_runtime_binding']
+            registered_execution_binding(state,binding_ref=binding.get('binding_ref',''),runtime_scope=binding.get('scope',''))
         record = json.loads((directory / 'observation_intent.json').read_text())
         if (record.get('task_id') != task_id or record.get('call_id') != call_id or
                 record.get('run_ref') != attempt_id or record.get('arguments_hash') != digest):
@@ -49,7 +54,7 @@ async def execute_native_command(service, arguments, *, task_id, call_id, stage=
     lock = None
     try:
         check_intent()
-        allowed = {'cmd','argv','workdir','env','timeout_ms','max_output_chars','read_paths','write_paths','_biomind_probe'}
+        allowed = {'cmd','argv','workdir','env','timeout_ms','max_output_chars','read_paths','write_paths','_biomind_probe','_runtime_binding'}
         if set(arguments) - allowed:
             raise ValueError('EXEC_COMMAND_ARGUMENTS_INVALID')
         command = arguments.get('argv') or arguments.get('cmd')
@@ -73,7 +78,9 @@ async def execute_native_command(service, arguments, *, task_id, call_id, stage=
             raise ValueError('EXECUTION_ENV_INVALID')
         env = {**os.environ, **overlay}
         if overlay.get('ENV_PREFIX'):
-            env['PATH'] = str(Path(overlay['ENV_PREFIX']) / 'bin') + os.pathsep + env.get('PATH','')
+            target_bin=str(Path(overlay['ENV_PREFIX']) / 'bin')
+            env['PATH']=os.pathsep.join([target_bin,*[p for p in env.get('PATH','').split(os.pathsep) if p!=target_bin]])
+            env['CONDA_PREFIX']=overlay['ENV_PREFIX']
         lock = (directory / 'intent.lock').open('a+')
         try:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -94,6 +101,8 @@ async def execute_native_command(service, arguments, *, task_id, call_id, stage=
                   'execution_carrier':'argv' if isinstance(command,list) else 'shell',
                   'shell':None if isinstance(command,list) else '/bin/sh','shell_login':False,
                   'execution_profile':'native','frozen_files':[]}
+        if arguments.get('_runtime_binding'):
+            action['runtime_binding']=deepcopy(arguments['_runtime_binding'])
         action['action_hash'] = hashlib.sha256(json.dumps(action,sort_keys=True).encode()).hexdigest()
         def prepare(state):
             if request_scope(state) != scope: raise ValueError('NATIVE_REQUEST_SCOPE_CHANGED')
@@ -117,6 +126,8 @@ async def execute_native_command(service, arguments, *, task_id, call_id, stage=
                 'receipt_ref':str(receipt),'stdout_path':str(directory/'stdout.log'),'stderr_path':str(directory/'stderr.log'),
                 'cmd':display,'original_cmd':display,'argv':action['argv'],'cwd':str(cwd),'env':overlay,
                 'scientific_validation':'not_assessed','frozen_files':[]}
+        if arguments.get('_runtime_binding'):
+            base['runtime_binding']=deepcopy(arguments['_runtime_binding'])
         observation['launch_delegated'] = True
         try:
             stdout,stderr,rc = await _run_native_command(command,check_intent=check_intent,cwd=cwd,env=env,

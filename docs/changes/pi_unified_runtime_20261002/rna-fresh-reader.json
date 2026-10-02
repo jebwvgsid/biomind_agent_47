@@ -1,0 +1,500 @@
+{
+  "scope": "new process and new temporary session; metadata only",
+  "selection": {
+    "decision": "registry_reused",
+    "availability": "AVAILABLE",
+    "selected_candidate": {
+      "env": "rna_env",
+      "availability": "AVAILABLE",
+      "inspection_status": "not_run",
+      "registry_path": "/public/home/liusiqi/03.毕设/agent_shim/software_registry.json",
+      "source_type": "software_registry",
+      "backend": "local",
+      "host": "ln02",
+      "prefix_candidates": [
+        "/public/home/liusiqi/anaconda3/envs/rna_env"
+      ],
+      "prefix": "/public/home/liusiqi/anaconda3/envs/rna_env",
+      "conflicting_packages": [],
+      "conflicting_capabilities": [],
+      "unknown_packages": [],
+      "unknown_tools": [],
+      "unknown_capabilities": [],
+      "versions": {
+        "R": "4.5.3"
+      },
+      "capability_evidence": {
+        "tool:Rscript": {
+          "status": "historically_observed",
+          "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+          "observed_at": "2026-10-01T08:26:16.342Z"
+        },
+        "package:R": {
+          "status": "historically_observed",
+          "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+          "observed_at": "2026-10-01T08:26:16.342Z"
+        },
+        "package:fgsea": {
+          "status": "historically_observed",
+          "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+          "observed_at": "2026-10-01T08:26:16.342Z"
+        },
+        "capability:tool:Rscript": {
+          "status": "unknown",
+          "source": "registration_declaration"
+        },
+        "capability:r-package:fgsea": {
+          "status": "unknown",
+          "source": "registration_declaration"
+        }
+      },
+      "unknown_binding_ids": [],
+      "requirements_status": "recorded",
+      "reason_code": "REGISTERED_RUNTIME_REUSED",
+      "coverage": {
+        "runtime.environment.prefix": {
+          "availability": "AVAILABLE",
+          "output_name": "RESOLVED_ENV_PREFIX",
+          "value_kind": "directory_path",
+          "conclusion_complete": true,
+          "reason_code": "REGISTERED_RUNTIME_REUSED"
+        }
+      },
+      "resolved_runtime_paths": {
+        "RESOLVED_ENV_PREFIX": "/public/home/liusiqi/anaconda3/envs/rna_env"
+      },
+      "source_ref": "registered-runtime:sha256:12edacaeb2fbba2a3c36d4871335142baa28058b21ea87fc594f296f0f4e4007",
+      "audit": {
+        "skill_id": "registered-environment:rna_env",
+        "env": "rna_env",
+        "checked_env": "rna_env",
+        "declared_env": "rna_env",
+        "status": "ready",
+        "declared_ok": true,
+        "decision": "registered_runtime_reused",
+        "runtime_source": "registered_runtime",
+        "healthcheck_status": "not_run",
+        "inspection_status": "not_run",
+        "source_ref": "registered-runtime:sha256:12edacaeb2fbba2a3c36d4871335142baa28058b21ea87fc594f296f0f4e4007",
+        "resolved_runtime_paths": {
+          "RESOLVED_ENV_PREFIX": "/public/home/liusiqi/anaconda3/envs/rna_env"
+        },
+        "coverage": {
+          "runtime.environment.prefix": {
+            "availability": "AVAILABLE",
+            "output_name": "RESOLVED_ENV_PREFIX",
+            "value_kind": "directory_path",
+            "conclusion_complete": true,
+            "reason_code": "REGISTERED_RUNTIME_REUSED"
+          }
+        },
+        "env_runner": "",
+        "last_verified_at": "2026-10-01T08:26:16.342Z",
+        "reason": "使用已登记环境",
+        "requirements_status": "recorded",
+        "launch_description": {
+          "versions": {
+            "R": "4.5.3"
+          },
+          "capability_evidence": {
+            "tool:Rscript": {
+              "status": "historically_observed",
+              "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+              "observed_at": "2026-10-01T08:26:16.342Z"
+            },
+            "package:R": {
+              "status": "historically_observed",
+              "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+              "observed_at": "2026-10-01T08:26:16.342Z"
+            },
+            "package:fgsea": {
+              "status": "historically_observed",
+              "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+              "observed_at": "2026-10-01T08:26:16.342Z"
+            },
+            "capability:tool:Rscript": {
+              "status": "unknown",
+              "source": "registration_declaration"
+            },
+            "capability:r-package:fgsea": {
+              "status": "unknown",
+              "source": "registration_declaration"
+            }
+          },
+          "env": "rna_env",
+          "prefix": "/public/home/liusiqi/anaconda3/envs/rna_env",
+          "entries": {
+            "Rscript": "/public/home/liusiqi/anaconda3/envs/rna_env/bin/Rscript"
+          },
+          "backend": "local",
+          "host": "ln02",
+          "source_ref": "registered-runtime:sha256:12edacaeb2fbba2a3c36d4871335142baa28058b21ea87fc594f296f0f4e4007",
+          "packages": [
+            "R",
+            "fgsea"
+          ],
+          "capabilities": [
+            "r-package:fgsea",
+            "tool:Rscript"
+          ],
+          "tools": [
+            "R",
+            "Rscript",
+            "fgsea",
+            "r",
+            "rscript"
+          ],
+          "language": "R"
+        },
+        "registry_path": "/public/home/liusiqi/03.毕设/agent_shim/software_registry.json",
+        "source_type": "software_registry"
+      },
+      "launch_description": {
+        "versions": {
+          "R": "4.5.3"
+        },
+        "capability_evidence": {
+          "tool:Rscript": {
+            "status": "historically_observed",
+            "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+            "observed_at": "2026-10-01T08:26:16.342Z"
+          },
+          "package:R": {
+            "status": "historically_observed",
+            "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+            "observed_at": "2026-10-01T08:26:16.342Z"
+          },
+          "package:fgsea": {
+            "status": "historically_observed",
+            "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+            "observed_at": "2026-10-01T08:26:16.342Z"
+          },
+          "capability:tool:Rscript": {
+            "status": "unknown",
+            "source": "registration_declaration"
+          },
+          "capability:r-package:fgsea": {
+            "status": "unknown",
+            "source": "registration_declaration"
+          }
+        },
+        "env": "rna_env",
+        "prefix": "/public/home/liusiqi/anaconda3/envs/rna_env",
+        "entries": {
+          "Rscript": "/public/home/liusiqi/anaconda3/envs/rna_env/bin/Rscript"
+        },
+        "backend": "local",
+        "host": "ln02",
+        "source_ref": "registered-runtime:sha256:12edacaeb2fbba2a3c36d4871335142baa28058b21ea87fc594f296f0f4e4007",
+        "packages": [
+          "R",
+          "fgsea"
+        ],
+        "capabilities": [
+          "r-package:fgsea",
+          "tool:Rscript"
+        ],
+        "tools": [
+          "R",
+          "Rscript",
+          "fgsea",
+          "r",
+          "rscript"
+        ],
+        "language": "R"
+      }
+    },
+    "candidates": [
+      {
+        "env": "popgen_gwas_r",
+        "availability": "UNKNOWN",
+        "inspection_status": "not_run",
+        "registry_path": "/public/home/liusiqi/03.毕设/agent_shim/software_registry.json",
+        "source_type": "software_registry",
+        "backend": "local",
+        "host": "ln02",
+        "prefix_candidates": [],
+        "reason_code": "REGISTERED_RUNTIME_LOCATION_UNRESOLVED"
+      },
+      {
+        "env": "rna_env",
+        "availability": "AVAILABLE",
+        "inspection_status": "not_run",
+        "registry_path": "/public/home/liusiqi/03.毕设/agent_shim/software_registry.json",
+        "source_type": "software_registry",
+        "backend": "local",
+        "host": "ln02",
+        "prefix_candidates": [
+          "/public/home/liusiqi/anaconda3/envs/rna_env"
+        ],
+        "prefix": "/public/home/liusiqi/anaconda3/envs/rna_env",
+        "conflicting_packages": [],
+        "conflicting_capabilities": [],
+        "unknown_packages": [],
+        "unknown_tools": [],
+        "unknown_capabilities": [],
+        "versions": {
+          "R": "4.5.3"
+        },
+        "capability_evidence": {
+          "tool:Rscript": {
+            "status": "historically_observed",
+            "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+            "observed_at": "2026-10-01T08:26:16.342Z"
+          },
+          "package:R": {
+            "status": "historically_observed",
+            "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+            "observed_at": "2026-10-01T08:26:16.342Z"
+          },
+          "package:fgsea": {
+            "status": "historically_observed",
+            "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+            "observed_at": "2026-10-01T08:26:16.342Z"
+          },
+          "capability:tool:Rscript": {
+            "status": "unknown",
+            "source": "registration_declaration"
+          },
+          "capability:r-package:fgsea": {
+            "status": "unknown",
+            "source": "registration_declaration"
+          }
+        },
+        "unknown_binding_ids": [],
+        "requirements_status": "recorded",
+        "reason_code": "REGISTERED_RUNTIME_REUSED",
+        "coverage": {
+          "runtime.environment.prefix": {
+            "availability": "AVAILABLE",
+            "output_name": "RESOLVED_ENV_PREFIX",
+            "value_kind": "directory_path",
+            "conclusion_complete": true,
+            "reason_code": "REGISTERED_RUNTIME_REUSED"
+          }
+        },
+        "resolved_runtime_paths": {
+          "RESOLVED_ENV_PREFIX": "/public/home/liusiqi/anaconda3/envs/rna_env"
+        },
+        "source_ref": "registered-runtime:sha256:12edacaeb2fbba2a3c36d4871335142baa28058b21ea87fc594f296f0f4e4007",
+        "audit": {
+          "skill_id": "registered-environment:rna_env",
+          "env": "rna_env",
+          "checked_env": "rna_env",
+          "declared_env": "rna_env",
+          "status": "ready",
+          "declared_ok": true,
+          "decision": "registered_runtime_reused",
+          "runtime_source": "registered_runtime",
+          "healthcheck_status": "not_run",
+          "inspection_status": "not_run",
+          "source_ref": "registered-runtime:sha256:12edacaeb2fbba2a3c36d4871335142baa28058b21ea87fc594f296f0f4e4007",
+          "resolved_runtime_paths": {
+            "RESOLVED_ENV_PREFIX": "/public/home/liusiqi/anaconda3/envs/rna_env"
+          },
+          "coverage": {
+            "runtime.environment.prefix": {
+              "availability": "AVAILABLE",
+              "output_name": "RESOLVED_ENV_PREFIX",
+              "value_kind": "directory_path",
+              "conclusion_complete": true,
+              "reason_code": "REGISTERED_RUNTIME_REUSED"
+            }
+          },
+          "env_runner": "",
+          "last_verified_at": "2026-10-01T08:26:16.342Z",
+          "reason": "使用已登记环境",
+          "requirements_status": "recorded",
+          "launch_description": {
+            "versions": {
+              "R": "4.5.3"
+            },
+            "capability_evidence": {
+              "tool:Rscript": {
+                "status": "historically_observed",
+                "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+                "observed_at": "2026-10-01T08:26:16.342Z"
+              },
+              "package:R": {
+                "status": "historically_observed",
+                "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+                "observed_at": "2026-10-01T08:26:16.342Z"
+              },
+              "package:fgsea": {
+                "status": "historically_observed",
+                "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+                "observed_at": "2026-10-01T08:26:16.342Z"
+              },
+              "capability:tool:Rscript": {
+                "status": "unknown",
+                "source": "registration_declaration"
+              },
+              "capability:r-package:fgsea": {
+                "status": "unknown",
+                "source": "registration_declaration"
+              }
+            },
+            "env": "rna_env",
+            "prefix": "/public/home/liusiqi/anaconda3/envs/rna_env",
+            "entries": {
+              "Rscript": "/public/home/liusiqi/anaconda3/envs/rna_env/bin/Rscript"
+            },
+            "backend": "local",
+            "host": "ln02",
+            "source_ref": "registered-runtime:sha256:12edacaeb2fbba2a3c36d4871335142baa28058b21ea87fc594f296f0f4e4007",
+            "packages": [
+              "R",
+              "fgsea"
+            ],
+            "capabilities": [
+              "r-package:fgsea",
+              "tool:Rscript"
+            ],
+            "tools": [
+              "R",
+              "Rscript",
+              "fgsea",
+              "r",
+              "rscript"
+            ],
+            "language": "R"
+          },
+          "registry_path": "/public/home/liusiqi/03.毕设/agent_shim/software_registry.json",
+          "source_type": "software_registry"
+        },
+        "launch_description": {
+          "versions": {
+            "R": "4.5.3"
+          },
+          "capability_evidence": {
+            "tool:Rscript": {
+              "status": "historically_observed",
+              "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+              "observed_at": "2026-10-01T08:26:16.342Z"
+            },
+            "package:R": {
+              "status": "historically_observed",
+              "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+              "observed_at": "2026-10-01T08:26:16.342Z"
+            },
+            "package:fgsea": {
+              "status": "historically_observed",
+              "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+              "observed_at": "2026-10-01T08:26:16.342Z"
+            },
+            "capability:tool:Rscript": {
+              "status": "unknown",
+              "source": "registration_declaration"
+            },
+            "capability:r-package:fgsea": {
+              "status": "unknown",
+              "source": "registration_declaration"
+            }
+          },
+          "env": "rna_env",
+          "prefix": "/public/home/liusiqi/anaconda3/envs/rna_env",
+          "entries": {
+            "Rscript": "/public/home/liusiqi/anaconda3/envs/rna_env/bin/Rscript"
+          },
+          "backend": "local",
+          "host": "ln02",
+          "source_ref": "registered-runtime:sha256:12edacaeb2fbba2a3c36d4871335142baa28058b21ea87fc594f296f0f4e4007",
+          "packages": [
+            "R",
+            "fgsea"
+          ],
+          "capabilities": [
+            "r-package:fgsea",
+            "tool:Rscript"
+          ],
+          "tools": [
+            "R",
+            "Rscript",
+            "fgsea",
+            "r",
+            "rscript"
+          ],
+          "language": "R"
+        }
+      }
+    ],
+    "candidate_count": 2,
+    "candidates_truncated": false,
+    "install_required": false,
+    "reason_code": "REGISTERED_RUNTIME_REUSED",
+    "registry_path": "/public/home/liusiqi/03.毕设/agent_shim/software_registry.json",
+    "source_type": "software_registry",
+    "registration_sources": {
+      "environment_registry": "/public/home/liusiqi/03.毕设/agent_shim/software_registry.json",
+      "source_type": "software_registry"
+    },
+    "invocation": {
+      "versions": {
+        "R": "4.5.3"
+      },
+      "capability_evidence": {
+        "tool:Rscript": {
+          "status": "historically_observed",
+          "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+          "observed_at": "2026-10-01T08:26:16.342Z"
+        },
+        "package:R": {
+          "status": "historically_observed",
+          "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+          "observed_at": "2026-10-01T08:26:16.342Z"
+        },
+        "package:fgsea": {
+          "status": "historically_observed",
+          "source_ref": "pi:01a0f68c-7b84-70ca-bfcd-d234aa37b81b:45afd65b",
+          "observed_at": "2026-10-01T08:26:16.342Z"
+        },
+        "capability:tool:Rscript": {
+          "status": "unknown",
+          "source": "registration_declaration"
+        },
+        "capability:r-package:fgsea": {
+          "status": "unknown",
+          "source": "registration_declaration"
+        }
+      },
+      "env": "rna_env",
+      "prefix": "/public/home/liusiqi/anaconda3/envs/rna_env",
+      "entries": {
+        "Rscript": "/public/home/liusiqi/anaconda3/envs/rna_env/bin/Rscript"
+      },
+      "backend": "local",
+      "host": "ln02",
+      "source_ref": "registered-runtime:sha256:12edacaeb2fbba2a3c36d4871335142baa28058b21ea87fc594f296f0f4e4007",
+      "packages": [
+        "R",
+        "fgsea"
+      ],
+      "capabilities": [
+        "r-package:fgsea",
+        "tool:Rscript"
+      ],
+      "tools": [
+        "R",
+        "Rscript",
+        "fgsea",
+        "r",
+        "rscript"
+      ],
+      "language": "R",
+      "healthcheck": "not_run",
+      "vantage": "registry"
+    },
+    "binding_ref": "runtime-evidence:sha256:f67855df8f1e9ead756b81b0b19de75ff28b5cde97ad9e6266bd6f75767a2c8f",
+    "binding_scope": {
+      "request_scope": {
+        "task_id": "pi-cfde5a70077f61c45046b95d",
+        "user_turn_revision": 1,
+        "request_key": "fresh-registry-read"
+      },
+      "runtime_scope": "registered-environment:rna_env"
+    }
+  },
+  "subprocess_count": 0,
+  "R_fgsea_ORA_TAD": "NOT_RUN",
+  "scientific_startup": "NOT_RUN"
+}

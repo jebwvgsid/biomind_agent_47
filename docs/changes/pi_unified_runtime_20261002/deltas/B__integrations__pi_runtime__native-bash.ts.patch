@@ -1,0 +1,54 @@
+--- /dev/null
++++ b/integrations/pi_runtime/native-bash.ts
+@@ -0,0 +1,51 @@
++/** A per-call runtime reference on Pi's existing bash tool. No global activation. */
++import { Type } from 'typebox';
++import { createBashToolDefinition, createLocalBashOperations, getAgentDir, getShellConfig, SettingsManager,
++  type BashToolOptions, type ExtensionContext, type ToolDefinition } from '@earendil-works/pi-coding-agent';
++
++export interface RuntimeBashLaunch {
++  command: string;
++  env: Record<string, string>;
++  launch?: Record<string, unknown>;
++}
++export type RuntimeBashResolver = (input: { binding_ref: string; command: string; shell: string; base_path?: string },
++  signal: AbortSignal | undefined, ctx: ExtensionContext) => Promise<RuntimeBashLaunch>;
++type ShellOptions = Pick<BashToolOptions, 'shellPath' | 'commandPrefix'>;
++
++export function runtimeBash(resolve: RuntimeBashResolver,
++  shellOptions?: (ctx: ExtensionContext) => ShellOptions): ToolDefinition {
++  const definition = createBashToolDefinition(process.cwd());
++  return {
++    ...definition,
++    description: definition.description + ' Optional binding_ref uses that current-request runtime for this call. Without it bash keeps the host shell environment; select_environment does not globally activate anything.',
++    parameters: Type.Object({ ...definition.parameters.properties,
++      binding_ref: Type.Optional(Type.String({ minLength: 1, description: 'Current-request binding_ref returned by select_environment.' })) }),
++    async execute(id, input, signal, update, ctx) {
++      // Reuse Pi's setting parser and project-trust decision. The product does
++      // not override these shell settings in memory; tests may supply the same
++      // options directly. Creating the reader never writes settings.
++      const settings = shellOptions ? undefined : SettingsManager.create(ctx.cwd, getAgentDir(), { projectTrusted: ctx.isProjectTrusted() });
++      const options = shellOptions?.(ctx) ?? { shellPath: settings!.getShellPath(), commandPrefix: settings!.getShellCommandPrefix() };
++      const args = input as { command: string; timeout?: number; binding_ref?: string };
++      if (!args.binding_ref) return createBashToolDefinition(ctx.cwd, options).execute(id, args, signal, update, ctx);
++      const local = createLocalBashOperations({ shellPath: options.shellPath });
++      const shell = getShellConfig(options.shellPath).shell;
++      let launch: Record<string, unknown> | undefined;
++      const bound = createBashToolDefinition(ctx.cwd, { ...options, operations: {
++        async exec(command, cwd, execution) {
++          const prepared = await resolve({ binding_ref: args.binding_ref!, command, shell, base_path: execution.env?.PATH }, execution.signal, ctx);
++          execution.signal?.throwIfAborted();
++          if (typeof prepared.command !== 'string' || !prepared.command.trim() || !prepared.env ||
++              Object.entries(prepared.env).some(([key, value]) => !key || key.includes('=') || typeof value !== 'string')) {
++            throw new Error('INVALID_RUNTIME_BASH_LAUNCH');
++          }
++          const env = { ...execution.env, ...prepared.env };
++          launch = prepared.launch;
++          return local.exec(prepared.command, cwd, { ...execution, env });
++        },
++      } });
++      const result = await bound.execute(id, args, signal, update, ctx);
++      return { ...result, details: { ...result.details, runtime_launch: launch, binding_ref: args.binding_ref } };
++    },
++  } as ToolDefinition;
++}

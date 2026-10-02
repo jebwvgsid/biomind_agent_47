@@ -1,0 +1,301 @@
+"""Bounded registered candidate selection is metadata-only, without config imports."""
+import importlib.abc
+import json
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+from unittest.mock import patch
+
+sys.dont_write_bytecode = True
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+class NoConfiguration(importlib.abc.MetaPathFinder):
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname == "config" or fullname.startswith("config.") or fullname == "dotenv" or fullname.startswith("dotenv."):
+            raise AssertionError("forbidden config import " + fullname)
+        return None
+
+sys.meta_path.insert(0, NoConfiguration())
+from integrations.pi_runtime.domain_adapter.registry import RegistryView
+from agent_core.registered_runtime import registered_runtime_reuse, record_execution_invalidation
+
+class RuntimeCandidateTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory(prefix="biomind-candidates-b-")
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.path = self.root / 'registry.json'
+        self.inventory = self.root / 'environments.txt'
+        self.data = {'environments': {'rna': {
+            'env': 'rna', 'prefix': str(self.root / 'envs/rna'), 'status': 'verified',
+            'language': 'r', 'packages': ['fgsea'], 'capabilities': ['ora'],
+            'versions': {'R': '4.5.3'}, 'backend': 'local', 'host': 'test-host',
+            'last_verified_at': '2000-01-01', 'private_extension': 'do-not-inject'}}, 'tools': {}}
+        self.save()
+
+    def save(self):
+        self.path.write_text(json.dumps(self.data))
+        self.view = RegistryView(self.path, self.inventory)
+
+    def select(self, requirements=None, **kwargs):
+        with patch('subprocess.Popen', side_effect=AssertionError('no subprocess')), patch.object(self.view, '_known_environment_prefixes', side_effect=AssertionError('no inventory on exact hit')):
+            return registered_runtime_reuse(self.view, requirements or {}, skill_record=kwargs.pop('skill_record', {}),
+                trusted_backend='local', trusted_host='test-host', **kwargs)
+
+    def test_tools_packages_caps_without_env_and_r_alias_select_registered(self):
+        for requirements in ({'tools': ['Rscript']}, {'packages': ['fgsea']}, {'capabilities': ['ora']}):
+            with self.subTest(requirements=requirements):
+                selected = self.select(requirements)
+                self.assertEqual(selected['availability'], 'AVAILABLE')
+                self.assertEqual(selected['selected_candidate']['env'], 'rna')
+                self.assertEqual(selected['selected_candidate']['audit']['healthcheck_status'], 'not_run')
+                self.assertEqual(selected['registry_path'], str(self.path))
+
+    def test_new_reader_and_no_query_initialization(self):
+        absent = self.root / 'missing' / 'registry.json'
+        view = RegistryView(absent, self.inventory)
+        self.assertEqual(view.read_error['reason_code'], 'REGISTRY_UNINITIALIZED')
+        self.assertFalse(absent.parent.exists())
+        fresh = RegistryView(self.path, self.inventory)
+        self.assertEqual(registered_runtime_reuse(fresh, {'tools': ['Rscript']}, skill_record={})['availability'], 'AVAILABLE')
+
+    def test_corrupt_unreadable_schema_distinct_no_fallback(self):
+        cases = [('{broken', 'REGISTRY_CORRUPT'), ('[]', 'REGISTRY_SCHEMA_INCOMPATIBLE'),
+                 ('{"tools": []}', 'REGISTRY_SCHEMA_INCOMPATIBLE'), ('{"schema_version": 8}', 'REGISTRY_SCHEMA_INCOMPATIBLE')]
+        for text, expected in cases:
+            self.path.write_text(text)
+            view = RegistryView(self.path, self.inventory)
+            result = registered_runtime_reuse(view, {'tools': ['Rscript']}, skill_record={})
+            self.assertEqual(result['reason_code'], expected)
+            self.assertEqual(result['registry_path'], str(self.path))
+            self.assertFalse(result['install_required'])
+            self.assertEqual(self.path.read_text(), text)
+        with patch.object(Path, 'read_text', side_effect=PermissionError('denied')):
+            view = RegistryView(self.path, self.inventory)
+        self.assertEqual(view.read_error['reason_code'], 'REGISTRY_UNREADABLE')
+
+    def test_explicit_constraints_conflict_without_override(self):
+        cases = [({'env': 'other'}, {'target_env': 'rna'}, 'TARGET_CONFLICT'),
+                 ({'env': 'rna', 'prefix': '/wrong'}, {}, 'PREFIX_CONFLICT'),
+                 ({'env': 'rna', 'backend': 'remote'}, {}, 'BACKEND_CONFLICT'),
+                 ({'env': 'rna', 'host': 'other-host'}, {}, 'HOST_CONFLICT'),
+                 ({'env': 'rna', 'versions': {'R': '>=9'}}, {}, 'REQUIREMENT_CONFLICT')]
+        for requirements, kwargs, ending in cases:
+            with self.subTest(ending=ending):
+                result = self.select(requirements, **kwargs)
+                self.assertEqual(result['availability'], 'UNKNOWN')
+                self.assertTrue(result['reason_code'].endswith(ending), result)
+                self.assertFalse(result['install_required'])
+
+    def test_prefix_constraints_disambiguate_registered_candidates(self):
+        self.data['environments']['rna2'] = {**self.data['environments']['rna'], 'env': 'rna2', 'prefix': str(self.root/'envs/rna2')}
+        self.save()
+        result = self.select({'packages': ['fgsea'], 'prefix': str(self.root/'envs/rna2')})
+        self.assertEqual(result['selected_candidate']['env'], 'rna2')
+
+    def test_equal_candidates_are_bounded_and_not_first_or_last(self):
+        for i in range(6):
+            name = f'rna{i}'
+            self.data['environments'][name] = {**self.data['environments']['rna'], 'env': name, 'prefix': str(self.root/'envs'/name)}
+        self.save()
+        result = self.select({'packages': ['fgsea']})
+        self.assertEqual(result['reason_code'], 'REGISTERED_RUNTIME_CANDIDATE_AMBIGUOUS')
+        self.assertEqual(len(result['candidates']), 3)
+        self.assertEqual(result['candidate_count'], 7)
+        self.assertTrue(result['candidates_truncated'])
+        self.assertFalse(result['selected_candidate'])
+
+    def test_missing_skill_mapping_falls_back_to_actual_needs(self):
+        result = self.select({'skill_id': 'enrichment-analysis', 'packages': ['fgsea']}, skill_record={})
+        self.assertEqual(result['selected_candidate']['env'], 'rna')
+
+    def test_new_declaration_unknown_old_verified_record_kept(self):
+        self.data['environments']['rna']['capability_evidence'] = {'package:fgsea': {'status': 'unknown', 'source': 'registration_declaration'}}
+        self.save()
+        result = self.select({'packages': ['fgsea']})
+        self.assertEqual(result['availability'], 'AVAILABLE')
+        self.assertEqual(result['selected_candidate']['requirements_status'], 'unknown')
+        self.assertEqual(result['selected_candidate']['audit']['last_verified_at'], '2000-01-01')
+        self.assertEqual(self.data, json.loads(self.path.read_text()))
+        self.data['environments']['rna']['capability_evidence']['package:fgsea']['status'] = 'historically_observed'
+        self.save()
+        self.assertEqual(self.select({'packages': ['fgsea']})['selected_candidate']['requirements_status'], 'recorded')
+
+    def test_known_negative_capability_not_selectable(self):
+        self.data['environments']['rna']['capability_evidence'] = {'package:fgsea': {'status': 'missing', 'source_ref': 'saved-receipt'}}
+        self.save()
+        result = self.select({'packages': ['fgsea']})
+        self.assertEqual(result['availability'], 'UNKNOWN')
+        self.assertEqual(result['reason_code'], 'REGISTERED_RUNTIME_REQUIREMENT_CONFLICT')
+
+    def test_launch_facts_white_list_and_no_model_setup_authority(self):
+        result = self.select({'env': 'rna', 'env_runner': 'arbitrary user text'})
+        launch = result['selected_candidate']['launch_description']
+        self.assertNotIn('private_extension', launch)
+        self.assertNotIn('env_runner', launch)
+        self.assertEqual(launch['backend'], 'local')
+        self.assertEqual(launch['host'], 'test-host')
+
+    def test_no_prefix_entry_and_runner_backends(self):
+        for extra in ({'entries': {'Rscript': '/synthetic/Rscript'}},
+                      {'runner_argv': ['/synthetic/runner', '{command}']}):
+            self.data['environments']['rna'].pop('prefix', None)
+            self.data['environments']['rna'].pop('entries', None)
+            self.data['environments']['rna'].update(extra)
+            self.save()
+            result = self.select({'env': 'rna'})
+            self.assertEqual(result['availability'], 'AVAILABLE', result)
+            self.assertEqual(result['selected_candidate']['prefix'], '')
+            self.assertIn('RESOLVED_RUNTIME_ENTRY', result['selected_candidate']['resolved_runtime_paths'])
+
+    def test_unsupported_runner_rejected_and_conda_structure_pins_launcher(self):
+        self.data['environments']['rna']['env_runner'] = 'source arbitrary && Rscript'
+        self.save()
+        self.assertEqual(self.select({'env': 'rna'})['reason_code'], 'REGISTERED_RUNTIME_LAUNCH_UNSUPPORTED')
+        self.data['environments']['rna']['env_runner'] = 'conda run -n rna Rscript'
+        self.save()
+        result = self.select({'env': 'rna'})
+        self.assertEqual(result['availability'], 'AVAILABLE')
+        self.assertEqual(result['selected_candidate']['launch_description']['launcher'], str(self.root/'bin/conda'))
+
+    def test_inventory_is_only_bounded_location_metadata_not_registration(self):
+        for i in range(6):
+            prefix = self.root/'inventory'/f'candidate{i}'
+            (prefix/'bin').mkdir(parents=True)
+            (prefix/'bin/Rscript').write_text('#!/bin/sh\nexit 0\n')
+            (prefix/'bin/Rscript').chmod(0o755)
+        self.inventory.write_text('\n'.join(str(self.root/'inventory'/f'candidate{i}') for i in range(6)))
+        self.data = {'environments': {}, 'tools': {}}
+        self.save()
+        with patch('subprocess.Popen', side_effect=AssertionError('no subprocess')):
+            self.assertEqual(registered_runtime_reuse(self.view, {'tools': ['Rscript']}, skill_record={})['reason_code'], 'REGISTERED_RUNTIME_NOT_FOUND')
+            rows = self.view.locate_candidates({'tools': ['Rscript']}, limit=99)['candidates']
+        self.assertEqual(len(rows), 3)
+        self.assertTrue(all(row['availability'] == 'UNKNOWN' and row['inspection_status'] == 'not_run' for row in rows))
+        self.assertEqual(self.data, json.loads(self.path.read_text()))
+
+    def test_explicit_prefix_does_not_read_inventory_even_for_location(self):
+        with patch.object(self.view, '_known_environment_prefixes', side_effect=AssertionError('inventory forbidden')):
+            rows = self.view.locate_candidates({'prefix': str(self.root/'envs/rna'), 'tools': ['Rscript']})['candidates']
+        self.assertEqual(len(rows), 1)
+
+    def test_r_missing_package_is_local_and_cancel_input_errors_ignored(self):
+        from agent_core.runtime_evidence import make_runtime_evidence, merge_runtime_evidence, runtime_evidence_state, digest
+        row = self.select({'env': 'rna'})['selected_candidate']
+        record = make_runtime_evidence({**row['audit'], 'skill_id': 'ora'}, task_id='task', skill_scope={
+            'skill_id': 'ora', 'skill_document_digest': digest('doc'), 'skill_contract_digest': digest('contract'),
+            'environment_id': 'rna', 'environment_fingerprint': digest(row['prefix']), 'host_id': 'test-host',
+            'inspection_contract_digest': digest('ora')}, producer='registered_runtime', observed_at='2000-01-01T00:00:00Z',
+            source_ref=row['source_ref'], coverage=row['coverage'], inspection_status='not_run')
+        state = {'task_id': 'task', 'task_state': {'runtime_evidence': runtime_evidence_state(merge_runtime_evidence([], [record], task_id='task'))}}
+        receipt = {'status': 'exited', 'execution_started': True, 'exit_code': 1, 'receipt_ref': '/saved/receipt',
+                   'env': {'CONDA_PREFIX': row['prefix']}, 'stderr': 'Error in library(fgsea) : there is no package called ‘fgsea’\n'}
+        for extra in ({'status': 'cancelled'}, {'stderr': 'cannot open input file'}, {'stderr': 'algorithm did not converge'}):
+            self.assertFalse(record_execution_invalidation(state, {**receipt, **extra}))
+        result = record_execution_invalidation(state, receipt)
+        self.assertEqual(result[0]['missing_dependency'], 'fgsea')
+        self.assertEqual(self.data, json.loads(self.path.read_text()))
+
+class BoundedLocationTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        from types import SimpleNamespace
+        self.tmp = tempfile.TemporaryDirectory(prefix="biomind-location-b-")
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.inventory = self.root/'inventory.txt'
+        self.service = SimpleNamespace(cwd=self.root, execution_profile='native',
+            registry=SimpleNamespace(path=self.root/'registry.json', environment_inventory=self.inventory),
+            _ensure_request=lambda: None, scope=lambda: {'request_key': 'test'})
+
+    async def test_exact_metadata_never_executes_candidate_and_is_bounded(self):
+        from integrations.pi_runtime.domain_adapter.registry import bounded_location_lookup
+        prefix = self.root/'envs/rna'
+        (prefix/'bin').mkdir(parents=True)
+        marker = self.root/'must-not-exist'
+        entry = prefix/'bin/Rscript'
+        entry.write_text('#!/bin/sh\ntouch ' + str(marker) + '\n')
+        entry.chmod(0o755)
+        self.inventory.write_text(str(prefix))
+        result = await bounded_location_lookup(self.service, {'tools': ['Rscript']})
+        self.assertEqual(result['status'], 'location_hints', result)
+        facts = result['candidates'][0]['path_metadata']['entries']['Rscript']
+        self.assertFalse(facts['executed'])
+        self.assertEqual(facts['evidence_kind'], 'executable_path_metadata')
+        self.assertFalse(marker.exists())
+        self.assertTrue(all(row['cleanup'] == 'confirmed' for row in result['stages']))
+        self.assertTrue(all(row['elapsed_seconds'] < 5 for row in result['stages']))
+        self.assertLessEqual(len(json.dumps(result).encode()), 8192)
+
+    async def test_slow_metadata_is_killed_at_five_seconds_with_observed_cleanup(self):
+        import time, os
+        from integrations.pi_runtime.domain_adapter import registry
+        # Time the lookup deadline after the existing executor module is loaded.
+        import execution.executor
+        child_pid_path = self.root/'slow-metadata-child.pid'
+        slow_metadata = ('import subprocess,sys,time; from pathlib import Path; '
+            'child=subprocess.Popen([sys.executable, "-I", "-B", "-c", "import time; time.sleep(30)"]); '
+            'Path(' + repr(str(child_pid_path)) + ').write_text(str(child.pid)); time.sleep(30)')
+        started = time.monotonic()
+        with patch.object(registry, '_LOCATION_METADATA_PROGRAM', slow_metadata):
+            result = await registry.bounded_location_lookup(self.service, {})
+        elapsed = time.monotonic()-started
+        self.assertEqual(result['status'], 'incomplete', result)
+        stage = result['stages'][0]
+        self.assertEqual(stage['status'], 'timed_out')
+        self.assertEqual(stage['cleanup'], 'confirmed')
+        self.assertTrue(stage['process_reaped'])
+        self.assertGreaterEqual(elapsed, 4.8)
+        self.assertLess(elapsed, 8)
+        with self.assertRaises(ProcessLookupError):
+            os.kill(stage['pid'], 0)
+        child_pid = int(child_pid_path.read_text())
+        try:
+            child_state = Path(f'/proc/{child_pid}/stat').read_text().rsplit(')', 1)[1].split()[0]
+        except FileNotFoundError:
+            child_state = 'gone'
+        self.assertIn(child_state, {'gone', 'Z'}, 'metadata timeout left a running descendant')
+
+    async def test_protected_prefix_does_not_bypass_existing_permission(self):
+        from integrations.pi_runtime.domain_adapter.registry import bounded_location_lookup
+        from integrations.pi_runtime.domain_adapter.service import DomainService
+        project = self.root/'project'
+        project.mkdir()
+        outside = self.root/'unapproved'
+        outside.mkdir()
+        service = DomainService(cwd=project, data_root=self.root/'state', install_root=ROOT,
+            session_id='protected-location', registry_path=self.root/'registry.json',
+            skills_root=self.root/'skills', preferences_path=self.root/'prefs.md',
+            environment_inventory=self.inventory, execution_profile='protected')
+        try:
+            await service.call('request.begin', {'request_id': 'request', 'role': 'generate'}, host_token=service.host_token)
+            with patch('execution.executor._run_native_command', side_effect=AssertionError('must not launch')):
+                result = await bounded_location_lookup(service, {'prefix': str(outside)})
+            self.assertEqual(result['status'], 'permission_required', result)
+            self.assertEqual(result['stages'], [])
+        finally:
+            await service.disconnected()
+
+    async def test_three_slow_candidate_stages_share_fifteen_second_total(self):
+        import time
+        from integrations.pi_runtime.domain_adapter import registry
+        prefixes = [self.root/'envs'/f'candidate-{i}' for i in range(3)]
+        for prefix in prefixes:
+            (prefix/'bin').mkdir(parents=True)
+        self.inventory.write_text('\n'.join(map(str, prefixes)))
+        started = time.monotonic()
+        slow_metadata = 'import time; time.sleep(4)\n' + registry._LOCATION_METADATA_PROGRAM
+        with patch.object(registry, '_LOCATION_METADATA_PROGRAM', slow_metadata):
+            result = await registry.bounded_location_lookup(self.service, {'tools': ['Rscript']})
+        elapsed = time.monotonic()-started
+        self.assertEqual(result['status'], 'incomplete', result)
+        self.assertEqual(result['stages'][-1]['status'], 'timed_out')
+        self.assertEqual(result['stages'][-1]['cleanup'], 'confirmed')
+        self.assertGreaterEqual(elapsed, 14.8)
+        self.assertLess(elapsed, 18)
+        self.assertLessEqual(len(result['candidates']), 3)
+
+if __name__ == '__main__':
+    unittest.main(verbosity=2)

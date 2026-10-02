@@ -1,0 +1,21 @@
+--- a/tests/test_registry_atomic_20261002.py
++++ b/tests/test_registry_atomic_20261002.py
+@@ -203,6 +203,18 @@
+         self.assertEqual(first.read_bytes(), old_content)
+         self.assertIn("export NEEDED=two", second.read_text())
+ 
++    def test_register_new_environment_does_not_normalize_unrelated_rows(self):
++        self.path.parent.mkdir(parents=True)
++        minimal = {"opaque_extension": {"keep": [1, 2]}, "status": "verified"}
++        initial = {"tools": {"oldtool": {"custom_field": True}}, "environments": {"old": minimal}, "custom_top": "keep"}
++        self.path.write_text(json.dumps(initial))
++        manager = PackageManager.for_registry(self.path)
++        manager.register_environment("new", prefix="/synthetic/new")
++        stored = self.read()
++        self.assertEqual(stored["environments"]["old"], minimal)
++        self.assertEqual(stored["tools"], initial["tools"])
++        self.assertEqual(stored["custom_top"], "keep")
++
+     def test_one_complete_record_requires_one_replace(self):
+         original_replace = os.replace
+         with patch("os.replace", wraps=original_replace) as replacement:

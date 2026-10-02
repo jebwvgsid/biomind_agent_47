@@ -1,0 +1,140 @@
+/** Offline: actual Pi extension -> Domain -> temporary executable. No scientific software. */
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import os from 'node:os';
+import { fileURLToPath } from 'node:url';
+import { createDomainClient } from '../domain-client.js';
+import { runtimeBash } from '../native-bash.js';
+import { createHarness, call, text, type ScriptEntry } from './extension-harness.js';
+
+const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
+const python = '/public/home/liusiqi/anaconda3/envs/biomind/bin/python';
+const quote = (value: string) => "'" + value.replaceAll("'", "'\\''") + "'";
+function receipt(context: any, id: string) {
+  const message = context.messages.findLast((m: any) => m.role === 'toolResult' && m.toolCallId === id);
+  assert(message, `missing ${id} receipt`);
+  return JSON.parse(message.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('\n'));
+}
+function resultText(event: any) { return event.result.content.filter((c: any) => c.type === 'text').map((c: any) => c.text).join('\n'); }
+
+test('E01 E02 E10 E17 N08 native binding reaches real executables; parallel calls and new requests stay isolated', async () => {
+  const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'biomind-bound-bash-'));
+  const cwd = path.join(tmp, 'project'), data = path.join(tmp, 'domain');
+  await fs.mkdir(cwd); await fs.mkdir(path.join(tmp, 'skills'));
+  const records: Record<string, any> = {};
+  for (const [name, tool, tag] of [['r_fixture', 'Rscript', 'R_LIBRARY'], ['py_fixture', 'python', 'PY_LIBRARY']]) {
+    const prefix = path.join(tmp, name), entry = path.join(prefix, 'bin', tool);
+    await fs.mkdir(path.dirname(entry), { recursive: true });
+    await fs.writeFile(entry, `#!/bin/sh\nprintf '%s|%s|%s\\n' "$0" "$BIOMIND_RUNTIME_FIXTURE" "$CONDA_PREFIX"\nprintf x >> ${quote(path.join(tmp, name + '.count'))}\n`);
+    await fs.chmod(entry, 0o755);
+    records[name] = { name, prefix, status: 'verified', packages: [tool], capabilities: [tool], entries: { [tool]: entry }, runtime_env: { BIOMIND_RUNTIME_FIXTURE: tag } };
+  }
+  const registry = path.join(tmp, 'registry.json'), prefs = path.join(tmp, 'prefs.md');
+  await fs.writeFile(registry, JSON.stringify({ environments: records, tools: {} }));
+  await fs.writeFile(prefs, 'Synthetic preferences.');
+  const script: ScriptEntry[] = [];
+  const calls: Array<{ method: string; params: any }> = [];
+  const h = await createHarness({ cwd, executionProfile: 'native', script, name: 'runtime-binding-e2e',
+    domainFactory: options => {
+      const client = createDomainClient({ ...options, python, dataRoot: data, installRoot: repo,
+        registryPath: registry, preferencesPath: prefs, skillsRoot: path.join(tmp, 'skills') });
+      return { call: async (method, params, options) => { calls.push({ method, params }); return client.call(method, params, options); },
+        hostCall: async (method, params, options) => { calls.push({ method, params }); return client.hostCall(method, params, options); }, close: options => client.close(options) };
+    } });
+  const parentEnvironment = { PATH: process.env.PATH, CONDA_PREFIX: process.env.CONDA_PREFIX, tag: process.env.BIOMIND_RUNTIME_FIXTURE };
+  let rRef = '', pRef = '';
+  try {
+    h.session.agent.toolExecution = 'parallel';
+    script.push(call('select-r', 'select_environment', { env_name: 'r_fixture', runtime_scope: 'R' }),
+      context => { const selected = receipt(context, 'select-r'); assert.equal(selected.availability, 'AVAILABLE'); rRef = selected.binding_ref; assert(rRef); return call('unique-run', 'run_command', { argv: ['Rscript'], workdir: cwd }); },
+      call('select-p', 'select_environment', { env_name: 'py_fixture', runtime_scope: 'Python' }),
+      context => { const selected = receipt(context, 'select-p'); pRef = selected.binding_ref; assert(pRef && pRef !== rRef);
+        return [...call('bound-r', 'bash', { command: 'Rscript', binding_ref: rRef }), ...call('bound-p', 'bash', { command: 'python', binding_ref: pRef })]; },
+      call('bare', 'bash', { command: 'printf "HOST:%s" "${BIOMIND_RUNTIME_FIXTURE-unbound}"' }),
+      call('ambiguous', 'run_command', { argv: ['Rscript'], workdir: cwd }),
+      call('scope-run', 'run_command', { argv: ['Rscript'], workdir: cwd, runtime_scope: 'R' }), text('Synthetic bindings observed.'),
+      call('new-bare', 'bash', { command: 'printf "HOST:%s" "${BIOMIND_RUNTIME_FIXTURE-unbound}"' }),
+      () => call('stale-ref', 'bash', { command: 'Rscript', binding_ref: rRef }), text('New request stayed isolated.'));
+    await h.prompt('Use the two already registered synthetic runtimes. No checks or installs.');
+    const ends = h.events.filter(e => e.type === 'tool_execution_end');
+    for (const [id, marker] of [['bound-r', 'R_LIBRARY'], ['bound-p', 'PY_LIBRARY']]) {
+      const row = ends.find(e => e.toolCallId === id); assert(row && !row.isError, JSON.stringify(row)); assert.match(resultText(row), new RegExp(marker));
+    }
+    assert.equal(resultText(ends.find(e => e.toolCallId === 'bare')), 'HOST:unbound');
+    assert.match(resultText(ends.find(e => e.toolCallId === 'ambiguous')), /BINDING|ambiguous|multiple|指定/i);
+    assert.equal(await fs.readFile(path.join(tmp, 'r_fixture.count'), 'utf8'), 'xxx');
+    assert.equal(await fs.readFile(path.join(tmp, 'py_fixture.count'), 'utf8'), 'x');
+    await h.prompt('[新任务] Keep the host environment and reject the previous request binding.');
+    const newEnds = h.events.filter(e => e.type === 'tool_execution_end');
+    assert.equal(resultText(newEnds.find(e => e.toolCallId === 'new-bare')), 'HOST:unbound');
+    assert(newEnds.find(e => e.toolCallId === 'stale-ref')?.isError);
+    assert.equal(await fs.readFile(path.join(tmp, 'r_fixture.count'), 'utf8'), 'xxx');
+    assert.deepEqual({ PATH: process.env.PATH, CONDA_PREFIX: process.env.CONDA_PREFIX, tag: process.env.BIOMIND_RUNTIME_FIXTURE }, parentEnvironment);
+    assert.equal(calls.filter(c => c.method === 'environments.select').length, 2);
+    assert.equal(calls.filter(c => c.method === 'environments.launch').length, 3);
+    assert(!h.busEvents.some(e => e.channel === 'biomind:ui_request' && e.value.kind === 'approval'));
+    assert.deepEqual(h.errors, []);
+  } finally { await h.close(); await fs.rm(tmp, { recursive: true, force: true }); }
+});
+
+test('native bash thin adapter preserves custom shell/prefix, raw pipeline semantics, streaming and timeout', async () => {
+  const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'biomind-bash-options-'));
+  const shell = path.join(tmp, 'shell'), marker = path.join(tmp, 'shell.count');
+  await fs.writeFile(shell, `#!/bin/sh\nprintf x >> ${quote(marker)}\nexec /bin/bash "$@"\n`); await fs.chmod(shell, 0o755);
+  const ctx = { cwd: tmp, sessionManager: { getSessionId: () => 'synthetic', getSessionFile: () => undefined }, isProjectTrusted: () => false } as any;
+  const launches: any[] = [], updates: any[] = [];
+  const tool = runtimeBash(async input => { launches.push(input); return { command: input.command, env: { BIOMIND_RUNTIME_FIXTURE: input.binding_ref }, launch: { binding_ref: input.binding_ref } }; },
+    () => ({ shellPath: shell, commandPrefix: 'export SYNTHETIC_PREFIX=kept' }));
+  try {
+    const bare: any = await tool.execute('bare', { command: 'false | tail -1; printf "$SYNTHETIC_PREFIX"' }, undefined, update => updates.push(update), ctx);
+    assert.equal(bare.content[0].text, 'kept'); assert.equal(launches.length, 0);
+    const bound: any = await tool.execute('bound', { command: 'printf "$BIOMIND_RUNTIME_FIXTURE:$SYNTHETIC_PREFIX"', binding_ref: 'scope-A' }, undefined, undefined, ctx);
+    assert.equal(bound.content[0].text, 'scope-A:kept'); assert.equal(launches[0].shell, shell); assert(launches[0].base_path.endsWith(process.env.PATH), 'Pi retains the host PATH after its own bin directory');
+    await assert.rejects(tool.execute('timeout', { command: 'sleep 10', timeout: 0.05 }, undefined, undefined, ctx), /timed out/i);
+    assert(updates.length); assert.equal(await fs.readFile(marker, 'utf8'), 'xxx');
+    assert.equal(process.env.SYNTHETIC_PREFIX, undefined); assert.equal(process.env.BIOMIND_RUNTIME_FIXTURE, undefined);
+  } finally { await fs.rm(tmp, { recursive: true, force: true }); }
+});
+
+test('E02 E04 I01 N12 independent sessions read the same supplemental registration without executing checks', async () => {
+  const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'biomind-register-wire-'));
+  const cwd = path.join(tmp, 'project'), prefix = path.join(tmp, 'existing'), entry = path.join(prefix, 'bin', 'Rscript');
+  const registry = path.join(tmp, 'registry.json'), prefs = path.join(tmp, 'prefs.md'), count = path.join(tmp, 'count');
+  await fs.mkdir(cwd); await fs.mkdir(path.dirname(entry), { recursive: true }); await fs.mkdir(path.join(tmp, 'skills'));
+  await fs.writeFile(entry, `#!/bin/sh\nprintf synthetic-existing\nprintf x >> ${quote(count)}\n`); await fs.chmod(entry, 0o755);
+  await fs.writeFile(registry, '{"environments":{},"tools":{}}'); await fs.writeFile(prefs, 'Synthetic preferences.');
+  const calls: string[] = [];
+  const open = (script: ScriptEntry[]) => createHarness({ cwd, executionProfile: 'native', script,
+    domainFactory: options => {
+      const client = createDomainClient({ ...options, python, installRoot: repo, dataRoot: path.join(tmp, 'domain'), registryPath: registry,
+        preferencesPath: prefs, skillsRoot: path.join(tmp, 'skills') });
+      return { call: (method, params, options) => { calls.push(method); return client.call(method, params, options); },
+        hostCall: (method, params, options) => { calls.push(method); return client.hostCall(method, params, options); }, close: options => client.close(options) };
+    } });
+  let h = await open([call('forged', 'register_environment', { env_name: 'forged', prefix, verified: true }),
+    call('register', 'register_environment', { env_name: 'existing', prefix, tools: ['Rscript'], source_note: 'Synthetic declared existing location.' }),
+    async context => { const registered = receipt(context, 'register'); assert.equal(registered.installation_status, 'not_run');
+      await assert.rejects(fs.access(count));
+      assert.equal(registered.record.evidence.strength, 'declared_not_verified'); return call('select', 'select_environment', { env_name: 'existing' }); },
+    context => call('first-run', 'bash', { command: 'Rscript', binding_ref: receipt(context, 'select').binding_ref }), text('Registered and executed.')]);
+  try {
+    await h.prompt('Register the existing synthetic executable without installation or checks.');
+    assert(h.events.find(e => e.type === 'tool_execution_end' && e.toolCallId === 'forged')?.isError);
+    assert.equal(await fs.readFile(count, 'utf8'), 'x');
+    const stored = JSON.parse(await fs.readFile(registry, 'utf8'));
+    assert(!stored.environments.forged); assert.equal(stored.environments.existing.prefix, prefix);
+    assert(!stored.environments.existing.last_verified_at);
+    await h.close();
+    h = await open([call('fresh-select', 'select_environment', { requirements: { tools: ['Rscript'] } }),
+      context => { const selected = receipt(context, 'fresh-select'); assert.equal(selected.availability, 'AVAILABLE');
+        return call('fresh-run', 'bash', { command: 'Rscript', binding_ref: selected.binding_ref }); }, text('Independent session reused the registration.')]);
+    await h.prompt('Use the registered Rscript capability directly.');
+    assert.equal(await fs.readFile(count, 'utf8'), 'xx');
+    assert.equal(calls.filter(method => method === 'environments.register').length, 1);
+    assert(!calls.some(method => method.startsWith('install.') || method === 'exec.probe'));
+    assert(!h.busEvents.some(e => e.channel === 'biomind:ui_request' && e.value.kind === 'approval'));
+    assert.deepEqual(h.errors, []);
+  } finally { await h.close(); await fs.rm(tmp, { recursive: true, force: true }); }
+});

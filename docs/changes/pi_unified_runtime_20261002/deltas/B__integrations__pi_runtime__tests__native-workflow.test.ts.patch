@@ -1,0 +1,12 @@
+--- a/integrations/pi_runtime/tests/native-workflow.test.ts
++++ b/integrations/pi_runtime/tests/native-workflow.test.ts
+@@ -34,7 +34,8 @@
+ test('T01-T09 native inventory and cross-directory ordinary work with real Domain',async()=>{
+   const script:any[]=[];const h=await fixture(script);
+   try{
+-    for(const n of NATIVE_TOOLS)assert(!h.resourceLoader.getExtensions().extensions[0].tools.has(n),`${n} must not be overridden`);
++    for(const n of NATIVE_TOOLS.filter(name=>name!=='bash'))assert(!h.resourceLoader.getExtensions().extensions[0].tools.has(n),`${n} must not be overridden`);
++    assert(h.resourceLoader.getExtensions().extensions[0].tools.has('bash'), 'bash keeps Pi execution with an optional per-call binding');
+     for(const n of ['a.vcf','b.fasta','c.gtf']){await fs.writeFile(path.join(h.B,n),'sample '+n);script.push(call(n,'read',{path:path.join(h.B,n)}));}
+     await fs.writeFile(path.join(h.B,'source.txt'),'old source');await fs.symlink(path.join(h.B,'source.txt'),path.join(h.A,'link'));
+     script.push(call('edit','edit',{path:path.join(h.B,'source.txt'),edits:[{oldText:'old',newText:'new'}]}),

@@ -1,0 +1,28 @@
+{
+  "typecheck": "PASS",
+  "build": "PASS",
+  "build_command": ".runtime/node/bin/node --max-old-space-size=768 node_modules/typescript/bin/tsc -p tsconfig.json",
+  "memory_note": "1024 MB build was killed rc137; same installed compiler/config successfully emitted with 768 MB heap cap; no dependency installation",
+  "cwd": "integrations/pi_runtime",
+  "source_dist_sha256": {
+    "integrations/pi_runtime/extensions/biomind.ts": "bf12d552d022e261b886ebaf4e7abb8f8d548fea3fdab845903662342854a261",
+    "integrations/pi_runtime/native-bash.ts": "f73f8ecdcfe4cd80365f2bbad2c163092c9bd68dd34bd9d23706490782bd891f",
+    "integrations/pi_runtime/dist/extensions/biomind.js": "ddaddb6a74b06c5d050694641f5d70dce138112f9939c28b4ba61a4e06f60d3b",
+    "integrations/pi_runtime/dist/native-bash.js": "7420858ff987811d96adfa341f4fe31ddb800a609c484c5e9b132bc64d1695fd",
+    "integrations/pi_runtime/dist/host.js": "3ef8f3cd7ce96981ba78fa9028bd4df98ce3ed4533027175d24fe2408d083166",
+    "integrations/pi_runtime/domain_adapter/service.py": "5545b82669d589eb852f065b928325ed2ba55dc255e2173ea9a22eada50c141c",
+    "integrations/pi_runtime/domain_adapter/registry.py": "64bfcae0638c14b5a03b3296262fb65b8009efa21e6d7ad8cb401416fa4d108b",
+    "agent_core/runtime_launch.py": "8d6b79e82a039a9ba6aa9ea960ec7cf950bffb1aedb56c1a2264657f95f77b62",
+    "agent_core/runtime_evidence.py": "f02575510dd15702ade7098c7efd03194d03b90d7a17de49abc5c4d0c0e15594",
+    "package_manager.py": "efb4268e592b7ab61960391e68990be36b963c3198dc48b39443ba06f1f93e56"
+  },
+  "activation": "new launch; no production processes restarted",
+  "target_tests": {
+    "candidates_and_bounded_metadata": 19,
+    "domain_binding": 10,
+    "shared_launcher": 9,
+    "node_real_domain": 3,
+    "PM_regression": 16,
+    "install_regression": 16
+  }
+}

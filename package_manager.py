@@ -245,7 +245,12 @@ class PackageManager:
         except (ValueError, TypeError) as exc:
             raise RegistryError("REGISTRY_CORRUPT", self.registry_path, str(exc)) from exc
         self._validate_registry(data)
-        return self._normalize_registry(data), True
+        # A write transaction must merge the actual stored rows, not a legacy
+        # read projection that adds defaults to unrelated records.
+        data = copy.deepcopy(data)
+        data.setdefault("tools", {})
+        data.setdefault("environments", {})
+        return data, True
 
     def _validate_registry(self, data):
         if not isinstance(data, dict):

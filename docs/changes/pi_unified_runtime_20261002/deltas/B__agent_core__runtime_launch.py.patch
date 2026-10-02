@@ -1,0 +1,47 @@
+--- a/agent_core/runtime_launch.py
++++ b/agent_core/runtime_launch.py
+@@ -54,7 +54,8 @@
+         if runtime_env.get('ENV_PREFIX', prefix) != prefix or runtime_env.get('CONDA_PREFIX', prefix) != prefix:
+             raise RuntimeLaunchError('RUNTIME_PREFIX_ENV_CONFLICT')
+         env.update(ENV_PREFIX=prefix, CONDA_PREFIX=prefix)
+-        env['PATH'] = str(Path(prefix) / 'bin') + os.pathsep + env.get('PATH', '')
++        target_bin=str(Path(prefix) / 'bin')
++        env['PATH']=os.pathsep.join([target_bin,*[p for p in env.get('PATH','').split(os.pathsep) if p!=target_bin]])
+     if isinstance(command, str):
+         if not command.strip() or '\x00' in command:
+             raise RuntimeLaunchError('RUNTIME_COMMAND_REQUIRED')
+@@ -83,16 +84,21 @@
+         if not Path(entry).is_file() or not os.access(entry, os.X_OK):
+             raise RuntimeLaunchError('RUNTIME_TARGET_ENTRY_MISSING:' + entry)
+         argv[0] = entry
+-    elif not is_shell and prefix:
++    elif not is_shell and (prefix or entries):
+         named = Path(argv[0]).name
+-        exact = entries.get(named) or str(Path(prefix) / 'bin' / named)
++        exact = entries.get(named) or (str(Path(prefix) / 'bin' / named) if prefix else '')
++        known_tools=set(record.get('tools') or []) | set(entries)
++        if record.get('language')=='python':known_tools.update({'python','python3'})
++        if record.get('language') in {'r','R'}:known_tools.add('Rscript')
+         if Path(argv[0]).is_absolute():
+-            if named in entries and _absolute(argv[0], 'ENTRY') != _absolute(exact, 'ENTRY'):
++            if exact and named in known_tools and _absolute(argv[0], 'ENTRY') != _absolute(exact, 'ENTRY'):
+                 raise RuntimeLaunchError('RUNTIME_EXPLICIT_ENTRY_CONFLICT:' + named)
+-        elif named in entries:
++        elif exact and named in known_tools:
+             argv[0] = _absolute(exact, 'ENTRY')
+     runner = record.get('runner_argv')
+     legacy = record.get('env_runner')
++    if is_shell and not prefix and entries and not runner and not legacy:
++        raise RuntimeLaunchError('RUNTIME_SHELL_ENTRY_MAPPING_UNSUPPORTED: use argv with the recorded entry')
+     runner_kind = 'prefix' if prefix else 'entry'
+     if runner:
+         if not isinstance(runner, list) or any(not isinstance(x, str) for x in runner) or runner.count('{command}') != 1:
+@@ -131,6 +137,8 @@
+             'env': env,
+             'launch': {'prefix': prefix, 'runner_kind': runner_kind,
+                        'entry': argv[0], 'runner_argv': argv if runner or legacy else [],
++                       'command_resolution': 'shell_with_prefix_path' if is_shell and prefix else
++                           'shell_runner_template' if is_shell else 'explicit_argv' if Path(argv[0]).is_absolute() else 'path_argv',
+                        'runtime_env': runtime_env, 'source_ref': record.get('source_ref', '')}}
+ 
+ 

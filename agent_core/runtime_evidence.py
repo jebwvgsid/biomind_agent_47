@@ -41,6 +41,35 @@ _CONTENT_FIELDS = (
     "expires_at", "inspection", "facts", "resolved_runtime_paths", "supersedes",
     "origin_task_id", "representation",
 )
+_BINDING_FIELDS = {'request_scope', 'launch_description', 'requirements', 'binding_digest'}
+_LAUNCH_FIELDS = {'prefix', 'entries', 'runtime_env', 'runner_argv', 'env_runner', 'launcher',
+                 'source_ref', 'env', 'env_name', 'backend', 'host', 'host_id', 'packages',
+                 'tools', 'capabilities', 'versions', 'language', 'capability_evidence'}
+_REQUIREMENT_FIELDS = {'env', 'env_name', 'default_env', 'prefix', 'backend', 'host', 'host_id',
+                      'tools', 'packages', 'capabilities', 'required_binding_ids', 'skill_id',
+                      'runtime_scope', 'inspection_probes', 'env_runner', 'language','versions'}
+
+
+def _binding_context(request_scope, launch_description, requirements, content_digest):
+    if not isinstance(request_scope, Mapping) or set(request_scope) != {'task_id','user_turn_revision','request_key'}:
+        raise RuntimeEvidenceError('RUNTIME_BINDING_REQUEST_SCOPE_INVALID')
+    if not request_scope.get('task_id') or type(request_scope.get('user_turn_revision')) is not int or request_scope['user_turn_revision'] < 0:
+        raise RuntimeEvidenceError('RUNTIME_BINDING_REQUEST_SCOPE_INVALID')
+    _text(request_scope.get('task_id'), 'request_scope.task_id')
+    _text(request_scope.get('request_key'), 'request_scope.request_key')
+    for value,allowed,label in ((launch_description,_LAUNCH_FIELDS,'LAUNCH'),(requirements,_REQUIREMENT_FIELDS,'REQUIREMENTS')):
+        if not isinstance(value,Mapping) or set(value)-allowed:
+            raise RuntimeEvidenceError('RUNTIME_BINDING_'+label+'_INVALID')
+        try:
+            serialized=json.dumps(value,sort_keys=True,allow_nan=False)
+        except (ValueError,TypeError) as exc:
+            raise RuntimeEvidenceError('RUNTIME_BINDING_'+label+'_INVALID') from exc
+        if len(serialized)>65536 or '\\u0000' in serialized:
+            raise RuntimeEvidenceError('RUNTIME_BINDING_'+label+'_INVALID')
+    context={'request_scope':deepcopy(dict(request_scope)),
+             'launch_description':deepcopy(dict(launch_description)), 'requirements':deepcopy(dict(requirements))}
+    context['binding_digest']=digest({'content_digest':content_digest,**context})
+    return context
 
 
 class RuntimeEvidenceError(ValueError):
@@ -268,15 +297,22 @@ def validate_runtime_evidence(record: Mapping[str, Any]) -> dict[str, Any]:
             raise RuntimeEvidenceError("RUNTIME_EVIDENCE_NEGATIVE_INCOMPLETE", binding_id)
     acceptance = value.get("acceptance")
     if acceptance is not None:
-        if not isinstance(acceptance, Mapping) or set(acceptance) != {"task_id", "revision", "accepted_at", "content_digest", "scope_digest"}:
+        core={"task_id", "revision", "accepted_at", "content_digest", "scope_digest"}
+        if not isinstance(acceptance, Mapping) or set(acceptance) not in (core,core|_BINDING_FIELDS):
             raise RuntimeEvidenceError("RUNTIME_EVIDENCE_ACCEPTANCE_INVALID")
         if not acceptance.get("task_id") or isinstance(acceptance.get("revision"), bool) or not isinstance(acceptance.get("revision"), int) or acceptance["revision"] < 1 or acceptance.get("content_digest") != value["content_digest"] or acceptance.get("scope_digest") != digest(value["scope"]):
             raise RuntimeEvidenceError("RUNTIME_EVIDENCE_ACCEPTANCE_INVALID")
         _timestamp(acceptance.get("accepted_at"), "accepted_at")
+        if 'request_scope' in acceptance:
+            binding=_binding_context(acceptance['request_scope'],acceptance['launch_description'],
+                                     acceptance['requirements'],value['content_digest'])
+            if acceptance['binding_digest']!=binding['binding_digest'] or acceptance['request_scope']['task_id']!=acceptance['task_id']:
+                raise RuntimeEvidenceError('RUNTIME_BINDING_DIGEST_MISMATCH')
     return value
 
 
-def merge_runtime_evidence(existing: Sequence[Mapping[str, Any]], incoming: Sequence[Mapping[str, Any]], *, task_id: str, accepted_at: str | None = None) -> list[dict[str, Any]]:
+def merge_runtime_evidence(existing: Sequence[Mapping[str, Any]], incoming: Sequence[Mapping[str, Any]], *, task_id: str, accepted_at: str | None = None,
+                           request_scope=None, launch_description=None, requirements=None) -> list[dict[str, Any]]:
     """Pure immutable admission. Caller persists the returned records atomically."""
     task_id = _text(task_id, "task_id")
     if not task_id:
@@ -303,6 +339,10 @@ def merge_runtime_evidence(existing: Sequence[Mapping[str, Any]], incoming: Sequ
         if key in records:
             if records[key]["content_digest"] != record["content_digest"]:
                 raise RuntimeEvidenceError("RUNTIME_EVIDENCE_ID_CONFLICT", key)
+            if request_scope is not None:
+                binding=_binding_context(request_scope,launch_description or {},requirements or {},record['content_digest'])
+                if any(records[key]['acceptance'].get(k)!=v for k,v in binding.items()):
+                    raise RuntimeEvidenceError('RUNTIME_BINDING_ACCEPTANCE_CONFLICT')
             continue
         for previous_id in record["supersedes"]:
             previous = records.get(previous_id)
@@ -310,6 +350,8 @@ def merge_runtime_evidence(existing: Sequence[Mapping[str, Any]], incoming: Sequ
                 raise RuntimeEvidenceError("RUNTIME_EVIDENCE_SUPERSESSION_INVALID", previous_id)
         revision += 1
         record["acceptance"] = {"task_id": task_id, "revision": revision, "accepted_at": accepted_at, "content_digest": record["content_digest"], "scope_digest": digest(record["scope"])}
+        if request_scope is not None:
+            record['acceptance'].update(_binding_context(request_scope,launch_description or {},requirements or {},record['content_digest']))
         records[key] = validate_runtime_evidence(record)
     return list(records.values())
 
@@ -346,9 +388,84 @@ def _accepted_records(task_state: Mapping[str, Any], task_id: str | None) -> lis
     return records
 
 
+def _current_records(task_state, task_id):
+    records=_accepted_records(task_state,task_id)
+    if not task_state.get('pi_request_id'):
+        return records
+    # Compatibility projections receive task_state only; the authoritative
+    # revision lives at the enclosing state level. Pi's durable request key is
+    # unique per request and is available here without inventing a new store.
+    key=task_state.get('current_request_key') or task_state['pi_request_id']
+    return [record for record in records if
+            (record.get('acceptance',{}).get('request_scope') or {}).get('request_key')==key and
+            (task_id is None or record['acceptance']['request_scope']['task_id']==task_id)]
+
+
+def registered_execution_binding(state, binding_ref='', runtime_scope='', requirements=None):
+    """Resolve accepted references for this request, without registry I/O/probes."""
+    task=state.get('task_state') or {};task_id=state.get('task_id')
+    from agent_core.request_state import request_scope
+    current=request_scope(state)
+    records=_accepted_records(task,task_id)
+    eligible=[r for r in records if r['producer']=='registered_runtime' and
+              r.get('acceptance',{}).get('request_scope')==current]
+    if binding_ref:
+        chosen=next((r for r in eligible if r['evidence_id']==binding_ref),None)
+        if not chosen:
+            raise RuntimeEvidenceError('RUNTIME_BINDING_NOT_IN_CURRENT_REQUEST',str(binding_ref))
+        eligible=[chosen]
+    if runtime_scope:
+        eligible=[r for r in eligible if r['scope']['skill_id']==runtime_scope]
+        if binding_ref and not eligible:raise RuntimeEvidenceError('RUNTIME_BINDING_SCOPE_CONFLICT')
+    req=dict(requirements or {})
+    if req.get('env') and req.get('env_name') and req['env']!=req['env_name']:
+        raise RuntimeEvidenceError('RUNTIME_BINDING_REQUIREMENT_CONFLICT','env/env_name')
+    def matches(record):
+        launch=record['acceptance']['launch_description'];previous=record['acceptance']['requirements']
+        wanted_env=req.get('env') or req.get('env_name') or req.get('default_env')
+        if wanted_env and wanted_env!=record['scope']['environment_id']:return False
+        for key in ('prefix','backend','host','host_id','language','env_runner'):
+            wanted=req.get(key)
+            actual=launch.get(key) or (launch.get('host_id') if key=='host' else launch.get('host') if key=='host_id' else None)
+            if wanted and wanted!=actual:return False
+        for key in ('tools','capabilities','required_binding_ids'):
+            available=set(launch.get(key) or []) | set(previous.get(key) or []) | (set(record['facts']) if key=='required_binding_ids' else set())
+            wanted=set(req.get(key) or [])
+            if key=='tools':available={v.casefold() for v in available};wanted={v.casefold() for v in wanted}
+            if not wanted.issubset(available):return False
+        if req.get('packages'):
+            from agent_core.registered_runtime import _package_covered
+            known=launch.get('packages') or previous.get('packages') or []
+            for item in req['packages']:
+                comparison=_package_covered(item,known,launch.get('versions') or {})
+                if comparison is False:return False
+                if comparison is None and not binding_ref and not wanted_env:
+                    name=re.split(r'[<>=!~\s]',item)[0]
+                    if _package_covered(name,[*known,*(previous.get('packages') or [])],launch.get('versions') or {}) is not True:return False
+        if req.get('versions'):
+            from agent_core.registered_runtime import _package_covered
+            for name,wanted in req['versions'].items():
+                condition=str(wanted)
+                spec=condition if condition.startswith(('<','>','=','!','~')) else '=='+condition
+                if _package_covered(name+spec,launch.get('packages') or [],launch.get('versions') or {}) is False:return False
+        return True
+    eligible=[r for r in eligible if matches(r)]
+    if binding_ref and not eligible:raise RuntimeEvidenceError('RUNTIME_BINDING_REQUIREMENT_CONFLICT')
+    if not eligible:return None
+    # Identical repeated selection of the same scope/source may deduplicate.
+    # Different scopes retain separate meaning even if the prefix is shared.
+    unique={digest({'scope':r['scope'],'source':r['source_ref'],'launch':r['acceptance']['launch_description']}):r for r in eligible}
+    if len(unique)>1:raise RuntimeEvidenceError('RUNTIME_BINDING_REQUIRED','multiple current runtime scopes; specify binding_ref')
+    record=next(iter(unique.values()))
+    return {'binding_ref':record['evidence_id'],'scope':record['scope']['skill_id'],
+            'launch':deepcopy(record['acceptance']['launch_description']),
+            'requirements':deepcopy(record['acceptance']['requirements']),
+            'source_ref':record['source_ref'],'record':deepcopy(record)}
+
+
 def evaluate_runtime_evidence(task_state: Mapping[str, Any], *, task_id: str | None = None, skill_scope: Mapping[str, Any] | None = None, required_binding_ids: Sequence[str] = (), now: str | None = None) -> dict[str, dict[str, Any]]:
     """Project each fact, keeping unknown/error and unresolved conflicts explicit."""
-    records = _accepted_records(task_state, task_id)
+    records = _current_records(task_state, task_id)
     now = _timestamp(now or _now(), "now")
     scope_filter = dict(skill_scope or {})
     if set(scope_filter) - set(SCOPE_FIELDS):
@@ -383,7 +500,7 @@ def evaluate_runtime_evidence(task_state: Mapping[str, Any], *, task_id: str | N
 
 def project_runtime_audits(task_state: Mapping[str, Any], *, task_id: str | None = None, skill_scope: Mapping[str, Any] | None = None, now: str | None = None) -> list[dict[str, Any]]:
     """Compatibility view; unaccepted, stale, negative or conflicting facts fail closed."""
-    records = _accepted_records(task_state, task_id)
+    records = _current_records(task_state, task_id)
     evaluations = evaluate_runtime_evidence(task_state, task_id=task_id, skill_scope=skill_scope, now=now)
     projected = []
     for record in records:
@@ -414,7 +531,7 @@ def project_registered_runtime_scopes(task_state: Mapping[str, Any], *, task_id=
     Each operation still evaluates its own negatives and supersession normally.
     """
     selected = set(skill_ids)
-    scopes = {digest(row['scope']): row['scope'] for row in _accepted_records(task_state, task_id)
+    scopes = {digest(row['scope']): row['scope'] for row in _current_records(task_state, task_id)
               if row['producer'] == 'registered_runtime' and (not selected or row['scope']['skill_id'] in selected)}
     audits, evaluations = [], []
     for scope in scopes.values():

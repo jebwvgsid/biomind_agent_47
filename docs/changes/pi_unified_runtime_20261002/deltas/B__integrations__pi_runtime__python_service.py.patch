@@ -1,0 +1,11 @@
+--- a/integrations/pi_runtime/python_service.py
++++ b/integrations/pi_runtime/python_service.py
+@@ -34,7 +34,7 @@
+ sys.stderr=DisconnectTolerantDiagnostics(sys.stderr)
+ sys.stdout=sys.stderr
+ MAX_FRAME=1024*1024
+-SCOPED_MUTATIONS={'exec.start','exec.cancel','files.write','memory.write','install.propose','install.execute','permissions.propose',
++SCOPED_MUTATIONS={'environments.select','environments.launch','environments.register','environments.register_observed','environments.locate','exec.start','exec.cancel','files.write','memory.write','install.propose','install.execute','permissions.propose',
+                   'exec.probe','permissions.mode','request.pause','request.resume','request.revise',
+                   'approval.decide','request.cancel','memory.maintenance.prepare','memory.maintenance.apply','archive.append',
+                   'files.stat','files.read','files.read_authorize','files.mutation_snapshot','permissions.revoke'}

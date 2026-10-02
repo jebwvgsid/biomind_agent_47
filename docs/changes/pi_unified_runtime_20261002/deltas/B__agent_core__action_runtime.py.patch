@@ -1,0 +1,102 @@
+--- a/agent_core/action_runtime.py
++++ b/agent_core/action_runtime.py
+@@ -816,7 +816,8 @@
+         if not Path(prefix).is_absolute():
+             raise ActionRuntimeContractError("ACTION_ENV_SNAPSHOT_PATH_INVALID")
+         effective["CONDA_PREFIX"] = prefix
+-        effective["PATH"] = str(Path(prefix) / "bin") + os.pathsep + effective["PATH"]
++        target_bin=str(Path(prefix) / 'bin')
++        effective['PATH']=os.pathsep.join([target_bin,*[p for p in effective['PATH'].split(os.pathsep) if p!=target_bin]])
+     # PATH/TMPDIR are explicit locations; empty/relative PATH components would
+     # reintroduce a dependence on a later process working directory.
+     if any(not part or not Path(part).is_absolute() for part in effective["PATH"].split(os.pathsep)):
+@@ -1308,7 +1309,7 @@
+         )
+ 
+ 
+-def registered_execution_environment(state: Mapping[str, Any], explicit: Mapping[str, Any]) -> Dict[str, str]:
++def registered_execution_environment(state: Mapping[str, Any], explicit: Mapping[str, Any], *, runtime_binding=None) -> Dict[str, str]:
+     """Materialize accepted registration for this step, without a fresh probe.
+ 
+     An explicit reviewed environment stays explicit. Ambiguous task bindings do
+@@ -1316,10 +1317,27 @@
+     """
+     environment = {str(k): str(v) for k, v in explicit.items()}
+     task = state.get("task_state") or {}
++    if runtime_binding:
++        from agent_core.runtime_evidence import registered_execution_binding
++        registered_execution_binding(state,binding_ref=runtime_binding.get('binding_ref',''),runtime_scope=runtime_binding.get('scope',''))
++        # Domain already resolved the shared launch, including runner-only
++        # records. Reapplying it here would double-wrap command and PATH.
++        return environment
+     explicit_prefix = environment.get("ENV_PREFIX") or environment.get("CONDA_PREFIX")
+     if explicit_prefix:
+         # Prior dependency errors remain observations. They do not mandate a
+         # diagnosis before the model can choose another authorized command.
++        return environment
++    if task.get('pi_request_id'):
++        from agent_core.runtime_evidence import registered_execution_binding
++        binding=registered_execution_binding(state)
++        if binding:
++            from agent_core.runtime_launch import prepare_runtime_launch
++            # This compatibility projection handles only environment facts.
++            # Domain prepares the command/runner once before permission hashing.
++            descriptor=dict(binding['launch']);descriptor.pop('env_runner',None);descriptor.pop('runner_argv',None)
++            launch=prepare_runtime_launch(descriptor,['/bin/true'],base_env={'PATH':os.environ.get('PATH','/usr/bin:/bin')},extra_env=environment)
++            return launch['env']
+         return environment
+     if not task.get("runtime_evidence"):
+         return environment
+@@ -1362,7 +1380,7 @@
+     from execution.script_validation import check_executable_action, resolve_direct_script_argv, explicit_script_diagnostic
+ 
+     if not isinstance(arguments, Mapping) or set(arguments) - {
+-        'cmd', 'argv', 'workdir', 'env', 'timeout_ms', 'max_output_chars', 'script_path', 'helper_paths', 'expected_sha256', 'legacy_action', 'script_args', 'interpreter', 'write_paths', 'delete_paths', 'read_paths', '_biomind_probe'}:
++        'cmd', 'argv', 'workdir', 'env', 'timeout_ms', 'max_output_chars', 'script_path', 'helper_paths', 'expected_sha256', 'legacy_action', 'script_args', 'interpreter', 'write_paths', 'delete_paths', 'read_paths', '_biomind_probe', '_runtime_binding'}:
+         raise ValueError('EXEC_COMMAND_ARGUMENTS_INVALID')
+     if not call_id:
+         raise ValueError('EXECUTION_INTENT_ID_MISSING')
+@@ -1480,6 +1498,7 @@
+         legacy = arguments.get('legacy_action') or {}
+         host_generated_source = None
+         actual_arguments = dict(arguments)
++        actual_arguments.pop('_runtime_binding',None)
+         # Resource references belong to the permission projection, never to
+         # the strict executable carrier/argv contract.
+         actual_arguments.pop('read_paths', None)
+@@ -1514,7 +1533,7 @@
+                     actual_arguments.update(script_path=str(inline), script_args=[], interpreter=interpreter)
+             else:
+                 raise ValueError('EXECUTABLE_CARRIER_MISSING')
+-        env = freeze_execution_environment(os.environ, registered_execution_environment(durable, actual_arguments.get('env') or {}))
++        env = freeze_execution_environment(os.environ, registered_execution_environment(durable, actual_arguments.get('env') or {},runtime_binding=arguments.get('_runtime_binding')))
+         diagnostic = explicit_script_diagnostic({k:v for k,v in actual_arguments.items() if k != 'legacy_action'})
+         if diagnostic:
+             raise PrelaunchAdmissionRejected(diagnostic['error'], phase='carrier_admission',
+@@ -1700,6 +1719,8 @@
+             'shell': None if tokens is not None else '/bin/sh', 'shell_login': False,
+             'frozen_files': frozen_files, 'syntax_check': syntax,
+             'dependency_scope': 'explicit script and helper paths only; complex shell dependencies not inferred'}
++        if arguments.get('_runtime_binding'):
++            action['runtime_binding']=deepcopy(arguments['_runtime_binding'])
+         # Complete write admission before persisting STARTING or charging a
+         # dispatch/repair. No await separates this check from the actual runner.
+         # A rejected target must not leave a phantom active process to reconcile.
+@@ -1777,6 +1798,8 @@
+                 'receipt_ref': str(receipt_path), 'runtime_metadata': cancellation,
+                 'stdout_path': str(attempt_dir/'stdout.log'), 'stderr_path': str(attempt_dir/'stderr.log'),
+                 'scientific_validation': 'not_assessed', 'cleanup_confirmed': complete}
++            if arguments.get('_runtime_binding'):
++                cancelled_result['runtime_binding']=deepcopy(arguments['_runtime_binding'])
+             from agent_core.command_inspection_owner import _once
+             if complete and not receipt_path.exists():
+                 _once(receipt_path, cancelled_result)
+@@ -1819,6 +1842,8 @@
+                 'workflow_stage_ids','execution_capability_id','operation','validation') if key in step},
+             'finished_at': time.time(), 'runtime_metadata': dict(observation) or get_last_execution_metadata()}
+         result['cleanup_confirmed'] = bool(result['runtime_metadata'].get('cleanup_confirmed', True))
++        if arguments.get('_runtime_binding'):
++            result['runtime_binding']=deepcopy(arguments['_runtime_binding'])
+         from agent_core.command_inspection_owner import _once
+         _once(receipt_path, result)
+         _record_formal_receipt(service.data_path, task_id, result)

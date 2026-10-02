@@ -1,0 +1,26 @@
+test_exact_metadata_never_executes_candidate_and_is_bounded (__main__.BoundedLocationTests.test_exact_metadata_never_executes_candidate_and_is_bounded) ... Executing <Task pending name='Task-2' coro=<BoundedLocationTests.test_exact_metadata_never_executes_candidate_and_is_bounded() running at /public/home/liusiqi/03.毕设/Biomind_v1/tests/test_runtime_candidates_20261002.py:222> wait_for=<Future pending cb=[Task.task_wakeup()] created at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:448> cb=[_run_until_complete_cb() at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:181] created at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:100> took 0.408 seconds
+ok
+test_protected_prefix_does_not_bypass_existing_permission (__main__.BoundedLocationTests.test_protected_prefix_does_not_bypass_existing_permission) ... Executing <Task finished name='Task-17' coro=<BoundedLocationTests.test_protected_prefix_does_not_bypass_existing_permission() done, defined at /public/home/liusiqi/03.毕设/Biomind_v1/tests/test_runtime_candidates_20261002.py:249> result=None created at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:100> took 0.302 seconds
+ok
+test_slow_metadata_is_killed_at_five_seconds_with_observed_cleanup (__main__.BoundedLocationTests.test_slow_metadata_is_killed_at_five_seconds_with_observed_cleanup) ... ok
+test_three_slow_candidate_stages_share_fifteen_second_total (__main__.BoundedLocationTests.test_three_slow_candidate_stages_share_fifteen_second_total) ... ok
+test_corrupt_unreadable_schema_distinct_no_fallback (__main__.RuntimeCandidateTests.test_corrupt_unreadable_schema_distinct_no_fallback) ... ok
+test_equal_candidates_are_bounded_and_not_first_or_last (__main__.RuntimeCandidateTests.test_equal_candidates_are_bounded_and_not_first_or_last) ... ok
+test_explicit_constraints_conflict_without_override (__main__.RuntimeCandidateTests.test_explicit_constraints_conflict_without_override) ... ok
+test_explicit_prefix_does_not_read_inventory_even_for_location (__main__.RuntimeCandidateTests.test_explicit_prefix_does_not_read_inventory_even_for_location) ... ok
+test_inventory_is_only_bounded_location_metadata_not_registration (__main__.RuntimeCandidateTests.test_inventory_is_only_bounded_location_metadata_not_registration) ... ok
+test_known_negative_capability_not_selectable (__main__.RuntimeCandidateTests.test_known_negative_capability_not_selectable) ... ok
+test_launch_facts_white_list_and_no_model_setup_authority (__main__.RuntimeCandidateTests.test_launch_facts_white_list_and_no_model_setup_authority) ... ok
+test_missing_skill_mapping_falls_back_to_actual_needs (__main__.RuntimeCandidateTests.test_missing_skill_mapping_falls_back_to_actual_needs) ... ok
+test_new_declaration_unknown_old_verified_record_kept (__main__.RuntimeCandidateTests.test_new_declaration_unknown_old_verified_record_kept) ... ok
+test_new_reader_and_no_query_initialization (__main__.RuntimeCandidateTests.test_new_reader_and_no_query_initialization) ... ok
+test_no_prefix_entry_and_runner_backends (__main__.RuntimeCandidateTests.test_no_prefix_entry_and_runner_backends) ... ok
+test_prefix_constraints_disambiguate_registered_candidates (__main__.RuntimeCandidateTests.test_prefix_constraints_disambiguate_registered_candidates) ... ok
+test_r_missing_package_is_local_and_cancel_input_errors_ignored (__main__.RuntimeCandidateTests.test_r_missing_package_is_local_and_cancel_input_errors_ignored) ... ok
+test_tools_packages_caps_without_env_and_r_alias_select_registered (__main__.RuntimeCandidateTests.test_tools_packages_caps_without_env_and_r_alias_select_registered) ... ok
+test_unsupported_runner_rejected_and_conda_structure_pins_launcher (__main__.RuntimeCandidateTests.test_unsupported_runner_rejected_and_conda_structure_pins_launcher) ... ok
+
+----------------------------------------------------------------------
+Ran 19 tests in 20.952s
+
+OK

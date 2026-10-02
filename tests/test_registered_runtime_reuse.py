@@ -172,7 +172,7 @@ def test_persisted_registration_does_not_gain_new_declared_requirements(tmp_path
 
 def test_named_launch_is_pinned_to_registered_external_prefix(tmp_path):
     pm, requirements, prefix = setup_registry(tmp_path)
-    requirements['env_runner'] = 'conda run -n science python'
+    pm.registry['environments']['science']['env_runner'] = 'conda run -n science python'
     audit = pm.registered_runtime_reuse(requirements)['selected_candidate']['audit']
     assert audit['env_runner'] == 'conda run -p ' + str(prefix) + ' python'
 

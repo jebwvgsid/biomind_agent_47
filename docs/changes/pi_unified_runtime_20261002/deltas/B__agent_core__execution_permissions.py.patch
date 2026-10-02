@@ -1,0 +1,29 @@
+--- a/agent_core/execution_permissions.py
++++ b/agent_core/execution_permissions.py
+@@ -406,7 +406,7 @@
+     cwd = Path(arguments.get('workdir') or project).expanduser()
+     cwd = (project / cwd).resolve(strict=True) if not cwd.is_absolute() else cwd.resolve(strict=True)
+     if not cwd.is_dir(): raise ValueError('EXECUTION_CWD_NOT_DIRECTORY')
+-    env = freeze_execution_environment(os.environ, registered_execution_environment(state, arguments.get('env') or {}))
++    env = freeze_execution_environment(os.environ, registered_execution_environment(state, arguments.get('env') or {}, runtime_binding=arguments.get('_runtime_binding')))
+     # Environment values remain in controlled execution evidence, never UI or
+     # reviewer projection. Neither Plan prose nor DB generation is hashed.
+     actual = {k:deepcopy(v) for k,v in arguments.items() if k not in {'timeout_ms','max_output_chars','workdir','read_paths'}}
+@@ -1196,7 +1196,7 @@
+         snapshot=deepcopy(prior['payload'].get('access_projection'))
+         if snapshot:
+             validate_read_grants(service.data_path,task_id,snapshot)
+-            runtime_arguments={**arguments,'env':registered_execution_environment(state,arguments.get('env') or {})}
++            runtime_arguments={**arguments,'env':registered_execution_environment(state,arguments.get('env') or {},runtime_binding=arguments.get('_runtime_binding'))}
+             return formal_access_projection(service,runtime_arguments,task_id,read_access=snapshot)
+     cwd=(project/Path(arguments.get('workdir') or project).expanduser()).resolve(strict=True)
+     if not cwd.is_dir():raise ValueError('EXECUTION_CWD_NOT_DIRECTORY')
+@@ -1270,7 +1270,7 @@
+         'read_directories':sorted(directories.values(),key=lambda r:r['root']),
+         'directory_snapshots':snapshots,'path_bindings':bindings,
+         'write_grants':path_grant_refs({g['grant_id']:g for g in write_grants}.values()),'write_targets':write_targets}
+-    runtime_arguments={**arguments,'env':registered_execution_environment(state,arguments.get('env') or {})}
++    runtime_arguments={**arguments,'env':registered_execution_environment(state,arguments.get('env') or {},runtime_binding=arguments.get('_runtime_binding'))}
+     return formal_access_projection(service,runtime_arguments,task_id,read_access=projection)
+ 
+ 

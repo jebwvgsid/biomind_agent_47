@@ -1,0 +1,23 @@
+test_N04_actual_import_evidence_is_scoped_to_checked_module (__main__.InstallTargets.test_N04_actual_import_evidence_is_scoped_to_checked_module) ... ok
+test_N04_arbitrary_echo_does_not_authorize_verified_registration (__main__.InstallTargets.test_N04_arbitrary_echo_does_not_authorize_verified_registration) ... ok
+test_N04_entry_and_overlay_conflicts_rejected (__main__.InstallTargets.test_N04_entry_and_overlay_conflicts_rejected) ... ok
+test_N04_exact_missing_target_never_falls_back_to_host (__main__.InstallTargets.test_N04_exact_missing_target_never_falls_back_to_host) ... ok
+test_N04_install_can_create_target_before_target_verification (__main__.InstallTargets.test_N04_install_can_create_target_before_target_verification) ... ok
+test_N04_package_check_rejects_echo_interpreter_and_missing_marker (__main__.InstallTargets.test_N04_package_check_rejects_echo_interpreter_and_missing_marker) ... ok
+test_N04_protected_uses_same_target_facts_and_existing_permission (__main__.InstallTargets.test_N04_protected_uses_same_target_facts_and_existing_permission) ... Executing <Task pending name='pi-install:install' coro=<DomainService._install.<locals>.execute() running at /public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/domain_adapter/service.py:1059> wait_for=<Future pending cb=[Task.task_wakeup()] created at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:448> cb=[shield.<locals>._inner_done_callback() at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/tasks.py:905] created at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/tasks.py:420> took 0.103 seconds
+Executing <Task pending name='pi-install:install' coro=<DomainService._install.<locals>.execute() running at /public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/domain_adapter/service.py:1070> wait_for=<Future pending cb=[Task.task_wakeup()] created at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:448> cb=[shield.<locals>._inner_done_callback() at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/tasks.py:905] created at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/tasks.py:420> took 0.102 seconds
+ok
+test_N04_runner_library_and_subprocess_inheritance_real_launch (__main__.InstallTargets.test_N04_runner_library_and_subprocess_inheritance_real_launch) ... ok
+test_N04_target_failure_wins_over_successful_host (__main__.InstallTargets.test_N04_target_failure_wins_over_successful_host) ... ok
+test_N05_registration_failure_recovers_fresh_connection_without_reinstall (__main__.InstallTargets.test_N05_registration_failure_recovers_fresh_connection_without_reinstall) ... ok
+test_N06_lost_terminal_receipt_reconciles_committed_registration (__main__.InstallTargets.test_N06_lost_terminal_receipt_reconciles_committed_registration) ... ok
+test_N06_unknown_claim_is_not_replayed (__main__.InstallTargets.test_N06_unknown_claim_is_not_replayed) ... ok
+test_N07_cancel_after_commit_keeps_committed_fact (__main__.InstallTargets.test_N07_cancel_after_commit_keeps_committed_fact) ... ok
+test_N07_cancel_during_install_keeps_effects_and_never_ready (__main__.InstallTargets.test_N07_cancel_during_install_keeps_effects_and_never_ready) ... ok
+test_N07_cancel_during_verification_preserves_install_without_ready (__main__.InstallTargets.test_N07_cancel_during_verification_preserves_install_without_ready) ... ok
+test_install_failure_preserves_existing_good_record (__main__.InstallTargets.test_install_failure_preserves_existing_good_record) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 2.260s
+
+OK

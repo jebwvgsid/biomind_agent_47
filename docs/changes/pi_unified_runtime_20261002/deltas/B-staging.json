@@ -1,0 +1,127 @@
+[
+  {
+    "file": "package_manager.py",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/B__package_manager.py.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "agent_core/runtime_launch.py",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/B__agent_core__runtime_launch.py.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "agent_core/runtime_evidence.py",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/B__agent_core__runtime_evidence.py.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "agent_core/registered_runtime.py",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/B__agent_core__registered_runtime.py.patch",
+    "apply_error": "error: patch failed: agent_core/registered_runtime.py:57\nerror: agent_core/registered_runtime.py: patch does not apply\n"
+  },
+  {
+    "file": "agent_core/native_command.py",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/B__agent_core__native_command.py.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "agent_core/action_runtime.py",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/B__agent_core__action_runtime.py.patch",
+    "apply_error": "error: patch failed: agent_core/action_runtime.py:1316\nerror: agent_core/action_runtime.py: patch does not apply\n"
+  },
+  {
+    "file": "agent_core/command_execution.py",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/B__agent_core__command_execution.py.patch",
+    "apply_error": "error: patch failed: agent_core/command_execution.py:283\nerror: agent_core/command_execution.py: patch does not apply\n"
+  },
+  {
+    "file": "agent_core/execution_permissions.py",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/B__agent_core__execution_permissions.py.patch",
+    "apply_error": "error: patch failed: agent_core/execution_permissions.py:406\nerror: agent_core/execution_permissions.py: patch does not apply\n"
+  },
+  {
+    "file": "integrations/pi_runtime/domain_adapter/service.py",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/B__integrations__pi_runtime__domain_adapter__service.py.patch",
+    "apply_error": "error: patch failed: integrations/pi_runtime/domain_adapter/service.py:35\nerror: integrations/pi_runtime/domain_adapter/service.py: patch does not apply\n"
+  },
+  {
+    "file": "integrations/pi_runtime/domain_adapter/registry.py",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/B__integrations__pi_runtime__domain_adapter__registry.py.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "integrations/pi_runtime/python_service.py",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/B__integrations__pi_runtime__python_service.py.patch",
+    "apply_error": "error: patch failed: integrations/pi_runtime/python_service.py:34\nerror: integrations/pi_runtime/python_service.py: patch does not apply\n"
+  },
+  {
+    "file": "integrations/pi_runtime/extensions/biomind.ts",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/B__integrations__pi_runtime__extensions__biomind.ts.patch",
+    "apply_error": "error: patch failed: integrations/pi_runtime/extensions/biomind.ts:1\nerror: integrations/pi_runtime/extensions/biomind.ts: patch does not apply\n"
+  },
+  {
+    "file": "integrations/pi_runtime/domain-client.ts",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/B__integrations__pi_runtime__domain-client.ts.patch",
+    "apply_error": "error: patch failed: integrations/pi_runtime/domain-client.ts:37\nerror: integrations/pi_runtime/domain-client.ts: patch does not apply\n"
+  },
+  {
+    "file": "integrations/pi_runtime/native-bash.ts",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/B__integrations__pi_runtime__native-bash.ts.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "integrations/pi_runtime/tests/runtime-binding.test.ts",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/B__integrations__pi_runtime__tests__runtime-binding.test.ts.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "integrations/pi_runtime/tests/test_environment_binding_20261002.py",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/B__integrations__pi_runtime__tests__test_environment_binding_20261002.py.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "tests/test_registry_atomic_20261002.py",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/B__tests__test_registry_atomic_20261002.py.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "tests/test_registered_runtime_reuse.py",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/B__tests__test_registered_runtime_reuse.py.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "tests/test_runtime_candidates_20261002.py",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/B__tests__test_runtime_candidates_20261002.py.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "tests/test_scoped_launch_20261002.py",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/B__tests__test_scoped_launch_20261002.py.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "integrations/pi_runtime/tests/native-workflow.test.ts",
+    "disposition": "delta_artifact_only_requires_preexisting_untracked_source",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/B__integrations__pi_runtime__tests__native-workflow.test.ts.patch"
+  }
+]
