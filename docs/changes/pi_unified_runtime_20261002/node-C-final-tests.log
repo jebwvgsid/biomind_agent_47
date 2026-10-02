@@ -1,0 +1,1738 @@
+TAP version 13
+# Subtest: real backend preserves external scope across main work and resume; new request asks again; denial pauses
+ok 1 - real backend preserves external scope across main work and resume; new request asks again; denial pauses
+  ---
+  duration_ms: 2597.799271
+  type: 'test'
+  ...
+# Subtest: C continuous main history retains exploration, results, user conditions and stable public rules
+ok 2 - C continuous main history retains exploration, results, user conditions and stable public rules
+  ---
+  duration_ms: 36.246935
+  type: 'test'
+  ...
+# Subtest: C public resume preserves request; explicit new task drops earlier task history
+ok 3 - C public resume preserves request; explicit new task drops earlier task history
+  ---
+  duration_ms: 38.534949
+  type: 'test'
+  ...
+# Subtest: C summaries from a previous task remain in raw entries and cannot leak across a real new task
+ok 4 - C summaries from a previous task remain in raw entries and cannot leak across a real new task
+  ---
+  duration_ms: 17.350734
+  type: 'test'
+  ...
+# Subtest: C native new-task append fault recovery: first-edit
+ok 5 - C native new-task append fault recovery: first-edit
+  ---
+  duration_ms: 21.62421
+  type: 'test'
+  ...
+# Subtest: C native new-task append fault recovery: checkpoint
+ok 6 - C native new-task append fault recovery: checkpoint
+  ---
+  duration_ms: 26.968204
+  type: 'test'
+  ...
+# Subtest: C native new-task append fault recovery: completion
+ok 7 - C native new-task append fault recovery: completion
+  ---
+  duration_ms: 19.536564
+  type: 'test'
+  ...
+# Subtest: C native new-task append fault recovery: after-completion
+ok 8 - C native new-task append fault recovery: after-completion
+  ---
+  duration_ms: 24.127351
+  type: 'test'
+  ...
+# Subtest: R1 deny stops same-batch later tools and next provider; explicit resume leaves original decision
+ok 9 - R1 deny stops same-batch later tools and next provider; explicit resume leaves original decision
+  ---
+  duration_ms: 17.138446
+  type: 'test'
+  ...
+# Subtest: C aborted question resumes the same main request without a latent transition
+ok 10 - C aborted question resumes the same main request without a latent transition
+  ---
+  duration_ms: 23.202134
+  type: 'test'
+  ...
+# Subtest: C original checks, stop conditions and failed evidence stay visible without a handoff summary
+ok 11 - C original checks, stop conditions and failed evidence stay visible without a handoff summary
+  ---
+  duration_ms: 23.363112
+  type: 'test'
+  ...
+# Subtest: C Pi compaction receives continuous current-request history and survives reload
+ok 12 - C Pi compaction receives continuous current-request history and survives reload
+  ---
+  duration_ms: 33.634673
+  type: 'test'
+  ...
+# Subtest: C Domain request initialization fault blocks dispatch and resume repairs without hidden continuation
+ok 13 - C Domain request initialization fault blocks dispatch and resume repairs without hidden continuation
+  ---
+  duration_ms: 22.626893
+  type: 'test'
+  ...
+# Subtest: C main may invoke existing execution from its first tool group without a role transition
+ok 14 - C main may invoke existing execution from its first tool group without a role transition
+  ---
+  duration_ms: 17.703305
+  type: 'test'
+  ...
+# Subtest: R4 historical usage labels retain each transport retry; unknown usage stays unknown
+ok 15 - R4 historical usage labels retain each transport retry; unknown usage stays unknown
+  ---
+  duration_ms: 0.429884
+  type: 'test'
+  ...
+# Subtest: R5 paused auto mode requires explicit UI resume consent; no provider call until user continues
+ok 16 - R5 paused auto mode requires explicit UI resume consent; no provider call until user continues
+  ---
+  duration_ms: 15.254005
+  type: 'test'
+  ...
+# Subtest: R1 an unresponsive approval times out, cancels its proposal and pauses before another provider call
+ok 17 - R1 an unresponsive approval times out, cancels its proposal and pauses before another provider call
+  ---
+  duration_ms: 35.550492
+  type: 'test'
+  ...
+# Subtest: C steering during current work remains visible and increments the same request revision
+ok 18 - C steering during current work remains visible and increments the same request revision
+  ---
+  duration_ms: 17.352337
+  type: 'test'
+  ...
+# Subtest: P01 production module loads by native file path; factory only registers
+ok 19 - P01 production module loads by native file path; factory only registers
+  ---
+  duration_ms: 66.176016
+  type: 'test'
+  ...
+# Subtest: P01/P04 Main direct answer settles once and each independent request resets
+ok 20 - P01/P04 Main direct answer settles once and each independent request resets
+  ---
+  duration_ms: 24.880452
+  type: 'test'
+  ...
+# Subtest: P02/P03 one agent waits for a real answer then directly executes with the same request
+ok 21 - P02/P03 one agent waits for a real answer then directly executes with the same request
+  ---
+  duration_ms: 57.775754
+  type: 'test'
+  ...
+# Subtest: P10 sequential tools and actual errors use Pi isError independently from failed scientific jobs
+ok 22 - P10 sequential tools and actual errors use Pi isError independently from failed scientific jobs
+  ---
+  duration_ms: 25.222933
+  type: 'test'
+  ...
+# Subtest: P06 correlated installation approval: n
+ok 23 - P06 correlated installation approval: n
+  ---
+  duration_ms: 21.597758
+  type: 'test'
+  ...
+# Subtest: P06 correlated installation approval: cancel
+ok 24 - P06 correlated installation approval: cancel
+  ---
+  duration_ms: 15.918112
+  type: 'test'
+  ...
+# Subtest: P06 correlated installation approval: y
+ok 25 - P06 correlated installation approval: y
+  ---
+  duration_ms: 17.246169
+  type: 'test'
+  ...
+# Subtest: P06 correlated installation approval: blank
+ok 26 - P06 correlated installation approval: blank
+  ---
+  duration_ms: 23.140551
+  type: 'test'
+  ...
+# Subtest: P06 correlated installation approval: edit
+ok 27 - P06 correlated installation approval: edit
+  ---
+  duration_ms: 17.194641
+  type: 'test'
+  ...
+# Subtest: P06 file approval honors domain-offered decisions: scope
+ok 28 - P06 file approval honors domain-offered decisions: scope
+  ---
+  duration_ms: 18.366593
+  type: 'test'
+  ...
+# Subtest: P06 file approval honors domain-offered decisions: edit
+ok 29 - P06 file approval honors domain-offered decisions: edit
+  ---
+  duration_ms: 21.266741
+  type: 'test'
+  ...
+# Subtest: P11/P12 preferences refreshed and withdrawn memory/derived text disappear while tool identities remain
+ok 30 - P11/P12 preferences refreshed and withdrawn memory/derived text disappear while tool identities remain
+  ---
+  duration_ms: 22.646795
+  type: 'test'
+  ...
+# Subtest: P15 Pi retry remains enabled and agent_settled follows the successful retry
+ok 31 - P15 Pi retry remains enabled and agent_settled follows the successful retry
+  ---
+  duration_ms: 21.344705
+  type: 'test'
+  ...
+# Subtest: P15/P12 actual Pi compaction excludes withdrawn memory and preserves request branch state
+ok 32 - P15/P12 actual Pi compaction excludes withdrawn memory and preserves request branch state
+  ---
+  duration_ms: 35.405378
+  type: 'test'
+  ...
+# Subtest: P08 abort of waiting UI grants nothing and does not cancel a scientific job
+ok 33 - P08 abort of waiting UI grants nothing and does not cancel a scientific job
+  ---
+  duration_ms: 18.912888
+  type: 'test'
+  ...
+# Subtest: P04 queued steer and follow-up revise the current request without a new scope
+ok 34 - P04 queued steer and follow-up revise the current request without a new scope
+  ---
+  duration_ms: 19.809426
+  type: 'test'
+  ...
+# Subtest: P05 actual tree navigation restores branch request/optional plan and next independent request resets both
+ok 35 - P05 actual tree navigation restores branch request/optional plan and next independent request resets both
+  ---
+  duration_ms: 30.925939
+  type: 'test'
+  ...
+# Subtest: P07/P08 active fake job blocks tree switch; waiting and cancelling use the original run_ref
+ok 36 - P07/P08 active fake job blocks tree switch; waiting and cancelling use the original run_ref
+  ---
+  duration_ms: 30.865106
+  type: 'test'
+  ...
+# Subtest: P13 explicitly enabled auto maintenance uses the same Pi session and one held outbox
+ok 37 - P13 explicitly enabled auto maintenance uses the same Pi session and one held outbox
+  ---
+  duration_ms: 23.919955
+  type: 'test'
+  ...
+# Subtest: P03/P13 Main agent maintenance replaces execution duties through its final reply
+ok 38 - P03/P13 Main agent maintenance replaces execution duties through its final reply
+  ---
+  duration_ms: 24.286947
+  type: 'test'
+  ...
+# Subtest: P13 ask policy creates no unsolicited maintenance provider request
+ok 39 - P13 ask policy creates no unsolicited maintenance provider request
+  ---
+  duration_ms: 11.899147
+  type: 'test'
+  ...
+# Subtest: P13 manual policy creates no unsolicited maintenance provider request
+ok 40 - P13 manual policy creates no unsolicited maintenance provider request
+  ---
+  duration_ms: 19.680869
+  type: 'test'
+  ...
+# Subtest: P13 disabled policy creates no unsolicited maintenance provider request
+ok 41 - P13 disabled policy creates no unsolicited maintenance provider request
+  ---
+  duration_ms: 11.705876
+  type: 'test'
+  ...
+# Subtest: Domain initialization failure is handled before Pi starts the provider
+ok 42 - Domain initialization failure is handled before Pi starts the provider
+  ---
+  duration_ms: 6.295581
+  type: 'test'
+  ...
+# Subtest: failed startup is disconnected and the next input creates a fresh service before sending to the provider
+ok 43 - failed startup is disconnected and the next input creates a fresh service before sending to the provider
+  ---
+  duration_ms: 12.474742
+  type: 'test'
+  ...
+# Subtest: request rejection after successful startup retains the service and accepted owner
+ok 44 - request rejection after successful startup retains the service and accepted owner
+  ---
+  duration_ms: 24.202677
+  type: 'test'
+  ...
+# Subtest: P12.e ask maintenance waits for real consent and holds the outbox outside model arguments
+ok 45 - P12.e ask maintenance waits for real consent and holds the outbox outside model arguments
+  ---
+  duration_ms: 19.538799
+  type: 'test'
+  ...
+# Subtest: P12.e abort while waiting for optional memory consent settles without a patch or second model call
+ok 46 - P12.e abort while waiting for optional memory consent settles without a patch or second model call
+  ---
+  duration_ms: 11.836435
+  type: 'test'
+  ...
+# Subtest: P12 user settings command and headless bus share privileged settings updates, never model tools
+ok 47 - P12 user settings command and headless bus share privileged settings updates, never model tools
+  ---
+  duration_ms: 20.174533
+  type: 'test'
+  ...
+# Subtest: P16.c real Pi reload keeps one bridge owner and replaces subscriptions once
+ok 48 - P16.c real Pi reload keeps one bridge owner and replaces subscriptions once
+  ---
+  duration_ms: 31.631941
+  type: 'test'
+  ...
+# Subtest: P12.b memory present during actual Pi compaction is withdrawn from its mixed summary on the next send
+ok 49 - P12.b memory present during actual Pi compaction is withdrawn from its mixed summary on the next send
+  ---
+  duration_ms: 35.9494
+  type: 'test'
+  ...
+# Subtest: P07.d real extension job observation/cancellation preserve request scope with zero additional model calls
+ok 50 - P07.d real extension job observation/cancellation preserve request scope with zero additional model calls
+  ---
+  duration_ms: 23.591603
+  type: 'test'
+  ...
+# Subtest: P02.b explicit question cancellation invents no answer and triggers no handoff or scientific work
+ok 51 - P02.b explicit question cancellation invents no answer and triggers no handoff or scientific work
+  ---
+  duration_ms: 14.323434
+  type: 'test'
+  ...
+# Subtest: P2 mutation identity remains bound across delayed snapshot
+ok 52 - P2 mutation identity remains bound across delayed snapshot
+  ---
+  duration_ms: 16.314853
+  type: 'test'
+  ...
+# Subtest: P2 mutation identity remains bound across delayed approval
+ok 53 - P2 mutation identity remains bound across delayed approval
+  ---
+  duration_ms: 21.553477
+  type: 'test'
+  ...
+# Subtest: A local wire: original project, one scope approval, two sequential stats, Pi read and continuous same-request reuse
+ok 54 - A local wire: original project, one scope approval, two sequential stats, Pi read and continuous same-request reuse
+  ---
+  duration_ms: 1058.300286
+  type: 'test'
+  ...
+# Subtest: A local wire: exact-file approval does not cover sibling; a new business request asks again
+ok 55 - A local wire: exact-file approval does not cover sibling; a new business request asks again
+  ---
+  duration_ms: 1049.339938
+  type: 'test'
+  ...
+# Subtest: A local wire: explicit denial, cancellation and blank host response never create a read grant
+ok 56 - A local wire: explicit denial, cancellation and blank host response never create a read grant
+  ---
+  duration_ms: 1082.699263
+  type: 'test'
+  ...
+# Subtest: ADD-01/04 UI dispatch keeps host privileges across retry; same message remains sequential
+ok 57 - ADD-01/04 UI dispatch keeps host privileges across retry; same message remains sequential
+  ---
+  duration_ms: 24.887848
+  type: 'test'
+  ...
+# Subtest: ADD-24 no approval for n
+ok 58 - ADD-24 no approval for n
+  ---
+  duration_ms: 15.971698
+  type: 'test'
+  ...
+# Subtest: ADD-24 no approval for cancel
+ok 59 - ADD-24 no approval for cancel
+  ---
+  duration_ms: 23.064855
+  type: 'test'
+  ...
+# Subtest: ADD-24 no approval for 
+ok 60 - ADD-24 no approval for 
+  ---
+  duration_ms: 15.600696
+  type: 'test'
+  ...
+# Subtest: ADD-24 no approval for edit
+ok 61 - ADD-24 no approval for edit
+  ---
+  duration_ms: 15.708887
+  type: 'test'
+  ...
+# Subtest: ADD-24 no approval for undefined
+ok 62 - ADD-24 no approval for undefined
+  ---
+  duration_ms: 21.733972
+  type: 'test'
+  ...
+# Subtest: ADD-06 stat and content derive the identical trusted Skill roots from Pi
+ok 63 - ADD-06 stat and content derive the identical trusted Skill roots from Pi
+  ---
+  duration_ms: 25.524937
+  type: 'test'
+  ...
+# Subtest: ADD-08 existing event bus returns real ledger state and only explicit revoke enters host mutation
+ok 64 - ADD-08 existing event bus returns real ledger state and only explicit revoke enters host mutation
+  ---
+  duration_ms: 12.996254
+  type: 'test'
+  ...
+# Subtest: ADD-02/08 UI read scope and revoke cancel/default match ledger semantics
+ok 65 - ADD-02/08 UI read scope and revoke cancel/default match ledger semantics
+  ---
+  duration_ms: 1.675898
+  type: 'test'
+  ...
+# Subtest: file_stat keeps domain home expansion while resolving ordinary paths at the project
+ok 66 - file_stat keeps domain home expansion while resolving ordinary paths at the project
+  ---
+  duration_ms: 22.754619
+  type: 'test'
+  ...
+# Subtest: L2 transport mock: continuous main tool groups preserve the current answer, manifest and stop conditions until settlement
+ok 67 - L2 transport mock: continuous main tool groups preserve the current answer, manifest and stop conditions until settlement
+  ---
+  duration_ms: 560.152896
+  type: 'test'
+  ...
+# handoff wire evidence: /tmp/biomind_impl_20261002_baseline/C-final-evidence/main-tool-group-fetch-fixture.json
+# Subtest: real host + same extension + real Python: one agent, correlated question, files and next request
+not ok 68 - real host + same extension + real Python: one agent, correlated question, files and next request
+  ---
+  duration_ms: 2338.401183
+  type: 'test'
+  location: '/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/dist/tests/host.test.js:153:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    247 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 247
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///public/home/liusiqi/03.%E6%AF%95%E8%AE%BE/Biomind_v1/integrations/pi_runtime/dist/tests/host.test.js:191:16)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: B1/B3 actual JSON consumes trusted settings/sessionDir and refreshes AGENTS plus preferences without historical rewrites
+ok 69 - B1/B3 actual JSON consumes trusted settings/sessionDir and refreshes AGENTS plus preferences without historical rewrites
+  ---
+  duration_ms: 5801.880956
+  type: 'test'
+  ...
+# Subtest: B1 actual JSON config sessionDir overrides Pi settings and environment
+ok 70 - B1 actual JSON config sessionDir overrides Pi settings and environment
+  ---
+  duration_ms: 2123.863703
+  type: 'test'
+  ...
+# Subtest: runtime JSON handshake deadline reaches the real service and reports timeout without sending to the provider
+ok 71 - runtime JSON handshake deadline reaches the real service and reports timeout without sending to the provider
+  ---
+  duration_ms: 1388.895766
+  type: 'test'
+  ...
+# Subtest: real product queue consumes steer and follow-up as revisions of the same request without a durable ACK
+ok 72 - real product queue consumes steer and follow-up as revisions of the same request without a durable ACK
+  ---
+  duration_ms: 2798.578106
+  type: 'test'
+  ...
+# Subtest: real product EOF leaves its already approved worker with the original Python owner until terminal
+ok 73 - real product EOF leaves its already approved worker with the original Python owner until terminal
+  ---
+  duration_ms: 5694.715335
+  type: 'test'
+  ...
+# Subtest: real host memory maintenance ask: same Pi extension, real Python Wiki/outbox and counted model calls
+ok 74 - real host memory maintenance ask: same Pi extension, real Python Wiki/outbox and counted model calls
+  ---
+  duration_ms: 4839.980351
+  type: 'test'
+  ...
+# Subtest: real host memory maintenance auto: same Pi extension, real Python Wiki/outbox and counted model calls
+not ok 75 - real host memory maintenance auto: same Pi extension, real Python Wiki/outbox and counted model calls
+  ---
+  duration_ms: 1672.745427
+  type: 'test'
+  location: '/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/dist/tests/host.test.js:372:5'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    247 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 247
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///public/home/liusiqi/03.%E6%AF%95%E8%AE%BE/Biomind_v1/integrations/pi_runtime/dist/tests/host.test.js:417:20)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: real host memory maintenance disabled: same Pi extension, real Python Wiki/outbox and counted model calls
+ok 76 - real host memory maintenance disabled: same Pi extension, real Python Wiki/outbox and counted model calls
+  ---
+  duration_ms: 2038.662318
+  type: 'test'
+  ...
+# Subtest: real host memory maintenance ask-cancel: same Pi extension, real Python Wiki/outbox and counted model calls
+ok 77 - real host memory maintenance ask-cancel: same Pi extension, real Python Wiki/outbox and counted model calls
+  ---
+  duration_ms: 2159.683133
+  type: 'test'
+  ...
+# Subtest: headless shutdown ignores later prompt in same input chunk and exits
+ok 78 - headless shutdown ignores later prompt in same input chunk and exits
+  ---
+  duration_ms: 1271.438351
+  type: 'test'
+  ...
+# Subtest: real host archival projection uses the existing SQLite writer while history reads stay disabled
+ok 79 - real host archival projection uses the existing SQLite writer while history reads stay disabled
+  ---
+  duration_ms: 2201.61506
+  type: 'test'
+  ...
+# Subtest: headless malformed protocol exits nonzero without model request or legacy fallback
+ok 80 - headless malformed protocol exits nonzero without model request or legacy fallback
+  ---
+  duration_ms: 1310.13642
+  type: 'test'
+  ...
+# Subtest: real product top-level frame failure aborts a pending question and exits nonzero without continuation
+ok 81 - real product top-level frame failure aborts a pending question and exits nonzero without continuation
+  ---
+  duration_ms: 2168.075726
+  type: 'test'
+  ...
+# Subtest: real product delivers an existing file fact and an explicit missing file error without inventing download paths
+ok 82 - real product delivers an existing file fact and an explicit missing file error without inventing download paths
+  ---
+  duration_ms: 2227.70149
+  type: 'test'
+  ...
+# Subtest: real product reads synthetic historical evidence without replaying or changing old permission, run or output facts
+ok 83 - real product reads synthetic historical evidence without replaying or changing old permission, run or output facts
+  ---
+  duration_ms: 4552.130457
+  type: 'test'
+  ...
+# Subtest: real headless control: settings, approved worker, observation and scoped cancel without extra model calls
+ok 84 - real headless control: settings, approved worker, observation and scoped cancel without extra model calls
+  ---
+  duration_ms: 3057.179669
+  type: 'test'
+  ...
+# Subtest: P06f actual host allows scoped native read; denied write pauses and prevents the following edit
+ok 85 - P06f actual host allows scoped native read; denied write pauses and prevents the following edit
+  ---
+  duration_ms: 2287.949483
+  type: 'test'
+  ...
+# Subtest: P06f actual host explicit memory_write approve uses correlated human approval and original Wiki store
+ok 86 - P06f actual host explicit memory_write approve uses correlated human approval and original Wiki store
+  ---
+  duration_ms: 2353.518412
+  type: 'test'
+  ...
+# Subtest: P06f actual host explicit memory_write deny uses correlated human approval and original Wiki store
+ok 87 - P06f actual host explicit memory_write deny uses correlated human approval and original Wiki store
+  ---
+  duration_ms: 2297.424944
+  type: 'test'
+  ...
+# Subtest: P06f actual host helper shell -u approve remains behind original formal command approval
+ok 88 - P06f actual host helper shell -u approve remains behind original formal command approval
+  ---
+  duration_ms: 2708.553766
+  type: 'test'
+  ...
+# Subtest: P06f actual host helper shell -u deny remains behind original formal command approval
+ok 89 - P06f actual host helper shell -u deny remains behind original formal command approval
+  ---
+  duration_ms: 2213.109638
+  type: 'test'
+  ...
+# Subtest: P06f actual host helper argv -u approve remains behind original formal command approval
+ok 90 - P06f actual host helper argv -u approve remains behind original formal command approval
+  ---
+  duration_ms: 2568.070643
+  type: 'test'
+  ...
+# Subtest: P06f actual host helper argv -u deny remains behind original formal command approval
+ok 91 - P06f actual host helper argv -u deny remains behind original formal command approval
+  ---
+  duration_ms: 2261.991313
+  type: 'test'
+  ...
+# Subtest: EXTERNAL_ACCESS local JSON host stdio resumes original scope once and exposes the same permission ledger
+ok 92 - EXTERNAL_ACCESS local JSON host stdio resumes original scope once and exposes the same permission ledger
+  ---
+  duration_ms: 2718.120448
+  type: 'test'
+  ...
+# Subtest: LATEST E14 M01 M02 M06 M08 real biomind skill-only direct execution without implicit probes
+ok 93 - LATEST E14 M01 M02 M06 M08 real biomind skill-only direct execution without implicit probes
+  ---
+  duration_ms: 2942.977918
+  type: 'test'
+  ...
+# Subtest: LATEST R01 R02 R04 R05 R06 M04 real biomind records to requested report and reproduction without rerun
+ok 94 - LATEST R01 R02 R04 R05 R06 M04 real biomind records to requested report and reproduction without rerun
+  ---
+  duration_ms: 8382.07273
+  type: 'test'
+  ...
+# Subtest: discovery retains Pi schemas and renderers; rg aliases grep
+ok 95 - discovery retains Pi schemas and renderers; rg aliases grep
+  ---
+  duration_ms: 0.338906
+  type: 'test'
+  ...
+# Subtest: ls/find browse project root, Unicode paths, hidden files, scoped ignore rules and protected entries
+ok 96 - ls/find browse project root, Unicode paths, hidden files, scoped ignore rules and protected entries
+  ---
+  duration_ms: 947.699174
+  type: 'test'
+  ...
+# Subtest: native grep/rg preserve regex, literals, line numbers, context, globs and global limits
+ok 97 - native grep/rg preserve regex, literals, line numbers, context, globs and global limits
+  ---
+  duration_ms: 934.538293
+  type: 'test'
+  ...
+# Subtest: external directory approval is required and reused; host-only metadata cannot be forged
+ok 98 - external directory approval is required and reused; host-only metadata cannot be forged
+  ---
+  duration_ms: 781.136801
+  type: 'test'
+  ...
+# Subtest: trusted Skill directories, aborts and changed file identities use the read boundary
+ok 99 - trusted Skill directories, aborts and changed file identities use the read boundary
+  ---
+  duration_ms: 751.632292
+  type: 'test'
+  ...
+# Subtest: real Pi extension exposes discovery and execution in one protected agent and keeps native shell disabled
+ok 100 - real Pi extension exposes discovery and execution in one protected agent and keeps native shell disabled
+  ---
+  duration_ms: 1471.984498
+  type: 'test'
+  ...
+# Subtest: P2 official schemas and preparation retained; denied or blank approval creates no directory
+ok 101 - P2 official schemas and preparation retained; denied or blank approval creates no directory
+  ---
+  duration_ms: 815.48949
+  type: 'test'
+  ...
+# Subtest: P2 Pi multi-edit preserves BOM/CRLF/Chinese, rejects ambiguity, overlap and missing text
+ok 102 - P2 Pi multi-edit preserves BOM/CRLF/Chinese, rejects ambiguity, overlap and missing text
+  ---
+  duration_ms: 811.032116
+  type: 'test'
+  ...
+# Subtest: P2 same-file native queue has no nested lock; aliases and separate targets keep all edits
+ok 103 - P2 same-file native queue has no nested lock; aliases and separate targets keep all edits
+  ---
+  duration_ms: 936.019444
+  type: 'test'
+  ...
+# Subtest: P2 read-first write and post-approval CAS refuse changed target; uncertain claim never reruns
+ok 104 - P2 read-first write and post-approval CAS refuse changed target; uncertain claim never reruns
+  ---
+  duration_ms: 733.161635
+  type: 'test'
+  ...
+# Subtest: P2 completed replay returns existing receipt without algorithm/write; abort before send has no effects
+ok 105 - P2 completed replay returns existing receipt without algorithm/write; abort before send has no effects
+  ---
+  duration_ms: 713.954474
+  type: 'test'
+  ...
+# Subtest: P2 native mutation cannot read private, symlink or multiply-linked files before approval
+ok 106 - P2 native mutation cannot read private, symlink or multiply-linked files before approval
+  ---
+  duration_ms: 691.938199
+  type: 'test'
+  ...
+# Subtest: P1 native catalog metadata, explicit expansion, read reference and current toolsets
+ok 107 - P1 native catalog metadata, explicit expansion, read reference and current toolsets
+  ---
+  duration_ms: 62.429693
+  type: 'test'
+  ...
+# Subtest: P1 native reload refreshes metadata/additions/body; disabled skill stays explicit-only; collisions diagnosed
+ok 108 - P1 native reload refreshes metadata/additions/body; disabled skill stays explicit-only; collisions diagnosed
+  ---
+  duration_ms: 31.063111
+  type: 'test'
+  ...
+# Subtest: P1 official read Unicode line paging, 400/401/1000, empty/missing, PNG and symlink race guard
+ok 109 - P1 official read Unicode line paging, 400/401/1000, empty/missing, PNG and symlink race guard
+  ---
+  duration_ms: 300.929887
+  type: 'test'
+  ...
+# Subtest: P1 S08 actual Pi compaction then reread Skill and reference with complete pairs
+ok 110 - P1 S08 actual Pi compaction then reread Skill and reference with complete pairs
+  ---
+  duration_ms: 53.190619
+  type: 'test'
+  ...
+# Subtest: P1 all current Skills load with official Pi diagnostics and unique names
+ok 111 - P1 all current Skills load with official Pi diagnostics and unique names
+  ---
+  duration_ms: 615.705965
+  type: 'test'
+  ...
+# Subtest: E01/E13 native identities reach the host-only environment query and refresh on Pi reload
+ok 112 - E01/E13 native identities reach the host-only environment query and refresh on Pi reload
+  ---
+  duration_ms: 48.214668
+  type: 'test'
+  ...
+# Subtest: E13 model cannot submit an arbitrary path as trusted Skill identity
+ok 113 - E13 model cannot submit an arbitrary path as trusted Skill identity
+  ---
+  duration_ms: 20.39386
+  type: 'test'
+  ...
+# Subtest: T01-T09 native inventory and cross-directory ordinary work with real Domain
+ok 114 - T01-T09 native inventory and cross-directory ordinary work with real Domain
+  ---
+  duration_ms: 880.524454
+  type: 'test'
+  ...
+# Subtest: T07 OS denial and T11 native edit error/truncation are genuine results
+ok 115 - T07 OS denial and T11 native edit error/truncation are genuine results
+  ---
+  duration_ms: 714.212358
+  type: 'test'
+  ...
+# Subtest: T10 native ! / !! context semantics and cancel reuse Pi
+not ok 116 - T10 native ! / !! context semantics and cancel reuse Pi
+  ---
+  duration_ms: 776.919506
+  type: 'test'
+  location: '/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/dist/tests/native-workflow.test.js:92:1'
+  failureType: 'testCodeFailure'
+  error: "ENOTEMPTY: directory not empty, rmdir '/tmp/biomind-native-pi-fYyFl7/A/.biomind/pi-domain/task_outputs/pi-daa80f9a60713690a11414d1/state_contract'"
+  code: 'ENOTEMPTY'
+  ...
+# Subtest: T08 ordinary native tool gate does not require a BioMind task or Generate
+ok 117 - T08 ordinary native tool gate does not require a BioMind task or Generate
+  ---
+  duration_ms: 630.134928
+  type: 'test'
+  ...
+# Subtest: T02 native directory discovery and dynamically created companions
+not ok 118 - T02 native directory discovery and dynamically created companions
+  ---
+  duration_ms: 792.344778
+  type: 'test'
+  location: '/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/dist/tests/native-workflow.test.js:121:1'
+  failureType: 'testCodeFailure'
+  error: "ENOTEMPTY: directory not empty, rmdir '/tmp/biomind-native-pi-Ww6KSH/A/.biomind/pi-domain/task_outputs/pi-21b6a4e635eb118187c448a1'"
+  code: 'ENOTEMPTY'
+  ...
+# Subtest: T20 real Pi compact/tree/reopen/fork identity keeps native without copied permissions
+ok 119 - T20 real Pi compact/tree/reopen/fork identity keeps native without copied permissions
+  ---
+  duration_ms: 2136.662536
+  type: 'test'
+  ...
+# Subtest: native footer survives welcome/quiet/new/resume; current session uses name, accepted question and stable short ID
+ok 120 - native footer survives welcome/quiet/new/resume; current session uses name, accepted question and stable short ID
+  ---
+  duration_ms: 36.383634
+  type: 'test'
+  ...
+# Subtest: normal 120×35 and 100×30 welcome retains independent title, sections and display-column alignment
+ok 121 - normal 120×35 and 100×30 welcome retains independent title, sections and display-column alignment
+  ---
+  duration_ms: 6.040266
+  type: 'test'
+  ...
+# Subtest: welcome follows actual conversation acceptance, never BioMind metadata, drafts or menu notifications
+ok 122 - welcome follows actual conversation acceptance, never BioMind metadata, drafts or menu notifications
+  ---
+  duration_ms: 2.088645
+  type: 'test'
+  ...
+# Subtest: compact reads owner state, current model and changed details; completion, cancellation and error stay compact
+ok 123 - compact reads owner state, current model and changed details; completion, cancellation and error stay compact
+  ---
+  duration_ms: 2.8534
+  type: 'test'
+  ...
+# Subtest: unchanged renders never rescan the branch or read draft; owner display caches by session and leaf
+ok 124 - unchanged renders never rescan the branch or read draft; owner display caches by session and leaf
+  ---
+  duration_ms: 15.29716
+  type: 'test'
+  ...
+# Subtest: new restores welcome; resume/reload and conversation compaction retain compact; disposed widget is inert
+ok 125 - new restores welcome; resume/reload and conversation compaction retain compact; disposed widget is inert
+  ---
+  duration_ms: 2.601289
+  type: 'test'
+  ...
+# Subtest: 80×24 and 42×20 welcome reflow keeps required state and input space across resize
+ok 126 - 80×24 and 42×20 welcome reflow keeps required state and input space across resize
+  ---
+  duration_ms: 8.454697
+  type: 'test'
+  ...
+# Subtest: external fields lose control sequences while trusted layout whitespace and theme survive
+ok 127 - external fields lose control sequences while trusted layout whitespace and theme survive
+  ---
+  duration_ms: 15.086476
+  type: 'test'
+  ...
+# Subtest: missing model and failed or unknown details stay truthful and keep native command entrances visible
+ok 128 - missing model and failed or unknown details stay truthful and keep native command entrances visible
+  ---
+  duration_ms: 2.145941
+  type: 'test'
+  ...
+# Subtest: BioMind local commands retain permissions, details and shutdown without taking editor ownership
+ok 129 - BioMind local commands retain permissions, details and shutdown without taking editor ownership
+  ---
+  duration_ms: 0.556607
+  type: 'test'
+  ...
+# Subtest: JSON and RPC do not install components or replace their input owners
+ok 130 - JSON and RPC do not install components or replace their input owners
+  ---
+  duration_ms: 0.21943
+  type: 'test'
+  ...
+# Subtest: quietStartup=true hides the full welcome and retains model state and command input guidance
+ok 131 - quietStartup=true hides the full welcome and retains model state and command input guidance
+  ---
+  duration_ms: 0.693232
+  type: 'test'
+  ...
+# Subtest: native quietStartup respects actual trust, reports source and reads settings only per lifecycle
+ok 132 - native quietStartup respects actual trust, reports source and reads settings only per lifecycle
+  ---
+  duration_ms: 6.065728
+  type: 'test'
+  ...
+# Subtest: status renders relative native session paths against the current project
+ok 133 - status renders relative native session paths against the current project
+  ---
+  duration_ms: 0.258694
+  type: 'test'
+  ...
+# Subtest: E01 E02 E10 E17 N08 native binding reaches real executables; parallel calls and new requests stay isolated
+not ok 134 - E01 E02 E10 E17 N08 native binding reaches real executables; parallel calls and new requests stay isolated
+  ---
+  duration_ms: 1474.008998
+  type: 'test'
+  location: '/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/dist/tests/runtime-binding.test.js:20:1'
+  failureType: 'testCodeFailure'
+  error: "ENOTEMPTY: directory not empty, rmdir '/tmp/biomind-bound-bash-mlYznc/domain/task_outputs/pi-823b08cdfff3a62e0446dc60'"
+  code: 'ENOTEMPTY'
+  ...
+# Subtest: native bash thin adapter preserves custom shell/prefix, raw pipeline semantics, streaming and timeout
+ok 135 - native bash thin adapter preserves custom shell/prefix, raw pipeline semantics, streaming and timeout
+  ---
+  duration_ms: 67.981786
+  type: 'test'
+  ...
+# Subtest: E02 E04 I01 N12 independent sessions read the same supplemental registration without executing checks
+ok 136 - E02 E04 I01 N12 independent sessions read the same supplemental registration without executing checks
+  ---
+  duration_ms: 2339.797371
+  type: 'test'
+  ...
+# Subtest: P16.a/c real Pi JSONL branch and real Python permission persistence reopen without replay; reload retains one real bridge
+not ok 137 - P16.a/c real Pi JSONL branch and real Python permission persistence reopen without replay; reload retains one real bridge
+  ---
+  duration_ms: 979.311837
+  type: 'test'
+  location: '/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/dist/tests/session-domain.test.js:170:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    opening Pi does not replay or roll back real domain state
+    + actual - expected
+    ... Skipped lines
+    
+      {
+        approval_gate: {
+          approval_current: false,
+          blocking_issue_fingerprints: [],
+          can_generate: false,
+    ...
+        audit_index: {
+    +     audit_head: 'audit:sha256:b76f6d577eca21730dbf50be8e93cd00af7e22d472243949d10031ec0d7b40cf',
+    +     event_count: 10,
+    -     audit_head: 'audit:sha256:10f071960825625b81f37806c84ae34d98d379ad60d9767ab24892f2be3647b3',
+    -     event_count: 9,
+          latest_by_type: {
+    +       runtime_event: 'audit:sha256:b76f6d577eca21730dbf50be8e93cd00af7e22d472243949d10031ec0d7b40cf',
+    -       runtime_event: 'audit:sha256:10f071960825625b81f37806c84ae34d98d379ad60d9767ab24892f2be3647b3',
+            state_created: 'audit:sha256:51f8fc5c78d79ff5689f671b56b634820498232ce155de150611b013a6e1bf5e'
+          }
+        },
+        authoritative_user_turn_revision: 2,
+        blocking_validation_issue_fingerprints: [],
+    ...
+        stale_step_ids: [],
+    +   state_generation: 10,
+    -   state_generation: 9,
+        steps: [],
+        task_id: 'pi-e9552f977f517bf05ed3ece6',
+        task_output_materializations: [],
+        task_state: {
+          budgets: {
+    ...
+          pi_execution_profile: {
+    +       hosts: [],
+    -       hosts: [
+    -         {
+    -           pid: 561,
+    -           start: '580915733'
+    -         }
+    -       ],
+            profile: 'protected',
+            project: '/tmp/biomind-session-domain-xPZSdf',
+            schema: 1,
+            session_id: '01a0fb2d-56e1-70d4-b5e8-74a8ddeb23a8',
+            source: 'host'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    task_id: 'pi-e9552f977f517bf05ed3ece6'
+    plan_id: 'plan_6b619856c159b022fe10'
+    schema_version: 10
+    plan_schema_version: 10
+    migration_version: 10
+    plan_contract_version: '1.2.1'
+    minimum_reader_version: '1.2.1'
+    migrations_applied:
+      0: 'normalize_plan_state'
+    created_at: ''
+    updated_at: '2026-10-02T13:54:08'
+    plan_file: '/tmp/biomind-session-domain-xPZSdf/domain/task_outputs/pi-e9552f977f517bf05ed3ece6/plan.md'
+    plan_version: 'plan_v1'
+    plan_revision: 1
+    plan_status: 'pending_review'
+    revision_status: 'current'
+    approval_status: 'awaiting_review'
+    execution_status: 'not_started'
+    current_effective_plan_version: 'plan_v1'
+    semantic_plan_hash: ''
+    approved_plan_hash: ''
+    approved_plan_revision: 0
+    approved_task_revision: 0
+    approval_timestamp: ''
+    approval_record:
+    approval_record_ref: ''
+    plan_snapshot_ref: ''
+    current_approval:
+    plan_artifacts:
+    approval_projection:
+    approval_scope:
+    validation_issues:
+    blocking_validation_issue_fingerprints:
+    renderer_projections:
+    renderer_projection_issues:
+    task_output_materializations:
+    validation_convergence_fingerprint: ''
+    validation_convergence_history:
+    repair_convergence:
+      status: 'not_validated'
+      cycle_type: ''
+      attempt_count: 0
+      max_attempts: 6
+      fingerprint: ''
+    can_request_approval: false
+    can_generate: false
+    approval_gate:
+      validation_complete: false
+      approval_current: false
+      can_generate: false
+      blocking_issue_fingerprints:
+      repair_status: 'not_validated'
+    generated_from_task_revision: 0
+    parent_plan_version: ''
+    current_step_id: ''
+    execution_cursor_step_id: ''
+    current_stage_id: ''
+    revision_history:
+    stale_step_ids:
+    revalidation_required_step_ids:
+    revision_budget:
+      remaining: 6
+    selected_skill_ids:
+    current_task:
+      task_spec: ~
+      task_revision: 0
+      task_semantic_hash: ''
+      task_record_hash: ''
+      canonicalization_version: 'task-c14n-v3'
+      created_generation: 1
+      last_mutation_event_id: ''
+      lifecycle: 'uninitialized'
+    conversation_evidence:
+      head_ref: ''
+      turn_count: 0
+    task_state:
+      status: 'running'
+      planning_failure:
+      budgets:
+        generate_attempts_by_step:
+        generate_action_count: 0
+        generate_action_count_by_step:
+        action_format_repair_count: 0
+        action_format_repair_by_step:
+        invalid_action_hashes_by_step:
+        execute_attempts_by_step:
+        recovery_attempts_by_fingerprint:
+        execution_retry_count: 0
+        script_patch_count: 0
+        plan_patch_count: 0
+        stage_rewind_count: 0
+        upstream_rollback_count: 0
+        no_op_plan_patch_by_signature:
+        diagnostic_probe_count: 0
+        diagnostic_probes_by_step:
+        contract_reconciliation_count: 0
+        recovery_judge_count: 0
+        recovery_judge_calls: 0
+        primary_execution_dispatches: 0
+        primary_execution_failures: 0
+        diagnostic_probes_proposed: 0
+        diagnostic_probes_validated: 0
+        diagnostic_probes_dispatched: 0
+        diagnostic_probes_completed: 0
+        diagnostic_probes_not_executed: 0
+        preaction_rejections: 0
+        payload_repairs: 0
+        external_handoffs_created: 0
+        external_jobs_submitted: 0
+        recovery_counter_identities:
+        empty_execute_count: 0
+        same_action_count: 0
+        same_transition_count: 0
+        no_progress_count: 0
+        max_planner_calls_per_epoch: 4
+        max_candidate_repairs_per_epoch: 4
+      pi_execution_profile:
+        schema: 1
+        profile: 'protected'
+        session_id: '01a0fb2d-56e1-70d4-b5e8-74a8ddeb23a8'
+        project: '/tmp/biomind-session-domain-xPZSdf'
+        source: 'host'
+        hosts:
+          0:
+            pid: 561
+            start: '580915733'
+      current_request_key: '7afeff4f-9dda-4086-9aef-0574750076ef'
+      pi_request_id: '7afeff4f-9dda-4086-9aef-0574750076ef'
+      pi_user_revision: 1
+      intent_admission:
+        request_kind: 'work'
+        execution_scope: 'simple'
+        review_before_execution: false
+        source: 'pi_host_request'
+      pi_session_id: '01a0fb2d-56e1-70d4-b5e8-74a8ddeb23a8'
+      execution_permissions:
+        policy_revision: 'execution-permissions-v2'
+        requests:
+          permission-521bb2d762ea5e37221ed48a5a309f30:
+            request_id: 'permission-521bb2d762ea5e37221ed48a5a309f30'
+            tool_call_id: 'persist-write'
+            request_scope:
+              task_id: 'pi-e9552f977f517bf05ed3ece6'
+              user_turn_revision: 1
+              request_key: '82ccb0ea-48ca-43f3-8a82-8bfbd09e2b00'
+            action_hash: 'bc65dd8f5340378a35a4b10408879b570c7750d65c2303613c9ac8ecebbe3ab9'
+            original_action_hash: 'bc65dd8f5340378a35a4b10408879b570c7750d65c2303613c9ac8ecebbe3ab9'
+            proposal_source_hash: 'bc65dd8f5340378a35a4b10408879b570c7750d65c2303613c9ac8ecebbe3ab9'
+            payload:
+              kind: 'file_write'
+              tool: 'write_file'
+              path: '/tmp/biomind-session-domain-xPZSdf/synthetic-output.txt'
+              arguments:
+                native_tool: 'write'
+                native_input:
+                  path: '/tmp/biomind-session-domain-xPZSdf/synthetic-output.txt'
+                  content: |-
+                    SYNTHETIC_FILE_CREATED_ONCE
+                    
+                path: '/tmp/biomind-session-domain-xPZSdf/synthetic-output.txt'
+                content: |-
+                  SYNTHETIC_FILE_CREATED_ONCE
+                  
+                expected_sha256: ''
+              scope_candidate:
+                root: '/tmp/biomind-session-domain-xPZSdf'
+                anchor:
+                  0: 2051
+                  1: 15994736
+                project: '/tmp/biomind-session-domain-xPZSdf'
+                operation: 'file_write'
+              human_required: false
+            resume_revision: 0
+            policy_revision: 'execution-permissions-v2'
+            status: 'allowed'
+            allowed_decisions:
+              0: 'y'
+              1: 'n'
+              2: 'scope'
+            created_at: 1790920448.4258726
+            payload_ref: 'object:sha256:7a10a1d0a1b5c7973ad5f2a41a4da4d62833d8efbf510340d4759526c66a389b'
+            source: 'human'
+            decided_at: 1790920448.4510114
+            claim: 'persist-write'
+            result:
+              status: 'completed'
+              operation: 'write_file'
+              path: '/tmp/biomind-session-domain-xPZSdf/synthetic-output.txt'
+              before_sha256: ''
+              sha256: '1b0758beddeb070de75ebfdd5c9c2b1cb1c628b3cd89f5870fbf4ce81a721203'
+              bytes: 28
+              created: true
+              executed: false
+              receipt_ref: '/tmp/biomind-session-domain-xPZSdf/domain/task_outputs/pi-e9552f977f517bf05ed3ece6/file_edits/639584725353499c8be6812d2798a31d/receipt.json'
+        grants:
+        owner:
+          task_id: 'pi-e9552f977f517bf05ed3ece6'
+          session_id: '01a0fb2d-56e1-70d4-b5e8-74a8ddeb23a8'
+          project: '/tmp/biomind-session-domain-xPZSdf'
+          storage: '/tmp/biomind-session-domain-xPZSdf/domain'
+      pi_context_boundary:
+        id: 'c5122083-483b-41f9-9727-57c3a9672b45'
+        kind: 'task'
+        user_revision: 1
+    failure:
+    provenance_state:
+      schema_version: 1
+      task_id: 'pi-e9552f977f517bf05ed3ece6'
+      actions:
+      attempts:
+      artifacts:
+      artifact_heads:
+      manifests:
+      stages:
+      validations:
+      attempt_counters:
+      migration_log:
+      updated_at: ''
+    steps:
+    compatibility:
+      source_schema_version: 10
+      read_aliases_enabled: false
+    plan_validation_state:
+      status: 'valid'
+      validated_plan_semantic_hash: ''
+      validator_version: 'plan-validator-v2'
+      violations:
+      validation_evidence_refs:
+      validated_at: '2026-10-02T13:54:08'
+    runtime_state:
+      status: 'running'
+      current_step_id: ''
+      current_stage_id: ''
+      budgets:
+        generate_attempts_by_step:
+        generate_action_count: 0
+        generate_action_count_by_step:
+        action_format_repair_count: 0
+        action_format_repair_by_step:
+        invalid_action_hashes_by_step:
+        execute_attempts_by_step:
+        recovery_attempts_by_fingerprint:
+        execution_retry_count: 0
+        script_patch_count: 0
+        plan_patch_count: 0
+        stage_rewind_count: 0
+        upstream_rollback_count: 0
+        no_op_plan_patch_by_signature:
+        diagnostic_probe_count: 0
+        diagnostic_probes_by_step:
+        contract_reconciliation_count: 0
+        recovery_judge_count: 0
+        recovery_judge_calls: 0
+        primary_execution_dispatches: 0
+        primary_execution_failures: 0
+        diagnostic_probes_proposed: 0
+        diagnostic_probes_validated: 0
+        diagnostic_probes_dispatched: 0
+        diagnostic_probes_completed: 0
+        diagnostic_probes_not_executed: 0
+        preaction_rejections: 0
+        payload_repairs: 0
+        external_handoffs_created: 0
+        external_jobs_submitted: 0
+        recovery_counter_identities:
+        empty_execute_count: 0
+        same_action_count: 0
+        same_transition_count: 0
+        no_progress_count: 0
+        max_planner_calls_per_epoch: 4
+        max_candidate_repairs_per_epoch: 4
+      execution_epoch: 0
+    approval_gate_v2:
+      status: 'missing'
+      applicable: false
+    state_generation: 9
+    audit_index:
+      audit_head: 'audit:sha256:10f071960825625b81f37806c84ae34d98d379ad60d9767ab24892f2be3647b3'
+      event_count: 9
+      latest_by_type:
+        state_created: 'audit:sha256:51f8fc5c78d79ff5689f671b56b634820498232ce155de150611b013a6e1bf5e'
+        runtime_event: 'audit:sha256:10f071960825625b81f37806c84ae34d98d379ad60d9767ab24892f2be3647b3'
+    authoritative_user_turn_revision: 2
+  actual:
+    task_id: 'pi-e9552f977f517bf05ed3ece6'
+    plan_id: 'plan_6b619856c159b022fe10'
+    schema_version: 10
+    plan_schema_version: 10
+    migration_version: 10
+    plan_contract_version: '1.2.1'
+    minimum_reader_version: '1.2.1'
+    migrations_applied:
+      0: 'normalize_plan_state'
+    created_at: ''
+    updated_at: '2026-10-02T13:54:08'
+    plan_file: '/tmp/biomind-session-domain-xPZSdf/domain/task_outputs/pi-e9552f977f517bf05ed3ece6/plan.md'
+    plan_version: 'plan_v1'
+    plan_revision: 1
+    plan_status: 'pending_review'
+    revision_status: 'current'
+    approval_status: 'awaiting_review'
+    execution_status: 'not_started'
+    current_effective_plan_version: 'plan_v1'
+    semantic_plan_hash: ''
+    approved_plan_hash: ''
+    approved_plan_revision: 0
+    approved_task_revision: 0
+    approval_timestamp: ''
+    approval_record:
+    approval_record_ref: ''
+    plan_snapshot_ref: ''
+    current_approval:
+    plan_artifacts:
+    approval_projection:
+    approval_scope:
+    validation_issues:
+    blocking_validation_issue_fingerprints:
+    renderer_projections:
+    renderer_projection_issues:
+    task_output_materializations:
+    validation_convergence_fingerprint: ''
+    validation_convergence_history:
+    repair_convergence:
+      status: 'not_validated'
+      cycle_type: ''
+      attempt_count: 0
+      max_attempts: 6
+      fingerprint: ''
+    can_request_approval: false
+    can_generate: false
+    approval_gate:
+      validation_complete: false
+      approval_current: false
+      can_generate: false
+      blocking_issue_fingerprints:
+      repair_status: 'not_validated'
+    generated_from_task_revision: 0
+    parent_plan_version: ''
+    current_step_id: ''
+    execution_cursor_step_id: ''
+    current_stage_id: ''
+    revision_history:
+    stale_step_ids:
+    revalidation_required_step_ids:
+    revision_budget:
+      remaining: 6
+    selected_skill_ids:
+    current_task:
+      task_spec: ~
+      task_revision: 0
+      task_semantic_hash: ''
+      task_record_hash: ''
+      canonicalization_version: 'task-c14n-v3'
+      created_generation: 1
+      last_mutation_event_id: ''
+      lifecycle: 'uninitialized'
+    conversation_evidence:
+      head_ref: ''
+      turn_count: 0
+    task_state:
+      status: 'running'
+      planning_failure:
+      budgets:
+        generate_attempts_by_step:
+        generate_action_count: 0
+        generate_action_count_by_step:
+        action_format_repair_count: 0
+        action_format_repair_by_step:
+        invalid_action_hashes_by_step:
+        execute_attempts_by_step:
+        recovery_attempts_by_fingerprint:
+        execution_retry_count: 0
+        script_patch_count: 0
+        plan_patch_count: 0
+        stage_rewind_count: 0
+        upstream_rollback_count: 0
+        no_op_plan_patch_by_signature:
+        diagnostic_probe_count: 0
+        diagnostic_probes_by_step:
+        contract_reconciliation_count: 0
+        recovery_judge_count: 0
+        recovery_judge_calls: 0
+        primary_execution_dispatches: 0
+        primary_execution_failures: 0
+        diagnostic_probes_proposed: 0
+        diagnostic_probes_validated: 0
+        diagnostic_probes_dispatched: 0
+        diagnostic_probes_completed: 0
+        diagnostic_probes_not_executed: 0
+        preaction_rejections: 0
+        payload_repairs: 0
+        external_handoffs_created: 0
+        external_jobs_submitted: 0
+        recovery_counter_identities:
+        empty_execute_count: 0
+        same_action_count: 0
+        same_transition_count: 0
+        no_progress_count: 0
+        max_planner_calls_per_epoch: 4
+        max_candidate_repairs_per_epoch: 4
+      pi_execution_profile:
+        schema: 1
+        profile: 'protected'
+        session_id: '01a0fb2d-56e1-70d4-b5e8-74a8ddeb23a8'
+        project: '/tmp/biomind-session-domain-xPZSdf'
+        source: 'host'
+        hosts:
+      current_request_key: '7afeff4f-9dda-4086-9aef-0574750076ef'
+      pi_request_id: '7afeff4f-9dda-4086-9aef-0574750076ef'
+      pi_user_revision: 1
+      intent_admission:
+        request_kind: 'work'
+        execution_scope: 'simple'
+        review_before_execution: false
+        source: 'pi_host_request'
+      pi_session_id: '01a0fb2d-56e1-70d4-b5e8-74a8ddeb23a8'
+      execution_permissions:
+        policy_revision: 'execution-permissions-v2'
+        requests:
+          permission-521bb2d762ea5e37221ed48a5a309f30:
+            request_id: 'permission-521bb2d762ea5e37221ed48a5a309f30'
+            tool_call_id: 'persist-write'
+            request_scope:
+              task_id: 'pi-e9552f977f517bf05ed3ece6'
+              user_turn_revision: 1
+              request_key: '82ccb0ea-48ca-43f3-8a82-8bfbd09e2b00'
+            action_hash: 'bc65dd8f5340378a35a4b10408879b570c7750d65c2303613c9ac8ecebbe3ab9'
+            original_action_hash: 'bc65dd8f5340378a35a4b10408879b570c7750d65c2303613c9ac8ecebbe3ab9'
+            proposal_source_hash: 'bc65dd8f5340378a35a4b10408879b570c7750d65c2303613c9ac8ecebbe3ab9'
+            payload:
+              kind: 'file_write'
+              tool: 'write_file'
+              path: '/tmp/biomind-session-domain-xPZSdf/synthetic-output.txt'
+              arguments:
+                native_tool: 'write'
+                native_input:
+                  path: '/tmp/biomind-session-domain-xPZSdf/synthetic-output.txt'
+                  content: |-
+                    SYNTHETIC_FILE_CREATED_ONCE
+                    
+                path: '/tmp/biomind-session-domain-xPZSdf/synthetic-output.txt'
+                content: |-
+                  SYNTHETIC_FILE_CREATED_ONCE
+                  
+                expected_sha256: ''
+              scope_candidate:
+                root: '/tmp/biomind-session-domain-xPZSdf'
+                anchor:
+                  0: 2051
+                  1: 15994736
+                project: '/tmp/biomind-session-domain-xPZSdf'
+                operation: 'file_write'
+              human_required: false
+            resume_revision: 0
+            policy_revision: 'execution-permissions-v2'
+            status: 'allowed'
+            allowed_decisions:
+              0: 'y'
+              1: 'n'
+              2: 'scope'
+            created_at: 1790920448.4258726
+            payload_ref: 'object:sha256:7a10a1d0a1b5c7973ad5f2a41a4da4d62833d8efbf510340d4759526c66a389b'
+            source: 'human'
+            decided_at: 1790920448.4510114
+            claim: 'persist-write'
+            result:
+              status: 'completed'
+              operation: 'write_file'
+              path: '/tmp/biomind-session-domain-xPZSdf/synthetic-output.txt'
+              before_sha256: ''
+              sha256: '1b0758beddeb070de75ebfdd5c9c2b1cb1c628b3cd89f5870fbf4ce81a721203'
+              bytes: 28
+              created: true
+              executed: false
+              receipt_ref: '/tmp/biomind-session-domain-xPZSdf/domain/task_outputs/pi-e9552f977f517bf05ed3ece6/file_edits/639584725353499c8be6812d2798a31d/receipt.json'
+        grants:
+        owner:
+          task_id: 'pi-e9552f977f517bf05ed3ece6'
+          session_id: '01a0fb2d-56e1-70d4-b5e8-74a8ddeb23a8'
+          project: '/tmp/biomind-session-domain-xPZSdf'
+          storage: '/tmp/biomind-session-domain-xPZSdf/domain'
+      pi_context_boundary:
+        id: 'c5122083-483b-41f9-9727-57c3a9672b45'
+        kind: 'task'
+        user_revision: 1
+    failure:
+    provenance_state:
+      schema_version: 1
+      task_id: 'pi-e9552f977f517bf05ed3ece6'
+      actions:
+      attempts:
+      artifacts:
+      artifact_heads:
+      manifests:
+      stages:
+      validations:
+      attempt_counters:
+      migration_log:
+      updated_at: ''
+    steps:
+    compatibility:
+      source_schema_version: 10
+      read_aliases_enabled: false
+    plan_validation_state:
+      status: 'valid'
+      validated_plan_semantic_hash: ''
+      validator_version: 'plan-validator-v2'
+      violations:
+      validation_evidence_refs:
+      validated_at: '2026-10-02T13:54:08'
+    runtime_state:
+      status: 'running'
+      current_step_id: ''
+      current_stage_id: ''
+      budgets:
+        generate_attempts_by_step:
+        generate_action_count: 0
+        generate_action_count_by_step:
+        action_format_repair_count: 0
+        action_format_repair_by_step:
+        invalid_action_hashes_by_step:
+        execute_attempts_by_step:
+        recovery_attempts_by_fingerprint:
+        execution_retry_count: 0
+        script_patch_count: 0
+        plan_patch_count: 0
+        stage_rewind_count: 0
+        upstream_rollback_count: 0
+        no_op_plan_patch_by_signature:
+        diagnostic_probe_count: 0
+        diagnostic_probes_by_step:
+        contract_reconciliation_count: 0
+        recovery_judge_count: 0
+        recovery_judge_calls: 0
+        primary_execution_dispatches: 0
+        primary_execution_failures: 0
+        diagnostic_probes_proposed: 0
+        diagnostic_probes_validated: 0
+        diagnostic_probes_dispatched: 0
+        diagnostic_probes_completed: 0
+        diagnostic_probes_not_executed: 0
+        preaction_rejections: 0
+        payload_repairs: 0
+        external_handoffs_created: 0
+        external_jobs_submitted: 0
+        recovery_counter_identities:
+        empty_execute_count: 0
+        same_action_count: 0
+        same_transition_count: 0
+        no_progress_count: 0
+        max_planner_calls_per_epoch: 4
+        max_candidate_repairs_per_epoch: 4
+      execution_epoch: 0
+    approval_gate_v2:
+      status: 'missing'
+      applicable: false
+    state_generation: 10
+    audit_index:
+      audit_head: 'audit:sha256:b76f6d577eca21730dbf50be8e93cd00af7e22d472243949d10031ec0d7b40cf'
+      event_count: 10
+      latest_by_type:
+        state_created: 'audit:sha256:51f8fc5c78d79ff5689f671b56b634820498232ce155de150611b013a6e1bf5e'
+        runtime_event: 'audit:sha256:b76f6d577eca21730dbf50be8e93cd00af7e22d472243949d10031ec0d7b40cf'
+    authoritative_user_turn_revision: 2
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///public/home/liusiqi/03.%E6%AF%95%E8%AE%BE/Biomind_v1/integrations/pi_runtime/dist/tests/session-domain.test.js:259:16)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: P08.c/P16.b a held real physical receipt arrives only after abort and legal branch switch, without new continuation
+ok 138 - P08.c/P16.b a held real physical receipt arrives only after abort and legal branch switch, without new continuation
+  ---
+  duration_ms: 1767.114327
+  type: 'test'
+  ...
+# Subtest: P11.d real domain AGENTS boundaries enter actual Pi payload once, while parent and escaped symlink bodies never enter
+ok 139 - P11.d real domain AGENTS boundaries enter actual Pi payload once, while parent and escaped symlink bodies never enter
+  ---
+  duration_ms: 782.694518
+  type: 'test'
+  ...
+# Subtest: P12.c real Wiki revocation projects only the selected Pi branch and preserves a current user quote containing the same sentinel
+ok 140 - P12.c real Wiki revocation projects only the selected Pi branch and preserves a current user quote containing the same sentinel
+  ---
+  duration_ms: 1891.032364
+  type: 'test'
+  ...
+# Subtest: P16.a real Pi JSONL reopens the persisted selected branch and continues its main request
+ok 141 - P16.a real Pi JSONL reopens the persisted selected branch and continues its main request
+  ---
+  duration_ms: 51.000927
+  type: 'test'
+  ...
+# Subtest: C copied historical Consult JSONL is read-only input; main decoding never replays a transition
+ok 142 - C copied historical Consult JSONL is read-only input; main decoding never replays a transition
+  ---
+  duration_ms: 24.002203
+  type: 'test'
+  ...
+# Subtest: C copied historical Generate JSONL is read-only input; main decoding never replays a transition
+ok 143 - C copied historical Generate JSONL is read-only input; main decoding never replays a transition
+  ---
+  duration_ms: 14.312586
+  type: 'test'
+  ...
+# Subtest: C copied historical handoff JSONL is read-only input; main decoding never replays a transition
+ok 144 - C copied historical handoff JSONL is read-only input; main decoding never replays a transition
+  ---
+  duration_ms: 13.615136
+  type: 'test'
+  ...
+# Subtest: C copied historical compaction JSONL is read-only input; main decoding never replays a transition
+ok 145 - C copied historical compaction JSONL is read-only input; main decoding never replays a transition
+  ---
+  duration_ms: 14.565069
+  type: 'test'
+  ...
+# Subtest: C copied historical cancelled JSONL is read-only input; main decoding never replays a transition
+ok 146 - C copied historical cancelled JSONL is read-only input; main decoding never replays a transition
+  ---
+  duration_ms: 19.611059
+  type: 'test'
+  ...
+# Subtest: C copied historical completed JSONL is read-only input; main decoding never replays a transition
+ok 147 - C copied historical completed JSONL is read-only input; main decoding never replays a transition
+  ---
+  duration_ms: 13.081141
+  type: 'test'
+  ...
+# Subtest: C copied historical active-job JSONL is read-only input; main decoding never replays a transition
+ok 148 - C copied historical active-job JSONL is read-only input; main decoding never replays a transition
+  ---
+  duration_ms: 7.911918
+  type: 'test'
+  ...
+# Subtest: A01 A02 I05 native: first request has one main toolset, no handoff or forced scientific template
+ok 149 - A01 A02 I05 native: first request has one main toolset, no handoff or forced scientific template
+  ---
+  duration_ms: 18.541171
+  type: 'test'
+  ...
+# Subtest: A01 A02 I05 protected: first request has one main toolset, no handoff or forced scientific template
+ok 150 - A01 A02 I05 protected: first request has one main toolset, no handoff or forced scientific template
+  ---
+  duration_ms: 13.809351
+  type: 'test'
+  ...
+# Subtest: A02 E12 common task history preserves original stop conditions, checks, execution receipt and later revision
+ok 151 - A02 E12 common task history preserves original stop conditions, checks, execution receipt and later revision
+  ---
+  duration_ms: 32.892538
+  type: 'test'
+  ...
+# Subtest: A01 A02 real new request still isolates old context while preserving original Pi entries
+ok 152 - A01 A02 real new request still isolates old context while preserving original Pi entries
+  ---
+  duration_ms: 28.019009
+  type: 'test'
+  ...
+# Subtest: A03 N11 legacy role and handoff are decoded as facts, never executable continuation
+ok 153 - A03 N11 legacy role and handoff are decoded as facts, never executable continuation
+  ---
+  duration_ms: 0.640558
+  type: 'test'
+  ...
+# Subtest: E15 select_environment locate mode calls the existing bounded metadata entry only
+ok 154 - E15 select_environment locate mode calls the existing bounded metadata entry only
+  ---
+  duration_ms: 18.13209
+  type: 'test'
+  ...
+# Subtest: P15d repaired compaction recovered retry accounting boundary
+ok 155 - P15d repaired compaction recovered retry accounting boundary
+  ---
+  duration_ms: 27.314396
+  type: 'test'
+  ...
+# Subtest: P15d repaired compaction exhausted retry accounting boundary
+ok 156 - P15d repaired compaction exhausted retry accounting boundary
+  ---
+  duration_ms: 31.784578
+  type: 'test'
+  ...
+# Subtest: P15d sdk: real serializer hidden HTTP retry, preserved auth, same options reused and unknown usage
+ok 157 - P15d sdk: real serializer hidden HTTP retry, preserved auth, same options reused and unknown usage
+  ---
+  duration_ms: 1945.766081
+  type: 'test'
+  ...
+# Subtest: P15d native-bundle: real serializer hidden HTTP retry, preserved auth, same options reused and unknown usage
+ok 158 - P15d native-bundle: real serializer hidden HTTP retry, preserved auth, same options reused and unknown usage
+  ---
+  duration_ms: 2338.33143
+  type: 'test'
+  ...
+# Subtest: P15d production extension keeps full-session usage across tree navigation and reload without replay
+ok 159 - P15d production extension keeps full-session usage across tree navigation and reload without replay
+  ---
+  duration_ms: 26.524087
+  type: 'test'
+  ...
+# Subtest: P15d actual Pi branch summary retry retains failed attempt usage on the complete session tree
+ok 160 - P15d actual Pi branch summary retry retains failed attempt usage on the complete session tree
+  ---
+  duration_ms: 31.055992
+  type: 'test'
+  ...
+# Subtest: P15d actual maintenance continuation has one shared request and three distinct counted provider calls
+ok 161 - P15d actual maintenance continuation has one shared request and three distinct counted provider calls
+  ---
+  duration_ms: 19.203096
+  type: 'test'
+  ...
+# Subtest: canary R2/R3 tool catalogs preserve their approved operations without changing normal product exposure
+ok 162 - canary R2/R3 tool catalogs preserve their approved operations without changing normal product exposure
+  ---
+  duration_ms: 0.259466
+  type: 'test'
+  ...
+# Subtest: canary R2 consecutive unified requests serialize only the narrowed catalog
+ok 163 - canary R2 consecutive unified requests serialize only the narrowed catalog
+  ---
+  duration_ms: 16.392398
+  type: 'test'
+  ...
+# Subtest: canary R3 consecutive unified requests serialize only the narrowed catalog
+ok 164 - canary R3 consecutive unified requests serialize only the narrowed catalog
+  ---
+  duration_ms: 14.18243
+  type: 'test'
+  ...
+# Subtest: usage observer excludes synthetic credentials in URL path/query from every recorded attempt
+ok 165 - usage observer excludes synthetic credentials in URL path/query from every recorded attempt
+  ---
+  duration_ms: 2.869059
+  type: 'test'
+  ...
+# Subtest: P15d observer reservation exhaustion, cancellation and failed ledger never cause a fallback send
+ok 166 - P15d observer reservation exhaustion, cancellation and failed ledger never cause a fallback send
+  ---
+  duration_ms: 0.842938
+  type: 'test'
+  ...
+# Subtest: L2 L3 fetch fixture: P03b/P11a/P11c real facts, approval refs and changed preference survive actual automatic compaction
+not ok 167 - L2 L3 fetch fixture: P03b/P11a/P11c real facts, approval refs and changed preference survive actual automatic compaction
+  ---
+  duration_ms: 2275.446982
+  type: 'test'
+  location: '/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/dist/tests/wire-composites.test.js:37:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    11 !== 12
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 12
+  actual: 11
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///public/home/liusiqi/03.%E6%AF%95%E8%AE%BE/Biomind_v1/integrations/pi_runtime/dist/tests/wire-composites.test.js:219:12)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# composite evidence: /tmp/biomind_impl_20261002_baseline/C-final-evidence/facts-preference-compaction.json
+# Subtest: L2 L3 fetch fixture: P12a/P12b actual Wiki mixed summary then off reaches final wire with legal tool pairs
+ok 168 - L2 L3 fetch fixture: P12a/P12b actual Wiki mixed summary then off reaches final wire with legal tool pairs
+  ---
+  duration_ms: 1831.904183
+  type: 'test'
+  ...
+# composite evidence: /tmp/biomind_impl_20261002_baseline/C-final-evidence/history-off-mixed-summary.json
+# Subtest: L2 L3 fetch fixture: P12a/P12b actual Wiki mixed summary then forget reaches final wire with legal tool pairs
+ok 169 - L2 L3 fetch fixture: P12a/P12b actual Wiki mixed summary then forget reaches final wire with legal tool pairs
+  ---
+  duration_ms: 1929.28199
+  type: 'test'
+  ...
+# composite evidence: /tmp/biomind_impl_20261002_baseline/C-final-evidence/history-forget-mixed-summary.json
+# Subtest: L2 L3 fetch fixture: P09a/P15a real HTTP retry and accepted steer/follow-up drain before one final settled
+ok 170 - L2 L3 fetch fixture: P09a/P15a real HTTP retry and accepted steer/follow-up drain before one final settled
+  ---
+  duration_ms: 835.927299
+  type: 'test'
+  ...
+# composite evidence: /tmp/biomind_impl_20261002_baseline/C-final-evidence/retry-steer-followup-settled.json
+# Subtest: L2 transport mock: Chinese SSE, actual extension tool pair and thinking on/off serialize through Pi
+ok 171 - L2 transport mock: Chinese SSE, actual extension tool pair and thinking on/off serialize through Pi
+  ---
+  duration_ms: 43.48299
+  type: 'test'
+  ...
+# wire evidence: /tmp/biomind_impl_20261002_baseline/C-final-evidence/chinese-tools-thinking.json
+# Subtest: L2 transport mock: domain error remains isError and reaches the next serialized request
+ok 172 - L2 transport mock: domain error remains isError and reaches the next serialized request
+  ---
+  duration_ms: 22.08614
+  type: 'test'
+  ...
+# wire evidence: /tmp/biomind_impl_20261002_baseline/C-final-evidence/tool-error.json
+# Subtest: L2 transport mock: status 503 invokes Pi AgentSession retry before final settlement; external network fails closed
+ok 173 - L2 transport mock: status 503 invokes Pi AgentSession retry before final settlement; external network fails closed
+  ---
+  duration_ms: 25.547517
+  type: 'test'
+  ...
+# wire evidence: /tmp/biomind_impl_20261002_baseline/C-final-evidence/retry-network.json
+1..173
+# tests 173
+# suites 0
+# pass 166
+# fail 7
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 142830.299164

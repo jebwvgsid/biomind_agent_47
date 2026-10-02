@@ -1,0 +1,169 @@
+--- a/integrations/pi_runtime/tests/session-domain.test.ts
++++ b/integrations/pi_runtime/tests/session-domain.test.ts
+@@ -152,7 +152,6 @@
+   const outputPath = path.join(cwd, 'synthetic-output.txt'); const fileText = 'SYNTHETIC_FILE_CREATED_ONCE\n';
+   const h = await realSession(cwd, dataRoot, manager, 'P16ac-real-domain-create', [
+     call('persist-ask', 'ask_user', { question: '当前分支允许写入哪份合成文件？' }),
+-    call('persist-handoff', 'handoff_generate', { goal: '按用户回答写入一个临时合成文件' }),
+     call('persist-plan', 'update_plan', { steps: [{ step: 'REAL_SELECTED_PLAN_甲', status: 'pending' }] }),
+     call('persist-write', 'write', { path: outputPath, content: fileText }),
+     text('REAL_SELECTED_ASSISTANT：文件写入已按实际回执完成。'), text('REAL_ABANDONED_ASSISTANT：另一个独立分支。'),
+@@ -173,27 +172,36 @@
+     assert.equal(Object.keys(permissions).length, 1); permissionId = Object.keys(permissions)[0]; permissionBefore = clone(permissions[permissionId]);
+     assert.equal(permissionBefore.source, 'human'); assert.equal(permissionBefore.status, 'allowed'); assert(permissionBefore.claim); assert(permissionBefore.result);
+     assert.equal(h.connections.length, 1); assert.equal(h.connections[0].calls.filter(row => row.method === 'files.write').length, 2);
+-    await h.prompt('REAL_ABANDONED_USER：这是之后不再选择的分支。');
++    await h.prompt('[新任务] REAL_ABANDONED_USER：这是之后不再选择的分支。');
+     abandonedRequest = requestFromBranch(manager.getBranch())!.requestId; assert.notEqual(abandonedRequest, selectedRequest);
+     assert.equal((await state()).task_state.pi_request_id, abandonedRequest);
+     assert.equal((await h.session.navigateTree(firstLeaf, { summarize: false, label: 'real-domain-selected-branch' })).cancelled, false);
+     selectedLeaf = manager.getLeafId()!;
+     assert.equal(requestFromBranch(manager.getBranch())!.requestId, selectedRequest);
+-    assert.equal(requestFromBranch(manager.getBranch())!.role, 'Generate');
++    assert.equal(requestFromBranch(manager.getBranch())!.role, 'Main');
+     // Logical Pi navigation does not roll back the Python authority/facts.
+     persistentBefore = await state(); assert.equal(persistentBefore.task_state.pi_request_id, abandonedRequest);
+     assert.deepEqual(persistentBefore.task_state.execution_permissions.requests[permissionId], permissionBefore);
+     outputBefore = { sha256: hash(await readFile(outputPath)), mtimeMs: (await stat(outputPath)).mtimeMs };
+     file = manager.getSessionFile()!; snapshot = await readFile(file, 'utf8'); assert.match(snapshot, /REAL_ABANDONED_USER/);
+-    assert.equal((await h.requests()).length, 6); assert.deepEqual(h.errors, []);
++    assert.equal((await h.requests()).length, 5); assert.deepEqual(h.errors, []);
+   } finally { off(); await h.close(); }
+   assert.equal(h.connections[0].closeCount, 1);
++  // Disconnect normally releases the host PID lease and records that lifecycle
++  // mutation. Take the unopened baseline after that supported shutdown.
++  persistentBefore = await state();
++  const withoutHostLifecycle = (value: Frame) => {
++    const stable = clone(value);
++    delete stable.audit_index; delete stable.state_generation; delete stable.updated_at;
++    delete stable.task_state.pi_execution_profile.hosts;
++    return stable;
++  };
+ 
+   const reopened = SessionManager.open(file, sessions);
+   assert.equal(reopened.getSessionId(), sessionId); assert.equal(reopened.getLeafId(), selectedLeaf);
+   const logical = requestFromBranch(reopened.getBranch())!;
+-  assert.equal(logical.requestId, selectedRequest); assert.equal(logical.role, 'Generate'); assert.equal(logical.plan?.[0].step, 'REAL_SELECTED_PLAN_甲');
+-  const h2 = await realSession(cwd, dataRoot, reopened, 'P16ac-real-domain-reopen', [text('已恢复所选分支历史；新请求由 Consult 直接回答。')]);
++  assert.equal(logical.requestId, selectedRequest); assert.equal(logical.role, 'Main'); assert.equal(logical.plan?.[0].step, 'REAL_SELECTED_PLAN_甲');
++  const h2 = await realSession(cwd, dataRoot, reopened, 'P16ac-real-domain-reopen', [text('已恢复所选分支历史；新请求由主 agent 直接回答。')]);
+   let report: Frame = { status: 'STARTED_NOT_PASSED' };
+   try {
+     assert.equal(h2.connections.length, 0); assert.equal((await h2.requests()).length, 0);
+@@ -217,18 +225,20 @@
+     } finally { offSettings(); }
+     assert.equal(settingsReplies, 1);
+     assert.equal(connection.calls.slice(beforeReloadCalls).filter(row => row.method === 'settings.update').length, 1);
+-    assert.equal((await h2.requests()).length, 0); assert.deepEqual(await state(), persistentBefore);
+-    await h2.prompt('REOPEN_REAL_USER：新的普通咨询，不重放之前的写入。');
++    assert.equal((await h2.requests()).length, 0);
++    assert.deepEqual(withoutHostLifecycle(await state()), withoutHostLifecycle(persistentBefore), 'host reconnect/reload does not change request, authorization or execution facts');
++    await h2.prompt('[新任务] REOPEN_REAL_USER：新的普通咨询，不重放之前的写入。');
+     const current = requestFromBranch(reopened.getBranch())!; const currentState = await state();
+-    assert.equal(current.role, 'Consult'); assert.equal(current.plan, undefined); assert.equal(current.handoffConsumed, false);
++    assert.equal(current.role, 'Main'); assert.equal(current.plan, undefined); assert.equal((current as any).handoff, undefined);
+     assert.notEqual(current.requestId, selectedRequest); assert.notEqual(current.requestId, abandonedRequest);
+     assert.equal(currentState.task_state.pi_request_id, current.requestId);
+     const requests = await h2.requests(); assert.equal(requests.length, 1);
+-    const actual = JSON.stringify(requests[0].context); assert.match(actual, /REAL_SELECTED_ANSWER_α/); assert(!actual.includes('REAL_ABANDONED_'));
+-    assert.match(actual, /\\"role\\":\\"Consult\\"/); assertPairs(requests[0].context.messages);
++    const actual = JSON.stringify(requests[0].context); assert(!actual.includes('REAL_SELECTED_')); assert(!actual.includes('REAL_ABANDONED_'));
++    assert(JSON.stringify(reopened.getEntries()).includes('REAL_SELECTED_ANSWER_α'), 'prior user evidence remains in the raw session, outside the new task context');
++    assert.doesNotMatch(actual, /\\"role\\":\\"(?:Consult|Generate)\\"/); assertPairs(requests[0].context.messages);
+     assert.deepEqual(currentState.task_state.execution_permissions.requests[permissionId], permissionBefore);
+     assert.equal(Object.keys(currentState.task_state.execution_permissions.requests).length, 1);
+-    assert.equal(connection.calls.filter(row => row.method === 'request.begin').length, 1);
++    assert.equal(connection.calls.filter(row => row.method === 'request.begin' && !row.params.boundary_id).length, 1);
+     assert(!connection.calls.some(row => /^(files\.write|exec\.|install\.)/.test(row.method)));
+     await assert.rejects(connection.call('files.write', { call_id: 'old-scope-cannot-replay', path: outputPath, content: 'must not write' }, { requestId: selectedRequest }), /STALE_ACTIVE_REQUEST/);
+     await connection.call('context.snapshot', {}, { requestId: current.requestId });
+@@ -319,7 +329,6 @@
+   const manager = SessionManager.create(cwd, sessions);
+   const h = await realSession(cwd, dataRoot, manager, 'P08c-P16b-real-late-receipt', [
+     text('ANCHOR_ASSISTANT：可合法返回的已结束分支。'),
+-    call('late-handoff', 'handoff_generate', { goal: '运行短标准库合成作业，并等待原句柄' }),
+     call('late-run', 'run_command', { argv: [python, '-I', '-u', '-c', code], workdir: cwd, env_name: 'fixture' }),
+     (context: Frame) => {
+       const message = [...context.messages].reverse().find((value: Frame) => value.role === 'toolResult' && value.toolName === 'run_command');
+@@ -330,7 +339,7 @@
+     },
+     (context: Frame) => {
+       const section = [...context.messages].reverse().find((value: Frame) => value.role === 'system' && value.sections?.['biomind-current'])?.sections['biomind-current'];
+-      assert.match(section, /"role":"Consult"/);
++      assert.doesNotMatch(section, /"role":"(?:Consult|Generate)"/);
+       assert(!JSON.stringify(context).includes('late-wait'), 'old branch wait must not enter the new request');
+       return text('NEW_BRANCH_ASSISTANT：独立咨询完成，不续行旧作业。');
+     },
+@@ -359,7 +368,7 @@
+     assert.equal(forwarded.wait_requests, 1, 'the original wait frame must have been dispatched before abort');
+     await deadline(h.session.abort(), 15000); await running; running = undefined;
+     assert.equal(h.session.isStreaming, false); assert.match(waiting.error, /WAIT_ABORTED/);
+-    assert.equal((await h.requests()).length, 4, 'abort must not start the scripted new-branch response');
++    assert.equal((await h.requests()).length, 3, 'abort must not start the scripted new-branch response');
+     assert(!connection.calls.some(row => ['exec.cancel', 'request.cancel'].includes(row.method)));
+     // Release only this fixture's ordinary file wait; the original approved
+     // executor and owner finish normally, independently of Pi's aborted waiter.
+@@ -376,14 +385,14 @@
+     });
+     assert.equal(held.original.result.run_ref, runRef); assert.equal(held.original.result.terminal, true); assert.equal(held.original.result.exit_code, 0);
+     assert.equal((await h.session.navigateTree(anchor, { summarize: false, label: 'after-terminal-safe-branch' })).cancelled, false);
+-    await h.prompt('NEW_BRANCH_USER：原作业完成后在另一个分支咨询。');
++    await h.prompt('[新任务] NEW_BRANCH_USER：原作业完成后在另一个分支咨询。');
+     const newRequest = requestFromBranch(manager.getBranch())!.requestId; assert.notEqual(newRequest, oldRequest);
+-    assert.equal((await h.requests()).length, 5); const eventsBeforeRelease = h.events.length;
++    assert.equal((await h.requests()).length, 4); const eventsBeforeRelease = h.events.length;
+     const lateBefore = connection.diagnostics.filter((value: any) => value.code === 'DOMAIN_UNKNOWN_OR_LATE_RESPONSE').length;
+     const released: any = await connection.call('fixture.release_held', {}); assert.equal(released.released, 1);
+     await waitUntil(async () => connection.diagnostics.filter((value: any) => value.code === 'DOMAIN_UNKNOWN_OR_LATE_RESPONSE').length > lateBefore ? true : undefined);
+     await h.session.waitForIdle();
+-    assert.equal((await h.requests()).length, 5); assert.equal(h.events.length, eventsBeforeRelease, 'late transport frame must not enter Pi as a new event/continuation');
++    assert.equal((await h.requests()).length, 4); assert.equal(h.events.length, eventsBeforeRelease, 'late transport frame must not enter Pi as a new event/continuation');
+     assert.equal(requestFromBranch(manager.getBranch())!.requestId, newRequest);
+     assert.equal(connection.calls.filter(row => row.method === 'exec.start').length, 2, 'one proposal plus one approved original dispatch');
+     assert(!connection.calls.some(row => ['exec.cancel', 'request.cancel'].includes(row.method)));
+@@ -392,7 +401,7 @@
+     assert.deepEqual(h.errors, []); assertPairs(manager.buildSessionContext().messages);
+     report = { status: 'PASS', verified_layer: 'L2 L3', oldRequest, newRequest, runRef, terminal,
+       heldOriginalId: held.original.id, actualLateDiagnostic: connection.diagnostics.filter((value: any) => value.code === 'DOMAIN_UNKNOWN_OR_LATE_RESPONSE'),
+-      originalReceiptSha256: hash(receiptBefore), finalReceiptSha256: hash(await readFile(receiptPath)), providerSendsBeforeRelease: 5,
++      originalReceiptSha256: hash(receiptBefore), finalReceiptSha256: hash(await readFile(receiptPath)), providerSendsBeforeRelease: 4,
+       providerSendsAfterRelease: (await h.requests()).length, actualExecStartCalls: connection.calls.filter(row => row.method === 'exec.start').length,
+       boundary: 'Pi abort completed first; actual original Python worker reached terminal; public navigateTree then new prompt; held original transport frame released last',
+       substitution: 'Only one outgoing exec.wait protocol frame delayed by a transparent test proxy; no executor/store/owner replacement',
+@@ -486,7 +495,7 @@
+     archivePath: '', ...memoryOptions });
+   const seedRequest = randomUUID(); let sourceRef = '';
+   try {
+-    await seed.hostCall('request.begin', { request_id: seedRequest, role: 'generate' });
++    await seed.hostCall('request.begin', { request_id: seedRequest, role: 'main' });
+     const args = { call_id: 'fixture-seed', operation: 'create', path: 'methods/composite-source.md', content: body };
+     const pending = await seed.call('memory.write', args, { requestId: seedRequest }) as Frame;
+     assert.equal(pending.status, 'waiting_approval'); const proposal = pending.approval;
+@@ -501,7 +510,6 @@
+   const h = await realSession(cwd, dataRoot, manager, 'P12c-real-revocation-branch', [
+     call('p12c-read', 'memory_read', { source_ref: sourceRef }), text(derived),
+     text('P12C_ABANDONED_ASSISTANT：此分支不得进入所选分支。'),
+-    call('p12c-handoff', 'handoff_generate', { goal: '按当前用户要求撤回已明确指定的旧来源' }),
+     () => { assert(sourceHash); return call('p12c-forget', 'memory_write', { operation: 'forget', path: sourceRef.slice('wiki:'.length), expected_hash: sourceHash, content: '' }); },
+     (context: Frame) => {
+       const users = context.messages.filter((message: Frame) => message.role === 'user');
+@@ -531,13 +539,18 @@
+     assert.equal((await h.session.navigateTree(selectedLeaf, { summarize: false, label: 'selected-revocation-branch' })).cancelled, false);
+     await h.prompt(currentUser);
+     const connection = h.connections[0]; const requestId = requestFromBranch(manager.getBranch())!.requestId;
++    const revised = connection.calls.filter(row => row.method === 'request.revise').at(-1)!.result;
++    assert.equal(revised.revision, 3, 'the authority advances beyond the abandoned branch revision');
++    const current = requestFromBranch(manager.getBranch())!;
++    assert.equal(current.revision, revised.revision);
++    assert(!JSON.stringify(current.userBasis).includes('P12C_ABANDONED_'), 'revision synchronization does not import abandoned user text');
+     const snapshot = await connection.call('context.snapshot', {}, { requestId }) as Frame;
+     assert(snapshot.revoked_sources.includes(sourceRef));
+     const unavailable = await connection.call('memory.read', { source_ref: sourceRef }, { requestId }) as Frame;
+     assert.equal(unavailable.status, 'unavailable');
+     assert.equal(approvals.length, 1); assert.equal(connection.calls.filter(row => row.method === 'memory.write').length, 2);
+     const writes = connection.calls.filter(row => row.method === 'memory.write'); assert.equal(writes[0].result.status, 'waiting_approval'); assert.equal(writes[1].result.status, 'written');
+-    const requests = await h.requests(); assert.equal(requests.length, 6); assert.deepEqual(h.errors, []);
++    const requests = await h.requests(); assert.equal(requests.length, 5); assert.deepEqual(h.errors, []);
+     const finalContext = requests.at(-1)!.context;
+     assert(finalContext.messages.some((message: Frame) => message.role === 'user' && JSON.stringify(message.content).includes(currentUser)));
+     assert(!JSON.stringify(finalContext).includes('P12C_ABANDONED_'));

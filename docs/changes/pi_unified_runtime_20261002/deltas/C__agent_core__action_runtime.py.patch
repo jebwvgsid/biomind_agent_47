@@ -1,0 +1,21 @@
+--- a/agent_core/action_runtime.py
++++ b/agent_core/action_runtime.py
+@@ -1447,7 +1447,7 @@
+                         'retained': True, 'rolled_back': False}],
+             'boundary': 'exclusive_intent_before_starting_and_delegation'}
+         from agent_core.execution_permissions import (authorize_command, claim_permission,
+-            validate_permit, execution_context, command_payload, digest as permission_digest)
++            validate_permit, execution_context, command_payload, request_allows_command, digest as permission_digest)
+         permission = await authorize_command(service, arguments, task_id=task_id,
+             call_id=call_id, cancel_event=cancel_event)
+         if permission['payload'].get('access_projection') is not None:
+@@ -1460,8 +1460,7 @@
+         if observation.get('expected_request_scope') is not None and observation['expected_request_scope'] != scope:
+             raise PrelaunchAdmissionRejected('FORMAL_REQUEST_SCOPE_CHANGED', phase='dynamic_admission')
+         admission = (durable.get('task_state') or {}).get('intent_admission') or {}
+-        probe = arguments.get('_biomind_probe') is True and admission.get('request_kind') == 'consult'
+-        if (admission.get('request_kind') != 'execute' and not probe) or admission.get('execution_scope') not in {'simple', 'managed'}:
++        if not request_allows_command(durable,arguments) or admission.get('execution_scope') not in {'simple', 'managed'}:
+             raise PrelaunchAdmissionRejected('CURRENT_REQUEST_HAS_NO_EXECUTION_AUTHORIZATION', phase='dynamic_admission')
+         approval = durable.get('current_approval') or {}
+         requested_review_done = approval.get('status') == 'approved' and approval.get('plan_snapshot_ref') == durable.get('plan_snapshot_ref')

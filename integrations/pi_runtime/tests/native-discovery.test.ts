@@ -151,7 +151,7 @@ test('trusted Skill directories, aborts and changed file identities use the read
   } finally { await f.close(); }
 });
 
-test('real Pi extension exposes discovery in Consult and Generate and keeps shell disabled', async () => {
+test('real Pi extension exposes discovery and execution in one protected agent and keeps native shell disabled', async () => {
   const f = await fixture();
   await writeFile(path.join(f.cwd, 'sample.txt'), 'EXTENSION_SENTINEL\n');
   const connections: DomainClient[] = [];
@@ -164,7 +164,6 @@ test('real Pi extension exposes discovery in Consult and Generate and keeps shel
     },
     script: [call('list', 'ls', {}), call('find', 'find', { pattern: '*.txt' }),
       call('grep', 'grep', { path: 'sample.txt', pattern: 'SENTINEL' }),
-      call('handoff', 'handoff_generate', { goal: 'read the same input in Generate' }),
       call('rg', 'rg', { path: 'sample.txt', pattern: 'SENTINEL' }), text('complete')],
   });
   try {

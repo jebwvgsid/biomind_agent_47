@@ -1,0 +1,124 @@
+"""E11 real Domain/executor flow with temporary scripts; never invokes real R.
+
+Error text is scripted, while launch, binding, receipts, and local invalidation
+are actual product code. The explicit diagnostic is not verification evidence.
+"""
+import json
+from pathlib import Path
+import shlex
+import sys
+import unittest
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import test_environment_binding_20261002 as binding_fixture
+
+
+class RuntimeDiagnostics(binding_fixture.EnvironmentBinding):
+    async def begin(self, name):
+        return await self.s.call('request.begin', {'request_id': name, 'role': 'main'}, host_token=self.s.host_token)
+
+    async def synthetic_runtime(self, name, stderr, *, delay=False):
+        prefix = self.tool(name)
+        registered = await self.s.call('environments.register', {'call_id': 'register-'+name,
+            'env_name': name, 'prefix': str(prefix),
+            'entries': {'Rscript': str(prefix/'bin/Rscript')}})
+        self.assertEqual(registered['status'], 'registered', registered)
+        marker = self.root/(name+'.calls')
+        program = prefix/'bin/Rscript'
+        program.write_text('#!/bin/sh\n'
+            'printf "%s\\n" "$1" >> ' + shlex.quote(str(marker)) + '\n'
+            'if [ "$1" = "--diagnose" ]; then printf "%s\\n" "targeted library metadata only"; exit 0; fi\n'
+            'printf "%s\\n" ' + shlex.quote(stderr) + ' >&2\n'
+            + ('/bin/sleep 5\n' if delay else '') + 'exit 1\n')
+        program.chmod(0o755)
+        selection = await self.select(env_name=name, runtime_scope=name)
+        self.assertEqual(selection['availability'], 'AVAILABLE', selection)
+        return selection, marker
+
+    async def execute_fixture(self, selection, call_id, **extra):
+        return await self.terminal(await self.s.call('exec.start', {
+            'call_id': call_id, 'arguments': {'argv': ['Rscript', '--analysis'],
+                'binding_ref': selection['binding_ref'], **extra}}))
+
+    async def test_missing_package_entry_and_library_errors_are_binding_local(self):
+        cases = [
+            ('missing-package', "Error in library(fgsea) : there is no package called ‘fgsea’", 'missing_package', 'fgsea'),
+            ('missing-bash-entry', '/bin/bash: line 1: Rscript: command not found', 'missing_entry', 'Rscript'),
+            ('missing-sh-entry', '/bin/sh: 1: Rscript: not found', 'missing_entry', 'Rscript'),
+            ('missing-library', "Error in dyn.load(file, DLLpath = DLLpath, ...) :\n  unable to load shared object '/temporary/R/library/fgsea/libs/fgsea.so':\n  libfixture.so: cannot open shared object file: No such file or directory", 'library_path', '/temporary/R/library/fgsea/libs/fgsea.so'),
+            ('missing-dyn-load', 'Error in dyn.load(file) :\n  libfixture.so: cannot open shared object file: No such file or directory', 'library_path', 'libfixture.so'),
+        ]
+        selections = []
+        for name, error, kind, dependency in cases:
+            selections.append((await self.synthetic_runtime(name, error), kind, dependency))
+        before = self.registry.read_bytes()
+        for index, ((choice, marker), kind, dependency) in enumerate(selections):
+            with self.subTest(kind=kind, dependency=dependency):
+                result = await self.execute_fixture(choice, 'failure-'+str(index))
+                self.assertEqual(result['exit_code'], 1, result)
+                rows = self.s._state()['task_state'].get('runtime_invalidations', {})
+                self.assertEqual(len(rows), index+1, rows)
+                row = rows[choice['binding_ref']]
+                self.assertEqual(row['missing_dependency'], dependency)
+                self.assertEqual(row['failure_kind'], kind)
+                if kind == 'library_path':
+                    self.assertEqual(row['library_path'], dependency)
+                self.assertEqual(row['binding_ref'], result['runtime_binding']['binding_ref'])
+                self.assertEqual(row['request_scope'], self.s.scope())
+                self.assertTrue(row['receipt_ref'])
+                replay = await self.select(runtime_scope=row['runtime_scope'])
+                self.assertEqual(replay['binding_ref'], choice['binding_ref'])
+                self.assertEqual(replay['runtime_diagnostic'], row)
+                selected = await self.select(env_name=row['environment'], runtime_scope=row['runtime_scope'])
+                self.assertEqual(selected['runtime_diagnostic'], row)
+                self.assertEqual(marker.read_text().splitlines(), ['--analysis'])
+                # An explicit, scoped diagnosis is allowed; no automatic rerun,
+                # installation, recursive search, or authority rewrite occurs.
+                diagnostic = await self.terminal(await self.s.call('exec.probe', {
+                    'call_id': 'diagnostic-'+str(index), 'arguments': {
+                        'argv': ['Rscript', '--diagnose', dependency],
+                        'binding_ref': choice['binding_ref'],
+                        'environment_diagnostic': True, 'timeout_ms': 1000}}, host_token=self.s.host_token))
+                self.assertEqual(diagnostic['exit_code'], 0, diagnostic)
+                self.assertIn('targeted library metadata only', diagnostic['stdout'])
+                self.assertEqual(marker.read_text().splitlines(), ['--analysis', '--diagnose'])
+                self.assertEqual(self.registry.read_bytes(), before)
+        authority = json.loads(before)
+        self.assertTrue(all(row['status'] != 'invalid' for row in authority['environments'].values()))
+
+    async def test_permission_input_timeout_and_cancellation_do_not_invalidate(self):
+        cases = [
+            ('permission', "Error in dyn.load(file) : unable to load shared object '/fixture/fgsea.so': Permission denied"),
+            ('input', "Error in file(file, 'rt') : cannot open input file '/fixture/input.tsv': No such file or directory"),
+            ('algorithm', 'algorithm did not converge'),
+        ]
+        for name, error in cases:
+            choice, marker = await self.synthetic_runtime(name, error)
+            before = self.registry.read_bytes()
+            result = await self.execute_fixture(choice, name)
+            self.assertEqual(result['exit_code'], 1, result)
+            self.assertEqual(marker.read_text().splitlines(), ['--analysis'])
+            self.assertEqual(self.registry.read_bytes(), before)
+        choice, _ = await self.synthetic_runtime('timeout', "there is no package called 'fgsea'", delay=True)
+        before = self.registry.read_bytes()
+        timed = await self.execute_fixture(choice, 'timed', timeout_ms=100)
+        self.assertNotEqual(timed['exit_code'], 0, timed)
+        self.assertEqual(self.registry.read_bytes(), before)
+        choice, _ = await self.synthetic_runtime('cancel', "there is no package called 'fgsea'", delay=True)
+        before = self.registry.read_bytes()
+        started = await self.s.call('exec.start', {'call_id': 'cancel', 'arguments': {
+            'argv': ['Rscript', '--analysis'], 'binding_ref': choice['binding_ref']}})
+        cancelled = await self.s.call('exec.cancel', {'run_ref': started['run_ref']})
+        terminal = await self.terminal(cancelled)
+        self.assertNotEqual(terminal.get('exit_code'), 0, terminal)
+        self.assertEqual(self.registry.read_bytes(), before)
+        self.assertEqual(self.s._state()['task_state'].get('runtime_invalidations', {}), {})
+
+
+# Reuse setup/helpers without repeating unrelated binding scenarios.
+for name in vars(binding_fixture.EnvironmentBinding):
+    if name.startswith('test_'):
+        setattr(RuntimeDiagnostics, name, None)
+
+if __name__ == '__main__':
+    unittest.main(verbosity=2)

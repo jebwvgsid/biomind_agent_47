@@ -20,7 +20,7 @@ async function fixture(label: string) {
     dataRoot: path.join(cwd, 'domain'), sessionId: randomUUID(), registryPath: path.join(cwd, 'registry.json'),
     skillsRoot: path.join(cwd, 'skills'), preferencesPath: path.join(cwd, 'preference.md'), historyEnabled: false, memoryMode: 'disabled' });
   const requestId = randomUUID(); const options = { requestId };
-  await domain.hostCall('request.begin', { request_id: requestId, role: 'generate' });
+  await domain.hostCall('request.begin', { request_id: requestId, role: 'main' });
   const versions = new Map<string, string>(); const events: any[] = [];
   let decide = async (_proposal: any) => 'n';
   const bridge: MutationBridge = {

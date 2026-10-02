@@ -1,0 +1,429 @@
+--- a/integrations/pi_runtime/extensions/biomind.ts
++++ b/integrations/pi_runtime/extensions/biomind.ts
+@@ -1,5 +1,5 @@
+ /** BioMind's sole Pi extension. Native CLI, SDK and tests load this module. */
+-import { planStageBoundary, boundaryDrafts, assertStageBoundary, bindHandoff, type StageBoundary } from '../stage-context.js';
++import { planStageBoundary, boundaryDrafts, assertStageBoundary, type StageBoundary } from '../stage-context.js';
+ import { nativeRead } from '../native-read.js';
+ import { runtimeBash, type RuntimeBashLaunch } from '../native-bash.js';
+ import { DISCOVERY_TOOLS, discoveryDefinition, nativeDiscovery, type DirectorySnapshot } from '../native-discovery.js';
+@@ -63,14 +63,14 @@
+ export interface RequestState {
+   requestId: string;
+   ownerSessionId?: string;
+-  role: 'Consult' | 'Generate';
++  role: 'Main';
+   status: 'active' | 'settled' | 'aborted' | 'error' | 'paused';
+   pauseReason?: string;
+   revision?: number;
+   userBasis?: Array<{ text: string; revision: number }>;
+   boundary?: StageBoundary;
+   handoff?: { toolCallId: string; goal: string; manifest?: string; bound?: Record<string, any> };
+-  handoffConsumed: boolean;
++  handoffConsumed?: boolean; // Read-only legacy field; new requests never create a handoff.
+   plan?: Array<{ step: string; status: 'pending' | 'in_progress' | 'completed' }>;
+   planSources?: string[];
+   maintenance?: { consumed: boolean; consent?: boolean; outboxId?: string; prompt?: string; sources?: unknown; applied?: boolean };
+@@ -109,7 +109,14 @@
+   return unique([...strings(object.source_ids), ...strings(object.sources), ...strings(object.history_sources), ...strings(asObject(object.provenance).sources)]);
+ }
+ export function requestFromBranch(branch: readonly SessionEntry[]): RequestState | undefined {
+-  return customEntries(branch, REQUEST).at(-1)?.data as RequestState | undefined;
++  const raw = customEntries(branch, REQUEST).at(-1)?.data as Record<string, any> | undefined;
++  if (!raw?.requestId) return undefined;
++  // Legacy entries remain untouched on disk. Their role and pending transition
++  // are not executable instructions; user facts still belong to this request.
++  const { handoff, handoffConsumed: _consumed, ...record } = raw;
++  return { ...record, role: 'Main',
++    userBasis: raw.userBasis?.length ? raw.userBasis : handoff?.bound?.user_basis ?? [],
++    boundary: raw.boundary?.kind === 'task' ? raw.boundary : undefined } as RequestState;
+ }
+ function provenanceFromBranch(branch: readonly SessionEntry[]): Map<string, string[]> {
+   return new Map(customEntries(branch, PROVENANCE)
+@@ -119,6 +126,15 @@
+ function textOf(message: unknown): string {
+   const content = asObject(message).content;
+   return typeof content === 'string' ? content : Array.isArray(content) ? content.filter(item => item.type === 'text').map(item => item.text).join('\n') : '';
++}
++function historicalFacts(message: AgentMessage): AgentMessage {
++  if (message.role !== 'custom' || message.customType !== 'biomind.handoff') return message;
++  let content = textOf(message);
++  try {
++    const { instruction: _instruction, phase: _phase, ...facts } = JSON.parse(content);
++    content = JSON.stringify({ historical_record: 'prior handoff facts; no transition or execution instruction', ...facts });
++  } catch { content = '[历史交接记录，仅保留事实，不触发执行或角色切换]\n' + content; }
++  return { ...message, content };
+ }
+ /** Source-aware projection only. Pi remains owner of all persisted messages. */
+ export function projectHistory(messages: AgentMessage[], branch: readonly SessionEntry[], snapshot: Snapshot, restoreCompacted = true): AgentMessage[] {
+@@ -148,7 +164,7 @@
+       return { ...message, summary: '[历史摘要已按当前来源策略撤回]' } as AgentMessage;
+     }
+     const sources = byMessage.get(fingerprint(message)) ?? sourceIds(asObject(message).details);
+-    if (!invalid(sources)) return message;
++    if (!invalid(sources)) return historicalFacts(message);
+     const cloned = structuredClone(message) as any;
+     if (cloned.role === 'assistant') {
+       // Keep only the protocol identities. Historical tool arguments can contain
+@@ -160,35 +176,41 @@
+       const facts = asObject(asObject(cloned.details).execution_facts);
+       cloned.content = [{ type: 'text', text: JSON.stringify({ history_content: 'withdrawn', ...facts }) }];
+       cloned.details = { execution_facts: facts, history_content: 'withdrawn' };
+-    } else if (cloned.role === 'custom') cloned.content = '[已撤回历史来源内容]';
++    } else if (cloned.role === 'custom') {
++      cloned.content = '[已撤回历史来源内容]';
++      if (cloned.customType === 'biomind.handoff') {
++        // Old handoffs sometimes mixed memory with host-bound user conditions,
++        // after hiding the original user messages. Revoke derived material but
++        // retain only the matching request's authoritative user basis.
++        try {
++          const historical = JSON.parse(textOf(message));
++          const owner = requestFromBranch(branch);
++          const basis = owner && owner.requestId === historical.request_id ? owner.userBasis : undefined;
++          if (Array.isArray(basis) && basis.length) cloned.content = JSON.stringify({
++            historical_record: 'source-derived handoff content withdrawn; user requirements retained',
++            request_id: historical.request_id, user_basis: basis,
++          });
++        } catch { /* No trusted request correlation: keep the source withdrawn. */ }
++      }
++    }
+     return cloned;
+   });
+ }
+ 
+-const READ_TOOLS = [...DISCOVERY_TOOLS, 'request_path_access', 'probe_command', 'ask_user', 'handoff_generate', 'select_environment', 'register_environment', 'inspect_run', 'wait_run', 'read_run_log', 'cancel_run', 'file_stat', 'read', 'memory_search', 'memory_read'];
+-const GENERATE_TOOLS = [...READ_TOOLS.filter(name => !['handoff_generate', 'probe_command'].includes(name)), 'update_plan', 'run_command', 'install_tool', 'write', 'edit', 'memory_write'];
+-const CONSULT_RULES = `Consult 负责在交接前完成本任务必要的输入、环境、Skill、参数确认。优先 read/file_stat/select_environment，明确要求的短程序核查使用 probe_command（只读项目/输入、隔离网络、临时区写入、有时限）。不增加默认 healthcheck。检查受限时说明具体原因，不能伪装 passed。handoff_generate 的 execution 必须列明实际对象、能力、核查、停止条件和缺口；无此类别时使用空数组，不编造。
+-当前阶段：Consult。普通咨询可直接答复并结束本次请求；需要执行时调用 handoff_generate 一次，由同一会话继续进入 Generate。`;
+-const GENERATE_RULES = `当前阶段：Generate。交接已经完成，你现在负责执行原用户任务。依据生效 handoff 中的用户依据、核查事实及 Generate 自有历史，使用可用工具继续推进已获授权的工作。
+-不能以计划摘要、已交接说明或将来会执行的承诺代替实际推进；没有另一个后台代理会替你自动执行。复用已确认且仍适用的环境、Skill、参数和核查。仅在新修订、输入/环境变化、来源撤回、证据缺失或执行反证时，说明原因并针对受影响部分补查；每次执行仍受后端授权与保护约束。用户原文的条件许可和失败停止条件保持有效，源码帮助不能替代明确要求的模块检查。
+-按真实状态汇报：已完成、确有阻塞、需用户选择或用户停止。已有证据足以说明完成或阻塞时可以直接说明；缺少关键选择用 ask_user 等待回答。用户明确只要计划、要求等待或停止时遵从其要求。`;
++const MAIN_TOOLS = [...DISCOVERY_TOOLS, 'request_path_access', 'probe_command', 'ask_user', 'select_environment', 'register_environment',
++  'inspect_run', 'wait_run', 'read_run_log', 'cancel_run', 'file_stat', 'read', 'memory_search', 'memory_read',
++  'update_plan', 'run_command', 'install_tool', 'write', 'edit', 'memory_write'];
+ const MAINTENANCE_RULES = `当前阶段：记忆维护。仅处理本次已完成对话的记忆维护；不继续或启动分析任务。仅在尚未提交时使用 maintenance_submit 提交有当前证据支持的 patch 或空 operations；提交后核对实际回执并结束。`;
+-const HANDOFF_INSTRUCTION = '仅当 request_id 与当前有效请求一致且当前阶段为 Generate 时：Consult 已完成交接，现在由你继续执行原用户任务。遵守用户最新决定与授权范围，使用工具推进 goal；不能只回复已交接或将执行的计划摘要。';
+-const DOMAIN_RULES = `你是 BioMind 生信助手。缺少关键选择时用 ask_user 等待真实回答。仅推进当前有效请求；历史交接不自动重跑，用户最新的修改、等待或停止要求优先。
+-根据实际工具回执判断科学进展。update_plan 只是可选笔记；不要求先计划，不用 Step/Gate/Commit 或必须产物判定。
+-已登记且目标明确的环境直接使用；select_environment 可只传已加载 Skill 名称，或明确 env_name。登记查询不附带健康检查，不为确认环境可用而重复 which、版本查询、测试 import 或 smoke test。用户明确要求环境检查，或实际执行发生相关错误时，再按需要针对性诊断。库存未知保持未知，不静默替换指定环境；未登记不等于未安装，也不等于安装许可。安装需实际授权，偏好不等于授权。长作业观察现有 run_ref，不重复启动，不用模型轮询充当界面心跳。
+-根据当前任务与已有工具反馈决定是否进一步读取文件、日志或执行小范围检查；不机械套用每步固定检查清单，不重复检查未变化的结果。用户要求的质控与格式检查属于任务，应通过现有受控工具完成。没有实际检查不能声称已验证；缺少检查记录不阻止如实交付。
+-run_command 中的 ls/find 只反映当前沙箱已挂载的路径，不能据此断言宿主未安装软件；环境诊断保持同一 env_name，并结合回执的环境与挂载范围判断。依赖检查保留原程序的退出码，不把 head/tail 的成功退出码当作上游程序成功。
+-按用户需求依据真实执行记录整理报告或复现脚本，区分失败尝试、未执行修订和缺失/截断记录。不依赖旧 Commit，不给简单任务默认增加报告、状态表或 manifest；生成 reproduce.sh 不触发执行，明确未独立重跑。读取、检查、写入和修正继续遵守原授权与执行保护。
+-多样本传 TXT/TSV/CSV 清单路径，执行时读取。保留明确工作目录与合法 argv/shell 调用。退出码、文件存在或 agent_settled 不代表科学结论。
+-Skills 由 Pi 原生目录发现，用 read 按实际 Skill 路径读取正文及相对其 baseDir 的 references/scripts；/skill:name 是用户显式调用。read 的 offset/limit 按行计数。脚本资源路径相对 Skill，输入输出和工作目录仍属于分析项目。
+-目录浏览用 ls，按文件名/路径模式定位用 find，搜索文本内容用 grep（rg 为同参数别名），再用 read 阅读具体文件和上下文。搜索仍使用当前读取权限；结果有截断/跳过提示时不能称已完整搜索。大型二进制及结构化数据继续通过受控 run_command 处理。
+-项目外数据通过 file_stat/read/write/edit/run_command 自动申请缺失的读取或读写范围，也可用 request_path_access 汇总 B 输入/O 输出；等待宿主审批时不重复申请。仅读取外部输入时建议其实际数据目录的只读会话范围；用户明确操作外部任务目录时可汇总目录读写。普通宿主主选项同时确认该范围内普通操作免逐次确认，模型不能开启它。命令未指定 workdir 时保持当前项目；外部输入用绝对路径及 read_paths，不上移到宽泛祖先。确需外部 cwd 时明确声明，cwd 不自动可写。最终能力与 request/session 有效期由宿主选择；新增根、升级读写或延长有效期均需明确批准。现有有效范围可复用，实际动作仍查 live 账本。拒绝后不换工具、call id、项目或别名规避。大型二进制先查元数据，结构读取交给已选环境的受控命令；普通聊天、handoff 和摘要都不是授权。
+-范围与动作许可直接使用原宿主审批，不先用 ask_user 重复提问。read_paths 声明实际文件或小范围子树；目录按本次有界元数据快照投影为只读，最多每子树 256 项/2 秒、总 512 挂载，private 排除、链接/特殊文件拒绝，启动后新增文件不可见。directory_snapshot_limit 要求缩小声明；directory_snapshot_symlink 要求明确声明受支持的实际文件，不是丢失授权。已选环境由只读运行时挂载，不把 Conda 根加入分析输入。
+-同一未改变布局发生执行保护前置阻塞时，先解释原 reason，必要时用既有受控读取接口查看 receipt_ref；不要换 echo/ls、删除 read_paths、换裸 Pi 或请求无依据的权限升级来绕过。同 call 重放仍是原终态，不重跑；代码或布局修复后的执行必须用新 call，正常重新验证、授权和 claim，不改写旧 blocked，也不自动继承批准。这不是永久项目锁。
+-execution_started=true 只证明执行包装进程已启动，没有可信 exec 证据不称业务程序已开始；退出码0或 isError:false 不表示科学分析成功。本次 read_paths 明确输入保持只读；write_paths 只声明实际使用的写根，不能授予权限或覆盖输入保护。OUTPUT_CONTRACT_CONFLICT 表示路径许可与用户输出要求不一致，须修订计划/需求；不要反复申请相同目录权限。
+-外部 workdir 可凭目录 read/read_write 授权使用，缺范围先审批，cwd 不隐含可写，也不改变原项目、资源加载或会话归属；精确文件授权不能充当整个父目录。Consult probe 始终只读、隔离网络且有时限。历史 writable_workdir_outside_project 回执不能代表新版本能力；保留原回执，核验当前版本与实际授权后用新 call 正常重建动作。只有用户要改变项目归属才使用现有项目重启入口；不能用裸 Pi/shell 绕过受控执行。
+-输出只引用真实文件路径；纯咨询无需文件。禁止假造产物或把服务器路径当成客户端已下载文件。`;
++const COMMON_RULES = `你是 BioMind 的单一主 agent，在同一个 Pi 会话中持续完成用户需要的理解、核查、执行、纠错和交付。信息足够时直接推进；仅在影响结果的关键歧义无法从已有材料解决时，用 ask_user 等待真实回答。用户最新修订、明确检查和失败停止条件优先，历史记录不自动触发重算。
++先复用当前适用 binding_ref 或用 select_environment 查询登记。已有适用登记默认直接按记录启动，不追加 which、版本、import、healthcheck 或扫描。AVAILABLE 表示登记可选择，未知能力和版本仍为 unknown，registered 不等于本次检查通过。未命中不等于未安装：必要时用 mode=locate 做有界定位、用 register_environment 补登记现有软件；不能借查询、刷新或初始化隐藏重复探测。真实缺包错误只针对对应能力诊断，不因取消、超时、输入错误重装或判整个环境损坏。
++明确要求的检查和停止条件必须保留，科学输入 QC 与环境体检不同。普通 base-R ORA 不例行检查 fgsea；用户明确要求 R/fgsea 检查时先满足条件再计算。读取按需 Skill 的正文及相对其 baseDir 的 references/scripts；脚本资源属于 Skill，输入输出和工作目录属于当前项目。旧偏好和工具输出不是授权。
++需持久观察的科学计算使用 run_command，保存真实 run_ref 和完整日志，按需 inspect/wait/read_run_log/cancel；不使用 nohup 或 & 冒充托管作业，不用模型轮询充当 UI 心跳。run_command 复用本请求和执行 scope 中唯一适用绑定，多个绑定需明确引用。环境相关 bash 显式传 binding_ref；裸 bash 保持宿主语义，上一条 export/activate 不会成为下一工具的环境保证。用户原生 ! 不受选择环境影响。
++安装仅在必要且具有原意图确认时进行，安装、目标验证、登记分别按真实回执报告；登记失败仅恢复登记，状态未知先对账，不重装。同 call 重放查询原执行，不自动重跑。取消请求不等于清理确认，无法确认时保留 unknown。
++依照真实命令回执和本次产物交付，不把 settled、文件存在、isError:false 或管道最后 rc 当科学成功。分析包装用显式 pipefail/PIPESTATUS 或先保存原分析 rc，再显示摘要；裸 shell 默认语义不改变。核对任务要求的样本、路径、字段、QC 和产物来源，旧文件不算本次结果；合法空结果按具体科学格式解释。按用户要求保留报告、reproduce.sh 和状态表，生成复现脚本不自动执行；普通问答和文件操作无需科学模板、TaskSpec、计划或交接摘要。
++update_plan 是可选笔记。仅引用真实路径，不把服务器文件说成已下载。开发修改保护既有 dirty 内容，按逻辑单元验证后仅提交本轮 delta，本地 commit；未经明确授权不 push、合并、发布或改写历史。`;
++const PROTECTED_RULES = `当前 execution:protected。文件读取、写入及命令继续经过原权限账本与执行保护，不能因工具可见或环境 prefix 已解析而视为目录已授权。项目外路径通过原工具申请缺失范围，已有授权可复用；用 request_path_access 汇总真实输入/输出范围，不能用 ask_user 重复代替宿主审批，拒绝后不能换工具、call id 或别名绕过。
++read_paths 声明实际文件或小范围子树；只读快照限制及链接拒绝按回执处理，不能把 Conda 根加入分析输入。已选环境使用原只读运行时挂载。external cwd 不隐含可写，也不改变项目、session、request 或资源归属。probe_command 仅用于必要检查，保持只读、网络隔离和有界预算。
++受控命令中的 ls/find 只说明当前挂载视图，不能断言宿主未安装。保护前置阻塞先解释原 reason，必要时读取 receipt_ref，不用 echo/ls、删除 read_paths 或裸 shell 绕过；修复后使用新 call 重新授权和 claim。execution_started 只证明包装进程已启动，不能替代业务成功。write_paths 不授予权限或覆盖输入保护；OUTPUT_CONTRACT_CONFLICT 应修订任务要求。`;
+ 
+ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
+   // Host configuration is captured once; project files and model arguments are not inputs.
+@@ -279,13 +301,13 @@
+       return value;
+     };
+     const begin = async (ctx: ExtensionContext, text = '') => {
+-      const value: RequestState = { requestId: randomUUID(), ownerSessionId: sessionId(ctx), role: 'Consult', status: 'active', handoffConsumed: false,
++      const value: RequestState = { requestId: randomUUID(), ownerSessionId: sessionId(ctx), role: 'Main', status: 'active',
+         revision: 1, userBasis: text ? [{ text, revision: 1 }] : [], boundary: planStageBoundary(ctx.sessionManager.getBranch(), 'task') };
+       const ownerSession = sessionId(ctx);
+       let connection: DomainConnection | undefined;
+       try {
+         connection = client(ctx);
+-        await connection.hostCall('request.begin', { request_id: value.requestId, role: 'consult' });
++        await connection.hostCall('request.begin', { request_id: value.requestId, role: 'main' });
+       }
+       catch (error) {
+         if (connection?.startupFailed && clients.get(ownerSession) === connection) {
+@@ -299,7 +321,7 @@
+         // In particular, a live job can reject a new request and still need cancellation.
+         lastOutcome = 'error'; setActiveTools([]); throw error;
+       }
+-      publish(ctx, value); setActiveTools(READ_TOOLS); exposedSources = []; archiveSubmitted.clear(); readVersions.clear(); lastOutcome = 'completed';
++      publish(ctx, value); setActiveTools(MAIN_TOOLS); exposedSources = []; archiveSubmitted.clear(); readVersions.clear(); lastOutcome = 'completed';
+       return value;
+     };
+     const current = (ctx: ExtensionContext) => {
+@@ -309,8 +331,7 @@
+     };
+     const pause = async (ctx: ExtensionContext, reason: string) => {
+       const value = state(ctx); if (!value) return;
+-      publish(ctx, { ...value, status: 'paused', pauseReason: reason,
+-        ...(value.handoffConsumed ? {} : { handoff: undefined }) });
++      publish(ctx, { ...value, status: 'paused', pauseReason: reason });
+       lastOutcome = 'aborted';
+       try { await client(ctx).hostCall('request.pause', { reason }, { requestId: value.requestId }); }
+       finally { await refreshApprovalStatus(ctx); ctx.abort(); }
+@@ -549,7 +570,7 @@
+       const execution_facts = Object.fromEntries(['run_ref', 'status', 'exit_code', 'log_path', 'log_cursor', 'next_cursor', 'request_scope', 'call_id',
+         'returncode', 'terminal', 'log_refs', 'receipt_ref', 'cancel_requested', 'stop_requested', 'task_cancelled', 'approval', 'approval_id',
+         'error', 'reason', 'phase', 'protection_phase', 'execution_started', 'count', 'unique_inode_count', 'affected_capability', 'host_boundary',
+-        'current_project_root', 'requested_workdir', 'instruction',
++        'current_project_root', 'requested_workdir', 'instruction', 'runtime_binding', 'runtime_launch', 'binding_ref', 'binding_scope', 'registration_sources', 'healthcheck_status',
+         'path', 'path_samples', 'backend', 'errno', 'probe_exit_code', 'permission_status']
+         .filter(key => object[key] !== undefined).map(key => [key, object[key]]));
+       return { content: [{ type: 'text' as const, text: JSON.stringify(projected) }], details: { ...receiptDetails(object), execution_facts, ...extra } };
+@@ -824,36 +845,23 @@
+         if (response.cancelled || response.answer === undefined) { await pause(ctx, 'question_cancelled'); throw new Error('User cancelled the question; no answer available'); }
+         return { question_id: response.id, request_id: response.requestId, question: args.question, answer: response.answer };
+       });
+-    register('handoff_generate', '完成本任务必要前置核查后提交有来源的交接。execution 各数组必填，无需的类别用空数组；缺口不得 ready。', OBJECT({
+-      goal: nonempty(), manifest: optionalString(), request_id: optionalString(), revision: Type.Optional(Type.Integer({ minimum: 1 })),
+-      execution: OBJECT({ readiness: Type.Union([Type.Literal('ready'), Type.Literal('blocked')]),
+-        objects: Type.Array(OBJECT({ path: nonempty(), direction: Type.Union([Type.Literal('input'), Type.Literal('output')]), parameters: Type.Optional(Type.Record(Type.String(), Type.Unknown())) })),
+-        capabilities: Type.Array(OBJECT({ kind: Type.Union([Type.Literal('skill'), Type.Literal('environment')]), name: nonempty(), path: optionalString(), evidence_call_id: nonempty() })),
+-        checks: Type.Array(OBJECT({ object: nonempty(), check: nonempty(), status: Type.Union(['registered','not_run','failed','passed'].map(v => Type.Literal(v))),
+-          vantage: Type.Union(['registry','host','sandbox'].map(v => Type.Literal(v))), required: Type.Boolean(), evidence_call_id: optionalString(), conditions: optionalString() })),
+-        stop_conditions: Type.Array(OBJECT({ text: nonempty(), check: nonempty() })), pending: Type.Array(nonempty()), decisions: Type.Array(nonempty()),
+-      }),
+-    }), async (id, args, signal, ctx) => {
+-      signal?.throwIfAborted(); const value = current(ctx);
+-      if (value.role !== 'Consult' || value.handoffConsumed || value.handoff) throw new Error('This request already has an execution handoff');
+-      const bound = bindHandoff(args, ctx.sessionManager.getBranch(), sessionId(ctx), value, pi.getCommands().filter(command => command.source === 'skill').map(command => ({ name: command.name.replace(/^skill:/, ''), path: command.sourceInfo.path })));
+-      if (bound.readiness !== 'ready') return { accepted: false, status: 'blocked', reason: 'HANDOFF_PRECONDITIONS_INCOMPLETE', pending: bound.pending, checks: bound.checks };
+-      publish(ctx, { ...value, handoff: { toolCallId: id, goal: args.goal.trim(), manifest: args.manifest, bound } });
+-      return { accepted: true, request_id: value.requestId, revision: value.revision, transition: 'after_tool_results' };
+-    });
+     register('update_plan', '可选的当前分支工作笔记，不是执行许可或必须产物合同。', OBJECT({ steps: Type.Array(OBJECT({ step: nonempty(), status: Type.Union([Type.Literal('pending'), Type.Literal('in_progress'), Type.Literal('completed')]) })) }),
+       async (_id, args, _signal, ctx) => { const value = current(ctx); publish(ctx, { ...value, plan: args.steps, planSources: exposedSources }); return { plan: args.steps, required_for_execution: false }; });
+     const runtimeRequirements = OBJECT({ env: optionalString(), prefix: optionalString(), backend: optionalString(), host: optionalString(),
+       packages: Type.Optional(Type.Array(Type.String())), tools: Type.Optional(Type.Array(Type.String())), capabilities: Type.Optional(Type.Array(Type.String())),
+       versions: Type.Optional(Type.Record(Type.String(), Type.String())) });
+-    register('select_environment', '从登记或已加载 Skill 需求选择适用运行时，返回本请求 binding_ref。已有适用登记直接使用，不体检、不安装。约束冲突明确报告；未知保持未知。run_command 可复用唯一适用绑定；环境相关 bash 必须显式传 binding_ref。',
+-      OBJECT({ requirements: Type.Optional(runtimeRequirements), skill_id: optionalString(), env_name: optionalString(), runtime_scope: optionalString() }),
++    register('select_environment', '从登记或已加载 Skill 需求选择适用运行时，返回本请求 binding_ref。已有适用登记直接使用，不体检、不安装。约束冲突明确报告；未知保持未知。mode=locate 仅做有界静态元数据定位，不建立绑定。run_command 可复用唯一适用绑定；环境相关 bash 必须显式传 binding_ref。',
++      OBJECT({ requirements: Type.Optional(runtimeRequirements), skill_id: optionalString(), env_name: optionalString(), runtime_scope: optionalString(), mode: Type.Optional(Type.Union([Type.Literal('select'), Type.Literal('locate')])) }),
+       async (_id, args, signal, ctx) => {
+-        if (Object.keys(args).some(key => !['requirements', 'skill_id', 'env_name', 'runtime_scope'].includes(key))) throw new Error('ENVIRONMENT_QUERY_FIELDS_INVALID');
++        if (Object.keys(args).some(key => !['requirements', 'skill_id', 'env_name', 'runtime_scope', 'mode'].includes(key))) throw new Error('ENVIRONMENT_QUERY_FIELDS_INVALID');
++        if (args.mode === 'locate' && (args.skill_id || args.runtime_scope)) throw new Error('ENVIRONMENT_LOCATE_USES_REQUIREMENTS_OR_ENV_NAME_ONLY');
+         const ownerSession = sessionId(ctx), ownerRequest = current(ctx).requestId;
+         const loaded_skills = pi.getCommands().filter(command => command.source === 'skill')
+           .map(command => ({ name: command.name.replace(/^skill:/, ''), file_path: command.sourceInfo.path }));
+-        const result = await client(ctx).hostCall('environments.select', { ...args, loaded_skills }, { signal, requestId: ownerRequest });
++        const { mode, ...selection } = args;
++        const result = mode === 'locate'
++          ? await client(ctx).call('environments.locate', { requirements: { ...(selection.requirements ?? {}), ...(selection.env_name ? { env: selection.env_name } : {}) } }, { signal, requestId: ownerRequest })
++          : await client(ctx).hostCall('environments.select', { ...selection, loaded_skills }, { signal, requestId: ownerRequest });
+         signal?.throwIfAborted();
+         if (sessionId(ctx) !== ownerSession || current(ctx).requestId !== ownerRequest) throw new Error('STALE_ENVIRONMENT_OWNER');
+         return result;
+@@ -879,10 +887,11 @@
+     const pathSchema=OBJECT({paths:Type.Array(OBJECT({path:nonempty(),access:Type.Union([Type.Literal('read'),Type.Literal('read_write')]),target_kind:Type.Union([Type.Literal('file'),Type.Literal('directory')]),recursive:Type.Boolean()}),{minItems:1,maxItems:16}),purpose:nonempty(),lifetime:Type.Optional(Type.Union([Type.Literal('request'),Type.Literal('session')]))});
+     if (!native) register('request_path_access','申请数据文件/目录的读取或读写范围。宿主选择最终子集与有效期；不改变项目、输出要求或自动审批模式。',pathSchema,
+       async(id,args,signal,ctx)=>withApproval(ctx,'permissions.propose',{...args,call_id:id},id,signal));
+-    const commandSchema = OBJECT({ cmd: optionalString(), argv: Type.Optional(Type.Array(Type.String(), { minItems: 1 })), workdir: nonempty(), env_name: optionalString(), binding_ref: optionalString(), runtime_scope: optionalString(), requirements: Type.Optional(runtimeRequirements), description: optionalString(),
++    const commandSchema = OBJECT({ cmd: optionalString(), argv: Type.Optional(Type.Array(Type.String(), { minItems: 1 })), workdir: nonempty(), env_name: optionalString(), binding_ref: optionalString(), runtime_scope: optionalString(), requirements: Type.Optional(runtimeRequirements), timeout_ms: Type.Optional(Type.Integer({ minimum: 1 })), description: optionalString(),
+       write_paths: Type.Optional(Type.Array(nonempty(),{description:native ? '可选写入意图记录，不授予权限或限制目录视图。' : '本次动作使用的写入文件/目录，相对 workdir；外部范围仍需宿主批准，不改变任务输出要求。'})),
+       read_paths: Type.Optional(Type.Array(nonempty(), { description: native ? '可选输入来源记录，不构造沙箱目录视图。' : '只读输入文件/小目录，相对项目；URI 仅对 :: 前文件授权。目录每次最多 256 项、2 秒、总 512 挂载，private 排除、链接拒绝；启动后新增文件不可见。' })) });
+-    register('probe_command', native ? '有时限的本地程序核查；保留观察取消，不提供强制只读或网络隔离。' : 'Consult 必要的短程序核查：项目和输入只读、隔离网络、仅临时区可写，15 秒/64 KiB 输出限制。仍使用宿主授权和原作业观察取消。', commandSchema,
++    const probeSchema = OBJECT({ ...asObject(asObject(commandSchema).properties), environment_diagnostic: Type.Optional(Type.Boolean({ description: '仅环境故障定点诊断设 true：单次 15 秒、当前 request 累计 30 秒。用户明确检查及科学输入 QC 不设置此标志。' })) });
++    register('probe_command', (native ? '有时限的本地程序核查；保留观察取消，不提供强制只读或网络隔离。' : '用户要求或实际错误需要的短程序核查：项目和输入只读、隔离网络、仅临时区可写，仍使用宿主授权和原作业观察取消。') + '默认15秒/64 KiB输出；用户明确检查或QC可用timeout_ms，不设置environment_diagnostic。仅环境故障定点诊断设environment_diagnostic=true，单次15秒、每request累计30秒；正式计算和安装不受诊断短预算影响。', probeSchema,
+       async (id, args, signal, ctx) => withApproval(ctx, 'exec.probe', { call_id: id, arguments: args }, id, signal,
+         (method, params) => client(ctx).hostCall(method, params, { signal, requestId: current(ctx).requestId })));
+     register('run_command', (native ? '启动本地托管命令并返回 run_ref；保留持久日志、观察、取消与重连对账，无 BioMind 目录或命令审批。' : '通过领域执行服务启动受控命令并返回 run_ref，保留持久日志、观察和取消。') + '支持 shell 或 argv，计划可选。显式 binding_ref/env_name 使用准确目标；否则复用本请求和 scope 的唯一适用绑定，多绑定须明确指定。无绑定且无运行时要求时保持宿主执行。', commandSchema,
+@@ -921,7 +930,7 @@
+         }
+       } else readySessions.add(sessionId(ctx)); // Protected tools retain lazy Domain binding and their existing dispatch guard.
+       const epoch = ++welcomeEpoch;
+-      setActiveTools(state(ctx)?.role === 'Generate' ? GENERATE_TOOLS : READ_TOOLS);
++      setActiveTools(MAIN_TOOLS);
+       ctx.ui.setStatus('biomind-execution', `execution:${profile}${process.env.BIOMIND_PI_BUILD_ID ? ' · build:'+process.env.BIOMIND_PI_BUILD_ID : ''}`);
+       ctx.ui.setStatus('biomind-approval', native ? 'approval:N/A' : state(ctx) ? 'approval:unknown' : 'approval:manual');
+       if (native && ctx.hasUI) ctx.ui.notify('execution:native · 普通工具使用当前账号权限，不提供额外目录沙箱。', 'info');
+@@ -1030,33 +1039,23 @@
+             ctx.ui.notify('任务已暂停。使用 /biomind-task continue 明确恢复，或 /biomind-task new 开始新任务。', 'warning'); return { action: 'handled' };
+           }
+           if (resume && (value.status === 'paused' || live.paused)) await client(ctx).hostCall('request.resume', {}, { requestId: value.requestId });
+-          if (value.handoffConsumed && !value.boundary) {
+-            const branch = ctx.sessionManager.getBranch();
+-            const start = branch.findIndex(e => e.type === 'custom' && e.customType === REQUEST && asObject(e.data).requestId === value!.requestId);
+-            const evidence = branch.slice(Math.max(0, start)).flatMap(e => e.type === 'message' && ['user','toolResult'].includes(e.message.role)
+-              ? [{ source_ref: `pi:${sessionId(ctx)}:${e.id}`, kind: e.message.role, text: textOf(e.message) }] : []);
+-            // Preserve a host-bound compatibility projection without rewriting
+-            // legacy messages or claiming free-text readiness is verified.
+-            if (!customEntries(branch, 'biomind.legacy_handoff_projection').some(e => asObject(e.data).requestId === value!.requestId))
+-              pi.appendEntry('biomind.legacy_handoff_projection', { requestId: value.requestId, goal: value.handoff?.goal,
+-                manifest: value.handoff?.manifest, evidence, readiness: 'blocked', missing: ['typed prerequisite checks and evidence bindings', 'committed native stage boundary'] });
+-            throw new Error('LEGACY_HANDOFF_EVIDENCE_REQUIRED: 已保留既有用户原文、交接和工具观察的受信引用；旧自由文本无法证明哪些前置检查必须通过，未自动视为 ready。原项目和账本保留，可用 /biomind-job 检查既有作业；明确新任务后按需要引用已有证据');
+-          }
+-          const revision = pureResume ? value.revision ?? 1 : (value.revision ?? 1) + 1;
+-          if (!pureResume) await client(ctx).hostCall('request.revise', {}, { requestId: value.requestId });
++          // A selected historical Pi branch can lag the live request revision.
++          // Advance from the host receipt without importing the abandoned branch.
++          const revised = pureResume ? live : asObject(await client(ctx).hostCall('request.revise', {}, { requestId: value.requestId }));
++          const revision = Number.isInteger(revised.revision) && revised.revision > 0 ? revised.revision
++            : pureResume ? value.revision ?? 1 : (value.revision ?? 1) + 1;
+           value = { ...value, status: 'active', pauseReason: undefined, revision,
+             userBasis: [...(value.userBasis ?? []), ...(pureResume ? [] : [{ text: event.text, revision }])], maintenance: undefined };
+           publish(ctx, value);
+         }
+         const entries = value.boundary ? boundaryDrafts(ctx.sessionManager.getBranch(), value.boundary) : [];
+         if (value.boundary && (!value.boundary.committed || entries.length)) {
+-          value = { ...value, role: value.boundary.kind === 'handoff' ? 'Generate' : value.role,
+-            handoffConsumed: value.boundary.kind === 'handoff' || value.handoffConsumed, boundary: { ...value.boundary, committed: true } };
++          value = { ...value, boundary: { ...value.boundary, committed: true } };
+           entries.push({ type: 'custom', customType: REQUEST, data: value });
+         }
+         preparedInputRequestId = value.requestId; lastOutcome = 'completed';
+         await refreshApprovalStatus(ctx);
+-        setActiveTools(value.role === 'Generate' ? GENERATE_TOOLS : READ_TOOLS);
++        setActiveTools(MAIN_TOOLS);
+         return { action: 'continue', ...(entries.length ? { biomindBoundary: { leafId: ctx.sessionManager.getLeafId(), entries } } : {}) };
+       } catch (error) {
+         preparedInputRequestId = undefined;
+@@ -1069,7 +1068,7 @@
+       event.systemPromptOptions.contextFiles = filterNativeContextFiles(event.systemPromptOptions.contextFiles, ctx.cwd, getAgentDir());
+       if (state(ctx)?.status !== 'active') { ctx.abort(); throw new Error('REQUEST_NOT_ACTIVE'); }
+       preparedInputRequestId = undefined; initialUserPending = true;
+-      event.systemPromptOptions.selectedTools = toolNames(state(ctx)?.role === 'Generate' ? GENERATE_TOOLS : READ_TOOLS);
++      event.systemPromptOptions.selectedTools = toolNames(MAIN_TOOLS);
+     });
+     pi.on('message_start', async (event, ctx) => {
+       if (event.message.role !== 'user') return;
+@@ -1079,8 +1078,9 @@
+       const index = inputQueue.findIndex(item => item.text === text);
+       if (index < 0) { ctx.abort(); throw new Error('Cannot correlate queued user revision'); }
+       inputQueue.splice(index, 1);
+-      const value = current(ctx), revision = (value.revision ?? 1) + 1;
+-      await client(ctx).hostCall('request.revise', {}, { requestId: value.requestId });
++      const value = current(ctx);
++      const revised = asObject(await client(ctx).hostCall('request.revise', {}, { requestId: value.requestId }));
++      const revision = Number.isInteger(revised.revision) && revised.revision > 0 ? revised.revision : (value.revision ?? 1) + 1;
+       publish(ctx, { ...value, revision, userBasis: [...(value.userBasis ?? []), { text, revision }] });
+     });
+     pi.on('turn_end', async (event, ctx) => {
+@@ -1088,10 +1088,9 @@
+       // identities are actual SessionManager entry IDs, never guessed offsets.
+       await archiveTurn(ctx);
+       lastOutcome = event.outcome;
+-      const sources = unique([...exposedSources, ...event.toolResults.flatMap(result => sourceIds(asObject(result).details))]);
+       if (exposedSources.length) pi.appendEntry(PROVENANCE, { entryId: event.messageEntryId, sources: exposedSources });
+       event.toolResults.forEach((result, index) => {
+-        const inherited = ['handoff_generate', 'update_plan'].includes(result.toolName) ? exposedSources : [];
++        const inherited = result.toolName === 'update_plan' ? exposedSources : [];
+         const toolSources = unique([...inherited, ...sourceIds(asObject(result).details)]);
+         if (toolSources.length) pi.appendEntry(PROVENANCE, { entryId: event.toolResultEntryIds[index], sources: toolSources });
+       });
+@@ -1100,7 +1099,7 @@
+         await pause(ctx, 'user_aborted'); return;
+       }
+       if (!value || value.status !== 'active' || event.outcome !== 'completed' || ctx.signal?.aborted) return;
+-      if (!value.handoff || value.handoffConsumed) {
++      {
+         // Ask while the active agent run still owns a cancellable signal. At
+         // agent_before_settle that signal can already be gone in Pi 0.87.1.
+         if (value.maintenance || event.toolResults.length || ctx.hasPendingMessages()
+@@ -1118,17 +1117,6 @@
+         }
+         return;
+       }
+-      if (value.handoff.bound?.revision !== value.revision) { publish(ctx, { ...value, handoff: undefined }); return; }
+-      const boundary = planStageBoundary(ctx.sessionManager.getBranch(), 'handoff', {
+-        content: JSON.stringify({ ...value.handoff.bound, phase: 'Generate', instruction: HANDOFF_INSTRUCTION }), details: { sources },
+-      });
+-      // Intent is durable before the first native draft. A partial append is
+-      // repaired at the public input boundary, never by an extra Consult turn.
+-      publish(ctx, { ...value, boundary });
+-      const next: RequestState = { ...value, boundary: { ...boundary, committed: true }, role: 'Generate', handoffConsumed: true };
+-      setActiveTools(GENERATE_TOOLS);
+-      return { entries: [...boundaryDrafts(ctx.sessionManager.getBranch(), boundary),
+-        { type: 'custom' as const, customType: REQUEST, data: next }], continue: true };
+     });
+     pi.on('context', async (event, ctx) => {
+       if (state(ctx)?.status !== 'active') { ctx.abort(); return { messages: [] }; }
+@@ -1136,11 +1124,9 @@
+       try {
+         const value = current(ctx);
+         assertStageBoundary(ctx.sessionManager.getBranch(), value.boundary);
+-        await client(ctx).hostCall('request.begin', { request_id: value.requestId, role: value.role.toLowerCase(),
+-          boundary_id: value.boundary!.id, user_revision: value.revision ?? 1, handoff_revision: value.handoff?.bound?.revision }, { signal: ctx.signal });
+-        // Existing request metadata records when native commit and Domain role
+-        // have both been verified; later Generate errors remain its own history.
+-        if (!value.boundary!.activated) publish(ctx, { ...value, boundary: { ...value.boundary!, activated: true } });
++        await client(ctx).hostCall('request.begin', { request_id: value.requestId, role: 'main',
++          ...(value.boundary ? { boundary_id: value.boundary.id } : {}), user_revision: value.revision ?? 1 }, { signal: ctx.signal });
++        if (value.boundary && !value.boundary.activated) publish(ctx, { ...value, boundary: { ...value.boundary, activated: true } });
+         ctx.ui.setStatus('biomind', `${value.role} · ${value.status}`);
+         pi.events.emit('biomind:state', { ...value, sessionId: sessionId(ctx) });
+       } catch (error) { ctx.abort(); pi.events.emit('biomind:diagnostic', { code: 'STAGE_BOUNDARY_INCOMPLETE', message: String(error) }); return { messages: [] }; }
+@@ -1180,18 +1166,15 @@
+       const value = state(ctx);
+       const planWithdrawn = value?.planSources?.some(source => !snapshot.history_enabled || (snapshot.revoked_sources ?? []).includes(source)
+         || source === 'unknown-history' && (snapshot.revoked_sources?.length ?? 0) > 0);
+-      const currentContext = { role: value?.role ?? 'Consult', request_id: value?.requestId, plan: planWithdrawn ? undefined : value?.plan,
++      const currentContext = { request_id: value?.requestId, plan: planWithdrawn ? undefined : value?.plan,
+         preferences: Object.fromEntries(Object.entries(asObject(snapshot.preferences)).filter(([key]) => key !== 'loaded_at')), user_revision: value?.revision, history_enabled: snapshot.history_enabled,
+         authorization_refs: snapshot.authorization_refs ?? [], approval_mode: snapshot.approval_mode ?? { mode: 'manual' },
+         revision: snapshot.revision, maintenance: snapshot.history_enabled && value?.maintenance?.outboxId && !value.maintenance.applied
+           ? { prompt: value.maintenance.prompt, sources: value.maintenance.sources, instruction: '用户任务已答复。这是一次受限记忆维护；仅可提交有当前公开证据支持的patch或空operations，不运行新分析、不新增任务。' } : undefined };
+       const messages = currentNativeProjectContext(event.messages).map(message => message.role === 'system' && message.sections?.['biomind-current']
+         ? { ...message, sections: Object.fromEntries(Object.entries(message.sections).filter(([key]) => key !== 'biomind-current')) } : message);
+-      // A maintenance outbox remains the active phase even after its patch was
+-      // applied: the following model turn only acknowledges that receipt.
+-      const roleRules = value?.maintenance?.outboxId ? MAINTENANCE_RULES : native ? `当前领域阶段：${value?.role ?? 'Consult'}。普通操作可直接执行。`
+-        : value?.role === 'Generate' ? GENERATE_RULES : CONSULT_RULES;
+-      messages.push({ role: 'system', content: '', sections: { 'biomind-current': `${native ? NATIVE_RULES : DOMAIN_RULES}\n${roleRules}\n当前有效状态与偏好（每次发送刷新）：\n${JSON.stringify({ ...currentContext, execution_profile: profile, ...(native ? { approval_mode: 'not_applicable', authorization_refs: [] } : {}) })}` }, timestamp: Date.now() });
++      const rules = value?.maintenance?.outboxId ? MAINTENANCE_RULES : `${COMMON_RULES}\n${native ? NATIVE_RULES : PROTECTED_RULES}`;
++      messages.push({ role: 'system', content: '', sections: { 'biomind-current': `${rules}\n当前有效状态与偏好：\n${JSON.stringify({ ...currentContext, execution_profile: profile, ...(native ? { approval_mode: 'not_applicable', authorization_refs: [] } : {}) })}` }, timestamp: Date.now() });
+       return { messages };
+     });
+     pi.on('session_before_compact', async (event, ctx) => {
+@@ -1252,7 +1235,13 @@
+     });
+     pi.on('agent_settled', (_event, ctx) => {
+       const value = state(ctx); if (!value) return;
+-      if (value.status === 'paused') return;
++      if (value.status === 'paused') {
++        // The permission/request remains paused, but the host still needs the
++        // terminal model-loop observation to report an aborted turn truthfully.
++        pi.events.emit('biomind:settled', { requestId: value.requestId, sessionId: sessionId(ctx), role: value.role,
++          outcome: 'aborted', reason: value.pauseReason, scientificSuccess: null });
++        return;
++      }
+       publish(ctx, { ...value, status: lastOutcome === 'completed' ? 'settled' : lastOutcome });
+       pi.events.emit('biomind:settled', { requestId: value.requestId, sessionId: sessionId(ctx), role: value.role, outcome: lastOutcome, scientificSuccess: null });
+     });
+@@ -1263,8 +1252,8 @@
+           return { block: true, reason: 'Session is paused or execution profile is not bound', terminate: true };
+         return;
+       }
+-      const allowed = toolNames(value?.maintenance?.outboxId && !value.maintenance.applied ? ['maintenance_submit'] : value?.role === 'Generate' ? GENERATE_TOOLS : READ_TOOLS);
+-      if (value?.status !== 'active' || !allowed.includes(event.toolName)) return { block: true, reason: 'This execution entry is not available in the current BioMind role', terminate: true };
++      const allowed = toolNames(value?.maintenance?.outboxId && !value.maintenance.applied ? ['maintenance_submit'] : MAIN_TOOLS);
++      if (value?.status !== 'active' || !allowed.includes(event.toolName)) return { block: true, reason: 'This execution entry is not available for the current BioMind request', terminate: true };
+     });
+     if (!native) pi.on('user_bash', () => ({ result: { output: 'Shell 快捷入口在 BioMind protected 模式不可用；请通过领域 run_command 执行并保留授权与作业句柄。', exitCode: 1, cancelled: false, truncated: false } }));
+     const guardLifecycle = async (ctx: ExtensionContext, action: string) => {
+@@ -1299,16 +1288,15 @@
+       catch { return { cancel: true }; }
+       const sourceState = state(ctx), targetState = requestFromBranch(ctx.sessionManager.getBranch(event.preparation.targetId));
+       const omitted = new Set(sourceState?.boundary?.targets ?? []);
+-      if (event.preparation.userWantsSummary && (sourceState?.requestId !== targetState?.requestId || sourceState?.role !== targetState?.role
+-        || event.preparation.entriesToSummarize.some(entry => omitted.has(entry.id)))) {
+-        ctx.ui.notify('跨任务或阶段切换请关闭分支摘要；原始分支仍可查看，过程不会带回目标阶段。', 'warning'); return { cancel: true };
++      if (event.preparation.userWantsSummary && (sourceState?.requestId !== targetState?.requestId || event.preparation.entriesToSummarize.some(entry => omitted.has(entry.id)))) {
++        ctx.ui.notify('跨任务切换请关闭分支摘要；原始分支仍可查看，旧任务不会被带入目标请求。', 'warning'); return { cancel: true };
+       }
+       if (event.preparation.userWantsSummary && (!fresh.history_enabled || (fresh.revoked_sources?.length ?? 0) > 0)) {
+         ctx.ui.notify('历史来源已撤回；请关闭分支摘要后切换，避免旧来源进入新的摘要。', 'warning'); return { cancel: true };
+       }
+     });
+     pi.on('session_tree', async (_event, ctx) => {
+-      setActiveTools(state(ctx)?.role === 'Generate' ? GENERATE_TOOLS : READ_TOOLS);
++      setActiveTools(MAIN_TOOLS);
+       await refreshApprovalStatus(ctx);
+     });
+     pi.on('session_shutdown', async (event, ctx) => {

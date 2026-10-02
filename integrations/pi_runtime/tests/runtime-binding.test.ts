@@ -76,7 +76,7 @@ test('E01 E02 E10 E17 N08 native binding reaches real executables; parallel call
     assert.equal(calls.filter(c => c.method === 'environments.launch').length, 3);
     assert(!h.busEvents.some(e => e.channel === 'biomind:ui_request' && e.value.kind === 'approval'));
     assert.deepEqual(h.errors, []);
-  } finally { await h.close(); await fs.rm(tmp, { recursive: true, force: true }); }
+  } finally { await h.close(); await fs.rm(tmp, { recursive: true, force: true, maxRetries: 20, retryDelay: 25 }); }
 });
 
 test('native bash thin adapter preserves custom shell/prefix, raw pipeline semantics, streaming and timeout', async () => {
@@ -95,7 +95,7 @@ test('native bash thin adapter preserves custom shell/prefix, raw pipeline seman
     await assert.rejects(tool.execute('timeout', { command: 'sleep 10', timeout: 0.05 }, undefined, undefined, ctx), /timed out/i);
     assert(updates.length); assert.equal(await fs.readFile(marker, 'utf8'), 'xxx');
     assert.equal(process.env.SYNTHETIC_PREFIX, undefined); assert.equal(process.env.BIOMIND_RUNTIME_FIXTURE, undefined);
-  } finally { await fs.rm(tmp, { recursive: true, force: true }); }
+  } finally { await fs.rm(tmp, { recursive: true, force: true, maxRetries: 20, retryDelay: 25 }); }
 });
 
 test('E02 E04 I01 N12 independent sessions read the same supplemental registration without executing checks', async () => {
@@ -136,5 +136,5 @@ test('E02 E04 I01 N12 independent sessions read the same supplemental registrati
     assert(!calls.some(method => method.startsWith('install.') || method === 'exec.probe'));
     assert(!h.busEvents.some(e => e.channel === 'biomind:ui_request' && e.value.kind === 'approval'));
     assert.deepEqual(h.errors, []);
-  } finally { await h.close(); await fs.rm(tmp, { recursive: true, force: true }); }
+  } finally { await h.close(); await fs.rm(tmp, { recursive: true, force: true, maxRetries: 20, retryDelay: 25 }); }
 });

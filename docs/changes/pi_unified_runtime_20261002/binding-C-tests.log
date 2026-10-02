@@ -1,0 +1,18 @@
+test_E01_E03_zero_probe_select_dedup_implicit_managed_binding (__main__.EnvironmentBinding.test_E01_E03_zero_probe_select_dedup_implicit_managed_binding) ... Executing <Task pending name='Task-2' coro=<EnvironmentBinding.test_E01_E03_zero_probe_select_dedup_implicit_managed_binding() running at /public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/tests/test_environment_binding_20261002.py:57> wait_for=<Future pending cb=[Task.task_wakeup()] created at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:448> cb=[_run_until_complete_cb() at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:181] created at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:100> took 0.328 seconds
+ok
+test_E02_fresh_process_and_session_same_authority_no_check (__main__.EnvironmentBinding.test_E02_fresh_process_and_session_same_authority_no_check) ... Executing <Task pending name='Task-14' coro=<EnvironmentBinding.test_E02_fresh_process_and_session_same_authority_no_check() running at /public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/tests/test_environment_binding_20261002.py:67> wait_for=<Future pending cb=[Task.task_wakeup()] created at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:448> cb=[_run_until_complete_cb() at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:181] created at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:100> took 0.140 seconds
+ok
+test_E04_I01_N12_metadata_registration_idempotent_and_no_claimed_verification (__main__.EnvironmentBinding.test_E04_I01_N12_metadata_registration_idempotent_and_no_claimed_verification) ... ok
+test_E08_same_name_other_prefix_preserves_identity_and_refuses_foreign_scope (__main__.EnvironmentBinding.test_E08_same_name_other_prefix_preserves_identity_and_refuses_foreign_scope) ... ok
+test_E09_errors_keep_authority_and_no_write (__main__.EnvironmentBinding.test_E09_errors_keep_authority_and_no_write) ... ok
+test_E15_lookup_does_not_repeat_failed_scope (__main__.EnvironmentBinding.test_E15_lookup_does_not_repeat_failed_scope) ... ok
+test_N08_two_scopes_parallel_and_new_request_isolation (__main__.EnvironmentBinding.test_N08_two_scopes_parallel_and_new_request_isolation) ... ok
+test_N09_explicit_constraints_reach_actual_launch (__main__.EnvironmentBinding.test_N09_explicit_constraints_reach_actual_launch) ... ok
+test_N15_partial_tool_mapping_keeps_precise_environment (__main__.EnvironmentBinding.test_N15_partial_tool_mapping_keeps_precise_environment) ... ok
+test_bound_bash_launch_preserves_requested_shell_and_does_not_probe (__main__.EnvironmentBinding.test_bound_bash_launch_preserves_requested_shell_and_does_not_probe) ... ok
+test_protected_metadata_registration_requires_existing_write_authority (__main__.EnvironmentBinding.test_protected_metadata_registration_requires_existing_write_authority) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 1.753s
+
+OK

@@ -1,0 +1,263 @@
+{
+  "status": "PASS",
+  "base_commit": "4721cc8e737991b7d6571d5bebfdf47e808b6ba1",
+  "patches": 64,
+  "files": [
+    {
+      "file": "agent_core/action_runtime.py",
+      "matches_effective_tree": true,
+      "sha256": "aef4f41190e5fa4bf79a13ae0493639655fc22d3b4fa7fc60a19f1149f29c82b"
+    },
+    {
+      "file": "agent_core/command_execution.py",
+      "matches_effective_tree": true,
+      "sha256": "ce8aa969d9a4504bff1e89af43af09accd46bb914b094383166073b4780876a7"
+    },
+    {
+      "file": "agent_core/execution_permissions.py",
+      "matches_effective_tree": true,
+      "sha256": "5a771a8400fa4f0f30698ee0a9c81f4f381557ee2ce31acc481ee62eb7b4154d"
+    },
+    {
+      "file": "agent_core/native_command.py",
+      "matches_effective_tree": true,
+      "sha256": "194f084294b85f3fb4a076498c34b46e9e7cd52ddce278300aa60a6fa4a51024"
+    },
+    {
+      "file": "agent_core/registered_runtime.py",
+      "matches_effective_tree": true,
+      "sha256": "df37c7b19823c0948fb5eae979643faa9e6da9464a3b3ed7cb883465ad33f61d"
+    },
+    {
+      "file": "agent_core/runtime_evidence.py",
+      "matches_effective_tree": true,
+      "sha256": "f02575510dd15702ade7098c7efd03194d03b90d7a17de49abc5c4d0c0e15594"
+    },
+    {
+      "file": "agent_core/runtime_launch.py",
+      "matches_effective_tree": true,
+      "sha256": "8d6b79e82a039a9ba6aa9ea960ec7cf950bffb1aedb56c1a2264657f95f77b62"
+    },
+    {
+      "file": "integrations/pi_runtime/domain-client.ts",
+      "matches_effective_tree": true,
+      "sha256": "faf20e19ce98d009036c3fb3dcc059fc00bd09f76267ad3d74ea422d34831f70"
+    },
+    {
+      "file": "integrations/pi_runtime/domain_adapter/archive_observation.py",
+      "matches_effective_tree": true,
+      "sha256": "968ac7cc9f119200e2766bc38b3df20da8f1445f91b55ed784a273764ea4bc08"
+    },
+    {
+      "file": "integrations/pi_runtime/domain_adapter/registry.py",
+      "matches_effective_tree": true,
+      "sha256": "64bfcae0638c14b5a03b3296262fb65b8009efa21e6d7ad8cb401416fa4d108b"
+    },
+    {
+      "file": "integrations/pi_runtime/domain_adapter/service.py",
+      "matches_effective_tree": true,
+      "sha256": "83c947f8dcafbe4f1cef903e27944b7bef4325157fdbbfa6734af56547176a75"
+    },
+    {
+      "file": "integrations/pi_runtime/extensions/biomind.ts",
+      "matches_effective_tree": true,
+      "sha256": "b065a271b3f182ea8d2740073f3a0aa9bec65f6e0acf7ebc2c7ff411050f5e66"
+    },
+    {
+      "file": "integrations/pi_runtime/native-bash.ts",
+      "matches_effective_tree": true,
+      "sha256": "f73f8ecdcfe4cd80365f2bbad2c163092c9bd68dd34bd9d23706490782bd891f"
+    },
+    {
+      "file": "integrations/pi_runtime/native-workflow.ts",
+      "matches_effective_tree": true,
+      "sha256": "afca95273df7724be8880c5d9417e1d78336afcbc76c41d2af319ea87fed3830"
+    },
+    {
+      "file": "integrations/pi_runtime/product-ui.ts",
+      "matches_effective_tree": true,
+      "sha256": "32d0b38a3f78c253ba4f278003541eb255d933b5e2acd9e0a52411846ea8cf25"
+    },
+    {
+      "file": "integrations/pi_runtime/python_service.py",
+      "matches_effective_tree": true,
+      "sha256": "210645431e63289b7c3f282818d4c2ea0916430840d741ff2544e9a13cd6a463"
+    },
+    {
+      "file": "integrations/pi_runtime/stage-context.ts",
+      "matches_effective_tree": true,
+      "sha256": "037f63401ad4083b5046c905dec82d6471d3fed88cef59fee8ab1e0ca964a7e2"
+    },
+    {
+      "file": "integrations/pi_runtime/tests/audit-domain-stage.test.ts",
+      "matches_effective_tree": true,
+      "sha256": "ad99387b53e6ee413603c9dd3c45dca0aba2977d27dcd8b109c7887d327dea87"
+    },
+    {
+      "file": "integrations/pi_runtime/tests/audit-fixes.test.ts",
+      "matches_effective_tree": true,
+      "sha256": "188c2a1f16fb299e36034f0986219b313d9d9bb9a660ffd7300c51c84d1a16fd"
+    },
+    {
+      "file": "integrations/pi_runtime/tests/biomind-extension.test.ts",
+      "matches_effective_tree": true,
+      "sha256": "798ee9dfc26c5536277d140084279f184189e152ac277b41e1b12d3ddd754bd6"
+    },
+    {
+      "file": "integrations/pi_runtime/tests/extension-harness.ts",
+      "matches_effective_tree": true,
+      "sha256": "0be058ead4a0a75173ebfa5ac1a72986d64e41f7be8ae36534a2eefb3c37c1c7"
+    },
+    {
+      "file": "integrations/pi_runtime/tests/external-access-wire.test.ts",
+      "matches_effective_tree": true,
+      "sha256": "d9c86b8fcc8c1ad28d4962ff693de680a1b3dfa847d55f93c93e32f18c647be2"
+    },
+    {
+      "file": "integrations/pi_runtime/tests/external-read-ui.test.ts",
+      "matches_effective_tree": true,
+      "sha256": "3d59adbdc19d73a130a2d2dc5692c3372c39a64c621b882964db6b5a491e8bae"
+    },
+    {
+      "file": "integrations/pi_runtime/tests/handoff-wire.test.ts",
+      "matches_effective_tree": true,
+      "sha256": "4c6730c080564bfa2834f18ff51bd4f48472947b8936ae9bfab3822a551d9146"
+    },
+    {
+      "file": "integrations/pi_runtime/tests/host.test.ts",
+      "matches_effective_tree": true,
+      "sha256": "687aa630014d1c4cc37ecdbe1727c089088b529a8bf2a3722a6bf454322d97b7"
+    },
+    {
+      "file": "integrations/pi_runtime/tests/native-discovery.test.ts",
+      "matches_effective_tree": true,
+      "sha256": "c9db411e8581a57344ef1cf83aec968437b1f44687efd107c6cf967f7064f6ac"
+    },
+    {
+      "file": "integrations/pi_runtime/tests/native-mutation.test.ts",
+      "matches_effective_tree": true,
+      "sha256": "cc4b6b3354a2c4c2e6c91edaa9761d887ddb4184627db6ad064f0f6ad2b9a315"
+    },
+    {
+      "file": "integrations/pi_runtime/tests/native-skills-read.test.ts",
+      "matches_effective_tree": true,
+      "sha256": "c141aaf479096e3e131680c9b718a8c13c46af250c01c34bbdf669e22de31e87"
+    },
+    {
+      "file": "integrations/pi_runtime/tests/native-workflow.test.ts",
+      "matches_effective_tree": true,
+      "sha256": "be06db7e59b1a0d0780a091e367f44b2442568fc4e872846a9c468dae50b3d72"
+    },
+    {
+      "file": "integrations/pi_runtime/tests/product-ui.test.ts",
+      "matches_effective_tree": true,
+      "sha256": "7035109bf2a1ac42d880cb92425e83535102076dfeb6d871bb57c4ac91ed65e6"
+    },
+    {
+      "file": "integrations/pi_runtime/tests/runtime-binding.test.ts",
+      "matches_effective_tree": true,
+      "sha256": "68c0b3bc009fb707e7d3136d58500328d588b102c569665f3cabe97727501be1"
+    },
+    {
+      "file": "integrations/pi_runtime/tests/session-domain.test.ts",
+      "matches_effective_tree": true,
+      "sha256": "9cfbc073fad762d253a0d7a6bb9d609854466e95eb2df0e1c558bfe39c28972b"
+    },
+    {
+      "file": "integrations/pi_runtime/tests/session-persistence.test.ts",
+      "matches_effective_tree": true,
+      "sha256": "cabef130ddfb07455bfa051f162bbf7aad60f588fe149eed34a7fe8dd13cf484"
+    },
+    {
+      "file": "integrations/pi_runtime/tests/test_diagnostic_budget_20261002.py",
+      "matches_effective_tree": true,
+      "sha256": "ad8c2af5e8b782a0342140827852480a1e526fbb802ec1c266e6ffd17b7fa20e"
+    },
+    {
+      "file": "integrations/pi_runtime/tests/test_environment_binding_20261002.py",
+      "matches_effective_tree": true,
+      "sha256": "048fbc60a73abb02bf1879a44c327c22d218b828f1e824304ba6da0f14dfc485"
+    },
+    {
+      "file": "integrations/pi_runtime/tests/test_install_targets_20261002.py",
+      "matches_effective_tree": true,
+      "sha256": "d8020abf159d3b767f5fc0ae30bfb1f2289ae9b92aee0f2ebab9401789b6bf42"
+    },
+    {
+      "file": "integrations/pi_runtime/tests/test_main_request_admission_20261002.py",
+      "matches_effective_tree": true,
+      "sha256": "11d5b96a07cd457bc1d16b2c4f531fff107d47b8d81477d9a8ee94b4ebe6fcaa"
+    },
+    {
+      "file": "integrations/pi_runtime/tests/test_runtime_diagnostics_20261002.py",
+      "matches_effective_tree": true,
+      "sha256": "2f0ef1ff73b0d1291b98528df00d57e5ad4366e1a53d1f9dc8b101e4fa2df1fe"
+    },
+    {
+      "file": "integrations/pi_runtime/tests/unified-agent.test.ts",
+      "matches_effective_tree": true,
+      "sha256": "5955741b330d98865e64d800590f099eeb33842350915fc63ef842d8cb938ddf"
+    },
+    {
+      "file": "integrations/pi_runtime/tests/usage-boundary.test.ts",
+      "matches_effective_tree": true,
+      "sha256": "f051a9d24ca55e498c20cd6fd291af23a87d0f7ce649709b37f6abeed4b255eb"
+    },
+    {
+      "file": "integrations/pi_runtime/tests/wire-composite-harness.ts",
+      "matches_effective_tree": true,
+      "sha256": "5bb04d29f7a06227156d29e540e8ad8866797ac8a562df354588ed58b259c6b8"
+    },
+    {
+      "file": "integrations/pi_runtime/tests/wire-composites.test.ts",
+      "matches_effective_tree": true,
+      "sha256": "b8399ff2ce95f6668ba30af2c14edeff2819e3dfcfccefaf26795fbe82f43ae6"
+    },
+    {
+      "file": "integrations/pi_runtime/tests/wire.test.ts",
+      "matches_effective_tree": true,
+      "sha256": "a0c196f07251217df490edc5d171466784cf361a8ba55aa25fa0e409a6ce40da"
+    },
+    {
+      "file": "integrations/pi_runtime/usage-observer.ts",
+      "matches_effective_tree": true,
+      "sha256": "fa789e266012de3ed5215b8819427ebd9e18d316445191e2c3933e1056ff1eb6"
+    },
+    {
+      "file": "package_manager.py",
+      "matches_effective_tree": true,
+      "sha256": "efb4268e592b7ab61960391e68990be36b963c3198dc48b39443ba06f1f93e56"
+    },
+    {
+      "file": "skills/enrichment-analysis/SKILL.md",
+      "matches_effective_tree": true,
+      "sha256": "da7650d2e98c8fe831b09e063de92f486c287f65a8e9c0ffbdaa6a90d95654a9"
+    },
+    {
+      "file": "tests/test_registered_runtime_reuse.py",
+      "matches_effective_tree": true,
+      "sha256": "a2de5e6dc35e80bd912bb392ede429bb1108ae36352f9e1c39a918fc977472db"
+    },
+    {
+      "file": "tests/test_registry_atomic_20261002.py",
+      "matches_effective_tree": true,
+      "sha256": "0fd836acc557c0022730edb5272d7a4c713f1341feea30383e2386dc5d237a39"
+    },
+    {
+      "file": "tests/test_runtime_candidates_20261002.py",
+      "matches_effective_tree": true,
+      "sha256": "efdbae6bcc244b0e57e2690e556f2ad4d7592dae32920fc2e48a12358e5528c8"
+    },
+    {
+      "file": "tests/test_scientific_delivery_20261002.py",
+      "matches_effective_tree": true,
+      "sha256": "fb24871a85f0bc36911a040197025e70f90ef64bd6ff4861dee8a76d7372f52a"
+    },
+    {
+      "file": "tests/test_scoped_launch_20261002.py",
+      "matches_effective_tree": true,
+      "sha256": "a6891cc4a40ed179507f5b064beee1d6a0fb0f2a7357150f25cc2713809b84d1"
+    }
+  ],
+  "scope": "changed-file reconstruction from saved original before-images and exact A/B/C patches; no execution/build of a clean checkout"
+}

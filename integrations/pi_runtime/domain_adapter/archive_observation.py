@@ -29,7 +29,7 @@ def append(service,params):
         raise DomainError('ARCHIVE_EVENT_ID_REQUIRED')
     if params.get('event_type') not in EVENT_TYPES:raise DomainError('ARCHIVE_PUBLIC_EVENT_TYPE_REQUIRED')
     stage=params.get('stage','runtime')
-    if stage not in {'consult','generate','runtime'}:raise DomainError('ARCHIVE_STAGE_INVALID')
+    if stage not in {'main','consult','generate','runtime'}:raise DomainError('ARCHIVE_STAGE_INVALID')
     content=params.get('content','');summary=params.get('summary','')
     if not isinstance(content,str) or not isinstance(summary,str):raise DomainError('ARCHIVE_TEXT_REQUIRED')
     supplied=params.get('metadata') or {}

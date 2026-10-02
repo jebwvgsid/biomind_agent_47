@@ -1,0 +1,22 @@
+--- a/integrations/pi_runtime/tests/product-ui.test.ts
++++ b/integrations/pi_runtime/tests/product-ui.test.ts
+@@ -155,7 +155,7 @@
+   await f.message(); f.setIdle(false); f.setState({ role: 'Consult', status: 'active' });
+   assert.equal(f.redraws(), 1);
+   assert(lines(f.widget()).length <= 4);
+-  assert.match(contents(f.widget()), /咨询中（Consult）/);
++  assert.match(contents(f.widget()), /处理中/);
+   assert.match(contents(f.widget()), /草稿区 · 尚未提交/);
+   assert.doesNotMatch(contents(f.widget()), /常用操作|直接输入问题即可开始/);
+   assert.equal(f.editor(), '第一行中文草稿\n第二行 🧬');
+@@ -165,8 +165,8 @@
+   const f = fixture(); await f.start(); await f.message();
+   const state: BioMindProductState = { role: 'Consult', status: 'active' };
+   f.setState(state); f.setIdle(false);
+-  assert.match(contents(f.widget()), /咨询中（Consult）/);
+-  state.role = 'Generate'; f.setState(state); assert.match(contents(f.widget()), /执行中（Generate）/);
++  assert.match(contents(f.widget()), /处理中/);
++  state.role = 'Generate'; f.setState(state); assert.match(contents(f.widget()), /处理中/);
+   for (const [value, label] of [['settled', '本次请求已结束'], ['aborted', '已中断'], ['error', '错误']] as const) {
+     state.status = value; f.setState(state); f.setIdle(true);
+     assert.match(contents(f.widget()), new RegExp(label));

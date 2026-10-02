@@ -1,0 +1,49 @@
+--- a/agent_core/registered_runtime.py
++++ b/agent_core/registered_runtime.py
+@@ -297,11 +297,31 @@
+             or receipt.get('status') != 'exited' or not receipt.get('receipt_ref')):
+         return []
+     stderr = str(receipt.get('stderr') or '')
++    # Transport/permission failures do not establish missing runtime capability,
++    # even when a wrapper also repeats an earlier dependency diagnostic.
++    if (receipt.get('timed_out') or receipt.get('exit_code') == 124
++            or re.search(r'TIMEOUT after|permission denied|operation not permitted', stderr, re.I)):
++        return []
++    failure_kind = 'missing_package'
+     missing = re.search(r"(?:^|\n)ModuleNotFoundError: No module named ['\"]([A-Za-z_][A-Za-z0-9_.]*)['\"](?:\n|$)", stderr)
+     if not missing:
+-        missing = re.search(r"(?:^|\n)[^\n]*:\s*([A-Za-z_][A-Za-z0-9_.+-]*): command not found(?:\n|$)", stderr)
++        missing = re.search(r"(?:^|\n)(?:[^\n]*:\s*)?([A-Za-z_][A-Za-z0-9_.+-]*): (?:command )?not found(?:\n|$)", stderr)
++        if missing:
++            failure_kind = 'missing_entry'
+     if not missing:
+         missing = re.search(r"there is no package called [\"'‘’]([A-Za-z][A-Za-z0-9_.]*)[\"'‘’]", stderr)
++    library_path = None
++    if not missing and re.search(r'unable to load shared object|Error in dyn\.load\(', stderr):
++        # Preserve the exact failing library location for a bounded, targeted
++        # diagnostic. Never infer that the entire environment is unusable.
++        missing = re.search(r"unable to load shared object\s+[\"'‘’]([^\"'‘’\n]+)[\"'‘’]", stderr)
++        if missing:
++            library_path = missing.group(1)
++        else:
++            missing = re.search(r"(?:^|\n)\s*([^:\n]*\.so(?:\.[0-9]+)*):\s*(?:cannot open shared object file|undefined symbol|wrong ELF class)", stderr)
++        if missing:
++            failure_kind = 'library_path'
++            library_path = missing.group(1)
+     if not missing:
+         return []
+     prefix = str((receipt.get('env') or {}).get('ENV_PREFIX') or (receipt.get('env') or {}).get('CONDA_PREFIX') or '')
+@@ -328,10 +348,13 @@
+             continue
+         sid = audit['skill_id']
+         row = {'environment': audit['env'], 'prefix': prefix, 'missing_dependency': missing.group(1),
++               'failure_kind': failure_kind,
+                'reason_code': 'REGISTERED_RUNTIME_DEPENDENCY_FAILED', 'receipt_ref': receipt['receipt_ref'],
+                'attempt_id': receipt.get('attempt_id'), 'step_id': receipt.get('step_id'),
+                'binding_ref': binding_ref or audit.get('runtime_audit_id'),
+                'request_scope': receipt.get('request_scope'), 'runtime_scope': sid}
++        if library_path:
++            row['library_path'] = library_path
+         task.setdefault('runtime_invalidations', {})[binding_ref or sid] = row
+         changed.append(row)
+     return changed

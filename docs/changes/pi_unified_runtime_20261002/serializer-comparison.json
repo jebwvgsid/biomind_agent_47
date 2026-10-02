@@ -1,0 +1,215 @@
+{
+  "schema": "biomind-offline-serializer-delta-v1",
+  "model": "deepseek-v4-flash",
+  "fixture": "same synthetic select_environment call + final response; no skills; preference-v1",
+  "input": "Use the registered synthetic runtime and report its stored identity. Do not run a health check.",
+  "scope": "scripted provider and FakeDomain; real built-in serializer; no external provider/model calls",
+  "units": "UTF-16 characters and UTF-8 bytes, not tokens",
+  "comparison": "Sum of both actual serialized requests for each profile; same scripted fixture before A and after C.",
+  "profiles": [
+    {
+      "profile": "native",
+      "request_count": {
+        "before": 2,
+        "after": 2
+      },
+      "compaction_count": {
+        "before": 0,
+        "after": 0
+      },
+      "retry_count": {
+        "before": 0,
+        "after": 0
+      },
+      "totals": {
+        "system": {
+          "before": {
+            "chars": 8280,
+            "bytes": 10664
+          },
+          "after": {
+            "chars": 9698,
+            "bytes": 13766
+          },
+          "delta": {
+            "chars": 1418,
+            "bytes": 3102
+          }
+        },
+        "tools": {
+          "before": {
+            "chars": 23792,
+            "bytes": 25716
+          },
+          "after": {
+            "chars": 29832,
+            "bytes": 33100
+          },
+          "delta": {
+            "chars": 6040,
+            "bytes": 7384
+          }
+        },
+        "history": {
+          "before": {
+            "chars": 774,
+            "bytes": 774
+          },
+          "after": {
+            "chars": 774,
+            "bytes": 774
+          },
+          "delta": {
+            "chars": 0,
+            "bytes": 0
+          }
+        },
+        "tool_outputs": {
+          "before": {
+            "chars": 275,
+            "bytes": 275
+          },
+          "after": {
+            "chars": 275,
+            "bytes": 275
+          },
+          "delta": {
+            "chars": 0,
+            "bytes": 0
+          }
+        },
+        "body": {
+          "before": {
+            "chars": 33148,
+            "bytes": 37456
+          },
+          "after": {
+            "chars": 40606,
+            "bytes": 47942
+          },
+          "delta": {
+            "chars": 7458,
+            "bytes": 10486
+          }
+        }
+      },
+      "tools_added": [
+        "install_tool",
+        "memory_write",
+        "register_environment",
+        "update_plan"
+      ],
+      "tools_removed": [
+        "handoff_generate"
+      ]
+    },
+    {
+      "profile": "protected",
+      "request_count": {
+        "before": 2,
+        "after": 2
+      },
+      "compaction_count": {
+        "before": 0,
+        "after": 0
+      },
+      "retry_count": {
+        "before": 0,
+        "after": 0
+      },
+      "totals": {
+        "system": {
+          "before": {
+            "chars": 10634,
+            "bytes": 18038
+          },
+          "after": {
+            "chars": 10088,
+            "bytes": 14728
+          },
+          "delta": {
+            "chars": -546,
+            "bytes": -3310
+          }
+        },
+        "tools": {
+          "before": {
+            "chars": 23148,
+            "bytes": 25300
+          },
+          "after": {
+            "chars": 33234,
+            "bytes": 37278
+          },
+          "delta": {
+            "chars": 10086,
+            "bytes": 11978
+          }
+        },
+        "history": {
+          "before": {
+            "chars": 774,
+            "bytes": 774
+          },
+          "after": {
+            "chars": 774,
+            "bytes": 774
+          },
+          "delta": {
+            "chars": 0,
+            "bytes": 0
+          }
+        },
+        "tool_outputs": {
+          "before": {
+            "chars": 275,
+            "bytes": 275
+          },
+          "after": {
+            "chars": 275,
+            "bytes": 275
+          },
+          "delta": {
+            "chars": 0,
+            "bytes": 0
+          }
+        },
+        "body": {
+          "before": {
+            "chars": 34858,
+            "bytes": 44414
+          },
+          "after": {
+            "chars": 44398,
+            "bytes": 53082
+          },
+          "delta": {
+            "chars": 9540,
+            "bytes": 8668
+          }
+        }
+      },
+      "tools_added": [
+        "edit",
+        "install_tool",
+        "memory_write",
+        "register_environment",
+        "run_command",
+        "update_plan",
+        "write"
+      ],
+      "tools_removed": [
+        "handoff_generate"
+      ]
+    }
+  ],
+  "before_sha256": "dfb0d261d461e8fc8c4c59e341e6e4b849997e614fb71cb20869801162cb08c2",
+  "after_sha256": "fd9c195209f27532f41128d363d625f2e08c9e2ddb552905298f51d27f61f47b",
+  "limitations": [
+    "This is byte/character measurement, not a tokenizer result or token savings claim.",
+    "Main tool availability expands tools metadata; registered-environment schema and common safety/stop/QC rules also changed.",
+    "System text decreased in protected profile and increased in native profile; total body bytes increased in both profiles.",
+    "Two provider requests per profile before and after. No turn-reduction claim is supported by this fixture.",
+    "The actual configured serializer is used with an in-process synthetic fetch response and scripted model outputs; no natural model behavior or external model service was evaluated."
+  ]
+}

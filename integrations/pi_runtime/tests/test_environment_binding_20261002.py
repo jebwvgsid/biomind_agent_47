@@ -49,8 +49,9 @@ class EnvironmentBinding(unittest.IsolatedAsyncioTestCase):
         prefix,_=await self.register('rna')
         with patch('subprocess.Popen',side_effect=AssertionError('selection probe')):
             one=await self.select(requirements={'tools':['Rscript']})
-            two=await self.select(requirements={'tools':['Rscript']})
-            reuse=await self.select()
+            with patch.object(self.s.registry,'reload',side_effect=AssertionError('repeated query reloaded registry')), patch('domain_adapter.service.registered_runtime_reuse',side_effect=AssertionError('repeated query enumerated registry')):
+                two=await self.select(requirements={'tools':['Rscript']})
+                reuse=await self.select()
         self.assertEqual(one['binding_ref'],two['binding_ref']);self.assertEqual(reuse['binding_ref'],one['binding_ref'])
         self.assertEqual(len(self.s._state()['task_state']['runtime_evidence']['records']),1)
         r=await self.terminal(await self.s.call('exec.start',{'call_id':'implicit','arguments':{'argv':['Rscript'],'workdir':str(self.root)}}))
@@ -83,6 +84,23 @@ class EnvironmentBinding(unittest.IsolatedAsyncioTestCase):
             r=await self.s.call('exec.start',{'call_id':'conflict-'+str(req),'arguments':{'argv':['Rscript'],'binding_ref':choice['binding_ref'],'requirements':req}})
             self.assertEqual(r['status'],'blocked',r);self.assertFalse(r['execution_started'])
         conflict=await self.select(env_name='one',requirements={'env':'other'});self.assertNotEqual(conflict['availability'],'AVAILABLE')
+    async def test_E08_same_name_other_prefix_preserves_identity_and_refuses_foreign_scope(self):
+        prefix,_=await self.register('same-name');other=self.tool('other-prefix')
+        before=self.registry.read_bytes()
+        with patch('subprocess.Popen',side_effect=AssertionError('metadata must not execute')):
+            result=await self.s.call('environments.register',{'call_id':'same-name-other-prefix','env_name':'same-name',
+                'prefix':str(other),'tools':['Rscript']})
+            self.assertEqual(result['status'],'registration_failed',result)
+            self.assertIn('CONFLICT',result['error']);self.assertEqual(self.registry.read_bytes(),before)
+        self.s=self.service('same-name-fresh');await self.begin('same-name-fresh-request')
+        for constraint in ({'prefix':str(other)},{'backend':'remote'},{'host':'foreign-node'}):
+            rejected=await self.select(env_name='same-name',requirements=constraint)
+            self.assertNotEqual(rejected['availability'],'AVAILABLE',rejected)
+        selected=await self.select(env_name='same-name')
+        run=await self.terminal(await self.s.call('exec.start',{'call_id':'stable-identity','arguments':{
+            'argv':['Rscript'],'binding_ref':selected['binding_ref']}}))
+        self.assertEqual(run['exit_code'],0,run);self.assertIn('same-name:'+str(prefix),run['stdout'])
+        self.assertNotIn(str(other),run['stdout'])
     async def test_E04_I01_N12_metadata_registration_idempotent_and_no_claimed_verification(self):
         prefix=self.tool('inventory');self.inventory.write_text(str(prefix)+'\n')
         r=await self.select(env_name='inventory');self.assertNotEqual(r['availability'],'AVAILABLE')

@@ -1,0 +1,168 @@
+--- a/integrations/pi_runtime/domain_adapter/service.py
++++ b/integrations/pi_runtime/domain_adapter/service.py
+@@ -335,21 +335,30 @@
+     def _registry_sources(self):
+         return {'environment_registry':str(self.registry.path),'source_type':'software_registry'}
+ 
++    def _binding_diagnostic(self,binding_ref):
++        state=self._state();row=(state.get('task_state',{}).get('runtime_invalidations') or {}).get(binding_ref)
++        if row and row.get('request_scope')==request_scope(state):return deepcopy(row)
++        return None
++
+     def select_environment(self,requirements,skill_id='',env_name='',*,loaded_skills=None,runtime_scope=''):
+         self._ensure_request()
+         if isinstance(requirements,list) and all(isinstance(r,str) for r in requirements):requirements={'packages':requirements}
+         if not isinstance(requirements,dict):raise DomainError('ENV_REQUIREMENTS_MUST_BE_OBJECT_OR_PACKAGE_LIST')
+         from agent_core.runtime_evidence import registered_execution_binding
+-        if not requirements and not skill_id and not env_name:
++        if not skill_id:
+             try:
+-                bound=registered_execution_binding(self._state(),runtime_scope=runtime_scope)
++                bound=registered_execution_binding(self._state(),runtime_scope=runtime_scope,
++                    requirements={'env':env_name} if env_name else {})
+             except ValueError as exc:
+-                return {'availability':'UNKNOWN','reason_code':str(exc),'install_required':False,
+-                        'registration_sources':self._registry_sources()}
+-            if bound:
++                if not requirements and not env_name:
++                    return {'availability':'UNKNOWN','reason_code':str(exc),'install_required':False,
++                            'registration_sources':self._registry_sources()}
++                bound=None
++            if bound and (not requirements or requirements==bound.get('requirements')):
+                 return {'availability':'AVAILABLE','decision':'binding_reused','binding_ref':bound['binding_ref'],
+                         'binding_scope':bound['scope'],'invocation':bound['launch'],'install_required':False,
+-                        'healthcheck_status':'not_run','registration_sources':self._registry_sources()}
++                        'healthcheck_status':'not_run','registration_sources':self._registry_sources(),
++                        'runtime_diagnostic':self._binding_diagnostic(bound['binding_ref'])}
+         self.registry.reload()
+         identity=self.skills().resolve(skill_id,loaded_skills=loaded_skills) if skill_id else None
+         if identity and identity['status']=='ambiguous':
+@@ -393,6 +402,8 @@
+             return evidence['evidence_id']
+         selected['binding_ref']=mutate(self.data_root,self.task_id,update)
+         selected['binding_scope']={'request_scope':request,'runtime_scope':sid}
++        diagnostic=self._binding_diagnostic(selected['binding_ref'])
++        if diagnostic:selected['runtime_diagnostic']=diagnostic
+         return selected
+ 
+     def _prepare_binding(self,arguments,*,shell='/bin/sh',base_path=None,explicit_only=False):
+@@ -582,16 +593,39 @@
+         return {**metadata,'content':shown[offset:end],'offset':offset,'next_offset':end if end<len(shown) else None,
+                 'total_chars':len(shown),'truncated':end<len(shown),'redacted':shown!=body}
+ 
++    def _reserve_diagnostic_budget(self,call_id,arguments):
++        """Small request admission budget; process ownership stays with observer.
++
++        Reserve worst-case time so concurrent calls/reconnects cannot overrun the
++        total. A short/failed check does not silently authorize more discovery.
++        Explicit user checks use the ordinary probe path, outside this budget.
++        """
++        budget=arguments['timeout_ms'];signature=digest(arguments)
++        def update(state):
++            task=state['task_state'];identity=task['pi_request_id']
++            book=task.get('pi_diagnostic_budget') or {}
++            if book.get('request_id')!=identity:book={'request_id':identity,'calls':{}}
++            prior=book['calls'].get(call_id)
++            if prior:
++                if prior['signature']!=signature:raise DomainError('DIAGNOSTIC_CALL_CONFLICT')
++                return
++            reserved=sum(row['timeout_ms'] for row in book['calls'].values())
++            if reserved+budget>30000:raise DomainError('ENVIRONMENT_DIAGNOSTIC_BUDGET_EXHAUSTED')
++            book['calls'][call_id]={'signature':signature,'timeout_ms':budget}
++            task['pi_diagnostic_budget']=book
++        mutate(self.data_root,self.task_id,update)
++
+     async def _exec_start(self,p,*,probe=False):
+         self._ensure_request(); call_id=self._call_id(p)
+-        if self.execution_profile == 'protected' and not probe and self._state().get('task_state',{}).get('intent_admission',{}).get('request_kind')!='execute':
+-            raise DomainError('GENERATE_REQUIRED_FOR_EXECUTION')
+         original=deepcopy(p.get('arguments') or {})
+         for field in ('approved','source','permit','human_required','host_token','access_projection','read_access','grants','mounts','_biomind_probe','profile','execution_profile','disable_sandbox','grant','session','session_id','roots','policy_revision','trusted_roots','_runtime_binding'):
+             if field in original or field in p: raise DomainError('MODEL_AUTHORITY_FIELD_FORBIDDEN')
+         # Pi's tool description is presentation metadata, not an executable
+         # argument supported by the existing strict formal action contract.
+         original.pop('description',None)
++        diagnostic=original.pop('environment_diagnostic',False)
++        if type(diagnostic) is not bool or (diagnostic and not probe):
++            raise DomainError('ENVIRONMENT_DIAGNOSTIC_REQUIRES_PROBE')
+         try:
+             original,binding,unavailable=self._prepare_binding(original)
+         except ValueError as exc:
+@@ -599,13 +633,15 @@
+         if unavailable:
+             return {'status':'blocked','error':'REGISTERED_ENVIRONMENT_UNAVAILABLE','selection':unavailable,'execution_started':False}
+         if probe:
+-            if self._state().get('task_state',{}).get('intent_admission',{}).get('request_kind')!='consult':
+-                raise DomainError('PROBE_REQUIRES_CONSULT')
+-            original.update(_biomind_probe=True,timeout_ms=15000,max_output_chars=8000)
++            budget=original.get('timeout_ms',15000)
++            if type(budget) is not int or not 1<=budget<=300000:raise DomainError('PROBE_TIMEOUT_INVALID')
++            original.update(_biomind_probe=True,timeout_ms=budget,max_output_chars=8000)
++            if diagnostic and budget>15000:raise DomainError('ENVIRONMENT_DIAGNOSTIC_SINGLE_BUDGET_EXCEEDED')
+         arguments=original
+         if self.execution_profile == 'native':
+             # Select before any legacy permission payload, projection or output ACL.
+             async with self._dispatch_lock:
++                if diagnostic:self._reserve_diagnostic_budget(call_id,arguments)
+                 result=self._run_view(await self.formal.start(arguments,task_id=self.task_id,stage='pi_native_probe' if probe else 'pi_native',request_scope=self.scope(),call_id=call_id,yield_time_ms=50))
+                 return {**result,'vantage':'host','profile':'native','execution_profile':'native'}
+         command_id=permissions.derive_permission_call_id(call_id,'command')
+@@ -614,7 +650,8 @@
+         if row['status']!='allowed': return self._permission_refusal(row)
+         # Owner reservation itself is short. Long work lives in the real observer.
+         async with self._dispatch_lock:
+-            result=self._run_view(await self.formal.start(arguments,task_id=self.task_id,stage='pi_consult_probe' if probe else 'pi_generate',request_scope=self.scope(),call_id=call_id,yield_time_ms=50))
++            if diagnostic:self._reserve_diagnostic_budget(call_id,arguments)
++            result=self._run_view(await self.formal.start(arguments,task_id=self.task_id,stage='pi_probe' if probe else 'pi_main',request_scope=self.scope(),call_id=call_id,yield_time_ms=50))
+             return {**result,'vantage':'sandbox','profile':'consult-probe-ro-v1' if probe else 'formal-input-ro-v1'}
+ 
+     async def call(self,method,p,*,host_token=None):
+@@ -646,13 +683,14 @@
+             return {'protocol':'biomind-domain-v1','session_id':self.session_id,'task_id':self.task_id,
+                     'execution_profile':self.execution_profile,
+                     'host_token':self.host_token,'methods':['request.begin','context.snapshot','environments.select',
++                    'environments.locate','environments.register','environments.launch','environments.register_observed',
+                     'exec.start','exec.status','exec.wait','exec.read_log','exec.cancel','approval.decide','files.read','files.write','files.stat',
+                     'memory.search','memory.read','memory.write','install.propose','install.execute','settings.update',
+                     'archive.append','archive.status','permissions.status','permissions.propose','permissions.mode','permissions.revoke']}
+         if method=='request.begin':
+             identity=str(p.get('request_id') or '')
+             if not identity: raise DomainError('REQUEST_ID_REQUIRED')
+-            if p.get('role','consult') not in {'consult','generate'}: raise DomainError('ROLE_INVALID')
++            if p.get('role','main') not in {'main','consult','generate'}: raise DomainError('LEGACY_ROLE_INVALID')
+             def update(state):
+                 task=state.setdefault('task_state',{})
+                 if 'boundary_id' in p and task.get('pi_request_id')!=identity:
+@@ -671,12 +709,12 @@
+                     task['pi_user_revision']=1
+                 elif task.get('pi_pause'):
+                     raise DomainError('REQUEST_PAUSED_EXPLICIT_RESUME_REQUIRED')
+-                task['intent_admission']={'request_kind':'execute' if p.get('role')=='generate' else 'consult',
++                task['intent_admission']={'request_kind':'work',
+                     'execution_scope':'simple','review_before_execution':False,'source':'pi_host_request'}
+                 if 'boundary_id' in p:
+                     if not isinstance(p['boundary_id'],str) or not p['boundary_id']:raise DomainError('BOUNDARY_ID_REQUIRED')
+-                    task['pi_context_boundary']={'id':p['boundary_id'],'role':p.get('role','consult'),
+-                        'user_revision':p.get('user_revision',1),'handoff_revision':p.get('handoff_revision')}
++                    task['pi_context_boundary']={'id':p['boundary_id'],'kind':'task',
++                        'user_revision':p.get('user_revision',1)}
+                 task['pi_session_id']=self.session_id
+                 permissions._permissions(state).setdefault('owner',{'task_id':self.task_id,
+                     'session_id':self.session_id,'project':str(self.cwd),'storage':str(self.data_root)})
+@@ -686,7 +724,7 @@
+             task=self._state().get('task_state',{})
+             return {'request_id':task.get('pi_request_id'),'paused':task.get('pi_pause'),
+                     'execution_profile':self.execution_profile,'requires_new_request':bool(task.get('pi_profile_requires_new_request')),
+-                    'revision':task.get('pi_user_revision',1),'role':task.get('intent_admission',{}).get('request_kind'),
++                    'revision':task.get('pi_user_revision',1),'agent':'main',
+                     'request_scope':self.scope(),'approval_mode':task.get('execution_permissions',{}).get('automation',{'mode':'manual'})}
+         if method=='request.pause':return self._pause_request(p.get('reason') or 'host_pause')
+         if method in {'request.resume','request.revise'}:
+@@ -928,6 +966,7 @@
+         return result
+ 
+     async def _install(self,method,p):
++        self._ensure_request()
+         from agent_core.runtime_launch import installation_verification_checks, prepare_runtime_launch, RuntimeLaunchError
+         call_id=self._call_id(p);args=deepcopy(p.get('arguments') or {})
+         for field in ('approved','source','permit','host_token','access_projection','read_access','grants','mounts','execution_profile','profile','disable_sandbox','_biomind_probe'):

@@ -1,0 +1,116 @@
+TAP version 13
+# Subtest: T01-T09 native inventory and cross-directory ordinary work with real Domain
+ok 1 - T01-T09 native inventory and cross-directory ordinary work with real Domain
+  ---
+  duration_ms: 4720.485141
+  type: 'test'
+  ...
+# Subtest: T07 OS denial and T11 native edit error/truncation are genuine results
+ok 2 - T07 OS denial and T11 native edit error/truncation are genuine results
+  ---
+  duration_ms: 709.138264
+  type: 'test'
+  ...
+# Subtest: T10 native ! / !! context semantics and cancel reuse Pi
+ok 3 - T10 native ! / !! context semantics and cancel reuse Pi
+  ---
+  duration_ms: 777.6916
+  type: 'test'
+  ...
+# Subtest: T08 ordinary native tool gate does not require a BioMind task or Generate
+ok 4 - T08 ordinary native tool gate does not require a BioMind task or Generate
+  ---
+  duration_ms: 612.824983
+  type: 'test'
+  ...
+# Subtest: T02 native directory discovery and dynamically created companions
+ok 5 - T02 native directory discovery and dynamically created companions
+  ---
+  duration_ms: 745.33962
+  type: 'test'
+  ...
+# Subtest: T20 real Pi compact/tree/reopen/fork identity keeps native without copied permissions
+ok 6 - T20 real Pi compact/tree/reopen/fork identity keeps native without copied permissions
+  ---
+  duration_ms: 2067.609339
+  type: 'test'
+  ...
+# Subtest: E01 E02 E10 E17 N08 native binding reaches real executables; parallel calls and new requests stay isolated
+ok 7 - E01 E02 E10 E17 N08 native binding reaches real executables; parallel calls and new requests stay isolated
+  ---
+  duration_ms: 1733.493606
+  type: 'test'
+  ...
+# Subtest: native bash thin adapter preserves custom shell/prefix, raw pipeline semantics, streaming and timeout
+ok 8 - native bash thin adapter preserves custom shell/prefix, raw pipeline semantics, streaming and timeout
+  ---
+  duration_ms: 70.69527
+  type: 'test'
+  ...
+# Subtest: E02 E04 I01 N12 independent sessions read the same supplemental registration without executing checks
+ok 9 - E02 E04 I01 N12 independent sessions read the same supplemental registration without executing checks
+  ---
+  duration_ms: 1971.989364
+  type: 'test'
+  ...
+# Subtest: P16.a/c real Pi JSONL branch and real Python permission persistence reopen without replay; reload retains one real bridge
+ok 10 - P16.a/c real Pi JSONL branch and real Python permission persistence reopen without replay; reload retains one real bridge
+  ---
+  duration_ms: 1829.42703
+  type: 'test'
+  ...
+# Subtest: P08.c/P16.b a held real physical receipt arrives only after abort and legal branch switch, without new continuation
+ok 11 - P08.c/P16.b a held real physical receipt arrives only after abort and legal branch switch, without new continuation
+  ---
+  duration_ms: 1785.456569
+  type: 'test'
+  ...
+# Subtest: P11.d real domain AGENTS boundaries enter actual Pi payload once, while parent and escaped symlink bodies never enter
+ok 12 - P11.d real domain AGENTS boundaries enter actual Pi payload once, while parent and escaped symlink bodies never enter
+  ---
+  duration_ms: 796.236084
+  type: 'test'
+  ...
+# Subtest: P12.c real Wiki revocation projects only the selected Pi branch and preserves a current user quote containing the same sentinel
+ok 13 - P12.c real Wiki revocation projects only the selected Pi branch and preserves a current user quote containing the same sentinel
+  ---
+  duration_ms: 1838.478709
+  type: 'test'
+  ...
+# Subtest: L2 L3 fetch fixture: P03b/P11a/P11c real facts, approval refs and changed preference survive actual automatic compaction
+ok 14 - L2 L3 fetch fixture: P03b/P11a/P11c real facts, approval refs and changed preference survive actual automatic compaction
+  ---
+  duration_ms: 4024.251066
+  type: 'test'
+  ...
+# composite evidence: /tmp/biomind_impl_20261002_baseline/C-focused-evidence/facts-preference-compaction.json
+# Subtest: L2 L3 fetch fixture: P12a/P12b actual Wiki mixed summary then off reaches final wire with legal tool pairs
+ok 15 - L2 L3 fetch fixture: P12a/P12b actual Wiki mixed summary then off reaches final wire with legal tool pairs
+  ---
+  duration_ms: 1916.207314
+  type: 'test'
+  ...
+# composite evidence: /tmp/biomind_impl_20261002_baseline/C-focused-evidence/history-off-mixed-summary.json
+# Subtest: L2 L3 fetch fixture: P12a/P12b actual Wiki mixed summary then forget reaches final wire with legal tool pairs
+ok 16 - L2 L3 fetch fixture: P12a/P12b actual Wiki mixed summary then forget reaches final wire with legal tool pairs
+  ---
+  duration_ms: 1938.254024
+  type: 'test'
+  ...
+# composite evidence: /tmp/biomind_impl_20261002_baseline/C-focused-evidence/history-forget-mixed-summary.json
+# Subtest: L2 L3 fetch fixture: P09a/P15a real HTTP retry and accepted steer/follow-up drain before one final settled
+ok 17 - L2 L3 fetch fixture: P09a/P15a real HTTP retry and accepted steer/follow-up drain before one final settled
+  ---
+  duration_ms: 830.460616
+  type: 'test'
+  ...
+# composite evidence: /tmp/biomind_impl_20261002_baseline/C-focused-evidence/retry-steer-followup-settled.json
+1..17
+# tests 17
+# suites 0
+# pass 17
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 33483.691491

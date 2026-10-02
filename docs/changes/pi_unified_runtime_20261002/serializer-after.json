@@ -1,0 +1,326 @@
+{
+  "schema": "biomind-offline-serializer-comparison-v1",
+  "model": "deepseek-v4-flash",
+  "serializer": "installed @earendil-works/pi-ai openai-completions",
+  "input": "Use the registered synthetic runtime and report its stored identity. Do not run a health check.",
+  "fixture": "same synthetic select_environment call + final response; no skills; preference-v1",
+  "scope": "scripted provider and FakeDomain; real built-in serializer; no external provider/model calls",
+  "counts_unit": "UTF-16 characters and UTF-8 bytes, not tokens",
+  "profiles": [
+    {
+      "profile": "native",
+      "requests": [
+        {
+          "index": 1,
+          "body": {
+            "chars": 20066,
+            "bytes": 23734
+          },
+          "system": {
+            "chars": 4849,
+            "bytes": 6883
+          },
+          "tools": {
+            "chars": 14916,
+            "bytes": 16550
+          },
+          "history": {
+            "chars": 150,
+            "bytes": 150
+          },
+          "message_count": 2,
+          "tools_count": 22,
+          "tool_names": [
+            "ask_user",
+            "bash",
+            "cancel_run",
+            "edit",
+            "file_stat",
+            "find",
+            "grep",
+            "inspect_run",
+            "install_tool",
+            "ls",
+            "memory_read",
+            "memory_search",
+            "memory_write",
+            "probe_command",
+            "read",
+            "read_run_log",
+            "register_environment",
+            "run_command",
+            "select_environment",
+            "update_plan",
+            "wait_run",
+            "write"
+          ],
+          "tool_outputs": {
+            "chars": 2,
+            "bytes": 2
+          },
+          "roles": [
+            "system",
+            "user"
+          ]
+        },
+        {
+          "index": 2,
+          "body": {
+            "chars": 20540,
+            "bytes": 24208
+          },
+          "system": {
+            "chars": 4849,
+            "bytes": 6883
+          },
+          "tools": {
+            "chars": 14916,
+            "bytes": 16550
+          },
+          "history": {
+            "chars": 624,
+            "bytes": 624
+          },
+          "message_count": 4,
+          "tools_count": 22,
+          "tool_names": [
+            "ask_user",
+            "bash",
+            "cancel_run",
+            "edit",
+            "file_stat",
+            "find",
+            "grep",
+            "inspect_run",
+            "install_tool",
+            "ls",
+            "memory_read",
+            "memory_search",
+            "memory_write",
+            "probe_command",
+            "read",
+            "read_run_log",
+            "register_environment",
+            "run_command",
+            "select_environment",
+            "update_plan",
+            "wait_run",
+            "write"
+          ],
+          "tool_outputs": {
+            "chars": 273,
+            "bytes": 273
+          },
+          "roles": [
+            "system",
+            "user",
+            "assistant",
+            "tool"
+          ]
+        }
+      ],
+      "total_requests": 2,
+      "compaction_count": 0,
+      "retry_count": 0,
+      "tool_result_count": 1,
+      "domain_calls": [
+        "request.status",
+        "request.begin",
+        "request.begin",
+        "context.snapshot",
+        "environments.select",
+        "request.begin",
+        "context.snapshot",
+        "context.snapshot",
+        "context.snapshot"
+      ],
+      "totals": {
+        "body": {
+          "chars": 40606,
+          "bytes": 47942
+        },
+        "system": {
+          "chars": 9698,
+          "bytes": 13766
+        },
+        "tools": {
+          "chars": 29832,
+          "bytes": 33100
+        },
+        "history": {
+          "chars": 774,
+          "bytes": 774
+        },
+        "tool_outputs": {
+          "chars": 275,
+          "bytes": 275
+        }
+      }
+    },
+    {
+      "profile": "protected",
+      "requests": [
+        {
+          "index": 1,
+          "body": {
+            "chars": 21962,
+            "bytes": 26304
+          },
+          "system": {
+            "chars": 5044,
+            "bytes": 7364
+          },
+          "tools": {
+            "chars": 16617,
+            "bytes": 18639
+          },
+          "history": {
+            "chars": 150,
+            "bytes": 150
+          },
+          "message_count": 2,
+          "tools_count": 23,
+          "tool_names": [
+            "ask_user",
+            "cancel_run",
+            "edit",
+            "file_stat",
+            "find",
+            "grep",
+            "inspect_run",
+            "install_tool",
+            "ls",
+            "memory_read",
+            "memory_search",
+            "memory_write",
+            "probe_command",
+            "read",
+            "read_run_log",
+            "register_environment",
+            "request_path_access",
+            "rg",
+            "run_command",
+            "select_environment",
+            "update_plan",
+            "wait_run",
+            "write"
+          ],
+          "tool_outputs": {
+            "chars": 2,
+            "bytes": 2
+          },
+          "roles": [
+            "system",
+            "user"
+          ]
+        },
+        {
+          "index": 2,
+          "body": {
+            "chars": 22436,
+            "bytes": 26778
+          },
+          "system": {
+            "chars": 5044,
+            "bytes": 7364
+          },
+          "tools": {
+            "chars": 16617,
+            "bytes": 18639
+          },
+          "history": {
+            "chars": 624,
+            "bytes": 624
+          },
+          "message_count": 4,
+          "tools_count": 23,
+          "tool_names": [
+            "ask_user",
+            "cancel_run",
+            "edit",
+            "file_stat",
+            "find",
+            "grep",
+            "inspect_run",
+            "install_tool",
+            "ls",
+            "memory_read",
+            "memory_search",
+            "memory_write",
+            "probe_command",
+            "read",
+            "read_run_log",
+            "register_environment",
+            "request_path_access",
+            "rg",
+            "run_command",
+            "select_environment",
+            "update_plan",
+            "wait_run",
+            "write"
+          ],
+          "tool_outputs": {
+            "chars": 273,
+            "bytes": 273
+          },
+          "roles": [
+            "system",
+            "user",
+            "assistant",
+            "tool"
+          ]
+        }
+      ],
+      "total_requests": 2,
+      "compaction_count": 0,
+      "retry_count": 0,
+      "tool_result_count": 1,
+      "domain_calls": [
+        "request.status",
+        "request.begin",
+        "permissions.status",
+        "request.begin",
+        "context.snapshot",
+        "environments.select",
+        "request.begin",
+        "context.snapshot",
+        "context.snapshot",
+        "context.snapshot"
+      ],
+      "totals": {
+        "body": {
+          "chars": 44398,
+          "bytes": 53082
+        },
+        "system": {
+          "chars": 10088,
+          "bytes": 14728
+        },
+        "tools": {
+          "chars": 33234,
+          "bytes": 37278
+        },
+        "history": {
+          "chars": 774,
+          "bytes": 774
+        },
+        "tool_outputs": {
+          "chars": 275,
+          "bytes": 275
+        }
+      }
+    }
+  ],
+  "source_sha256": {
+    "dist/extensions/biomind.js": "cc372f138bc425fcff28e2d7a394ffcd5eb01dc18b80a76e9df087973db07618",
+    "dist/native-workflow.js": "918aa28e9e78513cc32992048b4a535106bb16f0f3aa02b40a6756ee0ef1d115",
+    "dist/tests/extension-harness.js": "6117a13d4df0c04f3ebe74071dd53d8087c59a2ae529087bb4aee34821895ded",
+    "dist/model-config.js": "04acb99c16ab3b340f344ea28b8fe82b14dfce67c46b6877141d0a978baf5b46"
+  },
+  "limitations": [
+    "Does not prove natural model behavior.",
+    "No token counter; no token savings claim.",
+    "Fresh session/request identifiers vary at fixed formats.",
+    "No compaction or retry was triggered by this bounded fixture."
+  ]
+}

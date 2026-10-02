@@ -1,0 +1,32 @@
+--- a/agent_core/execution_permissions.py
++++ b/agent_core/execution_permissions.py
+@@ -713,13 +713,26 @@
+     return live
+ 
+ 
++def request_allows_command(state, arguments):
++    """Pi's main request owns work; historical non-Pi admission stays compatible.
++
++    This is request admission only. It grants no path, execution permit or
++    installation consent and never interprets model text as host authority.
++    """
++    task=state.get('task_state') or {}
++    admission=task.get('intent_admission') or {}
++    if task.get('pi_request_id'):
++        return bool(admission.get('request_kind')=='work' and admission.get('source')=='pi_host_request'
++                    and task.get('current_request_key')==task['pi_request_id'] and not task.get('pi_pause'))
++    return bool(admission.get('request_kind')=='execute' or
++                arguments.get('_biomind_probe') is True and admission.get('request_kind')=='consult')
++
++
+ async def authorize_command(service,arguments,*,task_id,call_id,cancel_event=None):
+     from agent_core.plan_tracker import load_plan_state
+     state=load_plan_state(service.data_path,task_id)
+-    admission=(state.get('task_state') or {}).get('intent_admission') or {}
+     review=(state.get('task_state') or {}).get('result_review') or {}
+-    probe=arguments.get('_biomind_probe') is True and admission.get('request_kind')=='consult'
+-    if (admission.get('request_kind')!='execute' and not probe) or review.get('request_scope')==_scope(state):
++    if not request_allows_command(state,arguments) or review.get('request_scope')==_scope(state):
+         raise PermissionDenied('CURRENT_REQUEST_FORBIDS_EXECUTION')
+     call_id=derive_permission_call_id(call_id,'command')
+     payload=command_payload(service,arguments,task_id,call_id=call_id)

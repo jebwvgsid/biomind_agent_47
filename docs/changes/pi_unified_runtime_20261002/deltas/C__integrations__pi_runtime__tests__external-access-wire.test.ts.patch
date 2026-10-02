@@ -1,0 +1,25 @@
+--- a/integrations/pi_runtime/tests/external-access-wire.test.ts
++++ b/integrations/pi_runtime/tests/external-access-wire.test.ts
+@@ -109,11 +109,10 @@
+   assert(event, `missing real Pi tool result ${id}`); return event.result;
+ }
+ 
+-test('A local wire: original project, one scope approval, two sequential stats, Pi read and Consult→Generate reuse', async () => {
+-  const f = await fixture('external-wire-scope-and-handoff', input => [
++test('A local wire: original project, one scope approval, two sequential stats, Pi read and continuous same-request reuse', async () => {
++  const f = await fixture('external-wire-scope-continuity', input => [
+     [...call('leaf-stat', 'file_stat', { path: input.leaf }), ...call('bud-stat', 'file_stat', { path: input.bud })],
+     call('leaf-content', 'read', { path: input.leaf, limit: 1 }),
+-    call('handoff', 'handoff_generate', { goal: 'Continue the same synthetic analysis request' }),
+     async () => { await writeFile(input.leaf, 'LEAF_FRESH\nsecond line\n');
+       return [...call('bud-content', 'read', { path: input.bud }), ...call('leaf-fresh', 'read', { path: input.leaf, limit: 1 })]; },
+     context => { assert.match(JSON.stringify(context), /BUD_ORIGINAL/); assert.match(JSON.stringify(context), /LEAF_FRESH/); return text('Synthetic reads completed in the original project.'); },
+@@ -134,7 +133,7 @@
+     assert.equal(reads[0].result.status, 'waiting_approval'); assert.equal(reads[1].result.status, 'completed');
+     assert(reads.every(row => row.privileged && row.requestId === f.requestId()));
+     assert.deepEqual([...new Map(calls.filter(row => row.method === 'request.begin').map(row => [row.params.role, [row.params.role, row.params.request_id]])).values()],
+-      [['consult', f.requestId()], ['generate', f.requestId()]]);
++      [['main', f.requestId()]]);
+     for (const id of ['leaf-content','bud-content','leaf-fresh']) assert.equal(toolResult(f,id).details?.write_path, undefined);
+     assert.match(JSON.stringify(toolResult(f, 'leaf-content')), /LEAF_ORIGINAL/);
+     assert.match(JSON.stringify(toolResult(f, 'leaf-fresh')), /LEAF_FRESH/);

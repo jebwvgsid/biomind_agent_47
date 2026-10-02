@@ -1,0 +1,80 @@
+--- /dev/null
++++ b/integrations/pi_runtime/tests/test_main_request_admission_20261002.py
+@@ -0,0 +1,77 @@
++"""C: host-owned main request keeps original native/protected permissions."""
++import asyncio
++from pathlib import Path
++import sys
++import tempfile
++import unittest
++sys.path.insert(0,str(Path(__file__).resolve().parent))
++from test_python_domain import DomainService,REPO,permissions
++
++
++class MainRequestAdmission(unittest.IsolatedAsyncioTestCase):
++    async def asyncSetUp(self):
++        self.tmp=tempfile.TemporaryDirectory(prefix='biomind-main-admission-');self.root=Path(self.tmp.name)
++        self.registry=self.root/'registry.json';self.registry.write_text('{"environments":{},"tools":{}}')
++        self.prefs=self.root/'prefs';self.prefs.write_text('fixture');self.services=[]
++
++    async def asyncTearDown(self):
++        for service in self.services:await service.disconnected()
++        self.tmp.cleanup()
++
++    async def service(self,profile):
++        s=DomainService(cwd=self.root,data_root=self.root/('data-'+profile),install_root=REPO,session_id=profile,
++            registry_path=self.registry,preferences_path=self.prefs,skills_root=self.root/'skills',execution_profile=profile)
++        self.services.append(s)
++        await s.call('request.begin',{'request_id':'main-request','role':'main'},host_token=s.host_token)
++        self.assertEqual(s._state()['task_state']['intent_admission']['request_kind'],'work')
++        return s
++
++    async def approve(self,s,pending):
++        p=pending['approval']
++        await s.call('approval.decide',{**{k:p[k] for k in ('request_id','action_hash','request_scope')},'choice':'y'},host_token=s.host_token)
++
++    async def terminal(self,s,r):
++        for _ in range(100):
++            if r.get('terminal'):return r
++            r=await s.call('exec.wait',{'run_ref':r['run_ref'],'max_wait_ms':100})
++        self.fail(str(r))
++
++    async def test_native_main_executes_without_per_action_permission(self):
++        s=await self.service('native')
++        r=await self.terminal(s,await s.call('exec.start',{'call_id':'main-native','arguments':{'argv':['/bin/echo','MAIN_NATIVE']}}))
++        self.assertEqual(r.get('exit_code'),0,r)
++        self.assertFalse(s._state()['task_state']['execution_permissions']['requests'])
++
++    async def test_protected_main_executes_only_after_existing_host_permission(self):
++        s=await self.service('protected');p={'call_id':'main-protected','arguments':{'cmd':'printf allowed > main-output'}}
++        waiting=await s.call('exec.start',p)
++        self.assertEqual(waiting['status'],'waiting_approval');self.assertFalse((self.root/'main-output').exists())
++        await self.approve(s,waiting)
++        r=await self.terminal(s,await s.call('exec.start',p))
++        self.assertEqual(r.get('exit_code'),0,r);self.assertEqual((self.root/'main-output').read_text(),'allowed')
++
++    async def test_host_probe_works_under_main_with_original_protected_boundary(self):
++        s=await self.service('protected');p={'call_id':'main-probe','arguments':{'argv':['/bin/echo','MAIN_PROBE']}}
++        waiting=await s.call('exec.probe',p,host_token=s.host_token)
++        self.assertEqual(waiting['status'],'waiting_approval',waiting)
++        await self.approve(s,waiting)
++        r=await self.terminal(s,await s.call('exec.probe',p,host_token=s.host_token))
++        self.assertEqual(r.get('exit_code'),0,r)
++        rows=s._state()['task_state']['execution_permissions']['requests']
++        self.assertTrue(next(iter(rows.values()))['payload']['access_projection']['probe'])
++
++    def test_non_pi_legacy_execute_retained_without_forging_generate(self):
++        def legacy(kind):return {'task_state':{'intent_admission':{'request_kind':kind}}}
++        self.assertTrue(permissions.request_allows_command(legacy('execute'),{}))
++        self.assertFalse(permissions.request_allows_command(legacy('consult'),{}))
++        self.assertTrue(permissions.request_allows_command(legacy('consult'),{'_biomind_probe':True}))
++        state={'task_state':{'pi_request_id':'r','current_request_key':'r',
++                'intent_admission':{'request_kind':'work','source':'model_text'}}}
++        self.assertFalse(permissions.request_allows_command(state,{}))
++        state['task_state']['intent_admission']['source']='pi_host_request'
++        self.assertTrue(permissions.request_allows_command(state,{}))
++        state['task_state']['pi_pause']={'reason':'explicit_stop'}
++        self.assertFalse(permissions.request_allows_command(state,{}))
++
++
++if __name__=='__main__':unittest.main()

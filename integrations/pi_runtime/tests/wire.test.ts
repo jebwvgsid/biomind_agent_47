@@ -186,8 +186,9 @@ test(`${LAYER}: Chinese SSE, actual extension tool pair and thinking on/off seri
   assert.equal(f.requests[0].reasoning_effort, 'high');
   assert.equal(f.requests[0].stream, true);
   const names = f.requests[0].tools!.map(tool => tool.function.name);
-  assert(names.includes('read') && names.includes('handoff_generate'));
-  assert(!names.includes('bash') && !names.includes('run_command'), 'Consult has no raw execution bypass');
+  assert(names.includes('read') && names.includes('run_command') && names.includes('install_tool'));
+  assert(!names.includes('handoff_generate'));
+  assert(!names.includes('bash'), 'protected profile keeps its execution permission boundary');
   assertWirePairs(f.requests[1].messages);
   const wireTool = f.requests[1].messages.find(message => message.role === 'tool');
   assert(wireTool && wireTool.tool_call_id === 'wire-read-1');

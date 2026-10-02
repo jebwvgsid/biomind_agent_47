@@ -26,7 +26,7 @@ export const isCanaryMode = () => Boolean(process.env.BIOMIND_PI_CANARY_LEDGER |
 export function canaryTools(names: readonly string[]): string[] {
   if (!isCanaryMode()) return [...names];
   const scenario = process.env.BIOMIND_PI_CANARY_SCENARIO;
-  const narrowR2 = new Set(['ask_user', 'handoff_generate', 'read', 'file_stat', 'write', 'edit']);
+  const narrowR2 = new Set(['ask_user', 'read', 'file_stat', 'write', 'edit']);
   return names.filter(name => !name.startsWith('memory_') && !['install_tool', 'maintenance_submit', 'update_plan'].includes(name)
     && (scenario !== 'R2' || narrowR2.has(name)) && (scenario !== 'R3' || !['write', 'edit'].includes(name)));
 }

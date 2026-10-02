@@ -1,9 +1,9 @@
 // Actual installed serializer, synthetic complete request chain, offline only.
 import fs from 'node:fs';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-const root='/public/home/liusiqi/03.毕设/Biomind_v1';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../../..');
 const runtime=path.join(root,'integrations/pi_runtime');
 const fixture='/tmp/biomind_impl_20261002_baseline/serializer-project';
 fs.mkdirSync(fixture,{recursive:true});

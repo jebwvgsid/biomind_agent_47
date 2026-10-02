@@ -1,0 +1,46 @@
+--- /dev/null
++++ b/integrations/pi_runtime/tests/test_diagnostic_budget_20261002.py
+@@ -0,0 +1,43 @@
++"""Diagnostic budget admission; explicit QC and formal runs are separate."""
++import asyncio
++from pathlib import Path
++import sys
++import unittest
++from unittest.mock import patch
++sys.path.insert(0,str(Path(__file__).resolve().parent))
++import test_environment_binding_20261002 as binding_fixture
++from domain_adapter.service import DomainError
++
++class DiagnosticBudget(binding_fixture.EnvironmentBinding):
++    # Inherit setup/helpers, not the B tests.
++    async def test_budget_reservation_replay_and_fresh_request(self):
++        p={'call_id':'diagnostic-one','arguments':{'argv':['/bin/echo','specific missing package'], 'environment_diagnostic':True}}
++        one=await self.terminal(await self.s.call('exec.probe',p,host_token=self.s.host_token))
++        replay=await self.terminal(await self.s.call('exec.probe',p,host_token=self.s.host_token))
++        self.assertEqual(one['run_ref'],replay['run_ref'])
++        two=await self.terminal(await self.s.call('exec.probe',{**p,'call_id':'diagnostic-two'},host_token=self.s.host_token))
++        self.assertEqual(two['exit_code'],0)
++        with patch('subprocess.Popen',side_effect=AssertionError('budget overrun launched')):
++            with self.assertRaisesRegex(DomainError,'BUDGET_EXHAUSTED'):
++                await self.s.call('exec.probe',{**p,'call_id':'diagnostic-three'},host_token=self.s.host_token)
++        explicit=await self.terminal(await self.s.call('exec.probe',{'call_id':'user-required-QC','arguments':{'argv':['/bin/echo','user QC'],'timeout_ms':45000}},host_token=self.s.host_token))
++        self.assertEqual(explicit['exit_code'],0)
++        formal=await self.terminal(await self.s.call('exec.start',{'call_id':'formal-not-diagnostic','arguments':{'argv':['/bin/echo','analysis fixture'],'timeout_ms':60000}}))
++        self.assertEqual(formal['exit_code'],0)
++        await self.begin('new-request')
++        fresh=await self.terminal(await self.s.call('exec.probe',p,host_token=self.s.host_token))
++        self.assertEqual(fresh['exit_code'],0)
++        self.assertNotEqual(fresh['run_ref'],one['run_ref'])
++
++    async def test_single_limit_and_managed_timeout_are_real(self):
++        with self.assertRaisesRegex(DomainError,'SINGLE_BUDGET_EXCEEDED'):
++            await self.s.call('exec.probe',{'call_id':'too-long','arguments':{'argv':['/bin/true'],'environment_diagnostic':True,'timeout_ms':15001}},host_token=self.s.host_token)
++        result=await self.terminal(await self.s.call('exec.probe',{'call_id':'short-timeout','arguments':{'argv':['/bin/sleep','5'],'environment_diagnostic':True,'timeout_ms':100}},host_token=self.s.host_token))
++        self.assertTrue(result['terminal'],result)
++        self.assertTrue(result.get('cleanup_confirmed'),result)
++        self.assertTrue(result.get('timed_out') or 'timeout' in str(result).lower(),result)
++
++# unittest inheritance otherwise repeats the ten B cases.
++for name in list(vars(binding_fixture.EnvironmentBinding)):
++    if name.startswith('test_'):setattr(DiagnosticBudget,name,None)
++if __name__=='__main__':unittest.main(verbosity=2)

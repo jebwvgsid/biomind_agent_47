@@ -103,7 +103,7 @@ export async function seedWiki(files: Awaited<ReturnType<typeof createFixtureFil
   const domain = new ObservedDomain(domainOptions(files, randomUUID(), true));
   const requestId = randomUUID();
   try {
-    await domain.hostCall('request.begin', { request_id: requestId, role: 'generate' });
+    await domain.hostCall('request.begin', { request_id: requestId, role: 'main' });
     const args = { call_id: 'fixture-seed', operation: 'create', path: 'methods/wire-source.md', content: body };
     const pending = await domain.call('memory.write', args, { requestId }) as Frame;
     assert.equal(pending.status, 'waiting_approval'); const proposal = pending.approval;

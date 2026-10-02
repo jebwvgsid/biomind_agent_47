@@ -1,0 +1,224 @@
+[
+  {
+    "file": "agent_core/action_runtime.py",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__agent_core__action_runtime.py.patch",
+    "apply_error": "error: patch failed: agent_core/action_runtime.py:1447\nerror: agent_core/action_runtime.py: patch does not apply\n"
+  },
+  {
+    "file": "agent_core/execution_permissions.py",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__agent_core__execution_permissions.py.patch",
+    "apply_error": "error: patch failed: agent_core/execution_permissions.py:713\nerror: agent_core/execution_permissions.py: patch does not apply\n"
+  },
+  {
+    "file": "agent_core/registered_runtime.py",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__agent_core__registered_runtime.py.patch",
+    "apply_error": "error: patch failed: agent_core/registered_runtime.py:297\nerror: agent_core/registered_runtime.py: patch does not apply\n"
+  },
+  {
+    "file": "integrations/pi_runtime/domain_adapter/archive_observation.py",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__domain_adapter__archive_observation.py.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "integrations/pi_runtime/domain_adapter/service.py",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__domain_adapter__service.py.patch",
+    "apply_error": "error: patch failed: integrations/pi_runtime/domain_adapter/service.py:335\nerror: integrations/pi_runtime/domain_adapter/service.py: patch does not apply\n"
+  },
+  {
+    "file": "integrations/pi_runtime/extensions/biomind.ts",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__extensions__biomind.ts.patch",
+    "apply_error": "error: patch failed: integrations/pi_runtime/extensions/biomind.ts:1\nerror: integrations/pi_runtime/extensions/biomind.ts: patch does not apply\n"
+  },
+  {
+    "file": "integrations/pi_runtime/native-workflow.ts",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__native-workflow.ts.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "integrations/pi_runtime/product-ui.ts",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__product-ui.ts.patch",
+    "apply_error": "error: patch failed: integrations/pi_runtime/product-ui.ts:6\nerror: integrations/pi_runtime/product-ui.ts: patch does not apply\n"
+  },
+  {
+    "file": "integrations/pi_runtime/stage-context.ts",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__stage-context.ts.patch",
+    "apply_error": "error: integrations/pi_runtime/stage-context.ts: does not exist in index\n"
+  },
+  {
+    "file": "integrations/pi_runtime/tests/audit-domain-stage.test.ts",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__tests__audit-domain-stage.test.ts.patch",
+    "apply_error": "error: integrations/pi_runtime/tests/audit-domain-stage.test.ts: does not exist in index\n"
+  },
+  {
+    "file": "integrations/pi_runtime/tests/audit-fixes.test.ts",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__tests__audit-fixes.test.ts.patch",
+    "apply_error": "error: integrations/pi_runtime/tests/audit-fixes.test.ts: does not exist in index\n"
+  },
+  {
+    "file": "integrations/pi_runtime/tests/biomind-extension.test.ts",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__tests__biomind-extension.test.ts.patch",
+    "apply_error": "error: patch failed: integrations/pi_runtime/tests/biomind-extension.test.ts:39\nerror: integrations/pi_runtime/tests/biomind-extension.test.ts: patch does not apply\n"
+  },
+  {
+    "file": "integrations/pi_runtime/tests/extension-harness.ts",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__tests__extension-harness.ts.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "integrations/pi_runtime/tests/external-access-wire.test.ts",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__tests__external-access-wire.test.ts.patch",
+    "apply_error": "error: integrations/pi_runtime/tests/external-access-wire.test.ts: does not exist in index\n"
+  },
+  {
+    "file": "integrations/pi_runtime/tests/external-read-ui.test.ts",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__tests__external-read-ui.test.ts.patch",
+    "apply_error": "error: integrations/pi_runtime/tests/external-read-ui.test.ts: does not exist in index\n"
+  },
+  {
+    "file": "integrations/pi_runtime/tests/handoff-wire.test.ts",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__tests__handoff-wire.test.ts.patch",
+    "apply_error": "error: patch failed: integrations/pi_runtime/tests/handoff-wire.test.ts:76\nerror: integrations/pi_runtime/tests/handoff-wire.test.ts: patch does not apply\n"
+  },
+  {
+    "file": "integrations/pi_runtime/tests/host.test.ts",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__tests__host.test.ts.patch",
+    "apply_error": "error: patch failed: integrations/pi_runtime/tests/host.test.ts:11\nerror: integrations/pi_runtime/tests/host.test.ts: patch does not apply\n"
+  },
+  {
+    "file": "integrations/pi_runtime/tests/native-discovery.test.ts",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__tests__native-discovery.test.ts.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "integrations/pi_runtime/tests/native-mutation.test.ts",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__tests__native-mutation.test.ts.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "integrations/pi_runtime/tests/native-skills-read.test.ts",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__tests__native-skills-read.test.ts.patch",
+    "apply_error": "error: patch failed: integrations/pi_runtime/tests/native-skills-read.test.ts:29\nerror: integrations/pi_runtime/tests/native-skills-read.test.ts: patch does not apply\n"
+  },
+  {
+    "file": "integrations/pi_runtime/tests/native-workflow.test.ts",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__tests__native-workflow.test.ts.patch",
+    "apply_error": "error: integrations/pi_runtime/tests/native-workflow.test.ts: does not exist in index\n"
+  },
+  {
+    "file": "integrations/pi_runtime/tests/product-ui.test.ts",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__tests__product-ui.test.ts.patch",
+    "apply_error": "error: patch failed: integrations/pi_runtime/tests/product-ui.test.ts:155\nerror: integrations/pi_runtime/tests/product-ui.test.ts: patch does not apply\n"
+  },
+  {
+    "file": "integrations/pi_runtime/tests/runtime-binding.test.ts",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__tests__runtime-binding.test.ts.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "integrations/pi_runtime/tests/session-domain.test.ts",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__tests__session-domain.test.ts.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "integrations/pi_runtime/tests/session-persistence.test.ts",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__tests__session-persistence.test.ts.patch",
+    "apply_error": "error: patch failed: integrations/pi_runtime/tests/session-persistence.test.ts:2\nerror: integrations/pi_runtime/tests/session-persistence.test.ts: patch does not apply\n"
+  },
+  {
+    "file": "integrations/pi_runtime/tests/test_diagnostic_budget_20261002.py",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__tests__test_diagnostic_budget_20261002.py.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "integrations/pi_runtime/tests/test_environment_binding_20261002.py",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__tests__test_environment_binding_20261002.py.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "integrations/pi_runtime/tests/test_main_request_admission_20261002.py",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__tests__test_main_request_admission_20261002.py.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "integrations/pi_runtime/tests/test_runtime_diagnostics_20261002.py",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__tests__test_runtime_diagnostics_20261002.py.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "integrations/pi_runtime/tests/unified-agent.test.ts",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__tests__unified-agent.test.ts.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "integrations/pi_runtime/tests/usage-boundary.test.ts",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__tests__usage-boundary.test.ts.patch",
+    "apply_error": "error: patch failed: integrations/pi_runtime/tests/usage-boundary.test.ts:281\nerror: integrations/pi_runtime/tests/usage-boundary.test.ts: patch does not apply\n"
+  },
+  {
+    "file": "integrations/pi_runtime/tests/wire-composite-harness.ts",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__tests__wire-composite-harness.ts.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "integrations/pi_runtime/tests/wire-composites.test.ts",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__tests__wire-composites.test.ts.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "integrations/pi_runtime/tests/wire.test.ts",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__tests__wire.test.ts.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "integrations/pi_runtime/usage-observer.ts",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__integrations__pi_runtime__usage-observer.ts.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "skills/enrichment-analysis/SKILL.md",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__skills__enrichment-analysis__SKILL.md.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "tests/test_scientific_delivery_20261002.py",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/C__tests__test_scientific_delivery_20261002.py.patch",
+    "apply_error": ""
+  }
+]

@@ -97,13 +97,11 @@ Do not default to the whole genome unless the experiment genuinely tested the wh
 ## Workflow
 
 1. Confirm species, ID type, foreground, background, and annotation source.
-2. Verify the execution environment. Python QC scripts use only the standard library. For the R wrapper, prefer a working existing R runner:
+2. Reuse an applicable current runtime binding, or query registered capabilities for the required R/Python entry. Python QC scripts use only the standard library. Ordinary reuse does not run `which`, version queries, imports, healthchecks, or environment scans. Registration is a launch reference, not a fresh health result; a miss does not prove software is absent. Use bounded location metadata and supplement an existing installation before considering installation.
 
-```bash
-Rscript --version || Rscript --version || Rscript --version
-```
+Base-R ORA does not require an `fgsea` check. GSEA needs its declared dependency. Preserve any explicit user prerequisite (including an R/fgsea check) and stop condition: when a required check fails, stop before the scientific command and report that failure. Scientific input QC below remains required and is distinct from routine environment testing.
 
-If no R runner is available, run the Python QC/build steps and write `blocked_report.md` with the missing R dependency.
+Use `run_command` with the applicable binding for scientific jobs and complete persistent logs. Small environment-related `bash` calls must pass `binding_ref`; bare bash remains the host shell and a previous export/activate is not a guarantee for another tool call. If required software remains unresolved after bounded lookup, report the checked scope and blocker; do not install or repeat scans automatically.
 3. If no `TERM2GENE` exists but an annotation table is available, build it:
 
 ```bash
@@ -237,3 +235,9 @@ For blocked runs:
 Read `references/reporting_standard.md` before writing `report.md`.
 
 The report must include species, gene ID type, genome/database version, foreground count, background count, mapped count, mapping rate, database used, method, statistical test, multiple-testing correction, threshold, number of significant terms, top biological themes, limitations, and exact commands used.
+
+### Execution and delivery evidence
+
+For an analysis script, keep the analysis exit status before printing a summary. For example, in Bash: `Rscript analysis.R >analysis.stdout.log 2>analysis.stderr.log; rc=$?; cat analysis.stderr.log; exit "$rc"`. If a pipeline is needed, explicitly preserve its upstream status with `PIPESTATUS` or an appropriate local `pipefail`; the shell tool itself keeps native pipeline defaults. A required check can precede analysis with `check_command && analysis_command`, so a failing prerequisite starts no analysis.
+
+Report the actual run reference, current inputs and required outputs/QC. A zero exit status, a pre-existing file, or a settled agent is not scientific validation. Validate the requested fields, samples and output scope; an empty enrichment result can be scientifically valid and must be explained under the selected method, not rejected by a universal nonempty rule. Preserve task-requested report/reproduce/status files, and do not re-run a reproduce script merely to deliver it.

@@ -102,7 +102,9 @@ export async function createHarness(options: HarnessOptions = {}) {
   await resourceLoader.reload();
   assert.deepEqual(resourceLoader.getExtensions().errors, []);
   assert.equal(resourceLoader.getExtensions().extensions.length, 1, 'must load the production extension');
-  assert(resourceLoader.getExtensions().extensions[0].tools.has('handoff_generate'));
+  assert(!resourceLoader.getExtensions().extensions[0].tools.has('handoff_generate'));
+  assert(resourceLoader.getExtensions().extensions[0].tools.has('install_tool'));
+  assert(resourceLoader.getExtensions().extensions[0].tools.has('register_environment'));
   const credentials = { async read() { return undefined; }, async list() { return []; },
     async modify() { throw new Error('Credential writes forbidden'); }, async delete() { throw new Error('Credential writes forbidden'); } };
   const modelRuntime = await ModelRuntime.create({ credentials, modelsPath: null, allowModelNetwork: false, refreshOnCreate: false });

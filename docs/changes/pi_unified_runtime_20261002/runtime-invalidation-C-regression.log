@@ -1,0 +1,6 @@
+test_r_missing_package_is_local_and_cancel_input_errors_ignored (__main__.RuntimeCandidateTests.test_r_missing_package_is_local_and_cancel_input_errors_ignored) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.008s
+
+OK

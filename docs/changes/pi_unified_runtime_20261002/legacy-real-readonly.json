@@ -1,0 +1,77 @@
+{
+  "status": "PASS",
+  "checked_at": "2026-10-02T05:45:58.939Z",
+  "scope": "read copied real JSONL with SessionManager.open and requestFromBranch only",
+  "source": "two exact historical session paths cited by immutable audit/case_evidence.json",
+  "production_session_resumed": false,
+  "production_science_executed": false,
+  "network_and_process_attempts": [],
+  "cases": [
+    {
+      "case": "TAD",
+      "source_path": "/public/home/liusiqi/.pi/agent/sessions/--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9--/2026-10-01T08-02-03-487Z_01a0f67c-1a5d-779d-8a0b-9542b5a26c76.jsonl",
+      "source_sha256": "f4edb8d4c5a0d58173db38324d05bb0a07fea0ba7a0f541bd3af1b33c7bf51bf",
+      "audit_sha256": "f4edb8d4c5a0d58173db38324d05bb0a07fea0ba7a0f541bd3af1b33c7bf51bf",
+      "matches_audit_sha256": true,
+      "original_unchanged": true,
+      "temporary_copy": "/tmp/biomind-real-legacy-readonly-opE2Ng/TAD/2026-10-01T08-02-03-487Z_01a0f67c-1a5d-779d-8a0b-9542b5a26c76.jsonl",
+      "copy_sha256": "f4edb8d4c5a0d58173db38324d05bb0a07fea0ba7a0f541bd3af1b33c7bf51bf",
+      "session_id": "01a0f67c-1a5d-779d-8a0b-9542b5a26c76",
+      "request_id": "18a5771a-2a47-477b-8999-c2b898f29b9d",
+      "decoded_role": "Main",
+      "historical_role": "Consult",
+      "status": "settled",
+      "entry_count": 91,
+      "compaction_entries": 0,
+      "user_message_count": 1,
+      "user_text_sha256": "b077b824464339b016e7cc2bc572c3bfd7bbcfb6938365871f667367dea20c4b",
+      "user_texts_preserved": true,
+      "user_conditions": [
+        {
+          "literal": "TAD",
+          "present": true
+        },
+        {
+          "literal": "停止",
+          "present": true
+        }
+      ],
+      "created_agent_session": false,
+      "domain_started": false,
+      "commands_replayed": false
+    },
+    {
+      "case": "ORA",
+      "source_path": "/public/home/liusiqi/.pi/agent/sessions/--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9--/2026-10-01T08-19-56-956Z_01a0f68c-7b84-70ca-bfcd-d234aa37b81b.jsonl",
+      "source_sha256": "23a5f586623f7a94e544da1d32af6ba8e871e7946764eabf5e5dd7048f48ad39",
+      "audit_sha256": "23a5f586623f7a94e544da1d32af6ba8e871e7946764eabf5e5dd7048f48ad39",
+      "matches_audit_sha256": true,
+      "original_unchanged": true,
+      "temporary_copy": "/tmp/biomind-real-legacy-readonly-opE2Ng/ORA/2026-10-01T08-19-56-956Z_01a0f68c-7b84-70ca-bfcd-d234aa37b81b.jsonl",
+      "copy_sha256": "23a5f586623f7a94e544da1d32af6ba8e871e7946764eabf5e5dd7048f48ad39",
+      "session_id": "01a0f68c-7b84-70ca-bfcd-d234aa37b81b",
+      "request_id": "db4f89eb-08be-4259-ad79-95411ce778f5",
+      "decoded_role": "Main",
+      "historical_role": "Consult",
+      "status": "settled",
+      "entry_count": 141,
+      "compaction_entries": 0,
+      "user_message_count": 1,
+      "user_text_sha256": "696d03efc947c7fc0bfb8ea3bf9954e891be5fa6e64b0d324f74c5582c294ea7",
+      "user_texts_preserved": true,
+      "user_conditions": [
+        {
+          "literal": "fgsea",
+          "present": true
+        },
+        {
+          "literal": "停止",
+          "present": true
+        }
+      ],
+      "created_agent_session": false,
+      "domain_started": false,
+      "commands_replayed": false
+    }
+  ]
+}

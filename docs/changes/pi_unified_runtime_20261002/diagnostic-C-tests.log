@@ -1,0 +1,7 @@
+test_budget_reservation_replay_and_fresh_request (test_diagnostic_budget_20261002.DiagnosticBudget.test_budget_reservation_replay_and_fresh_request) ... ok
+test_single_limit_and_managed_timeout_are_real (test_diagnostic_budget_20261002.DiagnosticBudget.test_single_limit_and_managed_timeout_are_real) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.723s
+
+OK

@@ -1,0 +1,80 @@
+{
+  "first_node_suite": {
+    "tests": 173,
+    "pass": 148,
+    "fail": 25,
+    "failures": [
+      "not ok 79 - real host archival projection uses the existing SQLite writer while history reads stay disabled",
+      "not ok 83 - real product reads synthetic historical evidence without replaying or changing old permission, run or output facts",
+      "not ok 84 - real headless control: settings, approved worker, observation and scoped cancel without extra model calls",
+      "not ok 85 - P06f actual host allows scoped native read, rejects bash and requires approval for native write/edit",
+      "not ok 86 - P06f actual host explicit memory_write approve uses correlated human approval and original Wiki store",
+      "not ok 87 - P06f actual host explicit memory_write deny uses correlated human approval and original Wiki store",
+      "not ok 89 - P06f actual host helper shell -u deny remains behind original formal command approval",
+      "not ok 91 - P06f actual host helper argv -u deny remains behind original formal command approval",
+      "not ok 92 - EXTERNAL_ACCESS local JSON host stdio resumes original scope once and exposes the same permission ledger",
+      "not ok 93 - LATEST E14 M01 M02 M06 M08 real biomind skill-only direct execution without implicit probes",
+      "not ok 94 - LATEST R01 R02 R04 R05 R06 M04 real biomind records to requested report and reproduction without rerun",
+      "not ok 97 - native grep/rg preserve regex, literals, line numbers, context, globs and global limits",
+      "not ok 98 - external directory approval is required and reused; host-only metadata cannot be forged",
+      "not ok 99 - trusted Skill directories, aborts and changed file identities use the read boundary",
+      "not ok 100 - real Pi extension exposes discovery and execution in one protected agent and keeps native shell disabled",
+      "not ok 112 - E01/E13 native identities reach the host-only environment query and refresh on Pi reload",
+      "not ok 118 - T02 native directory discovery and dynamically created companions",
+      "not ok 137 - P16.a/c real Pi JSONL branch and real Python permission persistence reopen without replay; reload retains one real bridge",
+      "not ok 138 - P08.c/P16.b a held real physical receipt arrives only after abort and legal branch switch, without new continuation",
+      "not ok 140 - P12.c real Wiki revocation projects only the selected Pi branch and preserves a current user quote containing the same sentinel",
+      "not ok 148 - C copied historical active-job JSONL is read-only input; main decoding never replays a transition",
+      "not ok 167 - L2 L3 L4 HTTP: P03b/P11a/P11c real facts, approval refs and changed preference survive actual automatic compaction",
+      "not ok 168 - L2 L3 L4 HTTP: P12a/P12b actual Wiki mixed summary then off reaches final wire with legal tool pairs",
+      "not ok 169 - L2 L3 L4 HTTP: P12a/P12b actual Wiki mixed summary then forget reaches final wire with legal tool pairs",
+      "not ok 170 - L2 L3 L4 HTTP: P09a/P15a real HTTP retry and accepted steer/follow-up drain before one final settled"
+    ]
+  },
+  "first_python_aggregate": {
+    "tests": 85,
+    "fail": 1,
+    "reason": "Multiprocessing spawn parent was stdin; child cannot reopen <stdin>. File-backed runner subsequently passed 87 tests."
+  },
+  "build_attempts": [
+    {
+      "phase": "initial C --noEmit",
+      "outcome": "TS2339 schema.properties type error; source fixed before full emit"
+    },
+    {
+      "phase": "full C build",
+      "outcome": "PASS; later real regression fixes require final rebuild"
+    }
+  ],
+  "scope": "Failures retained here; final acceptance uses passing reruns, never relabels these first attempts as PASS.",
+  "second_node_suite": {
+    "tests": 173,
+    "pass": 166,
+    "fail": 7,
+    "failures": [
+      "not ok 68 - real host + same extension + real Python: one agent, correlated question, files and next request",
+      "not ok 75 - real host memory maintenance auto: same Pi extension, real Python Wiki/outbox and counted model calls",
+      "not ok 116 - T10 native ! / !! context semantics and cancel reuse Pi",
+      "not ok 118 - T02 native directory discovery and dynamically created companions",
+      "not ok 134 - E01 E02 E10 E17 N08 native binding reaches real executables; parallel calls and new requests stay isolated",
+      "not ok 137 - P16.a/c real Pi JSONL branch and real Python permission persistence reopen without replay; reload retains one real bridge",
+      "not ok 167 - L2 L3 fetch fixture: P03b/P11a/P11c real facts, approval refs and changed preference survive actual automatic compaction"
+    ]
+  },
+  "focused_final": {
+    "tests": 17,
+    "pass": 17,
+    "scope": "native-workflow/runtime-binding/session-domain/wire-composites after exact fixture fixes"
+  },
+  "host_limited_reruns": {
+    "ordinary_host": "PASS, 5 synthetic provider calls",
+    "memory_auto_isolated": "PASS, 3 synthetic provider calls",
+    "earlier_sigkill": "still unexplained; not erased by later passes"
+  },
+  "final_python": {
+    "tests": 88,
+    "pass": 88,
+    "runner": "run_target_python.py file-backed"
+  },
+  "final_build": "PASS full tsc emit after final test fixture updates; no dependencies installed"
+}

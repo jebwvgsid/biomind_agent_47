@@ -1,0 +1,34 @@
+--- a/integrations/pi_runtime/tests/native-workflow.test.ts
++++ b/integrations/pi_runtime/tests/native-workflow.test.ts
+@@ -20,7 +20,7 @@
+   const h=await createHarness({cwd:A,executionProfile:'native',name:'native-workflow',script,
+     domainFactory: options=>createDomainClient({...options,python:'/public/home/liusiqi/anaconda3/envs/biomind/bin/python',
+       dataRoot:data,installRoot:path.resolve(root,'..'),registryPath:registry,preferencesPath:prefs,skillsRoot:path.join(tmp,'skills')})});
+-  return {...h,A,B,O,data,tmp,async cleanup(){await h.close();await fs.rm(tmp,{recursive:true,force:true});}};
++  return {...h,A,B,O,data,tmp,async cleanup(){await h.close();await fs.rm(tmp,{recursive:true,force:true,maxRetries:20,retryDelay:25});}};
+ }
+ function results(h:Awaited<ReturnType<typeof fixture>>) {
+   return h.events.filter(e=>e.type==='tool_execution_end');
+@@ -43,13 +43,13 @@
+       call('relative','read',{path:'../B 中文 space/source.txt'}),call('link','read',{path:'link'}),
+       call('stat','file_stat',{path:path.join(h.B,'a.vcf')}),
+       call('shell','bash',{command:`cd ${JSON.stringify(h.B)} && printf cwd-ok > ${JSON.stringify(path.join(h.O,'cwd.txt'))}`}),text('done'),
+-      call('handoff','handoff_generate',{goal:'Continue synthetic checks'}),call('after-handoff','read',{path:path.join(h.B,'c.gtf')}),text('done again'));
++      call('after-handoff','read',{path:path.join(h.B,'c.gtf')}),text('done again'));
+     await h.prompt('Read and edit only these synthetic files.');
+     assert.equal(results(h).length,9,JSON.stringify(h.busEvents));assert(results(h).every(e=>!e.isError),JSON.stringify(results(h)));
+     assert.equal(await fs.readFile(path.join(h.B,'source.txt'),'utf8'),'new source');
+     assert.equal(await fs.readFile(path.join(h.O,'new/report.md'),'utf8'),'report');
+     assert.equal(await fs.readFile(path.join(h.O,'cwd.txt'),'utf8'),'cwd-ok');
+-    await h.prompt('Continue with the synthetic handoff.');
++    await h.prompt('Continue with the synthetic file checks.');
+     assert(results(h).every(e=>!e.isError),JSON.stringify(results(h)));
+     assert.equal(h.manager.getHeader()?.cwd,h.A);
+     for(const n of NATIVE_TOOLS)assert(h.session.getActiveToolNames().includes(n),n);
+@@ -134,5 +134,5 @@
+       const state=JSON.parse(await fs.readFile(path.join(data,'task_outputs',dir,'plan_state.json'),'utf8'));
+       assert.equal(state.task_state.pi_execution_profile.profile,'native');assert.deepEqual(state.task_state.execution_permissions.grants,{});
+     }
+-  }finally{await h.close();await fs.rm(tmp,{recursive:true,force:true});}
++  }finally{await h.close();await fs.rm(tmp,{recursive:true,force:true,maxRetries:20,retryDelay:25});}
+ });

@@ -1,0 +1,30 @@
+--- a/integrations/pi_runtime/tests/native-skills-read.test.ts
++++ b/integrations/pi_runtime/tests/native-skills-read.test.ts
+@@ -29,15 +29,15 @@
+ test('P1 native catalog metadata, explicit expansion, read reference and current toolsets', async () => {
+   const f = await fixture(); const d = domain();
+   const h = await createHarness({ name: 'P1-catalog-explicit', ...f, domain: d, skillPaths: [f.skills], nativePrompt: true,
+-    script: [text('catalog only'), call('ref', 'read', { path: path.join(f.skills, 'fixture/references/ref.txt') }), text('loaded'), call('handoff', 'handoff_generate', { goal: 'toolset only' }), text('Generate'), text('new Consult')] });
++    script: [text('catalog only'), call('ref', 'read', { path: path.join(f.skills, 'fixture/references/ref.txt') }), text('loaded'), text('continued'), text('new request')] });
+   try {
+     checkTools(h); await h.prompt('catalog');
+     const first = serialized(h.requests[0]); assert(first.includes('DESCRIPTION_A')); assert(!first.includes('BODY_PRIVATE_A')); assert(!first.includes('REFERENCE_PRIVATE_A'));
+     await h.prompt('/skill:fixture explicit argument');
+     const explicit = serialized(h.requests[1]); assert(explicit.includes('BODY_PRIVATE_A')); assert(explicit.includes('explicit argument'));
+     assert(serialized(h.requests[2]).includes('REFERENCE_PRIVATE_A')); checkTools(h);
+-    await h.prompt('handoff'); checkTools(h); assert(tools(h).includes('run_command')); assert(tools(h).includes('write')); assert(tools(h).includes('edit'));
+-    await h.prompt('[新任务] new'); checkTools(h); for (const name of ['run_command', 'write', 'edit']) assert(!tools(h).includes(name));
++    await h.prompt('continue'); checkTools(h); assert(tools(h).includes('run_command')); assert(tools(h).includes('write')); assert(tools(h).includes('edit'));
++    await h.prompt('[新任务] new'); checkTools(h); for (const name of ['run_command', 'write', 'edit']) assert(tools(h).includes(name));
+     assert(d.calls.some(x => x.method === 'files.read_authorize' && x.privileged && (x.params.trusted_skill_dirs as string[]).includes(path.dirname(f.skill))));
+   } finally { await h.close(); }
+ });
+@@ -121,7 +121,7 @@
+     const last = d.calls.filter(row => row.method === 'environments.select').at(-1)!;
+     assert.deepEqual(last.params.loaded_skills, [{ name: 'changed-native', file_path: f.skill }]);
+     const request = JSON.stringify(h.requests.at(-1));
+-    for (const policy of ['不附带健康检查', '缺少检查记录不阻止如实交付', '生成 reproduce.sh 不触发执行']) assert(request.includes(policy));
++    for (const policy of ['不追加 which、版本、import、healthcheck 或扫描', '明确要求的检查和停止条件必须保留', '生成复现脚本不自动执行']) assert(request.includes(policy));
+     const definition = h.session.getActiveToolNames(); assert(definition.includes('select_environment'));
+     h.requests.forEach(row => assertPairs(row.messages));
+   } finally { await h.close(); }

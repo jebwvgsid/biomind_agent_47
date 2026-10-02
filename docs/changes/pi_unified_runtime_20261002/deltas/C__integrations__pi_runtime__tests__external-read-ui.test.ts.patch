@@ -1,0 +1,10 @@
+--- a/integrations/pi_runtime/tests/external-read-ui.test.ts
++++ b/integrations/pi_runtime/tests/external-read-ui.test.ts
+@@ -33,7 +33,6 @@
+   domain.receipts.set('approval.decide', () => { grant = true; return { status: 'allowed' }; });
+   const h = await createHarness({ name: 'external-read-host-retry-sequential', cwd: f.cwd, domain, script: [
+     [...call('leaf-stat', 'file_stat', { path: f.leaf }), ...call('bud-stat', 'file_stat', { path: f.bud })],
+-    call('handoff-read', 'handoff_generate', { goal: 'same analysis' }),
+     call('leaf-read', 'read', { path: f.leaf, limit: 1 }),
+     context => { assert.match(JSON.stringify(context), /LEAF_INPUT/); return text('synthetic done'); },
+   ] });

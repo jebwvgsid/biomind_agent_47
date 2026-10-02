@@ -1,0 +1,21 @@
+test_bind_and_import_preserve_fields_use_authority (__main__.AtomicRegistryTests.test_bind_and_import_preserve_fields_use_authority) ... ok
+test_changed_shim_never_overwrites_shared_old_file (__main__.AtomicRegistryTests.test_changed_shim_never_overwrites_shared_old_file) ... ok
+test_corrupt_schema_and_unreadable_never_become_empty (__main__.AtomicRegistryTests.test_corrupt_schema_and_unreadable_never_become_empty) ... ok
+test_directory_flush_failure_reports_committed_fact (__main__.AtomicRegistryTests.test_directory_flush_failure_reports_committed_fact) ... ok
+test_identity_conflicts_preserve_existing_record (__main__.AtomicRegistryTests.test_identity_conflicts_preserve_existing_record) ... ok
+test_legacy_partial_replacement_keeps_unspecified_fields (__main__.AtomicRegistryTests.test_legacy_partial_replacement_keeps_unspecified_fields) ... ok
+test_metadata_factory_no_initialization_or_probe (__main__.AtomicRegistryTests.test_metadata_factory_no_initialization_or_probe) ... ok
+test_omitted_fields_and_unknown_fields_survive_idempotent_update (__main__.AtomicRegistryTests.test_omitted_fields_and_unknown_fields_survive_idempotent_update) ... ok
+test_one_complete_record_requires_one_replace (__main__.AtomicRegistryTests.test_one_complete_record_requires_one_replace) ... ok
+test_optional_shim_failure_commits_prefix_and_reports_derived_failure (__main__.AtomicRegistryTests.test_optional_shim_failure_commits_prefix_and_reports_derived_failure) ... ok
+test_ready_requires_launch_and_does_not_destroy_old_record (__main__.AtomicRegistryTests.test_ready_requires_launch_and_does_not_destroy_old_record) ... ok
+test_real_process_writers_share_stable_lock (__main__.AtomicRegistryTests.test_real_process_writers_share_stable_lock) ... ok
+test_register_new_environment_does_not_normalize_unrelated_rows (__main__.AtomicRegistryTests.test_register_new_environment_does_not_normalize_unrelated_rows) ... ok
+test_required_shim_failure_preserves_previous_registry (__main__.AtomicRegistryTests.test_required_shim_failure_preserves_previous_registry) ... ok
+test_two_stale_writers_merge_changes_not_snapshots (__main__.AtomicRegistryTests.test_two_stale_writers_merge_changes_not_snapshots) ... ok
+test_write_and_replace_faults_preserve_old_bytes_cleanup_temp (__main__.AtomicRegistryTests.test_write_and_replace_faults_preserve_old_bytes_cleanup_temp) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.427s
+
+OK

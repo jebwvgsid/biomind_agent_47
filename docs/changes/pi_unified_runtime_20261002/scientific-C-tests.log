@@ -1,0 +1,15 @@
+test_E12_preflight_rejects_failure_and_wrong_resolution (__main__.OutputContractTests.test_E12_preflight_rejects_failure_and_wrong_resolution) ... ok
+test_J04_legal_empty_table_respects_declared_contract (__main__.OutputContractTests.test_J04_legal_empty_table_respects_declared_contract) ... ok
+test_J04_missing_required_output_is_not_validated (__main__.OutputContractTests.test_J04_missing_required_output_is_not_validated) ... ok
+test_J04_wrong_sample_and_wrong_exact_input_path_are_rejected (__main__.OutputContractTests.test_J04_wrong_sample_and_wrong_exact_input_path_are_rejected) ... ok
+test_N16_reused_or_partial_or_failed_rows_cannot_be_success (__main__.OutputContractTests.test_N16_reused_or_partial_or_failed_rows_cannot_be_success) ... ok
+test_E12_user_R_fgsea_condition_failure_has_zero_analysis_starts (__main__.RealExecutionDeliveryTests.test_E12_user_R_fgsea_condition_failure_has_zero_analysis_starts) ... Executing <Task pending name='Task-2' coro=<RealExecutionDeliveryTests.test_E12_user_R_fgsea_condition_failure_has_zero_analysis_starts() running at /public/home/liusiqi/03.毕设/Biomind_v1/tests/test_scientific_delivery_20261002.py:144> wait_for=<Future pending cb=[Task.task_wakeup()] created at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:448> cb=[_run_until_complete_cb() at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:181] created at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:100> took 0.110 seconds
+ok
+test_E12_user_TAD_preflight_failure_has_zero_analysis_starts (__main__.RealExecutionDeliveryTests.test_E12_user_TAD_preflight_failure_has_zero_analysis_starts) ... ok
+test_J02_native_pipeline_semantics_and_explicit_upstream_exit (__main__.RealExecutionDeliveryTests.test_J02_native_pipeline_semantics_and_explicit_upstream_exit) ... ok
+test_N16_rc_zero_without_required_file_cannot_pass_output_validation (__main__.RealExecutionDeliveryTests.test_N16_rc_zero_without_required_file_cannot_pass_output_validation) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.501s
+
+OK

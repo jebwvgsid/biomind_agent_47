@@ -1,0 +1,324 @@
+{
+  "status": "UNRESOLVED_INTERMITTENT_SIGKILL",
+  "scope": "targeted offline product test subprocesses only",
+  "observed": "Three recorded Node host deaths by SIGKILL; no model request had occurred in those cases. One limited rerun of host68 completed all assertions and five synthetic provider requests with exit0; memory-auto repeated SIGKILL. A later isolated memory-auto run (384 MiB parent heap, no concurrent compiler/test) completed all assertions, three synthetic provider requests and exit0. This does not identify or resolve the earlier signal cause.",
+  "cause": "unknown; signal alone does not establish product bug, OOM or test environment cause",
+  "not_observed": "No recorded cgroup oom/oom_kill counter increments. The relay did not issue SIGKILL.",
+  "tracing": "Attempted only own test processes, limited to signal/kill/wait/exit syscalls. Default sandbox denied PTRACE_TRACEME; no trace was collected, no escalation attempted.",
+  "no_production_process_signals_sent": true,
+  "cases": [
+    {
+      "source": "/tmp/biomind_impl_20261002_baseline/C-final-evidence/host-domain-raw.json",
+      "case": "host-domain",
+      "exit_code": 247,
+      "ready_received_ms": null,
+      "provider_calls": 0,
+      "frame_count": 0,
+      "observed_results": [],
+      "wait_observations": [
+        {
+          "timeout_ms": 60000,
+          "elapsed_ms": 2331.8410860000004,
+          "outcome": "child_exited"
+        }
+      ],
+      "signal_observations": [
+        {
+          "test_relay_child_exit": -9,
+          "child_pid": 26,
+          "observed_signal": 9,
+          "elapsed_seconds": 2.249,
+          "child_max_rss_kib": 136712,
+          "cgroup_memory_events_before": {
+            "memory.events": {
+              "low": "0",
+              "high": "0",
+              "max": "0",
+              "oom": "0",
+              "oom_kill": "0",
+              "oom_group_kill": "0"
+            },
+            "memory.events.local": {
+              "low": "0",
+              "high": "0",
+              "max": "0",
+              "oom": "0",
+              "oom_kill": "0",
+              "oom_group_kill": "0"
+            }
+          },
+          "cgroup_memory_events_after": {
+            "memory.events": {
+              "low": "0",
+              "high": "0",
+              "max": "0",
+              "oom": "0",
+              "oom_kill": "0",
+              "oom_group_kill": "0"
+            },
+            "memory.events.local": {
+              "low": "0",
+              "high": "0",
+              "max": "0",
+              "oom": "0",
+              "oom_kill": "0",
+              "oom_group_kill": "0"
+            }
+          },
+          "signal_sender": "unknown; relay did not send SIGKILL"
+        }
+      ],
+      "last_descendant_sample": {
+        "phase": "after-relay-exit",
+        "processes": []
+      }
+    },
+    {
+      "source": "/tmp/biomind_impl_20261002_baseline/C-final-evidence/host-memory-auto-raw.json",
+      "case": "host-memory-auto",
+      "exit_code": 247,
+      "ready_received_ms": 1247.8538320000007,
+      "provider_calls": 0,
+      "frame_count": 1,
+      "observed_results": [],
+      "wait_observations": [
+        {
+          "timeout_ms": 60000,
+          "elapsed_ms": 1264.1189339999983,
+          "outcome": "matched",
+          "matched_frame_type": "ready"
+        },
+        {
+          "timeout_ms": 20000,
+          "elapsed_ms": 402.83613799999875,
+          "outcome": "child_exited"
+        }
+      ],
+      "signal_observations": [
+        {
+          "test_relay_child_exit": -9,
+          "child_pid": 146,
+          "observed_signal": 9,
+          "elapsed_seconds": 1.619,
+          "child_max_rss_kib": 141916,
+          "cgroup_memory_events_before": {
+            "memory.events": {
+              "low": "0",
+              "high": "0",
+              "max": "0",
+              "oom": "0",
+              "oom_kill": "0",
+              "oom_group_kill": "0"
+            },
+            "memory.events.local": {
+              "low": "0",
+              "high": "0",
+              "max": "0",
+              "oom": "0",
+              "oom_kill": "0",
+              "oom_group_kill": "0"
+            }
+          },
+          "cgroup_memory_events_after": {
+            "memory.events": {
+              "low": "0",
+              "high": "0",
+              "max": "0",
+              "oom": "0",
+              "oom_kill": "0",
+              "oom_group_kill": "0"
+            },
+            "memory.events.local": {
+              "low": "0",
+              "high": "0",
+              "max": "0",
+              "oom": "0",
+              "oom_kill": "0",
+              "oom_group_kill": "0"
+            }
+          },
+          "signal_sender": "unknown; relay did not send SIGKILL"
+        }
+      ],
+      "last_descendant_sample": {
+        "phase": "after-relay-exit",
+        "processes": [
+          {
+            "pid": 158,
+            "parent": 1,
+            "start": "580908457",
+            "state": "R",
+            "comm": "python",
+            "rssPages": 15719,
+            "fdCount": 3
+          }
+        ]
+      }
+    },
+    {
+      "source": "/tmp/biomind_impl_20261002_baseline/host-C-signal-rerun/evidence/host-domain-raw.json",
+      "case": "host-domain",
+      "exit_code": 0,
+      "ready_received_ms": 1892.658665,
+      "provider_calls": 5,
+      "frame_count": 114,
+      "observed_results": [
+        {
+          "requestId": "consult-1",
+          "runtime_status": "completed"
+        },
+        {
+          "requestId": "work-2",
+          "runtime_status": "completed"
+        },
+        {
+          "requestId": "consult-3",
+          "runtime_status": "completed"
+        }
+      ],
+      "wait_observations": [
+        {
+          "timeout_ms": 60000,
+          "elapsed_ms": 1868.115219,
+          "outcome": "matched",
+          "matched_frame_type": "ready"
+        },
+        {
+          "timeout_ms": 20000,
+          "elapsed_ms": 1886.1963469999996,
+          "outcome": "matched",
+          "matched_frame_type": "result"
+        },
+        {
+          "timeout_ms": 20000,
+          "elapsed_ms": 59.823351,
+          "outcome": "matched",
+          "matched_frame_type": "question"
+        },
+        {
+          "timeout_ms": 20000,
+          "elapsed_ms": 20.247693000000254,
+          "outcome": "matched",
+          "matched_frame_type": "error"
+        },
+        {
+          "timeout_ms": 20000,
+          "elapsed_ms": 181.23135300000013,
+          "outcome": "matched",
+          "matched_frame_type": "result"
+        },
+        {
+          "timeout_ms": 20000,
+          "elapsed_ms": 101.22586799999954,
+          "outcome": "matched",
+          "matched_frame_type": "result"
+        }
+      ],
+      "signal_observations": [],
+      "last_descendant_sample": {
+        "phase": "after-relay-exit",
+        "processes": [
+          {
+            "pid": 27,
+            "parent": 1,
+            "start": "580932171",
+            "state": "R",
+            "comm": "python",
+            "rssPages": 18176,
+            "fdCount": 3
+          }
+        ]
+      }
+    },
+    {
+      "source": "/tmp/biomind_impl_20261002_baseline/host-C-signal-rerun/evidence/host-memory-auto-raw.json",
+      "case": "host-memory-auto",
+      "exit_code": 247,
+      "ready_received_ms": 1229.7454980000002,
+      "provider_calls": 0,
+      "frame_count": 13,
+      "observed_results": [],
+      "wait_observations": [
+        {
+          "timeout_ms": 60000,
+          "elapsed_ms": 1244.0073629999997,
+          "outcome": "matched",
+          "matched_frame_type": "ready"
+        },
+        {
+          "timeout_ms": 20000,
+          "elapsed_ms": 1667.098617999999,
+          "outcome": "child_exited"
+        }
+      ],
+      "signal_observations": [
+        {
+          "test_relay_child_exit": -9,
+          "child_pid": 30,
+          "observed_signal": 9,
+          "elapsed_seconds": 2.855,
+          "child_max_rss_kib": 142856,
+          "cgroup_memory_events_before": {
+            "memory.events": {
+              "low": "0",
+              "high": "0",
+              "max": "0",
+              "oom": "0",
+              "oom_kill": "0",
+              "oom_group_kill": "0"
+            },
+            "memory.events.local": {
+              "low": "0",
+              "high": "0",
+              "max": "0",
+              "oom": "0",
+              "oom_kill": "0",
+              "oom_group_kill": "0"
+            }
+          },
+          "cgroup_memory_events_after": {
+            "memory.events": {
+              "low": "0",
+              "high": "0",
+              "max": "0",
+              "oom": "0",
+              "oom_kill": "0",
+              "oom_group_kill": "0"
+            },
+            "memory.events.local": {
+              "low": "0",
+              "high": "0",
+              "max": "0",
+              "oom": "0",
+              "oom_kill": "0",
+              "oom_group_kill": "0"
+            }
+          },
+          "signal_sender": "unknown; relay did not send SIGKILL"
+        }
+      ],
+      "last_descendant_sample": {
+        "phase": "after-relay-exit",
+        "processes": []
+      }
+    },
+    {
+      "source": "/tmp/biomind_impl_20261002_baseline/C-auto-isolated-evidence/host-memory-auto-raw.json",
+      "case": "host-memory-auto-isolated",
+      "exit_code": 0,
+      "provider_calls": 3,
+      "frame_count": 65,
+      "startup": {
+        "ready_received_ms": 7208.745072999998
+      },
+      "observed_results": [
+        {
+          "runtime_status": "completed",
+          "scientific_success": null
+        }
+      ],
+      "conditions": "parent heap384; dedicated process; no compiler or other test process concurrently; no production commands",
+      "signal_observations": []
+    }
+  ]
+}

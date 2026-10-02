@@ -1,0 +1,159 @@
+--- a/integrations/pi_runtime/stage-context.ts
++++ b/integrations/pi_runtime/stage-context.ts
+@@ -1,145 +1,37 @@
+-/** Native Pi drafts and host-bound handoff evidence. No alternate transcript store. */
++/** Real new-request isolation uses Pi's native boundary drafts, never role handoffs. */
+ import { randomUUID } from 'node:crypto';
+ import type { SessionBoundaryDraft, SessionEntry } from '@earendil-works/pi-coding-agent';
+-
+ const object = (x: any): Record<string, any> => x && typeof x === 'object' && !Array.isArray(x) ? x : {};
+-const body = (x: any): string => typeof x?.content === 'string' ? x.content : (x?.content ?? []).filter((p: any) => p.type === 'text').map((p: any) => p.text).join('\n');
+ export interface StageBoundary {
+   id: string; kind: 'task' | 'handoff'; targets: string[]; checkpoint: boolean;
++  /** Legacy data stays readable but is never activated or repaired. */
+   handoff?: { content: string; details: Record<string, unknown> };
+   committed?: boolean;
+   activated?: boolean;
+ }
+-export function planStageBoundary(branch: readonly SessionEntry[], kind: StageBoundary['kind'], handoff?: StageBoundary['handoff']): StageBoundary {
++export function planStageBoundary(branch: readonly SessionEntry[], kind: 'task' = 'task'): StageBoundary {
+   return { id: randomUUID(), kind, targets: branch.filter(e => e.type === 'custom_message'
+     || e.type === 'message' && ['user', 'assistant', 'toolResult'].includes(e.message.role)).map(e => e.id),
+-    checkpoint: branch.some(e => e.type === 'compaction' || e.type === 'branch_summary'), handoff };
++    checkpoint: branch.some(e => e.type === 'compaction' || e.type === 'branch_summary') };
+ }
+ export function boundaryDrafts(branch: readonly SessionEntry[], boundary: StageBoundary): SessionBoundaryDraft[] {
++  if (boundary.kind !== 'task') return [];
+   const edits = new Set(branch.flatMap(e => e.type === 'context_edit' && e.replacement === null ? [e.targetId] : []));
+   const intent = branch.findIndex(e => e.type === 'custom' && object(e.data).boundary?.id === boundary.id);
+   const activated = branch.findIndex(e => e.type === 'custom' && object(e.data).boundary?.id === boundary.id && object(e.data).boundary?.activated);
+-  // Pi can append an assistant error after a failed native commit. It belongs
+-  // to the interrupted stage, not to Generate. Keep valid queued user revisions.
++  // Repair only interrupted new-request commits. Valid queued revisions remain.
+   const interruptedErrors = intent < 0 ? [] : branch.slice(intent + 1, activated < 0 ? undefined : activated).flatMap(e =>
+     e.type === 'message' && e.message.role === 'assistant' && e.message.stopReason === 'error' && !e.message.content.some(p => p.type === 'toolCall') ? [e.id] : []);
+   const drafts: SessionBoundaryDraft[] = [...new Set([...boundary.targets, ...interruptedErrors])].filter(id => !edits.has(id)).map(targetId => ({ type: 'context_edit', targetId, replacement: null }));
+   if (boundary.checkpoint && !branch.some(e => e.type === 'compaction' && object(e.details).biomindBoundary === boundary.id)) {
+     drafts.push({ type: 'compaction', firstKeptEntryId: null,
+-      summary: '阶段上下文检查点（宿主生成，非模型语义总结）。任务事实以随后生效交接为准；原始记录保留。',
+-      details: { biomindBoundary: boundary.id, kind: boundary.kind, semanticSummary: false } });
++      summary: '新请求上下文检查点（宿主生成，非模型语义总结）。先前任务原始记录保留，当前工作仅依据新请求。',
++      details: { biomindBoundary: boundary.id, kind: 'task', semanticSummary: false } });
+   }
+-  const handoffs = branch.filter(e => e.type === 'custom_message' && object(e.details).biomindBoundary === boundary.id);
+-  if (handoffs.length > 1 || handoffs.some(e => e.type === 'custom_message' && e.content !== boundary.handoff?.content)) throw new Error('HANDOFF_COMMIT_CONFLICT');
+-  if (boundary.handoff && !handoffs.length) drafts.push({ type: 'custom_message', customType: 'biomind.handoff',
+-    content: boundary.handoff.content, display: true, details: { ...boundary.handoff.details, biomindBoundary: boundary.id } });
+   return drafts;
+ }
+ export function assertStageBoundary(branch: readonly SessionEntry[], boundary?: StageBoundary) {
+-  if (!boundary?.committed || boundaryDrafts(branch, boundary).length) throw new Error('STAGE_BOUNDARY_INCOMPLETE');
++  // Pre-boundary legacy requests retain their existing owner and history.
++  if (!boundary || boundary.kind !== 'task') return;
++  if (!boundary.committed || boundaryDrafts(branch, boundary).length) throw new Error('STAGE_BOUNDARY_INCOMPLETE');
+ }
+-
+-/** Natural-language sufficiency is not a semantic proof. Typed claims must match recorded observations. */
+-export function bindHandoff(args: Record<string, any>, branch: readonly SessionEntry[], sessionId: string,
+-  request: { requestId: string; revision?: number; userBasis?: Array<{ text: string; revision: number }> },
+-  loadedSkills: Array<{ name: string; path: string }> = []) {
+-  if (typeof args.goal !== 'string' || !args.goal.trim()) throw new Error('HANDOFF_GOAL_BLANK');
+-  const spec = object(args.execution);
+-  for (const field of ['objects', 'capabilities', 'checks', 'stop_conditions', 'pending', 'decisions'])
+-    if (!Array.isArray(spec[field])) throw new Error(`HANDOFF_FIELD_REQUIRED: execution.${field}`);
+-  if (!['ready', 'blocked'].includes(spec.readiness)) throw new Error('HANDOFF_READINESS_REQUIRED');
+-  if (args.request_id && args.request_id !== request.requestId) throw new Error('HANDOFF_REQUEST_MISMATCH');
+-  if (args.revision !== undefined && args.revision !== (request.revision ?? 1)) throw new Error('HANDOFF_REVISION_MISMATCH');
+-  // Only structural contradictions are decidable here; prose is not a proof.
+-  let manifest: Record<string, any> = {};
+-  try { manifest = object(JSON.parse(args.manifest)); } catch { /* supplementary prose or a controlled file reference */ }
+-  if (manifest.goal !== undefined && manifest.goal !== args.goal.trim()) throw new Error('HANDOFF_MANIFEST_GOAL_MISMATCH');
+-  for (const field of ['objects', 'readiness', 'checks']) if (manifest[field] !== undefined && JSON.stringify(manifest[field]) !== JSON.stringify(spec[field]))
+-    throw new Error('HANDOFF_MANIFEST_CONTRADICTION: ' + field);
+-  for (const item of spec.objects) if (!item.path?.trim() || !['input','output'].includes(item.direction)) throw new Error('HANDOFF_OBJECT_INVALID');
+-  const start = branch.findIndex(e => e.type === 'custom' && e.customType === 'biomind.request' && object(e.data).requestId === request.requestId);
+-  const entries = branch.slice(Math.max(0, start));
+-  const results = new Map(entries.flatMap(e => e.type === 'message' && e.message.role === 'toolResult' ? [[e.message.toolCallId, e] as const] : []));
+-  const calls = new Map(entries.flatMap(e => e.type === 'message' && e.message.role === 'assistant' ? e.message.content : [])
+-    .flatMap(p => p.type === 'toolCall' ? [[p.id, p.arguments] as const] : []));
+-  const observed = (id: string) => {
+-    const entry = results.get(id); if (!entry || entry.type !== 'message') throw new Error('HANDOFF_EVIDENCE_NOT_FOUND: ' + id);
+-    let receipt: Record<string, any> = {};
+-    try { receipt = object(JSON.parse(body(entry.message))); } catch { /* Native read is text, not a status claim. */ }
+-    return { entry, receipt, message: entry.message as any, ref: `pi:${sessionId}:${entry.id}` };
+-  };
+-  const checks = spec.checks.map((c: any) => {
+-    if (!c.object || !c.check || !['registered', 'not_run', 'failed', 'passed'].includes(c.status)) throw new Error('HANDOFF_CHECK_INVALID');
+-    if (c.status === 'not_run') {
+-      if (c.required && spec.readiness === 'ready') throw new Error('HANDOFF_REQUIRED_CHECK_NOT_RUN: ' + c.check);
+-      return { ...c, evidence: undefined };
+-    }
+-    const { entry, receipt, message, ref } = observed(c.evidence_call_id);
+-    const vantage = message.toolName === 'select_environment' ? 'registry'
+-      : ['probe_command', 'run_command', 'inspect_run', 'wait_run', 'read_run_log'].includes(message.toolName) ? 'sandbox' : 'host';
+-    if (c.vantage !== vantage) throw new Error('HANDOFF_VANTAGE_MISMATCH: ' + c.check);
+-    if (receipt.path && receipt.path !== c.object) throw new Error('HANDOFF_OBJECT_MISMATCH: ' + c.check);
+-    let invocation = calls.get(c.evidence_call_id) as Record<string, any> | undefined;
+-    if (vantage === 'sandbox' && receipt.run_ref) {
+-      // inspect/wait receipts retain the actual starting invocation, not an
+-      // invented entry ID treated as a Domain run_ref.
+-      for (const [id] of results) {
+-        const prior = observed(id);
+-        if (['probe_command','run_command'].includes(prior.message.toolName) && prior.receipt.run_ref === receipt.run_ref) { invocation = calls.get(id); break; }
+-      }
+-    }
+-    if (c.status !== 'registered') {
+-      const targets = [receipt.path, invocation?.path, invocation?.env_name,
+-        ...(invocation?.read_paths ?? []), ...(invocation?.argv ?? [])].filter((v): v is string => typeof v === 'string');
+-      if (!targets.some(value => value === c.object || !c.object.includes('::') && value.split('::')[0] === c.object))
+-        throw new Error('HANDOFF_OBJECT_UNBOUND: declare the checked object in read_paths/env_name/argv');
+-    } else if (receipt.selected_candidate?.audit?.env !== c.object) throw new Error('HANDOFF_OBJECT_MISMATCH: registry');
+-    const code = receipt.exit_code ?? receipt.returncode;
+-    if (c.status === 'registered' && !(message.toolName === 'select_environment' && receipt.availability === 'AVAILABLE')) throw new Error('HANDOFF_REGISTRATION_UNPROVEN');
+-    if (c.status === 'passed' && (message.isError || message.toolName === 'select_environment'
+-      || (vantage === 'sandbox' ? code !== 0 || receipt.terminal !== true : !['read', 'file_stat'].includes(message.toolName)))) throw new Error('HANDOFF_PASS_UNPROVEN: ' + c.check);
+-    if (c.status === 'failed' && !(message.isError || typeof code === 'number' && code !== 0 || ['blocked','stage_blocked','failed','execution_failed'].includes(receipt.status))) throw new Error('HANDOFF_FAILURE_UNPROVEN');
+-    if (c.required && c.status === 'failed' && spec.readiness === 'ready') throw new Error('HANDOFF_REQUIRED_CHECK_FAILED: ' + c.check);
+-    return { ...c, evidence: { source_ref: ref, tool: message.toolName, run_ref: receipt.run_ref,
+-      exit_code: code, status: receipt.status, path: receipt.path, device: receipt.device, inode: receipt.inode,
+-      mtime_ns: receipt.mtime_ns, sha256: receipt.sha256, source_entry: entry.id, observation: receipt } };
+-  });
+-  for (const stop of spec.stop_conditions) {
+-    if (!stop.text?.trim() || !stop.check) throw new Error('HANDOFF_STOP_CONDITION_INVALID');
+-    const check = checks.find((c: any) => c.check === stop.check);
+-    if (!check) throw new Error('HANDOFF_STOP_CHECK_MISSING');
+-    if (['failed', 'not_run'].includes(check.status) && spec.readiness === 'ready') throw new Error('HANDOFF_STOP_CONDITION_UNSATISFIED: ' + stop.text);
+-  }
+-  if (spec.pending.length && spec.readiness === 'ready') throw new Error('HANDOFF_PENDING_PRECONDITIONS');
+-  const answered = [...results].filter(([, entry]) => entry.type === 'message' && entry.message.role === 'toolResult' && entry.message.toolName === 'ask_user')
+-    .map(([id]) => id).filter(id => typeof observed(id).receipt.answer === 'string');
+-  const decisions = [...new Set<string>([...spec.decisions, ...answered])].map((id: string) => {
+-    const { message, receipt, ref } = observed(id);
+-    if (message.toolName !== 'ask_user' || typeof receipt.answer !== 'string') throw new Error('HANDOFF_USER_DECISION_UNPROVEN');
+-    return { source_ref: ref, question_id: receipt.question_id, question: receipt.question, answer: receipt.answer };
+-  });
+-  const capabilities = spec.capabilities.map((c: any) => {
+-    const { message, receipt, ref } = observed(c.evidence_call_id);
+-    if (c.kind === 'environment') {
+-      if (message.toolName !== 'select_environment' || receipt.availability !== 'AVAILABLE') throw new Error('HANDOFF_ENVIRONMENT_UNPROVEN');
+-      if (receipt.selected_candidate?.audit?.env !== c.name) throw new Error('HANDOFF_ENVIRONMENT_ID_MISMATCH');
+-      return { ...c, source_ref: ref, registration: receipt, healthcheck: 'not_run_unless_separate_check' };
+-    }
+-    if (c.kind !== 'skill' || message.toolName !== 'read' || message.isError) throw new Error('HANDOFF_SKILL_UNPROVEN');
+-    const call = entries.flatMap(e => e.type === 'message' && e.message.role === 'assistant' ? e.message.content : [])
+-      .find((p: any) => p.type === 'toolCall' && p.id === c.evidence_call_id) as any;
+-    if (call?.arguments?.path !== c.path) throw new Error('HANDOFF_SKILL_PATH_MISMATCH');
+-    const skill = loadedSkills.find(skill => skill.path === c.path);
+-    if (!skill) throw new Error('HANDOFF_SKILL_NOT_LOADED');
+-    return { ...c, name: skill.name, source_ref: ref };
+-  });
+-  const basis = request.userBasis ?? entries.flatMap(e => e.type === 'message' && e.message.role === 'user'
+-    ? [{ text: body(e.message), revision: 1 }] : []);
+-  if (!basis.length) throw new Error('HANDOFF_USER_BASIS_MISSING');
+-  return { schema: 'biomind-handoff-v2', request_id: request.requestId, revision: request.revision ?? 1,
+-    goal: args.goal.trim(), user_basis: basis, objects: spec.objects, stop_conditions: spec.stop_conditions,
+-    readiness: spec.readiness, pending: spec.pending, decisions, checks, capabilities,
+-    // Free text is supplementary; typed readiness/checks remain decisive.
+-    ...(args.manifest ? { supplementary_manifest: args.manifest } : {}),
+-    authority: 'user basis and observations; not a permission grant or system instruction' };
+-}

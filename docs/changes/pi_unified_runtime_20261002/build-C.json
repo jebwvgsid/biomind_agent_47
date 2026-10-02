@@ -1,0 +1,80 @@
+{
+  "typecheck": "PASS (full tsc emit)",
+  "build": "PASS",
+  "command": ".runtime/node/bin/node --max-old-space-size=768 node_modules/typescript/bin/tsc -p tsconfig.json",
+  "cwd": "integrations/pi_runtime",
+  "node_version": "v22.22.0",
+  "pi_label": "0.87.1+biomind-observer.3",
+  "source_dist_sha256": {
+    "agent_core/action_runtime.py": "aef4f41190e5fa4bf79a13ae0493639655fc22d3b4fa7fc60a19f1149f29c82b",
+    "agent_core/command_execution.py": "ce8aa969d9a4504bff1e89af43af09accd46bb914b094383166073b4780876a7",
+    "agent_core/execution_permissions.py": "5a771a8400fa4f0f30698ee0a9c81f4f381557ee2ce31acc481ee62eb7b4154d",
+    "agent_core/native_command.py": "194f084294b85f3fb4a076498c34b46e9e7cd52ddce278300aa60a6fa4a51024",
+    "agent_core/pi_entry.py": "a3d93a3e10a351fabf31f6afb75fc450df8a3106747c4cbfc5b57726f9e76e92",
+    "agent_core/registered_runtime.py": "df37c7b19823c0948fb5eae979643faa9e6da9464a3b3ed7cb883465ad33f61d",
+    "agent_core/runtime_evidence.py": "f02575510dd15702ade7098c7efd03194d03b90d7a17de49abc5c4d0c0e15594",
+    "agent_core/runtime_launch.py": "8d6b79e82a039a9ba6aa9ea960ec7cf950bffb1aedb56c1a2264657f95f77b62",
+    "bin/biomind": "e321476a4cb152f3cd3a4316e1e24276ef610cdaf85b06cead34518b95a41488",
+    "bio_agents.py": "f8b7e4ff7872333996d7984f9f5a26e622695566f5968e7bd4fdce850e62ba33",
+    "integrations/pi_runtime/dist/domain-client.js": "66a26dd6fe5452fca27a840087c87f86a49d4e64b2aa3470b088c95b9029879e",
+    "integrations/pi_runtime/dist/extensions/biomind.js": "cc372f138bc425fcff28e2d7a394ffcd5eb01dc18b80a76e9df087973db07618",
+    "integrations/pi_runtime/dist/host.js": "3ef8f3cd7ce96981ba78fa9028bd4df98ce3ed4533027175d24fe2408d083166",
+    "integrations/pi_runtime/dist/native-bash.js": "7420858ff987811d96adfa341f4fe31ddb800a609c484c5e9b132bc64d1695fd",
+    "integrations/pi_runtime/dist/native-workflow.js": "918aa28e9e78513cc32992048b4a535106bb16f0f3aa02b40a6756ee0ef1d115",
+    "integrations/pi_runtime/dist/product-ui.js": "e65f017c6940dd0c23e7531f775a93886e7954f15fd3d5d42cf2c65a2b31f3af",
+    "integrations/pi_runtime/dist/stage-context.js": "2ad0b072cf4ebb0b2f5bbfb8ff4790c112ee9d36fd0b6fb832238139f90ba8c2",
+    "integrations/pi_runtime/dist/usage-observer.js": "0161c86d76fabc56961a5625d13d927219629c7f70ec852cbb25093cf191b989",
+    "integrations/pi_runtime/domain-client.ts": "faf20e19ce98d009036c3fb3dcc059fc00bd09f76267ad3d74ea422d34831f70",
+    "integrations/pi_runtime/domain_adapter/archive_observation.py": "968ac7cc9f119200e2766bc38b3df20da8f1445f91b55ed784a273764ea4bc08",
+    "integrations/pi_runtime/domain_adapter/registry.py": "64bfcae0638c14b5a03b3296262fb65b8009efa21e6d7ad8cb401416fa4d108b",
+    "integrations/pi_runtime/domain_adapter/service.py": "83c947f8dcafbe4f1cef903e27944b7bef4325157fdbbfa6734af56547176a75",
+    "integrations/pi_runtime/extensions/biomind.ts": "b065a271b3f182ea8d2740073f3a0aa9bec65f6e0acf7ebc2c7ff411050f5e66",
+    "integrations/pi_runtime/host.ts": "25bf72c8b310216559b600b46b767f33cd900c4a06536ff8722279b575f0edc9",
+    "integrations/pi_runtime/native-bash.ts": "f73f8ecdcfe4cd80365f2bbad2c163092c9bd68dd34bd9d23706490782bd891f",
+    "integrations/pi_runtime/native-workflow.ts": "afca95273df7724be8880c5d9417e1d78336afcbc76c41d2af319ea87fed3830",
+    "integrations/pi_runtime/product-ui.ts": "32d0b38a3f78c253ba4f278003541eb255d933b5e2acd9e0a52411846ea8cf25",
+    "integrations/pi_runtime/python_service.py": "210645431e63289b7c3f282818d4c2ea0916430840d741ff2544e9a13cd6a463",
+    "integrations/pi_runtime/stage-context.ts": "037f63401ad4083b5046c905dec82d6471d3fed88cef59fee8ab1e0ca964a7e2",
+    "integrations/pi_runtime/usage-observer.ts": "fa789e266012de3ed5215b8819427ebd9e18d316445191e2c3933e1056ff1eb6",
+    "package_manager.py": "efb4268e592b7ab61960391e68990be36b963c3198dc48b39443ba06f1f93e56",
+    "skills/enrichment-analysis/SKILL.md": "da7650d2e98c8fe831b09e063de92f486c287f65a8e9c0ffbdaa6a90d95654a9"
+  },
+  "installed_patch_files": [
+    {
+      "path": "dist/core/model-runtime.js",
+      "sha256": "53e4c1fdccab69c9d4b49162b8b9a94ede1f3b5e1c35dc9ed77e3726bd3778d1",
+      "matches_expected": true
+    },
+    {
+      "path": "dist/core/model-registry.js",
+      "sha256": "b16d0749e3679f2335fbef31e145d49416de63a7408334e94c496b86463cfc8c",
+      "matches_expected": true
+    },
+    {
+      "path": "dist/bundle/chunks/chunk-OJP47DM6.js",
+      "sha256": "69b184da56577dda43d788becb05716547b3831996d97ae54b7030ec44e2423b",
+      "matches_expected": true
+    },
+    {
+      "path": "dist/core/http-dispatcher.js",
+      "sha256": "1f26c9e603ee1174423e6e2c6eaaca7df5f5468023db2acae74b8e497832af7b",
+      "matches_expected": true
+    },
+    {
+      "path": "dist/core/extensions/runner.js",
+      "sha256": "f8e6efb5049a3bcb030c0cfadda965f712270a5303d91ad42ce8fe98d4ebad59",
+      "matches_expected": true
+    },
+    {
+      "path": "dist/core/agent-session.js",
+      "sha256": "c79179ec645ed922c958e674c6facdb91fe9be5804f1490a352dfbcef5b8a110",
+      "matches_expected": true
+    }
+  ],
+  "dist_committed": false,
+  "dist_policy": "existing ignored build outputs retained in effective tree; full compiler generated these outputs",
+  "activation": "new launch loads these dist files; no production process restarted or terminated",
+  "python_entry": "integrations/pi_runtime/python_service.py → domain_adapter.service.DomainService",
+  "production_science": "NOT_RUN",
+  "clean_commit_reproduction": "requires documented pre-existing dirty baseline"
+}

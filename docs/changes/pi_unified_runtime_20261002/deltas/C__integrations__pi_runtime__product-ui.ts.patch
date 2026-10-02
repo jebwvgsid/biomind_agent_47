@@ -1,0 +1,21 @@
+--- a/integrations/pi_runtime/product-ui.ts
++++ b/integrations/pi_runtime/product-ui.ts
+@@ -6,7 +6,7 @@
+ import { argumentCompletions } from './instructions.js';
+ 
+ export interface BioMindProductState {
+-  role?: 'Consult' | 'Generate';
++  role?: 'Main' | 'Consult' | 'Generate';
+   status?: 'active' | 'settled' | 'aborted' | 'error' | 'paused';
+ }
+ export type BioMindProductStateGetter = (ctx: ExtensionContext) => Readonly<BioMindProductState> | undefined;
+@@ -55,8 +55,7 @@
+   if (state?.status === 'aborted') return '已中断';
+   if (state?.status === 'error') return '错误';
+   if (state?.status === 'settled') return '本次请求已结束';
+-  if (state?.status === 'active' && state.role === 'Consult') return '咨询中（Consult）';
+-  if (state?.status === 'active' && state.role === 'Generate') return '执行中（Generate）';
++  if (state?.status === 'active') return '处理中';
+   return ctx.isIdle() ? '待输入' : '处理中';
+ }
+ 
