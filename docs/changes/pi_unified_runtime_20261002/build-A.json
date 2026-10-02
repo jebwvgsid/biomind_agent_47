@@ -1,0 +1,18 @@
+{
+  "typecheck": "PASS",
+  "build": "PASS (sequential retry after concurrent build was killed with rc137)",
+  "commands": [
+    ".runtime/node/bin/node --max-old-space-size=1024 node_modules/typescript/bin/tsc -p tsconfig.json --noEmit",
+    ".runtime/node/bin/node --max-old-space-size=1024 node_modules/typescript/bin/tsc -p tsconfig.json"
+  ],
+  "cwd": "integrations/pi_runtime",
+  "artifacts": {
+    "integrations/pi_runtime/extensions/biomind.ts": "d2bdd7a816059e61b575f7eb765db36f204a0e113cf95ecf0ae3c532622649c6",
+    "integrations/pi_runtime/dist/extensions/biomind.js": "489928b9706127da56ede66443e7da0a6e5a426d6a8daf83c0eb22768040519d",
+    "integrations/pi_runtime/dist/host.js": "3ef8f3cd7ce96981ba78fa9028bd4df98ce3ed4533027175d24fe2408d083166",
+    "package_manager.py": "1182df55a7e05b2fabf9341c6140ed4b15f604d9aea168ad495578b8e7a2393a",
+    "agent_core/runtime_launch.py": "7cddd2a93f831a71912cd19892b7e59b13657cf1bfae998e8a91cf00ff728fd6",
+    "integrations/pi_runtime/domain_adapter/service.py": "217f115d812df61d632c28df5cf217163e0234f4ede9faf285154f4738875531"
+  },
+  "activation": "new launch; existing processes not restarted"
+}

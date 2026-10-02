@@ -1,0 +1,223 @@
+"""A batch: real synthetic targets, never actual package installs or providers."""
+import asyncio
+from copy import deepcopy
+import json
+import os
+from pathlib import Path
+import shlex
+import sys
+import tempfile
+import unittest
+from unittest.mock import patch
+
+sys.path[:0]=[str(Path(__file__).resolve().parent)]
+from test_python_domain import DomainService, DomainError, REPO, permissions
+from agent_core.runtime_launch import prepare_runtime_launch, RuntimeLaunchError
+from package_manager import PackageManager
+
+
+class InstallTargets(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
+        self.tmp=tempfile.TemporaryDirectory(prefix='biomind-install-target-')
+        self.root=Path(self.tmp.name);self.registry=self.root/'registry.json'
+        self.registry.write_text('{"environments":{},"tools":{}}')
+        self.prefs=self.root/'prefs.md';self.prefs.write_text('synthetic')
+        self.kw=dict(cwd=self.root,data_root=self.root/'data',install_root=REPO,session_id='install-target',
+                     registry_path=self.registry,skills_root=self.root/'skills',preferences_path=self.prefs,execution_profile='native')
+        self.s=DomainService(**self.kw)
+        await self.s.call('request.begin',{'request_id':'r1','role':'consult'},host_token=self.s.host_token)
+        self.prefix=self.root/'target';(self.prefix/'bin').mkdir(parents=True)
+        self.host=self.root/'host';self.host.mkdir()
+        self.script(self.host/'fixture-tool','#!/bin/sh\necho HOST_ONLY\n')
+
+    async def asyncTearDown(self):
+        await self.s.disconnected();self.tmp.cleanup()
+
+    def script(self,path,body):
+        path.write_text(body);path.chmod(0o755);return path
+
+    def args(self,**extra):
+        return {'call_id':'install', 'arguments':{'cmd':'printf x >> install-count','env_name':'target',
+                'prefix':str(self.prefix),'packages':['fixture-tool'],
+                'verification_checks':[{'kind':'executable','tool':'fixture-tool','args':[]}],**extra}}
+
+    async def approve(self,args):
+        r=await self.s.call('install.propose',args);a=r['approval']
+        await self.s.call('approval.decide',{**{k:a[k] for k in ('request_id','action_hash','request_scope')},'choice':'y'},host_token=self.s.host_token)
+
+    async def install(self,args):
+        await self.approve(args)
+        return await self.s.call('install.execute',args)
+
+    async def reconnect(self):
+        await self.s.disconnected()
+        self.s=DomainService(**self.kw,session_existing=True)
+
+    async def test_N04_exact_missing_target_never_falls_back_to_host(self):
+        with patch.dict(os.environ,{'PATH':str(self.host)+os.pathsep+os.environ['PATH']}):
+            r=await self.install(self.args())
+        self.assertEqual(r['status'],'verification_failed',r)
+        self.assertIn('RUNTIME_TARGET_ENTRY_MISSING',r['error'])
+        self.assertEqual(json.loads(self.registry.read_text())['environments'],{})
+        self.assertNotIn('HOST_ONLY',str(r))
+
+    async def test_N04_target_failure_wins_over_successful_host(self):
+        self.script(self.prefix/'bin/fixture-tool','#!/bin/sh\necho TARGET_FAILURE >&2\nexit 17\n')
+        with patch.dict(os.environ,{'PATH':str(self.host)+os.pathsep+os.environ['PATH']}):
+            r=await self.install(self.args())
+        self.assertEqual(r['status'],'verification_failed',r)
+        self.assertEqual(r['verification'][0]['exit_code'],17)
+        self.assertIn('TARGET_FAILURE',r['verification'][0]['stderr'])
+        self.assertFalse(json.loads(self.registry.read_text())['environments'])
+
+    async def test_N04_arbitrary_echo_does_not_authorize_verified_registration(self):
+        args=self.args(verification_commands=['echo ok']);args['arguments'].pop('verification_checks')
+        r=await self.install(args)
+        self.assertEqual(r['error'],'INSTALL_STRUCTURED_VERIFICATION_REQUIRED',r)
+        self.assertFalse((self.root/'install-count').exists())
+
+    async def test_N04_package_check_rejects_echo_interpreter_and_missing_marker(self):
+        args=self.args(verification_checks=[{'kind':'python_import','tool':'echo','modules':['definitely_missing']}])
+        r=await self.install(args)
+        self.assertEqual(r['error'],'INSTALL_VERIFICATION_INTERPRETER_CONFLICT',r)
+        self.assertFalse((self.root/'install-count').exists())
+        self.script(self.prefix/'bin/python','#!/bin/sh\necho ok\n')
+        args=self.args(verification_checks=[{'kind':'python_import','tool':'python','modules':['definitely_missing']}])
+        args['call_id']='fake-interpreter'
+        r=await self.install(args)
+        self.assertEqual(r['status'],'verification_failed',r)
+        self.assertFalse(json.loads(self.registry.read_text())['environments'])
+
+    async def test_N04_actual_import_evidence_is_scoped_to_checked_module(self):
+        self.script(self.prefix/'bin/python','#!/bin/sh\nexec '+shlex.quote(sys.executable)+' "$@"\n')
+        r=await self.install(self.args(packages=['unproven-package'],verification_checks=[
+            {'kind':'python_import','tool':'python','modules':['json']}]))
+        self.assertEqual(r['status'],'registered',r)
+        row=json.loads(self.registry.read_text())['environments']['target']
+        self.assertEqual(row['capability_evidence']['python_module:json']['status'],'verified')
+        self.assertEqual(row['capability_evidence']['package:unproven-package']['status'],'unknown')
+
+    async def test_N04_entry_and_overlay_conflicts_rejected(self):
+        self.script(self.prefix/'bin/fixture-tool','#!/bin/sh\nexit 0\n')
+        r=await self.install(self.args(entries={'fixture-tool':str(self.host/'fixture-tool')}))
+        self.assertEqual(r['status'],'verification_failed',r)
+        self.assertIn('RUNTIME_TARGET_ENTRY_OUTSIDE_PREFIX',r['error'])
+        with self.assertRaisesRegex(RuntimeLaunchError,'RUNTIME_ENV_OVERRIDE_CONFLICT'):
+            prepare_runtime_launch({'prefix':str(self.prefix),'runtime_env':{'LD_LIBRARY_PATH':'/exact/lib'}},
+                ['fixture-tool'],extra_env={'LD_LIBRARY_PATH':'/wrong'},required_tool='fixture-tool')
+        with self.assertRaisesRegex(RuntimeLaunchError,'RUNTIME_EXPLICIT_ENTRY_CONFLICT'):
+            prepare_runtime_launch({'prefix':str(self.prefix)},[str(self.host/'fixture-tool')],required_tool='fixture-tool')
+
+    async def test_N04_runner_library_and_subprocess_inheritance_real_launch(self):
+        runner=self.script(self.root/'runner','#!/bin/sh\n[ "$LIB_FIXTURE" = exact-library ] || exit 18\nexport VIA_RUNNER=yes\nexec "$@"\n')
+        self.script(self.prefix/'bin/fixture-tool','#!/bin/sh\n[ "$VIA_RUNNER" = yes ] || exit 19\n/bin/sh -c \'test "$LIB_FIXTURE" = exact-library && echo TARGET_CHILD_OK\'\n')
+        r=await self.install(self.args(runner_argv=[str(runner),'{command}'],runtime_env={'LIB_FIXTURE':'exact-library'}))
+        self.assertEqual(r['status'],'registered',r)
+        self.assertIn('TARGET_CHILD_OK',r['verification'][0]['stdout'])
+        row=json.loads(self.registry.read_text())['environments']['target']
+        self.assertEqual(row['prefix'],str(self.prefix));self.assertEqual(row['runtime_env'],{'LIB_FIXTURE':'exact-library'})
+        self.assertEqual(row['evidence']['checks'][0]['launch']['runner_kind'],'argv_template')
+        self.assertNotIn('VIA_RUNNER',os.environ)
+
+    async def test_N04_protected_uses_same_target_facts_and_existing_permission(self):
+        await self.s.disconnected()
+        self.s=DomainService(**{**self.kw,'session_id':'protected-install','execution_profile':'protected'})
+        await self.s.call('request.begin',{'request_id':'protected-r1','role':'generate'},host_token=self.s.host_token)
+        self.script(self.prefix/'bin/fixture-tool','#!/bin/sh\n[ "$LIB_FIXTURE" = protected-library ] || exit 21\necho PROTECTED_TARGET\n')
+        r=await self.install(self.args(runtime_env={'LIB_FIXTURE':'protected-library'}))
+        self.assertEqual(r['status'],'registered',r)
+        self.assertIn('PROTECTED_TARGET',r['verification'][0]['stdout'])
+        rows=self.s._state()['task_state']['execution_permissions']['requests']
+        self.assertTrue(all(row['payload'].get('human_required') for row in rows.values()))
+
+    async def test_N04_install_can_create_target_before_target_verification(self):
+        (self.prefix/'bin').rmdir();self.prefix.rmdir()
+        body='#!/bin/sh\necho CREATED_TARGET\n'
+        program='from pathlib import Path; p=Path('+repr(str(self.prefix/'bin/fixture-tool'))+'); p.parent.mkdir(parents=True); p.write_text('+repr(body)+'); p.chmod(0o755)'
+        r=await self.install(self.args(cmd=shlex.join([sys.executable,'-I','-B','-c',program])))
+        self.assertEqual(r['status'],'registered',r)
+        self.assertIn('CREATED_TARGET',r['verification'][0]['stdout'])
+
+    async def test_N05_registration_failure_recovers_fresh_connection_without_reinstall(self):
+        self.script(self.prefix/'bin/fixture-tool','#!/bin/sh\necho target\n')
+        args=self.args();await self.approve(args)
+        with patch.object(PackageManager,'register_environment',side_effect=OSError('synthetic write failure')):
+            r=await self.s.call('install.execute',args)
+        self.assertEqual(r['status'],'registration_failed',r)
+        self.assertEqual(r['registration_recovery'],'retry_registration_only')
+        await self.reconnect()
+        r=await self.s.call('install.execute',args)
+        self.assertEqual(r['status'],'registered',r);self.assertFalse(r['installation_replayed'])
+        self.assertEqual((self.root/'install-count').read_text(),'x')
+
+    async def test_N06_lost_terminal_receipt_reconciles_committed_registration(self):
+        self.script(self.prefix/'bin/fixture-tool','#!/bin/sh\necho target\n')
+        args=self.args();await self.approve(args)
+        with patch.object(permissions,'complete_permission',side_effect=OSError('lost terminal receipt')):
+            with self.assertRaisesRegex(OSError,'lost terminal receipt'):
+                await self.s.call('install.execute',args)
+        await self.reconnect()
+        r=await self.s.call('install.execute',args)
+        self.assertEqual(r['status'],'registered',r);self.assertTrue(r['reconciled'])
+        self.assertEqual((self.root/'install-count').read_text(),'x')
+
+    async def test_N06_unknown_claim_is_not_replayed(self):
+        args=self.args();await self.approve(args)
+        state=self.s._state();row=next(iter(state['task_state']['execution_permissions']['requests'].values()))
+        permissions.claim_permission(self.s.data_root,self.s.task_id,row,'install:install')
+        await self.reconnect()
+        r=await self.s.call('install.execute',args)
+        self.assertEqual(r['status'],'reconciliation_required',r)
+        self.assertFalse((self.root/'install-count').exists())
+
+    async def test_N07_cancel_during_install_keeps_effects_and_never_ready(self):
+        args=self.args(cmd='printf x >> install-count; sleep 30')
+        await self.approve(args)
+        task=asyncio.create_task(self.s.call('install.execute',args))
+        for _ in range(100):
+            if (self.root/'install-count').exists():break
+            await asyncio.sleep(.02)
+        await self.s.call('exec.cancel',{'run_ref':'install:install'})
+        r=await task
+        self.assertEqual(r['status'],'cancelled',r)
+        self.assertFalse(json.loads(self.registry.read_text())['environments'])
+        await self.reconnect()
+        replay=await self.s.call('install.execute',args)
+        self.assertEqual(replay['status'],'cancelled')
+        self.assertEqual((self.root/'install-count').read_text(),'x')
+
+    async def test_N07_cancel_after_commit_keeps_committed_fact(self):
+        self.script(self.prefix/'bin/fixture-tool','#!/bin/sh\necho target\n')
+        args=self.args();await self.approve(args)
+        original=PackageManager.register_environment
+        def commit_then_cancel(pm,*a,**kw):
+            value=original(pm,*a,**kw)
+            self.s._install_cancels['install'].set()
+            return value
+        with patch.object(PackageManager,'register_environment',commit_then_cancel):
+            r=await self.s.call('install.execute',args)
+        self.assertEqual(r['status'],'registered',r)
+        self.assertTrue(json.loads(self.registry.read_text())['environments']['target'])
+
+    async def test_N07_cancel_during_verification_preserves_install_without_ready(self):
+        self.script(self.prefix/'bin/fixture-tool','#!/bin/sh\ntouch '+shlex.quote(str(self.root/'verify-started'))+'\nsleep 30\n')
+        args=self.args();await self.approve(args)
+        task=asyncio.create_task(self.s.call('install.execute',args))
+        for _ in range(100):
+            if (self.root/'verify-started').exists():break
+            await asyncio.sleep(.02)
+        await self.s.call('exec.cancel',{'run_ref':'install:install'})
+        r=await task
+        self.assertEqual(r['status'],'cancelled',r);self.assertTrue(r['cleanup_confirmed'],r)
+        self.assertFalse(json.loads(self.registry.read_text())['environments'])
+        self.assertEqual((self.root/'install-count').read_text(),'x')
+
+    async def test_install_failure_preserves_existing_good_record(self):
+        existing={'prefix':str(self.prefix),'status':'verified','packages':['old'],'extension':{'keep':True}}
+        self.registry.write_text(json.dumps({'environments':{'target':existing},'tools':{}}))
+        r=await self.install(self.args(cmd='printf partial > install-count; exit 9'))
+        self.assertEqual(r['status'],'execution_failed',r);self.assertEqual(r['software_side_effects'],'possible')
+        self.assertEqual(json.loads(self.registry.read_text())['environments']['target'],existing)
+
+
+if __name__=='__main__':unittest.main()

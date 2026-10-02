@@ -1,0 +1,121 @@
+{
+  "scope": "read-only reachable path confirmation; no production launch; no credentials",
+  "launcher": "/public/home/liusiqi/03.毕设/Biomind_v1/bin/biomind",
+  "head": "4721cc8e737991b7d6571d5bebfdf47e808b6ba1",
+  "branch": "refactor/pi-unified-runtime",
+  "files": {
+    "bin/biomind": {
+      "sha256": "e321476a4cb152f3cd3a4316e1e24276ef610cdaf85b06cead34518b95a41488",
+      "bytes": 488
+    },
+    "bio_agents.py": {
+      "sha256": "f8b7e4ff7872333996d7984f9f5a26e622695566f5968e7bd4fdce850e62ba33",
+      "bytes": 285
+    },
+    "agent_core/pi_entry.py": {
+      "sha256": "a3d93a3e10a351fabf31f6afb75fc450df8a3106747c4cbfc5b57726f9e76e92",
+      "bytes": 16425
+    },
+    "integrations/pi_runtime/host.ts": {
+      "sha256": "25bf72c8b310216559b600b46b767f33cd900c4a06536ff8722279b575f0edc9",
+      "bytes": 36456
+    },
+    "integrations/pi_runtime/dist/host.js": {
+      "sha256": "3ef8f3cd7ce96981ba78fa9028bd4df98ce3ed4533027175d24fe2408d083166",
+      "bytes": 38766
+    },
+    "integrations/pi_runtime/extensions/biomind.ts": {
+      "sha256": "4b5a8214fbf960100a05bd0b39dd975718ecfb8aa13d80b4ef3ab9f4feda48f0",
+      "bytes": 113644
+    },
+    "integrations/pi_runtime/dist/extensions/biomind.js": {
+      "sha256": "0d616142f37c39c844473bacb9b7e0cb78829a9632d213d0d8b0d0d8105faf84",
+      "bytes": 122976
+    },
+    "integrations/pi_runtime/native-workflow.ts": {
+      "sha256": "296e1e82e9e14f2479cee7a6f8070dc996c27ec1bfa24b67e8a8da3386cfdd9d",
+      "bytes": 2546
+    },
+    "integrations/pi_runtime/dist/native-workflow.js": {
+      "sha256": "7003cdf35e6c0b677c1d52d60af1541f409957595e2ef2735bcbebf25ea10c4b",
+      "bytes": 2575
+    },
+    "integrations/pi_runtime/package.json": {
+      "sha256": "26aa8452bcb049fcd674ff18c7854c4590fcd7b9b434f55116176a66dbbf52c0",
+      "bytes": 942
+    },
+    "integrations/pi_runtime/compat/pi-0.87.1-observer.patch.json": {
+      "sha256": "c9548f76b88c4b0e3a0887f6921eb526320254556a16c91442976e6eb48210fa",
+      "bytes": 9061
+    }
+  },
+  "chain": [
+    "bin/biomind",
+    "bio_agents.py",
+    "agent_core/pi_entry.py:198",
+    "integrations/pi_runtime/dist/host.js"
+  ],
+  "patch_check": {
+    "mode": "check",
+    "package": "@earendil-works/pi-coding-agent",
+    "version": "0.87.1",
+    "runtimeLabel": "0.87.1+biomind-observer.3",
+    "patchSha256": "c9548f76b88c4b0e3a0887f6921eb526320254556a16c91442976e6eb48210fa",
+    "files": [
+      {
+        "path": "dist/core/model-runtime.js",
+        "sha256": "53e4c1fdccab69c9d4b49162b8b9a94ede1f3b5e1c35dc9ed77e3726bd3778d1",
+        "changed": false
+      },
+      {
+        "path": "dist/core/model-registry.js",
+        "sha256": "b16d0749e3679f2335fbef31e145d49416de63a7408334e94c496b86463cfc8c",
+        "changed": false
+      },
+      {
+        "path": "dist/bundle/chunks/chunk-OJP47DM6.js",
+        "sha256": "69b184da56577dda43d788becb05716547b3831996d97ae54b7030ec44e2423b",
+        "changed": false
+      },
+      {
+        "path": "dist/core/http-dispatcher.js",
+        "sha256": "1f26c9e603ee1174423e6e2c6eaaca7df5f5468023db2acae74b8e497832af7b",
+        "changed": false
+      },
+      {
+        "path": "dist/core/extensions/runner.js",
+        "sha256": "f8e6efb5049a3bcb030c0cfadda965f712270a5303d91ad42ce8fe98d4ebad59",
+        "changed": false
+      },
+      {
+        "path": "dist/core/agent-session.js",
+        "sha256": "c79179ec645ed922c958e674c6facdb91fe9be5804f1490a352dfbcef5b8a110",
+        "changed": false
+      }
+    ]
+  },
+  "python_tests": {
+    "command": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python -B -m unittest -v test_native_workflow.NativeWorkflow.test_T13_native_external_cwd_output_no_contract_no_bwrap test_native_workflow.NativeWorkflow.test_T14_replay_and_new_connection_one_effect test_native_workflow.NativeWorkflow.test_T16_cancel_cleans_descendant_and_replay test_native_workflow.NativeWorkflow.test_T17_T19_migration_pending_not_replayed_and_requires_new_request test_native_workflow.NativeWorkflow.test_T18_legacy_and_profile_mismatch test_external_access_integration.ExternalAccessIntegration.test_parent_directory_approval_runs_two_exact_files_and_does_not_poison_pwd test_external_access_integration.ExternalAccessIntegration.test_missing_execution_capability_keeps_file_grant_and_never_spawns",
+    "cwd": "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/tests",
+    "pass": 7,
+    "fail": 0,
+    "seconds": 4.218,
+    "isolation": "existing NoProvider import guard; temporary registry/cwd/files; synthetic processes only"
+  },
+  "serializer_guard": {
+    "events": [
+      {
+        "pid": 2,
+        "kind": "guard_ready",
+        "allowed": true,
+        "root": "/tmp/biomind_impl_20261002_baseline"
+      },
+      {
+        "pid": 2,
+        "kind": "installed_sdk_source_read",
+        "allowed": true,
+        "path": "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/node_modules/openai/resources/admin/organization/projects/api-keys.mjs"
+      }
+    ]
+  }
+}

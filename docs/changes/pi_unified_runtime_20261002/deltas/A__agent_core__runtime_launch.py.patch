@@ -1,0 +1,181 @@
+--- /dev/null
++++ b/agent_core/runtime_launch.py
+@@ -0,0 +1,178 @@
++"""Interpret one recorded runtime launch without discovery or health checks.
++
++Native, protected and installation verification use the same argv/environment
++facts. A runner is an argv template, never a shell string prefix.
++"""
++from __future__ import annotations
++
++import os
++import hashlib
++import json
++from pathlib import Path
++import re
++import shlex
++
++
++class RuntimeLaunchError(ValueError):
++    pass
++
++
++def _absolute(value, label):
++    path = Path(str(value)).expanduser()
++    if not path.is_absolute() or '\x00' in str(path):
++        raise RuntimeLaunchError('RUNTIME_' + label + '_ABSOLUTE_REQUIRED')
++    return str(path.resolve())
++
++
++def prepare_runtime_launch(record, command, *, base_env=None, extra_env=None,
++                           required_tool=None, shell='/bin/sh'):
++    """Return a launch projection; inspecting an entry is not executing it.
++
++    ``runner_argv`` contains one standalone ``{command}`` slot. Legacy conda
++    runners ending in an interpreter remain restricted to that interpreter.
++    Extra environment cannot override the selected prefix, PATH or recorded
++    library variables. The caller retains profile/permission enforcement.
++    """
++    record = dict(record or {})
++    prefix_value = record.get('prefix') or (record.get('resolved_runtime_paths') or {}).get('RESOLVED_ENV_PREFIX')
++    prefix = _absolute(prefix_value, 'PREFIX') if prefix_value else ''
++    entries = dict(record.get('entries') or {})
++    runtime_env = dict(record.get('runtime_env') or {})
++    if any(not isinstance(k, str) or not k or '=' in k or '\x00' in k or
++           not isinstance(v, str) or '\x00' in v for k, v in runtime_env.items()):
++        raise RuntimeLaunchError('RUNTIME_ENV_INVALID')
++    env = dict(os.environ if base_env is None else base_env)
++    overlay = dict(extra_env or {})
++    critical = {'ENV_PREFIX', 'CONDA_PREFIX', 'PATH'} | set(runtime_env)
++    for key in critical & set(overlay):
++        expected = prefix if key in {'ENV_PREFIX', 'CONDA_PREFIX'} else runtime_env.get(key)
++        if overlay[key] != expected:
++            raise RuntimeLaunchError('RUNTIME_ENV_OVERRIDE_CONFLICT:' + key)
++    env.update(overlay)
++    env.update(runtime_env)
++    if prefix:
++        if runtime_env.get('ENV_PREFIX', prefix) != prefix or runtime_env.get('CONDA_PREFIX', prefix) != prefix:
++            raise RuntimeLaunchError('RUNTIME_PREFIX_ENV_CONFLICT')
++        env.update(ENV_PREFIX=prefix, CONDA_PREFIX=prefix)
++        env['PATH'] = str(Path(prefix) / 'bin') + os.pathsep + env.get('PATH', '')
++    if isinstance(command, str):
++        if not command.strip() or '\x00' in command:
++            raise RuntimeLaunchError('RUNTIME_COMMAND_REQUIRED')
++        argv = [shell, '-c', command]
++        is_shell = True
++    elif isinstance(command, list) and command and all(isinstance(s, str) and '\x00' not in s for s in command) and command[0]:
++        argv = list(command)
++        is_shell = False
++    else:
++        raise RuntimeLaunchError('RUNTIME_ARGV_REQUIRED')
++    if required_tool:
++        tool = str(required_tool)
++        if Path(tool).name != tool or tool in {'.', '..'}:
++            raise RuntimeLaunchError('RUNTIME_TOOL_NAME_INVALID')
++        entry = entries.get(tool) or (str(Path(prefix) / 'bin' / tool) if prefix else '')
++        if not entry:
++            raise RuntimeLaunchError('RUNTIME_ENTRY_REQUIRED:' + tool)
++        entry = _absolute(entry, 'ENTRY')
++        if prefix and not Path(entry).is_relative_to(Path(prefix)):
++            raise RuntimeLaunchError('RUNTIME_TARGET_ENTRY_OUTSIDE_PREFIX:' + tool)
++        if is_shell or (Path(argv[0]).is_absolute() and _absolute(argv[0], 'ENTRY') != entry) or (
++                not Path(argv[0]).is_absolute() and argv[0] != tool):
++            raise RuntimeLaunchError('RUNTIME_EXPLICIT_ENTRY_CONFLICT:' + tool)
++        # Only the exact intended target can supply verification. PATH fallback
++        # remains impossible even when the host provides an identically named tool.
++        if not Path(entry).is_file() or not os.access(entry, os.X_OK):
++            raise RuntimeLaunchError('RUNTIME_TARGET_ENTRY_MISSING:' + entry)
++        argv[0] = entry
++    elif not is_shell and prefix:
++        named = Path(argv[0]).name
++        exact = entries.get(named) or str(Path(prefix) / 'bin' / named)
++        if Path(argv[0]).is_absolute():
++            if named in entries and _absolute(argv[0], 'ENTRY') != _absolute(exact, 'ENTRY'):
++                raise RuntimeLaunchError('RUNTIME_EXPLICIT_ENTRY_CONFLICT:' + named)
++        elif named in entries:
++            argv[0] = _absolute(exact, 'ENTRY')
++    runner = record.get('runner_argv')
++    legacy = record.get('env_runner')
++    runner_kind = 'prefix' if prefix else 'entry'
++    if runner:
++        if not isinstance(runner, list) or any(not isinstance(x, str) for x in runner) or runner.count('{command}') != 1:
++            raise RuntimeLaunchError('RUNTIME_RUNNER_TEMPLATE_UNSUPPORTED')
++        expanded = []
++        for part in runner:
++            if part == '{command}':
++                expanded.extend(argv)
++            elif '{' in part or '}' in part:
++                raise RuntimeLaunchError('RUNTIME_RUNNER_TEMPLATE_UNSUPPORTED')
++            else:
++                expanded.append(part)
++        if not expanded or not Path(expanded[0]).is_absolute():
++            raise RuntimeLaunchError('RUNTIME_RUNNER_ABSOLUTE_REQUIRED')
++        argv = expanded
++        runner_kind = 'argv_template'
++    elif legacy:
++        try:
++            parts = shlex.split(str(legacy))
++        except ValueError as exc:
++            raise RuntimeLaunchError('RUNTIME_RUNNER_UNSUPPORTED') from exc
++        if len(parts) != 5 or Path(parts[0]).name not in {'conda', 'mamba', 'micromamba'} or parts[1] != 'run' or parts[2] not in {'-n', '-p'}:
++            raise RuntimeLaunchError('RUNTIME_RUNNER_UNSUPPORTED')
++        if is_shell or Path(argv[0]).name != Path(parts[4]).name:
++            raise RuntimeLaunchError('RUNTIME_RUNNER_ENTRY_CONFLICT')
++        if not prefix:
++            raise RuntimeLaunchError('RUNTIME_RUNNER_PREFIX_REQUIRED')
++        launcher = record.get('launcher') or parts[0]
++        if not Path(str(launcher)).is_absolute():
++            raise RuntimeLaunchError('RUNTIME_RUNNER_ABSOLUTE_REQUIRED')
++        argv = [str(launcher), 'run', '-p', prefix, *argv]
++        runner_kind = 'conda_entry'
++    if not prefix and not entries and not runner:
++        raise RuntimeLaunchError('RUNTIME_LAUNCH_DESCRIPTOR_REQUIRED')
++    return {'command': argv if runner or legacy or not is_shell else command,
++            'env': env,
++            'launch': {'prefix': prefix, 'runner_kind': runner_kind,
++                       'entry': argv[0], 'runner_argv': argv if runner or legacy else [],
++                       'runtime_env': runtime_env, 'source_ref': record.get('source_ref', '')}}
++
++
++def installation_verification_checks(request):
++    """Generate verifiable target checks; arbitrary shell success proves nothing."""
++    checks = request.get('verification_checks')
++    if not isinstance(checks, list) or not checks:
++        raise RuntimeLaunchError('INSTALL_STRUCTURED_VERIFICATION_REQUIRED')
++    result = []
++    for check in checks:
++        if not isinstance(check, dict) or not isinstance(check.get('tool'), str):
++            raise RuntimeLaunchError('INSTALL_VERIFICATION_CHECK_INVALID')
++        tool, kind = check['tool'], check.get('kind', 'executable')
++        evidence = {'kind': kind, 'tool': tool}
++        marker = ''
++        if kind == 'executable':
++            args = check.get('args', [])
++            if not isinstance(args, list) or any(not isinstance(v, str) for v in args):
++                raise RuntimeLaunchError('INSTALL_VERIFICATION_ARGS_INVALID')
++            argv = [check.get('entry') or tool, *args]
++        elif kind == 'python_import':
++            if not re.fullmatch(r'python(?:\d+(?:\.\d+)*)?',tool):
++                raise RuntimeLaunchError('INSTALL_VERIFICATION_INTERPRETER_CONFLICT')
++            modules = check.get('modules')
++            if not isinstance(modules, list) or not modules or any(not isinstance(v, str) or not v for v in modules):
++                raise RuntimeLaunchError('INSTALL_VERIFICATION_MODULES_REQUIRED')
++            marker='BIOMIND_IMPORT_OK:'+hashlib.sha256(json.dumps(modules).encode()).hexdigest()
++            argv = [check.get('entry') or tool, '-c',
++                    'import importlib,json; names=' + repr(modules) +
++                    '; [importlib.import_module(name) for name in names]; print('+repr(marker)+')']
++            evidence['modules'] = modules
++        elif kind == 'r_package':
++            if tool!='Rscript':
++                raise RuntimeLaunchError('INSTALL_VERIFICATION_INTERPRETER_CONFLICT')
++            packages = check.get('packages')
++            if not isinstance(packages, list) or not packages or any(not isinstance(v, str) or not v for v in packages):
++                raise RuntimeLaunchError('INSTALL_VERIFICATION_PACKAGES_REQUIRED')
++            marker='BIOMIND_PACKAGE_OK:'+hashlib.sha256(json.dumps(packages).encode()).hexdigest()
++            expr = 'p <- c(' + ','.join(json.dumps(v) for v in packages) + '); stopifnot(all(vapply(p, requireNamespace, logical(1), quietly=TRUE))); cat(' + json.dumps(marker+'\n') + ')'
++            argv = [check.get('entry') or tool, '-e', expr]
++            evidence['packages'] = packages
++        else:
++            raise RuntimeLaunchError('INSTALL_VERIFICATION_KIND_UNSUPPORTED')
++        result.append({'argv': argv, 'evidence': evidence, 'tool': tool,'expected_stdout_line':marker})
++    return result

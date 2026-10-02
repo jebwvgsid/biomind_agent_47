@@ -1,0 +1,257 @@
+--- a/integrations/pi_runtime/domain_adapter/service.py
++++ b/integrations/pi_runtime/domain_adapter/service.py
+@@ -778,14 +778,13 @@
+         return result
+ 
+     async def _install(self,method,p):
++        from agent_core.runtime_launch import installation_verification_checks, prepare_runtime_launch, RuntimeLaunchError
+         call_id=self._call_id(p);args=deepcopy(p.get('arguments') or {})
+         for field in ('approved','source','permit','host_token','access_projection','read_access','grants','mounts','execution_profile','profile','disable_sandbox','_biomind_probe'):
+             if field in args or field in p:raise DomainError('MODEL_AUTHORITY_FIELD_FORBIDDEN')
+         code=args.get('cmd')
+         if not isinstance(code,str) or not code.strip():raise DomainError('INSTALL_COMMAND_REQUIRED')
+         if not args.get('env_name'):raise DomainError('INSTALL_ENV_NAME_REQUIRED')
+-        # Installation keeps its intent confirmation in both profiles. Only
+-        # protected uses path grants and a sandbox access projection.
+         access_args={'cmd':code,'workdir':str(self.cwd)}
+         if args.get('prefix'):
+             prefix_target=Path(args['prefix']).expanduser()
+@@ -795,89 +794,183 @@
+         access=permissions.command_access_projection(self.commands,access_args,self.task_id,call_id='install:'+call_id) if self.execution_profile == 'protected' else None
+         payload={'kind':'installation','code':code,'language':'Bash','request':args,
+                  'cwd':str(self.cwd),'human_required':True}
+-        if access is not None: payload['access_projection']=access
++        if access is not None:payload['access_projection']=access
+         row=self._permission('install:'+call_id,payload)
++        request=row['payload']['request']
++        source={'registry_path':str(self.registry.path),'registry_source':'software_registry'}
++
++        def progress(stage,**details):
++            def save(state):
++                live=permissions._permissions(state)['requests'][row['request_id']]
++                if live.get('action_hash')!=row['action_hash'] or not live.get('claim'):
++                    raise DomainError('INSTALLATION_RECEIPT_IDENTITY_CHANGED')
++                live['installation_progress']={'stage':stage,**deepcopy(details)}
++            permissions._mutate(self.data_root,self.task_id,save)
++
++        def register_verified(saved,*,recovery=False):
++            # The recovery record is host-produced after real checks. It lives
++            # in the original claim, never in model-supplied retry arguments.
++            from package_manager import PackageManager
++            final=deepcopy(saved['registration']);result=deepcopy(saved['result'])
++            pm=PackageManager.for_registry(self.registry.path)
++            current=pm.get_environment(request['env_name']) or {}
++            marker=(current.get('evidence') or {}).get('installation_request_id')
++            committed=marker==row['request_id'] and all(current.get(k)==v for k,v in final.items() if k in {'prefix','entries','env_runner','runner_argv','launcher','runtime_env'})
++            if not committed:
++                live=permissions.permission_state(self.data_root,self.task_id,row['request_id'])
++                if live.get('status')!='allowed':
++                    result.update(status='cancelled',registration_status='not_run',registration_recovery='explicit_retry_required')
++                    return result
++                try:
++                    pm.register_environment(request['env_name'],record=final)
++                except Exception as exc:
++                    # A post-replace error may still mean the record committed.
++                    try:
++                        fresh=PackageManager.for_registry(self.registry.path).get_environment(request['env_name']) or {}
++                        committed=(fresh.get('evidence') or {}).get('installation_request_id')==row['request_id'] and all(fresh.get(k)==v for k,v in final.items() if k in {'prefix','entries','env_runner','runner_argv','launcher','runtime_env'})
++                    except Exception:
++                        committed=False
++                    if not committed:
++                        result.update(status='registration_failed',registration_status='failed',
++                                      registration_recovery='retry_registration_only',error=type(exc).__name__+': '+str(exc))
++                        progress('verification_completed',registration=final,result=result)
++                        return result
++            result.pop('error',None)
++            result.update(status='registered',registration_status='verified',registration_recovery='completed',
++                          registration_receipt=getattr(pm,'last_registry_receipt',{}) or {'committed':True,'reconciled':committed},
++                          reconciled=bool(recovery or committed))
++            progress('registration_committed',registration=final,result=result)
++            self.registry.reload()
++            return result
++
++        saved=row.get('installation_progress') or {}
++        if saved.get('stage')=='registration_committed':
++            # Includes a crash/lost transport receipt after atomic registry commit.
++            return {**saved['result'],'replayed':True,'reconciled':True}
++        if method=='install.execute' and saved.get('stage')=='verification_completed':
++            try:
++                result=register_verified(saved,recovery=True)
++            except Exception as exc:
++                return {**saved['result'],'status':'registration_failed','registration_status':'failed',
++                        'registration_recovery':'retry_registration_only','error':type(exc).__name__+': '+str(exc),**source}
++            def recovered(state):
++                live=permissions._permissions(state)['requests'][row['request_id']]
++                if live['action_hash']!=row['action_hash']:raise DomainError('INSTALLATION_RECEIPT_IDENTITY_CHANGED')
++                live['result']=deepcopy(result)
++            permissions._mutate(self.data_root,self.task_id,recovered)
++            return {**result,'replayed':True,'installation_replayed':False}
+         if row.get('result'):return {**row['result'],'replayed':True}
+         if row['status']=='pending':return self._waiting(row)
+-        if row['status']!='allowed':return {'status':'not_run','error':'INSTALLATION_PERMISSION_DENIED','execution_started':False}
++        if row['status']!='allowed':return {'status':'not_run','error':'INSTALLATION_PERMISSION_DENIED','execution_started':False,**source}
+         if method=='install.propose':return {'status':'approved','approval':self._approval(row),'execution_started':False}
+-        if row.get('claim'):return {'status':'reconciliation_required','error':'INSTALLATION_OUTCOME_UNKNOWN_RECONCILE'}
+-        request=row['payload']['request']
+-        verification=request.get('verification_commands') or []
+-        if not isinstance(verification,list) or not verification or any(not isinstance(v,str) or not v.strip() for v in verification):
+-            return {'status':'blocked','error':'INSTALL_VERIFICATION_COMMANDS_REQUIRED','execution_started':False}
++        if row.get('claim'):return {'status':'reconciliation_required','error':'INSTALLATION_OUTCOME_UNKNOWN_RECONCILE',**source}
++        try:
++            verification=installation_verification_checks(request)
++        except RuntimeLaunchError as exc:
++            return {'status':'blocked','error':str(exc),'execution_started':False,**source}
+         prefix=Path(request.get('prefix') or '')
++        # Current install API creates prefix environments. Runner-only metadata
++        # can be registered separately; do not publish incomplete target records.
+         if not prefix.is_absolute() or (self.execution_profile == 'protected' and not prefix.resolve().is_relative_to(self.cwd)):
+-            return {'status':'blocked','error':'INSTALL_PREFIX_OUTSIDE_AUTHORIZED_PROJECT','execution_started':False}
++            return {'status':'blocked','error':'INSTALL_PREFIX_OUTSIDE_AUTHORIZED_PROJECT','execution_started':False,**source}
+         if self.registry.path is None:return {'status':'blocked','error':'REGISTRY_PATH_NOT_CONFIGURED','execution_started':False}
+         from agent_core.command_execution import formal_protection_capability
+-        if self.execution_profile == 'protected': formal_protection_capability(row['payload']['access_projection'])
++        if self.execution_profile == 'protected':formal_protection_capability(row['payload']['access_projection'])
+         permit=permissions.claim_permission(self.data_root,self.task_id,row,'install:'+call_id)
+         from execution.executor import run_command
+         import threading
+         cancel=threading.Event();self._install_cancels[call_id]=cancel
+-        # The executor consumes this same permit's access projection for the
+-        # installation and every verification; registry writes remain host-owned.
+         command=row['payload']['code'];cwd=self.cwd
+         logroot=self.data_root/'task_outputs'/self.task_id/'installations'/row['request_id']
+         logroot.mkdir(parents=True,exist_ok=True)
+-        async def dispatch(code, **kwargs):
++        descriptor={k:deepcopy(request[k]) for k in ('env_runner','runner_argv','launcher','runtime_env','entries') if k in request}
++        descriptor['prefix']=str(prefix.resolve())
++
++        async def dispatch(actual,*,env=None,**kwargs):
+             if self.execution_profile == 'protected':
+-                with permissions.execution_context(permit,code,cwd=cwd):
+-                    return await run_command(code,cwd=cwd,**kwargs)
++                with permissions.execution_context(permit,actual,cwd=cwd,env=env):
++                    return await run_command(actual,cwd=cwd,env=env,**kwargs)
+             from execution.executor import _run_native_command
+             from agent_core.execution_profile import require_host_profile
+             def check_install_intent():
+                 require_host_profile(self)
+                 live=permissions.validate_permit(permit)
+-                if code not in [live['payload']['code'], *live['payload']['request'].get('verification_commands',[])]:
++                if live['action_hash']!=row['action_hash']:
+                     raise permissions.PermissionDenied('INSTALL_EXECUTION_PAYLOAD_CHANGED')
+-            return await _run_native_command(code,check_intent=check_install_intent,cwd=cwd,**kwargs)
++            return await _run_native_command(actual,check_intent=check_install_intent,cwd=cwd,env=env,**kwargs)
++
+         async def execute():
++            result={'status':'not_run','run_ref':'install:'+call_id,'registration_status':'not_run',
++                    'scientific_validation':'not_assessed','execution_started':False,'verification':[],**source,
++                    'log_refs':{'stdout':str(logroot/'stdout.log'),'stderr':str(logroot/'stderr.log')}}
++            observation={}
+             try:
++                progress('installation_started',result=result)
+                 stdout,stderr,rc=await dispatch(command,profile=False,display_streams=False,cancel_event=cancel,
+-                    capture_log_paths={'stdout':str(logroot/'stdout.log'),'stderr':str(logroot/'stderr.log')})
++                    capture_log_paths=result['log_refs'],runtime_observation=observation)
++                result.update(status='executed' if rc==0 else 'execution_failed',exit_code=rc,
++                              stdout=stdout[:6000],stderr=stderr[:6000],execution_started=True,
++                              software_side_effects='possible' if rc else 'installation_completed')
++                progress('installation_completed',result=result)
++                if rc==0:
++                    for index,check in enumerate(verification):
++                        launch=prepare_runtime_launch(descriptor,check['argv'],required_tool=check['tool'])
++                        logs={'stdout':str(logroot/f'verify-{index}.stdout.log'),'stderr':str(logroot/f'verify-{index}.stderr.log')}
++                        observation={}
++                        out,err,check_rc=await dispatch(launch['command'],env=launch['env'],profile=False,display_streams=False,
++                            cancel_event=cancel,capture_log_paths=logs,runtime_observation=observation)
++                        result['verification'].append({**check['evidence'],'argv':launch['command'],
++                            'launch':launch['launch'],'exit_code':check_rc,'stdout':out[:1000],'stderr':err[:1000],
++                            'log_refs':logs,'observed_at':datetime.now(timezone.utc).isoformat()})
++                        marker=check.get('expected_stdout_line')
++                        if check_rc!=0 or (marker and marker not in out.splitlines()):
++                            result.update(status='verification_failed',registration_status='not_run')
++                            if check_rc==0:result['error']='INSTALL_VERIFICATION_OUTPUT_MISSING'
++                            break
++                    if result['status']=='executed':
++                        if cancel.is_set():raise asyncio.CancelledError()
++                        observed=datetime.now(timezone.utc).isoformat()
++                        capability_evidence={}
++                        for checked in result['verification']:
++                            keys=['tool:'+checked['tool']]
++                            keys.extend('package:'+name for name in checked.get('packages',[]))
++                            keys.extend('python_module:'+name for name in checked.get('modules',[]))
++                            for key in keys:
++                                capability_evidence[key]={'status':'verified','source':'installation_execution',
++                                    'observed_at':checked['observed_at'],'installation_request_id':row['request_id'],
++                                    'log_refs':checked['log_refs']}
++                        final={**descriptor,'status':'verified','packages':request.get('packages') or [],
++                               'purpose':request.get('description') or 'Pi-approved installation',
++                               'last_verified_at':observed,'tools':sorted({c['tool'] for c in verification}),
++                               'capability_evidence':capability_evidence,
++                               'evidence':{'source':'installation_execution','installation_request_id':row['request_id'],
++                                           'observed_at':observed,'checks':deepcopy(result['verification']),
++                                           'declared_packages':request.get('packages') or [],
++                                           'checked_packages':sorted({name for c in verification for name in c['evidence'].get('packages',[])}),
++                                           'checked_python_modules':sorted({name for c in verification for name in c['evidence'].get('modules',[])})}}
++                        # No invented package versions; executable-only checks
++                        # evidence that tool, not every declared library/package.
++                        saved={'registration':final,'result':deepcopy(result)}
++                        progress('verification_completed',**saved)
++                        result=register_verified(saved)
+             except asyncio.CancelledError:
+-                result={'status':'cancelled','run_ref':'install:'+call_id,'registration_status':'not_run','scientific_validation':'not_assessed'}
+-                permissions.complete_permission(permit,result)
+-                return result
++                result.update(status='cancelled',registration_status='not_run',software_side_effects='possible',
++                              execution_started=bool(result['execution_started'] or observation.get('process_started_at')),
++                              cleanup_confirmed=bool(observation.get('cleanup_confirmed')),
++                              process_returncode=observation.get('process_returncode'))
++                if not observation.get('cleanup_confirmed'):
++                    result.update(status='reconciliation_required',error='INSTALLATION_CANCEL_CLEANUP_UNKNOWN')
+             except (FormalProtectionError,permissions.PermissionDenied) as exc:
+-                result={'status':'stage_blocked','run_ref':'install:'+call_id,'execution_started':False,
+-                    'registration_status':'not_run','scientific_validation':'not_assessed','error':str(exc)}
++                result.update(status='verification_blocked' if result['execution_started'] else 'stage_blocked',
++                              error=str(exc),registration_status='not_run')
+                 if isinstance(exc,FormalProtectionError):result['capability_missing']=exc.diagnostic
+-                permissions.complete_permission(permit,result)
+-                return result
+-            result={'status':'executed' if rc==0 else 'execution_failed','exit_code':rc,'stdout':stdout[:6000],'stderr':stderr[:6000],
+-                    'run_ref':'install:'+call_id,'registration_status':'verification_required','scientific_validation':'not_assessed',
+-                    'log_refs':{'stdout':str(logroot/'stdout.log'),'stderr':str(logroot/'stderr.log')},'verification':[]}
+-            if rc==0:
+-                for index,code in enumerate(verification):
+-                    try:
+-                        out,err,check_rc=await dispatch(code,profile=False,display_streams=False,cancel_event=cancel,
+-                            capture_log_paths={'stdout':str(logroot/f'verify-{index}.stdout.log'),'stderr':str(logroot/f'verify-{index}.stderr.log')})
+-                    except (FormalProtectionError,permissions.PermissionDenied) as exc:
+-                        # The installation already ran. Preserve its effects and
+-                        # logs; a revoked grant must not trigger a fresh install.
+-                        blocked={'status':'stage_blocked','execution_started':False,'error':str(exc)}
+-                        if isinstance(exc,FormalProtectionError):blocked['capability_missing']=exc.diagnostic
+-                        result['verification'].append(blocked)
+-                        result.update(status='verification_blocked',registration_status='not_run')
+-                        break
+-                    result['verification'].append({'exit_code':check_rc,'stdout':out[:1000],'stderr':err[:1000]})
+-                    if check_rc!=0:result['status']='verification_failed';break
+-                if result['status']=='executed':
+-                    if not prefix.is_dir():result.update(status='verification_failed',error='VERIFIED_PREFIX_MISSING')
+-                    else:
+-                        # Reuse registration implementation without constructing
+-                        # its scanning/configuration/shim-repair initializer.
+-                        from package_manager import PackageManager
+-                        pm=PackageManager.__new__(PackageManager)
+-                        self.registry.reload();pm.registry=deepcopy(self.registry.registry);pm.registry_path=self.registry.path
+-                        pm.register_environment(request['env_name'],packages=request.get('packages') or [],
+-                            purpose=request.get('description') or 'Pi-approved installation',healthcheck=' && '.join(verification),
+-                            status='verified',last_verified_at=time.strftime('%Y-%m-%dT%H:%M:%S'))
+-                        pm.registry['environments'][request['env_name']]['prefix']=str(prefix.resolve());pm._save_registry()
+-                        self.registry.reload();result['registration_status']='verified';result['status']='registered'
++            except (RuntimeLaunchError,OSError,ValueError) as exc:
++                saved=permissions.permission_state(self.data_root,self.task_id,row['request_id']).get('installation_progress') or {}
++                if saved.get('stage')=='verification_completed':
++                    result.update(status='registration_failed',registration_status='failed',registration_recovery='retry_registration_only')
++                else:
++                    result.update(status='verification_failed' if result['execution_started'] else 'execution_failed',registration_status='not_run')
++                result['error']=type(exc).__name__+': '+str(exc)
+             permissions.complete_permission(permit,result)
+             return result
+         task=asyncio.create_task(execute(),name='pi-install:'+call_id);self._install_tasks[call_id]=task

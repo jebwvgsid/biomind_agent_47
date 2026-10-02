@@ -1,0 +1,140 @@
+{
+  "head": "4721cc8e737991b7d6571d5bebfdf47e808b6ba1",
+  "branch": "refactor/consultant-controller-authority",
+  "repo": "/public/home/liusiqi/03.毕设/Biomind_v1",
+  "files": {
+    "package_manager.py": {
+      "sha256": "c2cadc2d4ee0003e68293849f7b6eefbe32b0aa773633ade95f47351a235c8db",
+      "size": 52763,
+      "tracked": true
+    },
+    "agent_core/registered_runtime.py": {
+      "sha256": "d2ff36b399575404b346d51dabe7060c976855efb259be975798a27fc850a594",
+      "size": 11476,
+      "tracked": true
+    },
+    "agent_core/action_runtime.py": {
+      "sha256": "ff491bfceb85700f6fd80773f6f6c7835fdf8b8c3eb2d049171043c65912d37c",
+      "size": 99889,
+      "tracked": true
+    },
+    "agent_core/native_command.py": {
+      "sha256": "79db51af6325105ed3f00eac8e5ab4f9cf9b9fa0bae2b07f202a10d9ecdc5bfd",
+      "size": 10359,
+      "tracked": true
+    },
+    "agent_core/formal_command_observation.py": {
+      "sha256": "6bc102bfe34670f3f3c6086962de45918fb8daf7fe6c303c58526d2a59d956e2",
+      "size": 23668,
+      "tracked": true
+    },
+    "agent_core/skill_runtime_metadata.py": {
+      "sha256": "df504135bedbf58187a52cfd2ed36499187f32075a581dabd17d25cc188a635f",
+      "size": 5166,
+      "tracked": true
+    },
+    "execution/executor.py": {
+      "sha256": "7099113b65b538047f299b91f818b98b2a5641dbcdde9dff1be68338512da2c6",
+      "size": 57923,
+      "tracked": true
+    },
+    "integrations/pi_runtime/domain_adapter/service.py": {
+      "sha256": "d29b617c01497daaa46efa3ac3339cf354c631033284f889b7c2f4bc4e464cdf",
+      "size": 63431,
+      "tracked": true
+    },
+    "integrations/pi_runtime/domain_adapter/registry.py": {
+      "sha256": "6a15c9c9e9d858f2cc9bc4882137133c1933b37f319000ff1536afdf2f3dac4d",
+      "size": 3974,
+      "tracked": true
+    },
+    "integrations/pi_runtime/extensions/biomind.ts": {
+      "sha256": "4b5a8214fbf960100a05bd0b39dd975718ecfb8aa13d80b4ef3ab9f4feda48f0",
+      "size": 113644,
+      "tracked": true
+    },
+    "integrations/pi_runtime/native-workflow.ts": {
+      "sha256": "296e1e82e9e14f2479cee7a6f8070dc996c27ec1bfa24b67e8a8da3386cfdd9d",
+      "size": 2546,
+      "tracked": true
+    },
+    "integrations/pi_runtime/stage-context.ts": {
+      "sha256": "24bd0f2f37b12796eb171013dde5fe02a48f8c67f6472db57f1a320b66a03dc6",
+      "size": 12584,
+      "tracked": false
+    },
+    "integrations/pi_runtime/execution-profile.ts": {
+      "sha256": "7c893dc98cb8d183e757480da1ea7fe9731c8695f211c035d02e9cec6aff0e0f",
+      "size": 2352,
+      "tracked": true
+    },
+    "integrations/pi_runtime/domain-client.ts": {
+      "sha256": "f72fa3b0408e7c242d58d0e8dfe3df6f2157147d7204453e77398e49c52eb65f",
+      "size": 15509,
+      "tracked": true
+    },
+    "integrations/pi_runtime/tests/extension-harness.ts": {
+      "sha256": "d67ec3f78f72d159527f0ede250cffaa6669d4947daaafc8314f2f272ce34e70",
+      "size": 12382,
+      "tracked": true
+    },
+    "integrations/pi_runtime/tests/test_python_domain.py": {
+      "sha256": "fa79f381155904f1b10167192b1af030f989541b540e160c64bcb7ae92b5221a",
+      "size": 38799,
+      "tracked": true
+    },
+    "integrations/pi_runtime/package.json": {
+      "sha256": "26aa8452bcb049fcd674ff18c7854c4590fcd7b9b434f55116176a66dbbf52c0",
+      "size": 942,
+      "tracked": true
+    },
+    "integrations/pi_runtime/tsconfig.json": {
+      "sha256": "bc7de54e6cf9820ede89bebac7cb51a58f66f6a4a36377e5687f15daf177d0db",
+      "size": 424,
+      "tracked": true
+    },
+    "integrations/pi_runtime/dist/extensions/biomind.js": {
+      "sha256": "0d616142f37c39c844473bacb9b7e0cb78829a9632d213d0d8b0d0d8105faf84",
+      "size": 122976,
+      "tracked": false
+    },
+    "integrations/pi_runtime/dist/native-workflow.js": {
+      "sha256": "7003cdf35e6c0b677c1d52d60af1541f409957595e2ef2735bcbebf25ea10c4b",
+      "size": 2575,
+      "tracked": false
+    },
+    "integrations/pi_runtime/dist/stage-context.js": {
+      "sha256": "a60ddae621d75ec369c423f3902fd06d12303dd8e39d8ecf222ba7c3593da2bc",
+      "size": 12613,
+      "tracked": false
+    },
+    "integrations/pi_runtime/dist/host.js": {
+      "sha256": "3ef8f3cd7ce96981ba78fa9028bd4df98ce3ed4533027175d24fe2408d083166",
+      "size": 38766,
+      "tracked": false
+    },
+    "integrations/pi_runtime/compat/pi-0.87.1-observer.patch.json": {
+      "sha256": "c9548f76b88c4b0e3a0887f6921eb526320254556a16c91442976e6eb48210fa",
+      "size": 9061,
+      "tracked": true
+    },
+    "agent_core/runtime_evidence.py": {
+      "sha256": "622b25a6147e96f9d0750074afff5506baed824670cdfad85836d4b4f741c3a0",
+      "size": 26214
+    },
+    "skills/enrichment-analysis/SKILL.md": {
+      "sha256": "9d4cfc2f2decb1f090e63e56f873fd8b754874b00662b9c0ae385506159bf488",
+      "size": 9882
+    },
+    "skills/enrichment-analysis/references/dependencies.md": {
+      "sha256": "720ea10394a1cd3eb97753b1d50b74d62be139acc14b8ff84c64d3d11e365222",
+      "size": 866
+    },
+    "integrations/pi_runtime/tests/test_native_workflow.py": {
+      "sha256": "fc772721ea0636de82fe144507cf3a2473bc7acac5acad8140f1a0c6c6f3d69b",
+      "size": 12172
+    }
+  },
+  "baseline_location": "/tmp/biomind_impl_20261002_baseline",
+  "audit_commit": "4721cc8e737991b7d6571d5bebfdf47e808b6ba1"
+}

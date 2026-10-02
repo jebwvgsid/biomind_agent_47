@@ -1,0 +1,703 @@
+--- a/package_manager.py
++++ b/package_manager.py
+@@ -7,6 +7,10 @@
+ import subprocess
+ import logging
+ import sys
++import copy
++import fcntl
++import hashlib
++import tempfile
+ from pathlib import Path
+ from datetime import datetime
+ from typing import Any, Dict, List, Optional
+@@ -15,30 +19,30 @@
+ # =========================================================
+ # 1. 配置加载与路径修复
+ # =========================================================
+-try:
+-    # 1. 获取当前文件所在目录 (通常是 agent_core)
+-    current_dir = Path(__file__).resolve().parent
+-    # 2. 获取 BioMind 项目根目录
+-    project_root = current_dir.parent
+-    
+-    # 3. 将项目根目录加入 sys.path
+-    if str(project_root) not in sys.path:
+-        sys.path.insert(0, str(project_root))
+-    
+-    # 4. [修改] 使用统一的导入方式 (防止文件夹/文件冲突)
+-    from config import config as config_module
+-
+-    # 读取变量
+-    BIO_SOFTWARE_ROOT = getattr(config_module, 'BIO_SOFTWARE_ROOT', None)
+-    # [新增] 读取源码安装专用目录
+-    BIO_SOURCE_INSTALL_DIR = getattr(config_module, 'BIO_SOURCE_INSTALL_DIR', None)
+-    ANACONDA_ROOT = getattr(config_module, 'ANACONDA_ROOT', None)
+-
+-except Exception as e:
+-    # 兜底默认值
+-    BIO_SOFTWARE_ROOT = None
+-    BIO_SOURCE_INSTALL_DIR = None
+-    ANACONDA_ROOT = None
++# Metadata readers/writers must not import application configuration (which may
++# load credentials), discover managers, scan environments, or repair shims.
++BIO_SOFTWARE_ROOT = None
++BIO_SOURCE_INSTALL_DIR = None
++ANACONDA_ROOT = None
++
++
++def _load_legacy_configuration():
++    global BIO_SOFTWARE_ROOT, BIO_SOURCE_INSTALL_DIR, ANACONDA_ROOT
++    try:
++        from config import config as config_module
++    except Exception:
++        return
++    BIO_SOFTWARE_ROOT = getattr(config_module, "BIO_SOFTWARE_ROOT", BIO_SOFTWARE_ROOT)
++    BIO_SOURCE_INSTALL_DIR = getattr(config_module, "BIO_SOURCE_INSTALL_DIR", BIO_SOURCE_INSTALL_DIR)
++    ANACONDA_ROOT = getattr(config_module, "ANACONDA_ROOT", ANACONDA_ROOT)
++
++
++class RegistryError(ValueError):
++    """A metadata error with a stable code and the actual authority path."""
++    def __init__(self, code, path, detail=""):
++        self.code, self.registry_path, self.detail = code, str(path), detail
++        super().__init__(f"{code}: {path}: {detail}")
++
+ 
+ logger = logging.getLogger("PackageManager")
+ 
+@@ -63,7 +67,24 @@
+     }
+     SHIM_PATH_PARTS = {"agent_shim", "bin_shims", "shims"}
+ 
+-    def __init__(self, work_dir: str = "./"):
++    @classmethod
++    def for_registry(cls, registry_path, *, work_dir=None, conda_root=None, conda_exe=None):
++        """Open the existing authority without initialization or software probes."""
++        return cls(work_dir or str(Path(registry_path).parent), registry_path=registry_path,
++                   metadata_only=True, conda_root=conda_root, conda_exe=conda_exe)
++
++    def __init__(self, work_dir: str = "./", *, registry_path=None, metadata_only=False,
++                 conda_root=None, conda_exe=None):
++        if metadata_only:
++            self.work_dir = Path(work_dir).absolute()
++            self.registry_path = Path(registry_path).absolute()
++            self.root_dir = self.registry_path.parent
++            self.shim_dir = self.root_dir / "bin_shims"
++            self.source_root = self.root_dir / "source_tools"
++            self.conda_root, self.conda_exe = conda_root, conda_exe
++            self.registry = self._load_registry()
++            return
++        _load_legacy_configuration()
+         # 1. work_dir 用于存放临时文件或项目特定数据
+         self.work_dir = Path(work_dir).absolute()
+         
+@@ -212,23 +233,161 @@
+             
+         return None
+ 
++    def _read_registry(self):
++        try:
++            text = self.registry_path.read_text(encoding="utf-8")
++        except FileNotFoundError:
++            return self._default_registry(), False
++        except (OSError, UnicodeError) as exc:
++            raise RegistryError("REGISTRY_UNREADABLE", self.registry_path, str(exc)) from exc
++        try:
++            data = json.loads(text)
++        except (ValueError, TypeError) as exc:
++            raise RegistryError("REGISTRY_CORRUPT", self.registry_path, str(exc)) from exc
++        self._validate_registry(data)
++        return self._normalize_registry(data), True
++
++    def _validate_registry(self, data):
++        if not isinstance(data, dict):
++            raise RegistryError("REGISTRY_SCHEMA_INCOMPATIBLE", self.registry_path, "expected object")
++        if data.get("schema_version", 1) != 1:
++            raise RegistryError("REGISTRY_SCHEMA_INCOMPATIBLE", self.registry_path, "unsupported schema_version")
++        for section in ("tools", "environments"):
++            records = data.get(section, {})
++            if not isinstance(records, dict) or any(not isinstance(k, str) or not isinstance(v, dict)
++                                                   for k, v in records.items()):
++                raise RegistryError("REGISTRY_SCHEMA_INCOMPATIBLE", self.registry_path, section)
++            for name, record in records.items():
++                declared = record.get("name") if section == "tools" else record.get("env")
++                if declared and declared != name:
++                    raise RegistryError("REGISTRY_IDENTITY_CONFLICT", self.registry_path, f"{section}.{name}")
++                if section == "environments" and record.get("prefix") and record.get("path") and record["prefix"] != record["path"]:
++                    raise RegistryError("REGISTRY_IDENTITY_CONFLICT", self.registry_path, f"environments.{name}.prefix/path")
++                if section == "tools" and record.get("env") and record.get("env_name") and record["env"] != record["env_name"]:
++                    raise RegistryError("REGISTRY_IDENTITY_CONFLICT", self.registry_path, f"tools.{name}.env_name")
++
+     def _load_registry(self):
+-        if self.registry_path.exists():
++        data, initialized = self._read_registry()
++        self._registry_baseline = copy.deepcopy(data)
++        self.registry_initialized = initialized
++        return data
++
++    def _identity_conflicts(self, old, new):
++        for section in ("environments", "tools"):
++            for name, record in new.get(section, {}).items():
++                previous = old.get(section, {}).get(name, {})
++                fields = ("prefix", "path", "backend", "scope", "host", "execution_scope")
++                if section == "tools":
++                    fields += ("env", "env_name", "source_path", "source_executable")
++                for field in fields:
++                    before, after = previous.get(field), record.get(field)
++                    if before not in (None, "", {}) and after not in (None, "", {}) and before != after:
++                        raise RegistryError("REGISTRY_IDENTITY_CONFLICT", self.registry_path,
++                                            f"{section}.{name}.{field}: {before!r} != {after!r}")
++
++    def _atomic_write_registry(self, data):
++        temporary = None
++        try:
++            with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=self.registry_path.parent,
++                                             prefix=f".{self.registry_path.name}.", suffix=".tmp", delete=False) as stream:
++                temporary = Path(stream.name)
++                json.dump(data, stream, ensure_ascii=False, indent=2)
++                stream.write("\n")
++                stream.flush()
++                os.fsync(stream.fileno())
++            if self.registry_path.exists():
++                temporary.chmod(self.registry_path.stat().st_mode & 0o777)
++            os.replace(temporary, self.registry_path)
++            temporary = None
++            # A directory fsync failure happens *after* commit: expose that fact
++            # in the receipt instead of inviting a repeated software install.
+             try:
+-                data = json.loads(self.registry_path.read_text(encoding='utf-8'))
+-                return self._normalize_registry(data)
+-            except Exception:
+-                return self._default_registry()
+-        return self._default_registry()
++                descriptor = os.open(self.registry_path.parent, os.O_RDONLY)
++                try:
++                    os.fsync(descriptor)
++                finally:
++                    os.close(descriptor)
++            except OSError as exc:
++                return str(exc)
++            return ""
++        finally:
++            if temporary is not None:
++                temporary.unlink(missing_ok=True)
++
++    def _update_registry(self, mutation):
++        self.last_registry_receipt = {"committed": False, "registry_path": str(self.registry_path),
++                                      "source_type": "software_registry"}
++        self.registry_path.parent.mkdir(parents=True, exist_ok=True)
++        # This separate inode is never replaced by a writer.
++        lock_path = self.registry_path.with_name(self.registry_path.name + ".lock")
++        with lock_path.open("a+b") as lock:
++            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
++            try:
++                latest, initialized = self._read_registry()
++                updated = copy.deepcopy(latest)
++                mutation(updated)
++                self._validate_registry(updated)
++                self._identity_conflicts(latest, updated)
++                for name, record in updated.get("environments", {}).items():
++                    old_status = latest.get("environments", {}).get(name, {}).get("status")
++                    if record.get("status") in self.INSTALLED_STATUSES and old_status not in self.INSTALLED_STATUSES:
++                        if not any(record.get(key) for key in ("prefix", "path", "env_runner", "runner", "runner_argv", "launcher")):
++                            raise RegistryError("REGISTRY_LAUNCH_INCOMPLETE", self.registry_path, name)
++                changed = updated != latest or not initialized
++                durability_warning = self._atomic_write_registry(updated) if changed else ""
++                self.registry = updated
++                self._registry_baseline = copy.deepcopy(updated)
++                self.registry_initialized = True
++                self.last_registry_receipt = {"committed": True, "changed": changed,
++                    "registry_path": str(self.registry_path), "source_type": "software_registry",
++                    "durability_warning": durability_warning}
++                return updated
++            finally:
++                fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
++
++    def _merge_delta(self, baseline, desired, latest, trail=()):
++        """Three-way merge for legacy callers that mutate registry then save.
++
++        Only fields changed since this instance's read may be written. Independent
++        mapping/list additions merge; conflicting scalar updates fail visibly.
++        """
++        missing = object()
++        merged = copy.deepcopy(latest)
++        for key in baseline.keys() | desired.keys():
++            old, new, current = baseline.get(key, missing), desired.get(key, missing), latest.get(key, missing)
++            if old == new:
++                continue
++            location = (*trail, str(key))
++            if new is missing:
++                # Replacing a partial legacy dictionary is not an explicit
++                # deletion request. Use register_environment(remove_fields=...).
++                continue
++            elif isinstance(new, dict) and (old is missing or isinstance(old, dict)) and (current is missing or isinstance(current, dict)):
++                merged[key] = self._merge_delta({} if old is missing else old, new,
++                                                {} if current is missing else current, location)
++            elif key in {"packages", "capabilities", "bound_tools", "skill_ids"} and isinstance(new, list):
++                removed = set(old if isinstance(old, list) else []) - set(new)
++                merged[key] = [item for item in self._merge_unique([] if current is missing else current, new) if item not in removed]
++            elif current is missing or current == old or current == new:
++                merged[key] = copy.deepcopy(new)
++            else:
++                raise RegistryError("REGISTRY_UPDATE_CONFLICT", self.registry_path, ".".join(location))
++        return merged
+ 
+     def _save_registry(self):
+-        self.registry_path.write_text(json.dumps(self.registry, indent=2), encoding='utf-8')
++        desired = copy.deepcopy(self.registry)
++        baseline = copy.deepcopy(getattr(self, "_registry_baseline", self._default_registry()))
++        def apply(latest):
++            merged = self._merge_delta(baseline, desired, latest)
++            latest.clear()
++            latest.update(merged)
++        self._update_registry(apply)
+ 
+     def _default_registry(self) -> Dict[str, Dict[str, Any]]:
+         return {"tools": {}, "environments": {}}
+ 
+     def _normalize_registry(self, data: Optional[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+-        registry = self._default_registry()
++        registry = copy.deepcopy(data) if isinstance(data, dict) else self._default_registry()
+         if isinstance(data, dict):
+             registry["tools"] = dict(data.get("tools") or {})
+             registry["environments"] = dict(data.get("environments") or {})
+@@ -539,109 +698,110 @@
+     def get_environment(self, env_name: str) -> Dict[str, Any]:
+         return dict(self.registry.get("environments", {}).get(env_name, {}))
+ 
++    def _merge_record_fields(self, existing, patch):
++        result = copy.deepcopy(existing)
++        for key, value in patch.items():
++            if key in {"packages", "capabilities", "skill_ids", "bound_tools"}:
++                result[key] = self._merge_unique(existing.get(key), value)
++            elif isinstance(value, dict) and isinstance(existing.get(key), dict):
++                result[key] = self._merge_record_fields(existing[key], value)
++            elif key == "evidence" and isinstance(value, list) and isinstance(existing.get(key), list):
++                result[key] = copy.deepcopy(existing[key])
++                for item in value:
++                    if item not in result[key]:
++                        result[key].append(copy.deepcopy(item))
++            else:
++                result[key] = copy.deepcopy(value)
++        return result
++
++    def _environment_patch(self, registry, env_name, patch, remove_fields=()):
++        if not isinstance(env_name, str) or not env_name.strip():
++            raise RegistryError("REGISTRY_IDENTITY_INVALID", self.registry_path, "empty environment name")
++        envs = registry.setdefault("environments", {})
++        existing = envs.get(env_name, {})
++        merged = self._merge_record_fields(existing, patch)
++        # Extending an old verified environment does not make newly declared
++        # packages/capabilities verified. Keep evidence at its actual scope.
++        for field, kind in (("packages", "package"), ("capabilities", "capability")):
++            for item in self._ensure_list(patch.get(field)):
++                if item not in self._ensure_list(existing.get(field)):
++                    merged.setdefault("capability_evidence", {}).setdefault(f"{kind}:{item}",
++                        {"status": "unknown", "source": "registration_declaration"})
++        if patch.get("status") == "registered" and existing.get("status") in self.INSTALLED_STATUSES:
++            merged["status"] = existing["status"]
++        for field in remove_fields:
++            if field in {"env", "prefix", "backend", "scope", "host", "execution_scope"}:
++                raise RegistryError("REGISTRY_IDENTITY_CONFLICT", self.registry_path, f"cannot remove identity field {field}")
++            merged.pop(field, None)
++        merged.setdefault("env", env_name)
++        merged.setdefault("status", "registered")
++        merged.setdefault("registered_at", datetime.now().isoformat())
++        if patch.get("status") in self.INSTALLED_STATUSES:
++            if not any(merged.get(key) for key in ("prefix", "path", "env_runner", "runner", "runner_argv", "launcher")):
++                raise RegistryError("REGISTRY_LAUNCH_INCOMPLETE", self.registry_path, env_name)
++            if merged.get("backend") in {"prefix", "conda-prefix"} and not merged.get("prefix"):
++                raise RegistryError("REGISTRY_LAUNCH_INCOMPLETE", self.registry_path, "prefix backend needs prefix")
++            if merged.get("backend") == "runner" and not any(merged.get(key) for key in ("env_runner", "runner", "runner_argv", "launcher")):
++                raise RegistryError("REGISTRY_LAUNCH_INCOMPLETE", self.registry_path, "runner backend needs launcher")
++        if merged.get("prefix") and not Path(str(merged["prefix"])).is_absolute():
++            raise RegistryError("REGISTRY_IDENTITY_INVALID", self.registry_path, "prefix must be absolute")
++        envs[env_name] = merged
++
+     def register_environment(
+-        self,
+-        env_name: str,
+-        purpose: str = "",
+-        packages=None,
+-        skill_id: str = None,
+-        notes: str = "",
+-        language: str = "",
+-        capabilities=None,
+-        healthcheck: str = "",
+-        status: str = "registered",
+-        tool_name: str = "",
+-        last_verified_at: str = "",
+-        healthchecks_by_skill=None,
++        self, env_name: str, purpose: str = None, packages=None, skill_id: str = None,
++        notes: str = None, language: str = None, capabilities=None, healthcheck: str = None,
++        status: str = None, tool_name: str = None, last_verified_at: str = None,
++        healthchecks_by_skill=None, *, prefix=None, env_runner=None, backend=None, scope=None,
++        versions=None, evidence=None, record=None, remove_fields=(),
+     ):
+-        """Register a reusable environment even when it does not expose a command shim."""
+-        envs = self.registry.setdefault("environments", {})
+-        existing = dict(envs.get(env_name, {}))
+-        merged_packages = self._merge_unique(existing.get("packages"), packages)
+-        merged_caps = self._merge_unique(existing.get("capabilities"), capabilities)
+-        merged_skills = self._merge_unique(existing.get("skill_ids"), [skill_id] if skill_id else [])
+-        merged_tools = self._merge_unique(existing.get("bound_tools"), [tool_name] if tool_name else [])
+-        selected_language = str(language or existing.get("language", "")).lower()
+-        merged_healthchecks_by_skill = dict(existing.get("healthchecks_by_skill") or {})
+-        if isinstance(healthchecks_by_skill, dict):
+-            for key, value in healthchecks_by_skill.items():
+-                if str(key or "").strip() and str(value or "").strip():
+-                    merged_healthchecks_by_skill[str(key).strip()] = str(value).strip()
+-        skill_healthcheck = ""
++        """Commit an explicit metadata patch; omitted fields retain their values.
++
++        ``record`` carries additional launch/evidence fields without dropping
++        fields owned by other producers. ``remove_fields`` is the only implicit-
++        default-free field deletion operation. No software is run here.
++        """
++        patch = copy.deepcopy(record or {})
++        fields = {"purpose": purpose, "packages": packages, "notes": notes, "language": language,
++                  "capabilities": capabilities, "healthcheck": healthcheck, "status": status,
++                  "last_verified_at": last_verified_at, "healthchecks_by_skill": healthchecks_by_skill,
++                  "prefix": prefix, "env_runner": env_runner, "backend": backend, "scope": scope,
++                  "versions": versions, "evidence": evidence}
++        for key, value in fields.items():
++            if value is not None:
++                if key in patch and patch[key] != value:
++                    raise RegistryError("REGISTRY_UPDATE_CONFLICT", self.registry_path, key)
++                patch[key] = value
+         if skill_id:
+-            skill_healthcheck = str(healthcheck or merged_healthchecks_by_skill.get(skill_id, "") or "").strip()
+-        selected_healthcheck = self.build_environment_healthcheck(
+-            env_name=env_name,
+-            language=selected_language,
+-            packages=merged_packages,
+-            healthcheck=skill_healthcheck or healthcheck or existing.get("healthcheck", ""),
+-        )
+-        if skill_id and selected_healthcheck:
+-            merged_healthchecks_by_skill[skill_id] = selected_healthcheck
+-        envs[env_name] = {
+-            "env": env_name,
+-            "purpose": purpose or existing.get("purpose") or "Reusable environment",
+-            "language": selected_language,
+-            "packages": merged_packages,
+-            "capabilities": merged_caps,
+-            "healthcheck": selected_healthcheck,
+-            "healthchecks_by_skill": merged_healthchecks_by_skill,
+-            "status": "broken" if str(status or "").lower() == "broken" else self._best_status(existing.get("status", "registered"), status or "registered"),
+-            "notes": notes or existing.get("notes", ""),
+-            "skill_ids": merged_skills,
+-            "bound_tools": merged_tools,
+-            "registered_at": existing.get("registered_at", datetime.now().isoformat()),
+-            "last_verified_at": last_verified_at or existing.get("last_verified_at", ""),
+-        }
+-        self._save_registry()
++            patch["skill_ids"] = self._merge_unique(patch.get("skill_ids"), [skill_id])
++            if healthcheck:
++                patch.setdefault("healthchecks_by_skill", {})[skill_id] = healthcheck
++        if tool_name:
++            patch["bound_tools"] = self._merge_unique(patch.get("bound_tools"), [tool_name])
++        if language is not None:
++            patch["language"] = language.lower()
++        self._update_registry(lambda latest: self._environment_patch(latest, env_name, patch, remove_fields))
+         return True
+ 
+     def merge_registry_data(self, data: Optional[Dict[str, Any]]) -> Dict[str, int]:
+-        """Merge external software registry JSON without downgrading verified records."""
+-        stats = {"tools": 0, "environments": 0}
++        """Merge explicit records in one transaction, including unknown fields."""
+         if not isinstance(data, dict):
+-            return stats
+-
+-        for env_name, info in (data.get("environments") or {}).items():
+-            if not env_name or not isinstance(info, dict):
+-                continue
+-            self.register_environment(
+-                env_name=str(info.get("env") or env_name),
+-                purpose=str(info.get("purpose") or ""),
+-                packages=info.get("packages"),
+-                skill_id=None,
+-                notes=str(info.get("notes") or ""),
+-                language=str(info.get("language") or ""),
+-                capabilities=info.get("capabilities"),
+-                healthcheck=str(info.get("healthcheck") or ""),
+-                healthchecks_by_skill=info.get("healthchecks_by_skill"),
+-                status=str(info.get("status") or "registered"),
+-                tool_name="",
+-                last_verified_at=str(info.get("last_verified_at") or ""),
+-            )
+-            record = self.registry.setdefault("environments", {}).setdefault(str(info.get("env") or env_name), {})
+-            record["skill_ids"] = self._merge_unique(record.get("skill_ids"), info.get("skill_ids") or info.get("skill_id"))
+-            record["bound_tools"] = self._merge_unique(record.get("bound_tools"), info.get("bound_tools"))
+-            self._save_registry()
+-            stats["environments"] += 1
+-
+-        for tool_name, info in (data.get("tools") or {}).items():
+-            if not tool_name or not isinstance(info, dict):
+-                continue
+-            tools = self.registry.setdefault("tools", {})
+-            existing = dict(tools.get(tool_name, {}))
+-            merged = dict(existing)
+-            merged.update(info)
+-            merged["name"] = str(merged.get("name") or tool_name)
+-            merged["env"] = str(merged.get("env") or merged.get("env_name") or existing.get("env") or "")
+-            merged["env_name"] = str(merged.get("env_name") or merged.get("env") or "")
+-            merged["status"] = self._best_status(existing.get("status", "registered"), info.get("status", "registered"))
+-            tools[tool_name] = merged
+-            if merged.get("env"):
+-                self.bind_tool_to_environment(str(tool_name), str(merged["env"]))
+-            else:
+-                self._save_registry()
+-            stats["tools"] += 1
++            return {"tools": 0, "environments": 0}
++        self._validate_registry(data)
++        stats = {"tools": len(data.get("tools", {})), "environments": len(data.get("environments", {}))}
++        def apply(latest):
++            for name, record in data.get("environments", {}).items():
++                self._environment_patch(latest, name, record)
++            for name, record in data.get("tools", {}).items():
++                merged = self._merge_record_fields(latest.setdefault("tools", {}).get(name, {}), record)
++                merged.setdefault("name", name)
++                latest["tools"][name] = merged
++                env_name = merged.get("env") or merged.get("env_name")
++                if env_name:
++                    self._bind_records(latest, name, env_name)
++            for key, value in data.items():
++                if key not in {"tools", "environments"}:
++                    latest[key] = self._merge_record_fields(latest.get(key, {}), value) if isinstance(value, dict) else copy.deepcopy(value)
++        self._update_registry(apply)
+         return stats
+ 
+     def discover_runtime_candidates(self, requirements: Optional[Dict[str, Any]], *,
+@@ -794,23 +954,19 @@
+                 self._save_registry()
+             return False, str(e)
+ 
++    def _bind_records(self, registry, tool_name, env_name):
++        tools = registry.setdefault("tools", {})
++        existing = tools.get(tool_name, {})
++        old_env = existing.get("env") or existing.get("env_name")
++        if old_env and old_env != env_name:
++            raise RegistryError("REGISTRY_IDENTITY_CONFLICT", self.registry_path, f"tools.{tool_name}.env")
++        tool_record = copy.deepcopy(existing)
++        tool_record.update(name=tool_name, env=env_name, env_name=env_name)
++        tools[tool_name] = tool_record
++        self._environment_patch(registry, env_name, {"bound_tools": [tool_name]})
++
+     def bind_tool_to_environment(self, tool_name: str, env_name: str):
+-        tools = self.registry.setdefault("tools", {})
+-        envs = self.registry.setdefault("environments", {})
+-        tool_record = dict(tools.get(tool_name, {}))
+-        tool_record["name"] = tool_name
+-        tool_record["env"] = env_name
+-        tool_record["env_name"] = env_name
+-        tools[tool_name] = tool_record
+-
+-        env_record = dict(envs.get(env_name, {}))
+-        env_record["env"] = env_name
+-        env_record["bound_tools"] = self._merge_unique(env_record.get("bound_tools"), [tool_name])
+-        env_record.setdefault("packages", [])
+-        env_record.setdefault("capabilities", [])
+-        env_record.setdefault("status", "registered")
+-        envs[env_name] = env_record
+-        self._save_registry()
++        self._update_registry(lambda latest: self._bind_records(latest, tool_name, env_name))
+         return True
+ 
+     def _extract_extra_setup_from_shim(self, text: str) -> str:
+@@ -923,96 +1079,81 @@
+     # =========================================================
+     # [核心修改] 注册现有工具 (支持 setup_script 和 路径优化)
+     # =========================================================
+-    def register_existing_tool(self, tool_name: str, env_name: str, source_path: str = None, setup_script: str = None):
+-        """
+-        注册工具并生成 Shim
+-        :param tool_name: 工具名称/命令名
+-        :param env_name: 依赖的 Conda 环境名
+-        :param source_path: 源码所在目录 (会自动添加到 PATH)
+-        :param setup_script: [新增] 特异性环境配置脚本 (如 export PERL5LIB=...)
++    def register_existing_tool(self, tool_name: str, env_name: str, source_path: str = None,
++                               setup_script: str = None, *, prefix=None, evidence=None,
++                               record=None, generate_shim=True):
++        """Register existing software; shim failures cannot discard exact launch facts.
++
++        A setup-dependent launch requires its shim before metadata is committed.
++        Plain prefix/absolute-entry launch may be committed with a separately
++        reported derived-file error. Existing shared shims are never overwritten.
+         """
+         original_tool_name = str(tool_name or "").strip()
+         if self._is_shim_like_path(original_tool_name):
+-            raise ValueError(
+-                f"Refusing to register shim path as tool command: {original_tool_name}. "
+-                "Use the command name plus the real executable directory instead."
+-            )
+-        tool_name = original_tool_name
+-        
+-        # 自动清洗：如果传入路径，只取文件名
+-        if "/" in tool_name: tool_name = os.path.basename(tool_name)
+-        if "\\" in tool_name: tool_name = os.path.basename(tool_name)
+-        
+-        # 自动清洗：如果 source_path 指向文件，自动转为目录
++            raise ValueError(f"Refusing to register shim path as tool command: {original_tool_name}. Use the real command name.")
++        tool_name = original_tool_name.replace("\\", "/").rsplit("/", 1)[-1]
++        if not re.fullmatch(r"[A-Za-z0-9_.+-]+", tool_name) or tool_name in {".", ".."}:
++            raise RegistryError("REGISTRY_IDENTITY_INVALID", self.registry_path, "tool name")
++        if self._is_shim_like_path(source_path):
++            raise ValueError(f"Refusing to register tool '{tool_name}' from shim path: {source_path}.")
+         source_executable = None
+-        if self._is_shim_like_path(source_path):
+-            raise ValueError(
+-                f"Refusing to register tool '{tool_name}' from shim path: {source_path}. "
+-                "Use the real executable path instead of agent_shim/bin_shims."
+-            )
+         if source_path and os.path.isfile(source_path):
+             source_executable = os.path.abspath(source_path)
+-            source_path = os.path.dirname(source_path)
++            source_path = os.path.dirname(source_executable)
+         env_name = self._normalize_tool_registration_env(tool_name, env_name, source_path)
+-
++        patch = copy.deepcopy(record or {})
++        patch.update(name=tool_name, env=env_name, env_name=env_name)
++        if source_path is not None:
++            patch["source_path"] = str(source_path)
++        if source_executable:
++            patch["source_executable"] = source_executable
++        if evidence is not None:
++            patch["evidence"] = evidence
++        if setup_script is not None:
++            patch["custom_setup"] = bool(setup_script)
++        final_setup = ""
++        if source_path and self.infer_conda_env_from_path(source_path) != env_name:
++            abs_path = os.path.abspath(source_path)
++            final_setup += f'export PATH={shlex.quote(abs_path + ":" + abs_path + "/bin")}:"$PATH"\n'
++            final_setup += f'export PYTHONPATH={shlex.quote(abs_path)}:"${{PYTHONPATH:-}}"\n'
++        if setup_script:
++            final_setup += "\n# --- Custom Setup from Agent ---\n" + setup_script + "\n"
++        derived_errors, derived_paths = [], []
++        exact_prefix = prefix or self.get_environment(env_name).get("prefix")
++        direct_launch = bool(exact_prefix or source_executable) and not setup_script
++        if not generate_shim and not direct_launch:
++            raise RegistryError("REGISTRY_LAUNCH_INCOMPLETE", self.registry_path, "shim-free tool needs prefix or absolute entry")
++        if generate_shim:
++            try:
++                shim_path = self._create_shim(env_name, tool_name, extra_setup=final_setup,
++                                              source_path=source_path, source_executable=source_executable)
++                patch["shim_path"] = str(shim_path)
++                derived_paths.append(str(shim_path))
++            except Exception as exc:
++                if not direct_launch:
++                    raise
++                derived_errors.append(str(exc))
++        def apply(latest):
++            previous = latest.setdefault("tools", {}).get(tool_name, {})
++            merged = self._merge_record_fields(previous, patch)
++            merged.setdefault("status", "registered")
++            merged.setdefault("install_time", datetime.now().isoformat())
++            merged.setdefault("category", "Manual Registered")
++            latest["tools"][tool_name] = merged
++            environment_patch = {"capabilities": [f"tool:{tool_name}"], "bound_tools": [tool_name]}
++            if prefix is not None:
++                environment_patch["prefix"] = prefix
++            self._environment_patch(latest, env_name, environment_patch)
++            self._bind_records(latest, tool_name, env_name)
+         try:
+-            final_setup = ""
+-            
+-            # 1. 处理路径 (同时添加 root 和 bin)
+-            if source_path:
+-                abs_path = os.path.abspath(source_path)
+-                inferred_env = self.infer_conda_env_from_path(abs_path)
+-                if inferred_env and inferred_env == env_name:
+-                    logger.info(
+-                        "Registering %s from conda env %s; skipping redundant PATH/PYTHONPATH injection.",
+-                        tool_name,
+-                        env_name,
+-                    )
+-                else:
+-                    # 这里的修改解决了 3d-dna 等脚本在根目录的问题
+-                    final_setup += f'export PATH="{abs_path}:{abs_path}/bin:$PATH"\n'
+-                    final_setup += f'export PYTHONPATH="{abs_path}:$PYTHONPATH"\n'
+-
+-            # 2. [新增] 注入自定义 Setup (来自 Agent/知识库)
+-            if setup_script:
+-                final_setup += "\n# --- Custom Setup from Agent ---\n"
+-                final_setup += setup_script + "\n"
+-                final_setup += "# -----------------------------\n"
+-
+-            # 3. 创建 Shim
+-            shim_path = self._create_shim(
+-                env_name,
+-                tool_name,
+-                extra_setup=final_setup,
+-                source_path=source_path,
+-                source_executable=source_executable,
+-            )
+-            
+-            # 4. 更新注册表
+-            self.registry.setdefault("tools", {})[tool_name] = {
+-                "status": "registered", 
+-                "env": env_name, 
+-                "env_name": env_name,
+-                "shim_path": str(shim_path),
+-                "source_path": source_path,
+-                "custom_setup": bool(setup_script),
+-                "install_time": datetime.now().isoformat(), 
+-                "category": "Manual Registered"
+-            }
+-            self.register_environment(
+-                env_name=env_name,
+-                purpose=f"Runtime for tool {tool_name}",
+-                capabilities=[f"tool:{tool_name}"],
+-                status="registered",
+-                tool_name=tool_name,
+-            )
+-            self.bind_tool_to_environment(tool_name, env_name)
+-            self._save_registry()
+-            display_print(f"✅ Registered tool: {tool_name}")
+-            return True
+-        except Exception as e:
+-            logger.error(f"Registration failed: {e}")
+-            raise e # 抛出异常让 Agent 知道
++            self._update_registry(apply)
++        except Exception:
++            self.last_registry_receipt = {"committed": False, "registry_path": str(self.registry_path),
++                "derived_paths": derived_paths, "derived_errors": derived_errors,
++                "unreferenced_derived_paths_possible": bool(derived_paths)}
++            raise
++        self.last_registry_receipt.update(derived_paths=derived_paths, derived_errors=derived_errors)
++        return True
+ 
+     def load_from_yaml(self, config_path):
+         """加载 YAML 配置"""
+@@ -1139,6 +1280,28 @@
+ 
+ exec "$real_tool" "$@"
+ """
+-        shim_path.write_text(script, encoding='utf-8')
+-        shim_path.chmod(0o755)
+-        return shim_path
++        self.shim_dir.mkdir(parents=True, exist_ok=True)
++        # Never replace a shared old shim. A changed derivation gets a stable,
++        # content-addressed path; the registry records the actual selected file.
++        payload = script.encode("utf-8")
++        digest = hashlib.sha256(payload).hexdigest()[:16]
++        candidates = [shim_path, self.shim_dir / f".{tool_name}.{digest}.shim"]
++        temporary = None
++        try:
++            with tempfile.NamedTemporaryFile(dir=self.shim_dir, prefix=f".{tool_name}.", delete=False) as stream:
++                temporary = Path(stream.name)
++                stream.write(payload)
++                stream.flush()
++                os.fsync(stream.fileno())
++            temporary.chmod(0o755)
++            for candidate in candidates:
++                try:
++                    os.link(temporary, candidate)
++                    return candidate
++                except FileExistsError:
++                    if candidate.read_bytes() == payload:
++                        return candidate
++            raise RegistryError("REGISTRY_SHIM_CONFLICT", self.registry_path, tool_name)
++        finally:
++            if temporary is not None:
++                temporary.unlink(missing_ok=True)

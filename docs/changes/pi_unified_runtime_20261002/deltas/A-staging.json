@@ -1,0 +1,38 @@
+[
+  {
+    "file": "package_manager.py",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/A__package_manager.py.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "tests/test_registry_atomic_20261002.py",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/A__tests__test_registry_atomic_20261002.py.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "agent_core/runtime_launch.py",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/A__agent_core__runtime_launch.py.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "integrations/pi_runtime/domain_adapter/service.py",
+    "disposition": "delta_artifact_only_requires_effective_baseline",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/A__integrations__pi_runtime__domain_adapter__service.py.patch",
+    "apply_error": "error: patch failed: integrations/pi_runtime/domain_adapter/service.py:778\nerror: integrations/pi_runtime/domain_adapter/service.py: patch does not apply\n"
+  },
+  {
+    "file": "integrations/pi_runtime/tests/test_install_targets_20261002.py",
+    "disposition": "source_hunks_staged",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/A__integrations__pi_runtime__tests__test_install_targets_20261002.py.patch",
+    "apply_error": ""
+  },
+  {
+    "file": "integrations/pi_runtime/extensions/biomind.ts",
+    "disposition": "source_hunks_staged_zero_context_exact_removed_line",
+    "patch": "docs/changes/pi_unified_runtime_20261002/deltas/A__integrations__pi_runtime__extensions__biomind.ts.patch",
+    "apply_error": ""
+  }
+]
