@@ -1,6 +1,6 @@
 # Pi 0.87.1 + BioMind observer compatibility patch
 
-This runtime is **0.87.1+biomind-observer.5**, not unmodified upstream.
+This runtime is **0.87.1+biomind-observer.6**, not unmodified upstream.
 The original negative P15.d artifacts remain historical evidence.
 
 `pi-0.87.1-observer.patch.json` contains exact, unique replacement anchors and
@@ -221,7 +221,8 @@ The host's compatibility check includes the generated adapter digest.
 
 In BioMind mode, normal/fatal recovery messages use the persisted session file
 and its project: `biomind --project-dir <quoted-project> --session <quoted-file>`.
-Every path is shell quoted. Missing, temporary or not-yet-persisted sessions
+The current `.6` revision also appends the launch config, selected Node executable
+and explicit model record as described below. Every path is shell quoted. Missing, temporary or not-yet-persisted sessions
 get no recovery promise. The adapter changes neither `APP_NAME` nor `.pi`,
 authentication, model discovery or session storage. A prior-crash notice stays
 distinct from this process's startup readiness. Pi's extension-update check is
@@ -248,3 +249,35 @@ stdin error produces one failure and one shutdown, raw terminal flags recover,
 and normal `/quit` and double Ctrl+C retain their behavior. These tests prove
 the handling path; the triggering cause of the user's original EIO remains
 unconfirmed. They do not reconnect or execute the user's TAD session.
+
+## .6: preserve the launch settings in recovery commands
+
+Persisted-session commands also include the host's resolved `--pi-config`,
+`--pi-node` and `--pi-model-record` paths when available. The existing launch
+source variables are shared with project restarts. Each value uses the same
+POSIX shell quoting as the project and session; credentials are never included.
+The actual selected Node executable is retained even when it was chosen by the
+entry's default resolution. Config and model-record flags are omitted when no
+explicit source was selected. The command does not snapshot later file edits.
+An exact CLI `--session` overrides `continueSession: true` in that config, while
+explicit CLI `--session --continue` and a conflicting project remain errors.
+
+The adapter is the only changed dependency target in `.6`. Its exact `.5` bytes
+are a recognized predecessor. The manifest declares reversible source edits and
+both digests; unknown adapter bytes still fail before any mutation. Reverting
+`.6` removes the generated adapter and restores upstream dependency bytes. To
+restore `.5`, revert first, restore that revision's source/manifest/helper, then
+apply and rebuild. Installer tests cover upgrades from upstream and `.2`–`.5`,
+repeat apply/check, and exact restoration through both `.4` and `.5` manifests.
+
+```bash
+python compat/pi-recovery-context-pty.py --evidence-dir /absolute/empty/recovery-evidence
+```
+
+This offline acceptance test launches the real BioMind entry with a synthetic
+saved session, custom agent/data directories, explicit config/Node/model-record,
+and a configured continue default. It executes the displayed recovery command
+verbatim from a different directory, without inherited business settings or
+added command flags. It observes only the fixture's child processes and confirms
+the selected directories/model source, domain storage, session/project identity,
+no message replay and no writes to the default agent/domain directories.

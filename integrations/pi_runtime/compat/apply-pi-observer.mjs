@@ -26,10 +26,23 @@ const plan = patch.files.map(file => {
   if (file.generatedSource) {
     const source = fs.readFileSync(path.join(directory, file.generatedSource));
     if (sha(source) !== file.patchedSha256) throw new Error(`Adapter source checksum mismatch: ${file.path}`);
+    // A generated adapter can evolve without changing the SDK/bundle imports.
+    // Reconstruct every declared predecessor and verify its exact bytes before
+    // accepting an in-place upgrade; arbitrary old hashes are not sufficient.
+    for (const previous of file.previousSources ?? []) {
+      let previousSource = source.toString('utf8');
+      for (const edit of previous.replacements.slice().reverse()) {
+        if (previousSource.split(edit.after).length !== 2) throw new Error(`Previous adapter anchor mismatch: ${file.path}`);
+        previousSource = previousSource.replace(edit.after, edit.before);
+      }
+      if (sha(previousSource) !== previous.sha256) throw new Error(`Previous adapter checksum mismatch: ${file.path}`);
+    }
     const current = fs.existsSync(filename) ? fs.readFileSync(filename) : undefined;
-    if (current && sha(current) !== file.patchedSha256) throw new Error(`Unknown installed bytes: ${file.path}`);
-    if (mode === 'check' && !current) throw new Error(`Patch missing: ${file.path}`);
-    return { filename, next: source, remove: mode === 'revert', changed: mode === 'revert' ? !!current : !current,
+    const currentHash = current && sha(current);
+    if (current && ![file.patchedSha256, ...(file.previousSources ?? []).map(previous => previous.sha256)].includes(currentHash))
+      throw new Error(`Unknown installed bytes: ${file.path}`);
+    if (mode === 'check' && currentHash !== file.patchedSha256) throw new Error(`Patch missing: ${file.path}`);
+    return { filename, next: source, remove: mode === 'revert', changed: mode === 'revert' ? !!current : currentHash !== file.patchedSha256,
       path: file.path, sha256: mode === 'revert' ? null : file.patchedSha256 };
   }
   const original = fs.readFileSync(filename, 'utf8');

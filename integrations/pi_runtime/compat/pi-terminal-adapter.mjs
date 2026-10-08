@@ -7,14 +7,22 @@ import path from 'node:path';
 export const isBioMindTerminal = () => process.env.BIOMIND_PI_UI_COMMANDS === '1';
 const shellQuote = value => `'${String(value).replaceAll("'", "'\"'\"'")}'`;
 
-export function formatBioMindResumeCommand(manager, isTTY = process.stdout.isTTY) {
+export function formatBioMindResumeCommand(manager, isTTY = process.stdout.isTTY, environment = process.env) {
   if (!isTTY || !manager?.isPersisted()) return undefined;
   const filename = manager.getSessionFile();
   const cwd = manager.getCwd();
   if (!filename || !cwd || !fs.existsSync(filename)) return undefined;
   // A file path is unambiguous even with a custom session directory. The product
   // entry validates its embedded project before starting another runtime.
-  return ['biomind', '--project-dir', shellQuote(cwd), '--session', shellQuote(filename)].join(' ');
+  const args = ['biomind', '--project-dir', shellQuote(cwd), '--session', shellQuote(filename)];
+  // Reuse the host's resolved launch sources, also used by /project restarts.
+  // These are file/executable paths, never credentials or serialized settings.
+  for (const [flag, key] of [['--pi-config', 'BIOMIND_PI_CONFIG_PATH'],
+    ['--pi-node', 'BIOMIND_PI_NODE'], ['--pi-model-record', 'BIOMIND_PI_MODEL_RECORD']]) {
+    const value = environment[key];
+    if (typeof value === 'string' && value) args.push(flag, shellQuote(value));
+  }
+  return args.join(' ');
 }
 
 export function bioMindCrashInstructions(owner, agentDir) {

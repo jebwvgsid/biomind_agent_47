@@ -74,6 +74,7 @@ test('configured registry create reuses existing table and never duplicates laun
   const failed = await createProject({ ...f, agentDir: blocked }, f.cwd, path.join(f.root, 'D'));
   assert.equal(failed.directoryCreated, true); assert.equal(failed.instructionsCreated, true);
   assert.equal(failed.registration, 'failed'); assert.equal(failed.error, 'PROJECT_CREATE_OR_REGISTRATION_FAILED');
+  assert.equal(failed.message, undefined, 'unknown failures retain the generic receipt');
 });
 
 test('relative Wiki roots use the selected project cwd, independently from the host launch directory', async () => {
@@ -112,6 +113,12 @@ test('actual product CLI list/create bypass nonexistent scientific Python and mo
   const invoke = async (args: string[]) => JSON.parse((await runFile('/usr/bin/python3', [path.join(repo, 'integrations/pi_runtime/testing/posix-pipe-relay.py'), '/usr/bin/python3', path.join(repo, 'bio_agents.py'), ...args, '--pi-config', config, '--pi-node', process.execPath], { cwd: f.cwd, env, encoding: 'utf8' })).stdout);
   const before = snapshot(f.root);
   assert.equal((await invoke(['project', 'list'])).type, 'project_list'); assert.deepEqual(snapshot(f.root), before);
+  const refused = await invoke(['project', 'create', f.root]).catch(error => {
+    assert.equal(error.code, 2); return JSON.parse(error.stdout);
+  });
+  assert.equal(refused.type, 'project_created'); assert.equal(refused.error, 'PROJECT_DIRECTORY_INVALID');
+  assert.equal(refused.message, `Choose a project directory, not a shared/home root: ${f.root}`);
+  assert.deepEqual(snapshot(f.root), before, 'HOME refusal writes neither AGENTS nor project registration');
   const target = path.join(f.root, "真实入口 中文 ' 空项目");
   assert.equal((await invoke(['project', 'create', target])).registration, 'launcher');
   const after = snapshot(f.root);

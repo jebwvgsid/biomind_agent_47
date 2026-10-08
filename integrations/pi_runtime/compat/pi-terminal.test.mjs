@@ -150,10 +150,21 @@ test('recovery uses the persisted file and project with safe shell arguments', t
   const filename = path.join(cwd, "session ' record.jsonl");
   fs.writeFileSync(filename, '{}\n');
   const manager = { isPersisted: () => true, getCwd: () => cwd, getSessionFile: () => filename };
-  const command = formatBioMindResumeCommand(manager, true);
+  const command = formatBioMindResumeCommand(manager, true, {});
   const decoded = spawnSync('/bin/bash', ['-c', 'biomind() { printf "%s\\0" "$@"; }; ' + command], { encoding: 'utf8' });
   assert.equal(decoded.status, 0, decoded.stderr);
   assert.deepEqual(decoded.stdout.split('\0').slice(0, -1), ['--project-dir', cwd, '--session', filename]);
+  const launchPaths = [path.join(root, "配置 ' $(unsafe).json"),
+    path.join(root, "Node ' executable"), path.join(root, "模型 `unsafe` record.json")];
+  const restored = formatBioMindResumeCommand(manager, true, {
+    BIOMIND_PI_CONFIG_PATH: launchPaths[0], BIOMIND_PI_NODE: launchPaths[1],
+    BIOMIND_PI_MODEL_RECORD: launchPaths[2], BIOMIND_PI_API_KEY: 'never-in-command',
+  });
+  const restoredArgs = spawnSync('/bin/bash', ['-c', 'biomind() { printf "%s\\0" "$@"; }; ' + restored], { encoding: 'utf8' });
+  assert.equal(restoredArgs.status, 0, restoredArgs.stderr);
+  assert.deepEqual(restoredArgs.stdout.split('\0').slice(0, -1), ['--project-dir', cwd, '--session', filename,
+    '--pi-config', launchPaths[0], '--pi-node', launchPaths[1], '--pi-model-record', launchPaths[2]]);
+  assert.doesNotMatch(restored, /never-in-command/);
   assert.equal(formatBioMindResumeCommand(manager, false), undefined);
   assert.equal(formatBioMindResumeCommand({ ...manager, isPersisted: () => false }, true), undefined);
   fs.unlinkSync(filename);

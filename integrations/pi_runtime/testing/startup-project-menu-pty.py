@@ -24,7 +24,7 @@ import time
 
 
 ANSI = re.compile(r'\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)|\x1b\[[0-?]*[ -/]*[@-~]|\x1b[()][A-Za-z0-9]|\x1b[=>]')
-SCENARIOS = ('home-cancel', 'home-input-eio', 'cwd-first-direct', 'empty-project-back', 'history-back-navigation',
+SCENARIOS = ('home-cancel', 'home-input-eio', 'home-create-rejected', 'cwd-first-direct', 'empty-project-back', 'history-back-navigation',
     'open-directory-back', 'create-project-back', 'all-history-back', 'all-history-cross-project',
     'open-directory-new-conversation', 'explicit-empty-project-direct', 'explicit-session-direct',
     'explicit-resume-picker', 'resume-nontty', 'resume-json')
@@ -230,6 +230,17 @@ def main():
         assert 'SYNTHETIC_MENU_INPUT' in screen()
 
     read_only('home-input-eio', input_eio)
+
+    def home_create_rejected(send, wait, choose, request, screen):
+        wait('浏览全部历史对话'); choose(5, 'open create project input')
+        wait('输入目录'); send(str(home) + '\r', 'attempt to create project at HOME')
+        wait('确认创建'); choose(1, 'confirm attempted HOME project')
+        wait('Choose a project directory, not a shared/home root:')
+        assert str(home) in screen(fresh=True)
+        assert '请检查目录权限' not in screen(fresh=True), 'Known HOME refusal was replaced by a permissions guess'
+        send(b'\x1b', 'cancel after the exact project refusal')
+
+    read_only('home-create-rejected', home_create_rejected)
 
     def empty_back(send, wait, choose, request, screen):
         wait('浏览全部历史对话'); choose(2, 'choose empty registered project')

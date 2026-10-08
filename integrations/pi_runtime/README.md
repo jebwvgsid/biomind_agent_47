@@ -2,7 +2,7 @@
 
 This private package uses `@earendil-works/pi-coding-agent`, `pi-agent-core` and
 `pi-ai` **0.87.1**, with the documented reversible dependency observer patch
-**0.87.1+biomind-observer.5** (see `compat/README.md`). Native interactive mode launches the upstream fullscreen CLI;
+**0.87.1+biomind-observer.6** (see `compat/README.md`). Persisted-session recovery hints retain explicit config/model-record paths and the selected Node executable. Native interactive mode launches the upstream fullscreen CLI;
 JSON mode calls its public `createAgentSession`. Both load
 `extensions/biomind.ts`. Pi owns model calls, tool continuation, retry,
 compaction, messages and branches. Python owns authorization, execution

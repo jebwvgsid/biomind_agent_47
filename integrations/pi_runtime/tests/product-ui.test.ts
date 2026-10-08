@@ -403,6 +403,36 @@ test('BioMind local commands retain permissions, details and shutdown without ta
   assert.equal(f.writes.length, 0, 'commands do not install or mutate editor/session components');
 });
 
+test('/status prioritizes backend availability and its failure cause over an idle or missing request', async () => {
+  const f = fixture();
+  f.setState(undefined); f.setIdle(true);
+  const displayed = async () => {
+    await f.commands.get('status')!.handler('', f.ctx);
+    return f.notices.at(-1)!.split('\n')[0]!;
+  };
+  for (const [backend, expected] of [
+    [undefined, /正在初始化后台/],
+    [{ state: 'starting' }, /正在初始化后台/],
+    [{ state: 'unavailable' }, /后台连接已断开.*分析输入已停止/],
+    [{ state: 'closed' }, /后台已关闭.*分析输入已停止/],
+    [{ state: 'failed', stage: 'startup', message: 'PROJECT_DIRECTORY_INVALID：请选择分析目录' }, /后台初始化失败.*PROJECT_DIRECTORY_INVALID.*请选择分析目录/],
+    [{ state: 'failed', stage: 'runtime', message: '服务输出已关闭' }, /后台连接中断.*服务输出已关闭/],
+  ] as Array<[BioMindProductDetails['backend'], RegExp]>) {
+    f.setDetails({ backend });
+    const line = await displayed();
+    assert.match(line, expected);
+    assert.doesNotMatch(line, /待输入|处理中|直接输入问题即可开始/);
+  }
+  f.setState({ role: 'Main', status: 'active' });
+  assert.match(await displayed(), /后台连接中断.*服务输出已关闭/, 'historical request state cannot hide backend failure');
+  f.setDetails({ backend: { state: 'ready' } });
+  assert.equal(await displayed(), 'BioMind 状态：处理中');
+  f.setState(undefined);
+  assert.equal(await displayed(), 'BioMind 状态：待输入');
+  f.setIdle(false);
+  assert.equal(await displayed(), 'BioMind 状态：处理中');
+});
+
 test('JSON and RPC do not install components or replace their input owners', async () => {
   const headless = fixture(false); assert.equal(headless.commands.size, 0);
   for (const [mode, hasUI] of [['json', false], ['rpc', true]] as const) {

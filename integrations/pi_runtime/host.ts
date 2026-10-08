@@ -407,7 +407,12 @@ export async function main(): Promise<number> {
   process.env.BIOMIND_PI_NODE = process.execPath;
   if (values['model-record']) process.env.BIOMIND_PI_MODEL_RECORD = path.resolve(values['model-record']);
   else delete process.env.BIOMIND_PI_MODEL_RECORD;
-  if (values.session !== undefined) config.session = values.session;
+  if (values.session !== undefined) {
+    config.session = values.session;
+    // An exact CLI recovery target overrides a configured latest-session default.
+    // Explicit CLI --session + --continue remains invalid below.
+    if (values.continue === undefined) delete config.continueSession;
+  }
   if (values.continue !== undefined) config.continueSession = values.continue;
   if (values['no-session']) config.sessionMode = 'temporary';
   if (values['session-dir'] !== undefined) config.sessionDir = values['session-dir'];

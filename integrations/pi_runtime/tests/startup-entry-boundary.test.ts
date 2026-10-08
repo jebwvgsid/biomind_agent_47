@@ -52,10 +52,19 @@ test('exact ID conflict is reported before model resources and does not rewrite 
 test('create validates the same HOME policy before writing project instructions',async()=>{
   const f=fixture(),old=process.env.HOME;process.env.HOME=f.home;
   try {
-    const config={agentDir:f.agent,launcherPython:'/usr/bin/python3'};
+    const config={agentDir:f.agent,launcherPython:'/usr/bin/python3',memoryRoot:path.join(f.root,'memory-not-created')};
+    const alias=path.join(f.root,'home-alias');fs.symlinkSync(f.home,alias);
     await assert.rejects(validateProjectRoot(config,f.home),{code:'PROJECT_DIRECTORY_INVALID'});
-    assert.equal((await createProject(config,f.a,f.home)).error,'PROJECT_CREATE_OR_REGISTRATION_FAILED');
+    for (const target of [f.home,alias]) {
+      const receipt=await createProject(config,f.a,target);
+      assert.equal(receipt.error,'PROJECT_DIRECTORY_INVALID');
+      assert.equal(receipt.message,`Choose a project directory, not a shared/home root: ${f.home}`);
+      assert.deepEqual([receipt.directoryCreated,receipt.instructionsCreated,receipt.registration],[false,false,'failed']);
+    }
     assert.deepEqual(fs.readdirSync(f.home),[]);
+    assert.deepEqual(fs.readdirSync(f.agent),[],'no launcher registration');
+    assert.deepEqual(fs.readdirSync(f.sessions),[],'no synthetic session registration');
+    assert(!fs.existsSync(config.memoryRoot),'no Wiki registration or database');
     assert.equal(await validateProjectRoot(config,f.a),f.a);
   } finally {if(old===undefined)delete process.env.HOME;else process.env.HOME=old;}
 });

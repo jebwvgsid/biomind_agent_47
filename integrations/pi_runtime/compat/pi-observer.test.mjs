@@ -37,6 +37,7 @@ function originalBytes(file) {
 const originals = new Map(manifest.files.map(file => [file.path, originalBytes(file)]));
 const newFiles = new Set(['dist/core/extensions/types.d.ts', 'dist/core/compaction/compaction.js']);
 function oldReplacementCount(file, revision) {
+  if (revision === '.5') return file.replacements.length;
   if (revision === 'upstream' || file.path === 'dist/modes/interactive/interactive-mode.js') return 0;
   if (revision === '.4') return file.path === 'dist/bundle/chunks/chunk-OJP47DM6.js'
     ? file.previousPatches.at(-1).replacementCount : file.replacements.length;
@@ -54,6 +55,17 @@ function oldReplacementCount(file, revision) {
   return file.replacements.length;
 }
 
+function previousSource(file) {
+  const previous = file.previousSources[0];
+  let source = fs.readFileSync(path.join(directory, file.generatedSource), 'utf8');
+  for (const edit of previous.replacements.slice().reverse()) {
+    assert.equal(source.split(edit.after).length, 2);
+    source = source.replace(edit.after, edit.before);
+  }
+  assert.equal(sha(source), previous.sha256);
+  return source;
+}
+
 function fixture(t, revision) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'biomind-pi-compat-test-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
@@ -61,7 +73,14 @@ function fixture(t, revision) {
   fs.mkdirSync(packageRoot, { recursive: true });
   fs.writeFileSync(path.join(packageRoot, 'package.json'), JSON.stringify({ version: manifest.originalVersion }));
   for (const file of manifest.files) {
-    if (file.generatedSource) continue;
+    if (file.generatedSource) {
+      if (revision === '.5') {
+        const filename = path.join(packageRoot, file.path);
+        fs.mkdirSync(path.dirname(filename), { recursive: true });
+        fs.writeFileSync(filename, previousSource(file));
+      }
+      continue;
+    }
     let bytes = originals.get(file.path);
     for (const edit of file.replacements.slice(0, oldReplacementCount(file, revision))) {
       assert.equal(bytes.split(edit.before).length, 2);
@@ -91,7 +110,7 @@ function invokeHelper(script, root, args = []) {
   });
 }
 
-test('reverting .5 permits the matching .4 manifest to restore its exact prior installation', async t => {
+test('reverting .6 permits the matching .4 manifest to restore its exact prior installation', async t => {
   const { root, packageRoot } = fixture(t, '.4');
   const expected = hashes(packageRoot);
   await successful(root);
@@ -107,6 +126,26 @@ test('reverting .5 permits the matching .4 manifest to restore its exact prior i
       return { ...file, patchedSha256: expected[file.path], replacements: file.replacements.slice(0, count),
         previousPatches: file.previousPatches?.filter(previous => previous.replacementCount < count) };
     }) };
+  fs.writeFileSync(path.join(predecessorDirectory, 'pi-0.87.1-observer.patch.json'), JSON.stringify(previousManifest));
+  const result = await invokeHelper(predecessorHelper, root);
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(hashes(packageRoot), expected);
+});
+test('reverting .6 permits the matching .5 manifest and adapter to restore exact prior bytes', async t => {
+  const { root, packageRoot } = fixture(t, '.5');
+  const expected = hashes(packageRoot);
+  await successful(root);
+  await successful(root, '--revert');
+  const predecessorDirectory = path.join(root, 'compat5');
+  fs.mkdirSync(predecessorDirectory);
+  const predecessorHelper = path.join(predecessorDirectory, 'apply-pi-observer.mjs');
+  fs.copyFileSync(helper, predecessorHelper);
+  const previousManifest = { ...manifest, runtimeLabel: '0.87.1+biomind-observer.5', files: manifest.files.map(file => {
+    if (!file.generatedSource) return file;
+    fs.writeFileSync(path.join(predecessorDirectory, file.generatedSource), previousSource(file));
+    const { previousSources, ...previous } = file;
+    return { ...previous, patchedSha256: expected[file.path] };
+  }) };
   fs.writeFileSync(path.join(predecessorDirectory, 'pi-0.87.1-observer.patch.json'), JSON.stringify(previousManifest));
   const result = await invokeHelper(predecessorHelper, root);
   assert.equal(result.status, 0, result.stderr);
@@ -128,12 +167,12 @@ function modificationTimes(packageRoot) {
     fs.existsSync(path.join(packageRoot, file.path)) ? fs.statSync(path.join(packageRoot, file.path), { bigint: true }).mtimeNs.toString() : null]));
 }
 
-for (const revision of ['upstream', '.2', '.3', '.4']) {
-  test(`compatibility .5 applies to ${revision}, checks, reverts and reapplies exact bytes`, async t => {
+for (const revision of ['upstream', '.2', '.3', '.4', '.5']) {
+  test(`compatibility .6 applies to ${revision}, checks, reverts and reapplies exact bytes`, async t => {
     const { root, packageRoot } = fixture(t, revision);
     assert.notEqual((await run(root, '--check')).status, 0, 'check cannot accept an older revision');
     await successful(root);
-    assert.equal(manifest.runtimeLabel, '0.87.1+biomind-observer.5');
+    assert.equal(manifest.runtimeLabel, '0.87.1+biomind-observer.6');
     assert.deepEqual(hashes(packageRoot), expectedHashes('patchedSha256'));
     const appliedTimes = modificationTimes(packageRoot);
     await successful(root);

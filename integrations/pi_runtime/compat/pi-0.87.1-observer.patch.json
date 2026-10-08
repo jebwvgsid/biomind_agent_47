@@ -1,7 +1,7 @@
 {
   "package": "@earendil-works/pi-coding-agent",
   "originalVersion": "0.87.1",
-  "runtimeLabel": "0.87.1+biomind-observer.5",
+  "runtimeLabel": "0.87.1+biomind-observer.6",
   "files": [
     {
       "path": "dist/core/model-runtime.js",
@@ -270,7 +270,22 @@
       "path": "dist/biomind-terminal-adapter.js",
       "generatedSource": "pi-terminal-adapter.mjs",
       "originalSha256": null,
-      "patchedSha256": "ceebdf57e826591c799658670077736964b72a32bfca5a4fcf311739edfaa338"
+      "patchedSha256": "d719eb4806862a104da6ccbb291d99ebe86dda520c59b58f8e67bd22584481ad",
+      "previousSources": [
+        {
+          "sha256": "ceebdf57e826591c799658670077736964b72a32bfca5a4fcf311739edfaa338",
+          "replacements": [
+            {
+              "before": "export function formatBioMindResumeCommand(manager, isTTY = process.stdout.isTTY) {",
+              "after": "export function formatBioMindResumeCommand(manager, isTTY = process.stdout.isTTY, environment = process.env) {"
+            },
+            {
+              "before": "  return ['biomind', '--project-dir', shellQuote(cwd), '--session', shellQuote(filename)].join(' ');",
+              "after": "  const args = ['biomind', '--project-dir', shellQuote(cwd), '--session', shellQuote(filename)];\n  // Reuse the host's resolved launch sources, also used by /project restarts.\n  // These are file/executable paths, never credentials or serialized settings.\n  for (const [flag, key] of [['--pi-config', 'BIOMIND_PI_CONFIG_PATH'],\n    ['--pi-node', 'BIOMIND_PI_NODE'], ['--pi-model-record', 'BIOMIND_PI_MODEL_RECORD']]) {\n    const value = environment[key];\n    if (typeof value === 'string' && value) args.push(flag, shellQuote(value));\n  }\n  return args.join(' ');"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

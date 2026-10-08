@@ -315,7 +315,8 @@ export function installBioMindProductUI(pi: ExtensionAPI, getState: BioMindProdu
       try { detail = options.details?.(ctx) ?? {}; } catch { detail = { memory: '未知', instructions: '加载失败' }; }
       const sessionPath = (value?: string) => value ? path.resolve(ctx.cwd, value) : undefined;
       const quiet = quietPresentation(ctx);
-      ctx.ui.notify(`BioMind 状态：${status(ctx, getState)}\n计时：${activityText() ?? '本轮尚未开始'}\n底座：Pi\n项目目录：${field(ctx.cwd)}\n会话：${field(ctx.sessionManager.getSessionId())}\n会话文件：${field(sessionPath(ctx.sessionManager.getSessionFile?.()), '尚未写盘或临时会话')}\n会话目录：${field(sessionPath(ctx.sessionManager.getSessionDir?.()), '未知')}\n模型：${modelText(ctx)}\n思考：${field(ctx.thinkingLevel)}\n说明：${field(detail.instructions, '未核对（/instructions）')}\n记忆：${field(detail.memory, '未知（/biomind-memory status）')}\n认证：${field(detail.authentication, '原生 /login；未验证连通性')}\n欢迎设置：quietStartup=${quiet.enabled} · ${quiet.source}\n/permissions 查看实际数据范围、有效期和审批模式`, 'info');
+      const currentStatus = detail.backend?.state === 'ready' ? status(ctx, getState) : backendLabel(detail);
+      ctx.ui.notify(`BioMind 状态：${currentStatus}\n计时：${activityText() ?? '本轮尚未开始'}\n底座：Pi\n项目目录：${field(ctx.cwd)}\n会话：${field(ctx.sessionManager.getSessionId())}\n会话文件：${field(sessionPath(ctx.sessionManager.getSessionFile?.()), '尚未写盘或临时会话')}\n会话目录：${field(sessionPath(ctx.sessionManager.getSessionDir?.()), '未知')}\n模型：${modelText(ctx)}\n思考：${field(ctx.thinkingLevel)}\n说明：${field(detail.instructions, '未核对（/instructions）')}\n记忆：${field(detail.memory, '未知（/biomind-memory status）')}\n认证：${field(detail.authentication, '原生 /login；未验证连通性')}\n欢迎设置：quietStartup=${quiet.enabled} · ${quiet.source}\n/permissions 查看实际数据范围、有效期和审批模式`, 'info');
     },
   });
   pi.registerCommand('permissions', {

@@ -107,7 +107,7 @@ export async function listProjects(config: ProjectLauncherConfig, cwd: string, s
 }
 export interface ProjectCreateReceipt {
   root: string; directoryCreated: boolean; instructionsCreated: boolean;
-  registration: 'existing' | 'memory_project_roots' | 'launcher' | 'failed'; error?: string;
+  registration: 'existing' | 'memory_project_roots' | 'launcher' | 'failed'; error?: string; message?: string;
 }
 const projectInstructions = '# 项目说明\n\n物种：待确认\n样本：待确认\n参考版本：待确认\n输入路径：待确认\n研究目标：待确认\n\n分析前按当前任务核对适用信息；本文件不包含已验证科研结论。\n';
 export async function createProject(config: ProjectLauncherConfig, cwd: string, target: string): Promise<ProjectCreateReceipt> {
@@ -139,7 +139,10 @@ export async function createProject(config: ProjectLauncherConfig, cwd: string, 
       fs.renameSync(temporary, filename);
     } finally { if (fs.existsSync(temporary)) fs.unlinkSync(temporary); }
     receipt.registration = 'launcher';
-  } catch { receipt.error = 'PROJECT_CREATE_OR_REGISTRATION_FAILED'; }
+  } catch (error) {
+    receipt.error = error instanceof ProjectDirectoryError ? error.code : 'PROJECT_CREATE_OR_REGISTRATION_FAILED';
+    if (error instanceof ProjectDirectoryError) receipt.message = error.message;
+  }
   return receipt;
 }
 function shellQuote(value: string) { return `'${value.replaceAll("'", "'\"'\"'")}'`; }

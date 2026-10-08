@@ -59,7 +59,7 @@ export async function runStartupProjectMenu(config: ProjectLauncherConfig, launc
         const confirmed = await menuPrompt(`创建 ${cwd} 与缺失的 AGENTS.md？`, ['返回', '确认创建']);
         if (confirmed !== '确认创建') continue;
         const receipt = await createProject(config, launchCwd, cwd);
-        if (receipt.error) { notice = `项目创建或登记失败，请检查目录权限：${cwd}`; continue; }
+        if (receipt.error) { notice = receipt.message ?? `项目创建或登记失败，请检查目录权限：${cwd}`; continue; }
         listing = await listProjects(config, launchCwd);
       }
     } else {

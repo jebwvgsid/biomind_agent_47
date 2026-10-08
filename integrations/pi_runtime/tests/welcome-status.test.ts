@@ -162,6 +162,11 @@ test('startup confirms backend without model calls; settings and instructions re
     await commands.get('instructions').handler('status', ctx); assert.match(await status(), /AGENTS.override.md 存在为空/);
     failSnapshot = true; await commands.get('biomind-memory').handler('status', ctx);
     assert.match(await status(), /状态读取失败/);
+    branch.splice(0);
+    await emit('session_start', { reason: 'reload' });
+    const unavailable = await status();
+    assert.match(unavailable, /^BioMind 状态：后台初始化失败：.*synthetic snapshot unavailable/);
+    assert.doesNotMatch(unavailable, /^BioMind 状态：(待输入|处理中)/);
     const uiBefore = uiInstalls, readsBefore = promptReads, callsBefore = domainCalls;
     Object.assign(ctx, { mode: 'json', hasUI: false }); await emit('session_start', { reason: 'new' });
     assert.equal(uiInstalls, uiBefore); assert.equal(promptReads, readsBefore); assert.equal(domainCalls, callsBefore + 1); assert.equal(keyReads, 0);
