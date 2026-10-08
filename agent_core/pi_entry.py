@@ -118,18 +118,23 @@ def select_engine(argv: Sequence[str]) -> tuple[str, list[str]]:
 
 
 def pi_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="BioMind — Pi runtime")
+    parser = argparse.ArgumentParser(description="BioMind — Pi runtime",
+        epilog="Shell: biomind project list/create/open; biomind --resume to choose history.")
     parser.add_argument("--version", action="store_true", help="Show declared product/source identity offline; no worktree or patch verification")
-    parser.add_argument("command", nargs="?", choices=("interactive",), default="interactive")
-    parser.add_argument("--project-dir", type=Path, default=Path.cwd())
+    parser.add_argument("command", nargs="?", choices=("interactive", "project"), default="interactive")
+    parser.add_argument("project_action", nargs="?", choices=("list", "create", "open"))
+    parser.add_argument("project_target", nargs="?", type=Path)
+    parser.add_argument("--project-dir", type=Path, help="Explicit project root; otherwise keep launch cwd or the selected session cwd")
     parser.add_argument("--pi-mode", choices=("interactive", "json"), default="interactive")
     parser.add_argument("--pi-config", type=Path, help="Explicit non-secret Pi runtime settings; no dotenv loading")
     parser.add_argument("--pi-model-record", type=Path, help="Confirmed non-secret model selection shared with offline acceptance")
     parser.add_argument("--pi-node", type=Path, help="Explicit Node >=22.19.0 executable")
     sessions = parser.add_mutually_exclusive_group()
     sessions.add_argument("--session", help="Resume a Pi session by exact ID or JSONL path")
+    sessions.add_argument("--resume", "-r", action="store_true", help="Choose a saved Pi session interactively")
     sessions.add_argument("--continue", dest="continue_session", action="store_true", help="Explicitly continue the most recent Pi session in this project")
     sessions.add_argument("--no-session", action="store_true", help="Use an explicit temporary Pi session")
+    parser.add_argument("--session-dir", type=Path, help="Native Pi session directory override")
     parser.add_argument("--prompt", help="Initial prompt passed as one argv value")
     parser.add_argument("--pi-check", action="store_true", help="Check candidate runtime without starting a model or service")
     return parser
@@ -151,7 +156,25 @@ def node_executable(explicit: Path | None, environment: Mapping[str, str], runti
 def build_pi_command(args: argparse.Namespace, *, environment: Mapping[str, str] | None = None,
                      runtime: Path = RUNTIME, version_runner: Callable = subprocess.run) -> tuple[list[str], Path]:
     environment = os.environ if environment is None else environment
-    project = args.project_dir.expanduser().resolve()
+    launch_cwd = Path.cwd().resolve()
+    project_action = getattr(args, "project_action", None)
+    project_target = getattr(args, "project_target", None)
+    if args.command != "project" and (project_action or project_target):
+        raise PiEntryError("Project actions require: biomind project list/create/open")
+    if args.command == "project":
+        if project_action in {"create", "open"} and project_target is None:
+            raise PiEntryError(f"project {project_action} requires a directory")
+        if project_action not in {"create", "open"} and project_target is not None:
+            raise PiEntryError("Only project create/open accepts a directory")
+    if getattr(args, "resume", False):
+        if args.pi_mode != "interactive":
+            raise PiEntryError("--resume requires --pi-mode interactive")
+        if args.command == "project" and project_action in {"list", "create"}:
+            raise PiEntryError("--resume cannot be used with project list/create")
+    explicit_project = args.project_dir is not None or project_action == "open"
+    project = (project_target if project_action == "open" else args.project_dir or launch_cwd).expanduser().resolve()
+    if project_action == "open" and args.project_dir and project != args.project_dir.expanduser().resolve():
+        raise PiEntryError("project open conflicts with --project-dir")
     if not project.is_dir():
         raise PiEntryError(f"Project directory does not exist: {project}")
     runtime = runtime.resolve()
@@ -176,26 +199,34 @@ def build_pi_command(args: argparse.Namespace, *, environment: Mapping[str, str]
     if installed.get("version") != "0.87.1":
         raise PiEntryError("Pi package mismatch: this candidate requires 0.87.1")
     command = [str(node), str(host), "--mode", args.pi_mode,
-               "--project-dir", str(project)]
+               "--launch-cwd", str(launch_cwd), "--entry-python", str(Path(sys.executable).resolve())]
+    if explicit_project:
+        command.extend(["--project-dir", str(project)])
+    if project_action == "open":
+        command.append("--project-open")
+    lightweight = args.command == "project" and project_action != "open"
+    if lightweight:
+        command.extend(["--project-command", project_action or "menu"])
+        if project_target is not None:
+            command.extend(["--project-target", str(project_target.expanduser().absolute())])
     if args.pi_config:
         config = args.pi_config.expanduser().resolve()
         if not config.is_file():
             raise PiEntryError(f"Explicit Pi settings file does not exist: {config}")
         command.extend(["--config", str(config)])
-    # An explicit fixture/runtime config keeps its existing selection path.
-    # Ordinary product invocations bridge already-loaded legacy launch fields.
-    if args.pi_model_record or environment.get("BIOMIND_PI_MODEL_RECORD") or not args.pi_config:
-        try:
-            selection, selection_source = resolve_model_config(record_path=args.pi_model_record, environment=environment,
-                repo=runtime.parent.parent, project=project)
-        except (OSError, ValueError) as error:
-            raise PiEntryError("Current model configuration is unavailable or invalid; provide a non-secret --pi-model-record") from error
-        if selection is not None:
-            command.extend(["--model-selection", json.dumps(selection, ensure_ascii=False, separators=(",", ":"))])
-        if selection_source.get("software_root") and not environment.get("BIOMIND_PI_REGISTRY_PATH"):
-            command.extend(["--registry-path", str(Path(selection_source["software_root"]) / "software_registry.json")])
+    # The host resolves nonsecret model fields after final project/session/menu
+    # selection. Project list/create never read project .env or model records.
+    if (not lightweight or project_action is None) and (args.pi_model_record or environment.get("BIOMIND_PI_MODEL_RECORD") or not args.pi_config):
+        command.append("--resolve-entry-model")
+        record = args.pi_model_record or environment.get("BIOMIND_PI_MODEL_RECORD")
+        if record:
+            command.extend(["--model-record", str(Path(record).expanduser().absolute())])
+    if getattr(args, "session_dir", None):
+        command.extend(["--session-dir", str(args.session_dir.expanduser())])
     if getattr(args, "session", None):
         command.extend(["--session", args.session])
+    if getattr(args, "resume", False):
+        command.append("--resume")
     if getattr(args, "continue_session", False):
         command.append("--continue")
     if getattr(args, "no_session", False):

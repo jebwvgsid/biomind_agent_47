@@ -40,14 +40,6 @@ from .task_semantics import (
     normalize_task_semantics as shared_normalize_task_semantics,
 )
 
-try:
-    from langchain_core.messages import HumanMessage
-except ImportError:
-    class HumanMessage:  # type: ignore[no-redef]
-        def __init__(self, content: str):
-            self.content = content
-
-
 logger = logging.getLogger("BioMind.WikiMemory")
 
 
@@ -305,6 +297,77 @@ class WikiSearchHit:
 class WikiMemoryManager:
     """Project-scoped LLM Wiki memory curated from SessionArchive evidence."""
 
+    @classmethod
+    def read_project_roots(cls, memory_dir, *, wiki_dir=None):
+        """Read launcher metadata without constructing or initializing a Wiki.
+
+        Only an existing configured database is opened, in SQLite read-only mode.
+        An unavailable source is distinct from a valid empty registry. Knowledge
+        pages, indexes and directory access times are not launcher metadata.
+        """
+        db = (Path(wiki_dir) if wiki_dir else Path(memory_dir) / 'wiki') / 'wiki_index.sqlite3'
+        try:
+            db.stat()
+            # Even SQLite mode=ro may create/update WAL coordination sidecars.
+            # Metadata-only launchers must leave the configured store untouched;
+            # immutable=1 would silently omit committed, uncheckpointed roots.
+            with db.open('rb') as stream:
+                header = stream.read(20)
+            if header[:16] == b'SQLite format 3\x00' and 2 in header[18:20]:
+                return {'status':'unavailable', 'roots':[], 'reason':'wal_metadata_requires_coordination'}
+        except FileNotFoundError:
+            return {'status':'missing', 'roots':[], 'reason':'database_missing'}
+        except OSError as exc:
+            return {'status':'unavailable', 'roots':[], 'reason':type(exc).__name__}
+        try:
+            with cls._project_roots_connection(db, writable=False) as conn:
+                if not conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='memory_project_roots'").fetchone():
+                    return {'status':'missing', 'roots':[], 'reason':'registry_table_missing'}
+                rows = conn.execute('SELECT root,project_id FROM memory_project_roots ORDER BY root,project_id').fetchall()
+            return {'status':'ok', 'roots':[dict(row) for row in rows]}
+        except (OSError, sqlite3.Error) as exc:
+            return {'status':'unavailable', 'roots':[], 'reason':type(exc).__name__}
+
+    @classmethod
+    def register_project_root(cls, memory_dir, project_root, *, wiki_dir=None):
+        """Explicit create only: add directory metadata to an existing registry.
+
+        Preserve every historical mapping, including ambiguous roots. Do not
+        create a database, migrate its schema or create any knowledge pages.
+        """
+        source = cls.read_project_roots(memory_dir, wiki_dir=wiki_dir)
+        if source['status'] != 'ok':
+            return source
+        db = (Path(wiki_dir) if wiki_dir else Path(memory_dir) / 'wiki') / 'wiki_index.sqlite3'
+        try:
+            root = str(Path(project_root).expanduser().resolve(strict=True))
+            if not Path(root).is_dir():
+                return {'status':'unavailable', 'roots':[], 'reason':'project_not_directory'}
+            with cls._project_roots_connection(db, writable=True) as conn:
+                conn.execute('BEGIN IMMEDIATE')
+                rows = conn.execute('SELECT root,project_id FROM memory_project_roots WHERE root=? ORDER BY project_id', (root,)).fetchall()
+                if rows:
+                    return {'status':'existing', 'roots':[dict(row) for row in rows]}
+                identity = 'project-' + hashlib.sha256(root.encode()).hexdigest()[:24]
+                conn.execute('INSERT OR IGNORE INTO memory_project_roots(root,project_id) VALUES (?,?)', (root,identity))
+                conn.commit()
+            return {'status':'registered', 'roots':[{'root':root, 'project_id':identity}]}
+        except (OSError, sqlite3.Error) as exc:
+            return {'status':'unavailable', 'roots':[], 'reason':type(exc).__name__}
+
+    @staticmethod
+    @contextmanager
+    def _project_roots_connection(db, *, writable=False):
+        # mode=rw also refuses to create a missing database during a create race.
+        conn = sqlite3.connect(Path(db).resolve().as_uri() + ('?mode=rw' if writable else '?mode=ro'), uri=True)
+        conn.row_factory = sqlite3.Row
+        try:
+            if not writable:
+                conn.execute('PRAGMA query_only=ON')
+            yield conn
+        finally:
+            conn.close()
+
     def __init__(
         self,
         llm: Any,
@@ -540,6 +603,14 @@ class WikiMemoryManager:
         if skipped: session_archive.mark_wiki_ingested([e.id for e in skipped], project_id=project_id, summary='excluded: no memory use')
         batch = [e for e in pending if e not in skipped][: max(1, limit)]
         if not batch: return {'status':'noop','written':[],'errors':[],'model_calls':0}
+        # Only LLM ingestion needs LangChain; project lookup and Pi startup do not.
+        try:
+            from langchain_core.messages import HumanMessage
+        except ImportError:
+            class HumanMessage:  # type: ignore[no-redef]
+                def __init__(self, content: str):
+                    self.content = content
+
         archive_records = [event.as_wiki_record() for event in batch]
         event_text = session_archive.format_events_for_wiki_prompt(batch, total_limit=INGEST_EVENT_TEXT_CHAR_LIMIT)
         query = "\n".join(

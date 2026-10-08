@@ -2,14 +2,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { spawn } from 'node:child_process';
+import { spawn, execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { parseArgs } from 'node:util';
 import { randomUUID, createHash } from 'node:crypto';
 import { StringDecoder } from 'node:string_decoder';
 import { resolveHandshakeTimeoutMs } from './domain-client.js';
 import { assertObservationMode, observationMode, runtimeObservationLabel, projectObservedUsage } from './usage-observer.js';
 import { filterNativeContextFiles } from './native-context.js';
-import { openProductSession, describeProductSession, validateSessionSelection, ProductSessionError, type NativeSessionSelection } from './native-session.js';
+import { openProductSession, describeProductSession, validateSessionSelection, resolveSessionDir, ProductSessionError, type NativeSessionSelection } from './native-session.js';
 import { selectConfiguredModel, validateModelSelection, type ModelSelection } from './model-config.js';
 import {
   createAgentSession, createEventBus, DefaultResourceLoader, getAgentDir, ModelRuntime,
@@ -27,13 +28,15 @@ interface Config extends NativeSessionSelection {
   memoryRoot?: string; wikiRoot?: string; historyEnabled?: boolean;
   archivePath?: string; memoryMode?: 'ask' | 'auto' | 'manual' | 'disabled';
   modelSelection?: ModelSelection;
+  configPath?: string;
+  launcherPython?: string;
 }
 function readConfig(filename?: string): Config {
   if (!filename) return {};
   const value = JSON.parse(fs.readFileSync(path.resolve(filename), 'utf8'));
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Runtime settings must be a JSON object');
   const allowed = new Set(['python','agentDir','dataRoot','installRoot','provider','model','thinkingLevel',
-    'providerFixture','registryPath','preferencesPath','memoryRoot','wikiRoot','historyEnabled','archivePath','memoryMode','sessionMode','session','continueSession','handshakeTimeoutMs']);
+    'providerFixture','registryPath','preferencesPath','memoryRoot','wikiRoot','historyEnabled','archivePath','memoryMode','sessionMode','session','continueSession','sessionDir','handshakeTimeoutMs']);
   for (const key of Object.keys(value)) if (!allowed.has(key)) throw new Error('Unknown runtime setting; credentials do not belong in this file');
   if (value.historyEnabled !== undefined && typeof value.historyEnabled !== 'boolean') throw new Error('historyEnabled must be boolean');
   if (value.memoryMode !== undefined && !['ask','auto','manual','disabled'].includes(value.memoryMode)) throw new Error('Invalid memoryMode');
@@ -42,7 +45,7 @@ function readConfig(filename?: string): Config {
     resolveHandshakeTimeoutMs(value.handshakeTimeoutMs);
   }
   validateSessionSelection(value);
-  return value;
+  return { ...value, configPath: path.resolve(filename) };
 }
 function locatePackage(name: string): string {
   let folder = path.dirname(fileURLToPath(import.meta.resolve(name)));
@@ -100,6 +103,7 @@ async function startNative(config: Config, cwd: string, prompt?: string): Promis
     if (config.model) args.push('--model', config.model);
   }
   if (config.sessionMode === 'temporary') args.push('--no-session');
+  if (config.sessionDir) args.push('--session-dir', config.sessionDir);
   if (config.session) args.push('--session', config.session);
   if (config.continueSession) args.push('--continue');
   if (config.thinkingLevel) args.push('--thinking', config.thinkingLevel);
@@ -300,10 +304,15 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
 
 export async function main(): Promise<number> {
   const { values } = parseArgs({ options: { mode: { type: 'string', default: 'interactive' },
-    'project-dir': { type: 'string', default: process.cwd() }, config: { type: 'string' },
+    'project-dir': { type: 'string' }, config: { type: 'string' },
+    'launch-cwd': { type: 'string' }, 'session-dir': { type: 'string' },
+    'project-command': { type: 'string' }, 'project-target': { type: 'string' },
+    'project-open': { type: 'boolean' },
+    'entry-python': { type: 'string' }, 'resolve-entry-model': { type: 'boolean' }, 'model-record': { type: 'string' },
     'model-selection': { type: 'string' }, 'registry-path': { type: 'string' }, prompt: { type: 'string' },
-    session: { type: 'string' }, continue: { type: 'boolean' }, 'no-session': { type: 'boolean' } } });
-  const cwd = path.resolve(values['project-dir']!);
+    session: { type: 'string' }, continue: { type: 'boolean' }, resume: { type: 'boolean', short: 'r' }, 'no-session': { type: 'boolean' } } });
+  const launchCwd = path.resolve(values['launch-cwd'] ?? process.cwd());
+  let cwd = path.resolve(values['project-dir'] ?? launchCwd);
   if (!fs.statSync(cwd).isDirectory()) throw new Error('Project cwd is not a directory');
   locatePackage('@earendil-works/pi-coding-agent'); locatePackage('@earendil-works/pi-ai'); locatePackage('@earendil-works/pi-agent-core');
   // Verify the actual SDK and published CLI bundle bytes before any session can send.
@@ -316,10 +325,97 @@ export async function main(): Promise<number> {
     if (actual !== target.patchedSha256) throw new Error('BIOMIND_PI_COMPAT_PATCH_REQUIRED');
   }
   const config = readConfig(values.config);
+  if (values['project-open']) { delete config.session; delete config.continueSession; }
+  config.launcherPython = values['entry-python'];
+  if (config.launcherPython) process.env.BIOMIND_PI_LAUNCHER_PYTHON = config.launcherPython;
+  process.env.BIOMIND_PI_NODE = process.execPath;
+  if (values['model-record']) process.env.BIOMIND_PI_MODEL_RECORD = path.resolve(values['model-record']);
+  else delete process.env.BIOMIND_PI_MODEL_RECORD;
   if (values.session !== undefined) config.session = values.session;
   if (values.continue !== undefined) config.continueSession = values.continue;
   if (values['no-session']) config.sessionMode = 'temporary';
+  if (values['session-dir'] !== undefined) config.sessionDir = values['session-dir'];
   validateSessionSelection(config);
+  const terminal = !!process.stdin.isTTY && !!process.stdout.isTTY;
+  if (values.resume) {
+    if (config.session || config.continueSession || config.sessionMode === 'temporary') throw new ProductSessionError('SESSION_SELECTION_CONFLICT');
+    if (values.mode !== 'interactive' || !terminal) throw new Error('--resume 需要交互终端；非交互模式请使用 --session 或 --continue。');
+    if (values['project-command'] && values['project-command'] !== 'menu') throw new Error('--resume 仅适用于打开项目或交互启动。');
+  }
+  const automaticSessionChoice = values.mode === 'interactive' && terminal && values.prompt === undefined &&
+    !config.session && !config.continueSession && config.sessionMode !== 'temporary' && !values.resume;
+  const explicitAgentDir = config.agentDir !== undefined;
+  // Resolve sessions in the host before native startup so menus and exact resumes
+  // use the selected project's settings and execution profile.
+  const suggestProject = !values['project-dir'] && !config.session && !config.continueSession && !values.resume &&
+    values.mode === 'interactive' && values.prompt === undefined && process.stdin.isTTY;
+  const parentSessionSelection = values.mode !== 'interactive' || !!values['project-command'] ||
+    suggestProject || automaticSessionChoice || !!values.resume || !!config.session || !!config.continueSession;
+  const unusualAgentEnv = !!process.env.PI_CODING_AGENT_DIR && !path.isAbsolute(process.env.PI_CODING_AGENT_DIR);
+  let agentDir = config.agentDir !== undefined ? path.resolve(config.agentDir)
+    : config.providerFixture ? path.join(cwd, '.biomind/pi-agent') : undefined;
+  if (agentDir === undefined && (parentSessionSelection || unusualAgentEnv)) {
+    const { getAgentDir } = await import('@earendil-works/pi-coding-agent');
+    agentDir = path.resolve(getAgentDir());
+  }
+  if (agentDir !== undefined) {
+    config.agentDir = agentDir;
+    process.env.PI_CODING_AGENT_DIR = agentDir;
+  }
+  if (parentSessionSelection) {
+    const { SettingsManager } = await import('@earendil-works/pi-coding-agent');
+    const { resolveSessionTarget } = await import('./native-session.js');
+    const sessionDirOverride = config.sessionDir;
+    config.sessionDir = resolveSessionDir(cwd, config, SettingsManager.create(cwd, agentDir!));
+    if (values['project-command']) {
+      if (values['project-command'] === 'menu' && (values.mode !== 'interactive' || !process.stdin.isTTY)) throw new Error('PROJECT_MENU_REQUIRES_TERMINAL');
+      const { runProjectCommand } = await import('./project-launcher.js');
+      const result = await runProjectCommand(config, cwd, values['project-command'], values['project-target']);
+      if (result.exitCode !== undefined) return result.exitCode;
+      if (result.cwd) cwd = result.cwd;
+    } else if (suggestProject) {
+      const { maybeSuggestProjectRoot } = await import('./project-launcher.js');
+      const selected = await maybeSuggestProjectRoot(config, cwd);
+      if (!selected) return 0;
+      cwd = selected;
+    }
+    // Resolve the chosen project's storage before showing its saved conversations.
+    // Keep the original override for any later cross-project selection.
+    if (!explicitAgentDir && config.providerFixture) {
+      agentDir = path.join(cwd, '.biomind/pi-agent'); config.agentDir = agentDir;
+      process.env.PI_CODING_AGENT_DIR = agentDir;
+    }
+    config.sessionDir = resolveSessionDir(cwd, { sessionDir: sessionDirOverride }, SettingsManager.create(cwd, agentDir!));
+    if (values.resume || automaticSessionChoice) {
+      const { runStartupSessionMenu } = await import('./project-launcher.js');
+      const choice = await runStartupSessionMenu(config, cwd, { resume: values.resume,
+        allowAllProjects: values['project-dir'] === undefined && values['project-command'] === undefined });
+      if (choice.exitCode !== undefined) return choice.exitCode;
+      if (choice.session) config.session = choice.session;
+      if (choice.continueSession) config.continueSession = true;
+    }
+    cwd = await resolveSessionTarget(cwd, config, launchCwd, values['project-dir'] !== undefined || values['project-command'] !== undefined);
+    if (!explicitAgentDir && config.providerFixture) {
+      agentDir = path.join(cwd, '.biomind/pi-agent'); config.agentDir = agentDir;
+      process.env.PI_CODING_AGENT_DIR = agentDir;
+    }
+    // Re-resolve after selection: the target project's settings remain authoritative.
+    config.sessionDir = resolveSessionDir(cwd, { sessionDir: sessionDirOverride }, SettingsManager.create(cwd, agentDir!));
+  } else {
+    // Keep existing explicit/environment path handling; Pi alone reads native settings.
+    config.sessionDir = resolveSessionDir(cwd, config, { getSessionDir: () => undefined });
+  }
+  if (values['resolve-entry-model']) {
+    if (!values['entry-python']) throw new Error('ENTRY_PYTHON_REQUIRED');
+    const args = ['-m', 'agent_core.pi_launch_metadata', 'model', '--project', cwd,
+      ...(values['model-record'] ? ['--record', values['model-record']] : [])];
+    const resolved = await promisify(execFile)(values['entry-python'], args, {
+      cwd: path.join(runtime, '../..'), env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' }, encoding: 'utf8', maxBuffer: 1024 * 1024,
+    });
+    const metadata = JSON.parse(resolved.stdout);
+    if (metadata.selection) values['model-selection'] = JSON.stringify(metadata.selection);
+    if (metadata.registryPath && !config.registryPath) config.registryPath = metadata.registryPath;
+  }
   if (values['registry-path'] && !config.registryPath) config.registryPath = values['registry-path'];
   if (values['model-selection']) {
     const selection = validateModelSelection(JSON.parse(values['model-selection']));
@@ -328,6 +424,10 @@ export async function main(): Promise<number> {
       throw new Error('CONFLICTING_PRODUCT_MODEL_CONFIGURATION');
     }
     Object.assign(config, { provider: selection.provider, model: selection.model, thinkingLevel: selection.thinking, modelSelection: selection });
+    if (selection.provider === 'deepseek' && !process.env.DEEPSEEK_API_KEY) {
+      const alias = process.env.QWEN_API_KEY ?? process.env.DASHSCOPE_API_KEY ?? process.env.OPENAI_API_KEY;
+      if (alias) process.env.DEEPSEEK_API_KEY = alias;
+    }
   }
   configureDomain(config, cwd);
   if (values.mode === 'interactive') return await startNative(config, cwd, values.prompt);
