@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { canonicalProjectRoot, createProject, listProjects, menuPrompt, runStartupSessionMenu,
-  type ProjectLauncherConfig } from './project-launcher.js';
+  validateProjectRoot, ProjectDirectoryError, type ProjectLauncherConfig } from './project-launcher.js';
 import { selectHistorySession } from './session-launcher.js';
 import { readTargetSessionRoot } from './native-session.js';
 
@@ -28,7 +28,7 @@ function usableDirectory(root: string): boolean {
 
 /** The host resolves settings afresh for every chosen root; the launch cwd is only a choice. */
 export async function runStartupProjectMenu(config: ProjectLauncherConfig, launchCwd: string,
-  configForProject: (cwd: string) => ProjectLauncherConfig): Promise<StartupMenuSelection> {
+  configForProject: (cwd: string) => ProjectLauncherConfig, options: { selectSession?: boolean } = {}): Promise<StartupMenuSelection> {
   if (!process.stdin.isTTY || !process.stdout.isTTY) throw new Error('PROJECT_MENU_REQUIRES_TERMINAL');
   let notice = '';
   // Cache metadata while navigating back. Only creating a project changes this list.
@@ -36,15 +36,17 @@ export async function runStartupProjectMenu(config: ProjectLauncherConfig, launc
   for (;;) {
     const labels = listing.projects.map(entry => `${entry.root}${canonicalProjectRoot(entry.root) === canonicalProjectRoot(launchCwd) ? '（启动目录）' : ''}${entry.availability !== 'available' ? '（不可用）' : ''}`);
     const selected = await menuPrompt(`选择项目${listing.incomplete.length ? '（部分来源不可读）' : ''}${notice ? `\n${notice}` : ''}`,
-      [...labels, '打开其他目录…', '创建项目…', '浏览全部历史对话…', '取消']);
+      [...labels, '打开其他目录…', '创建项目…', ...(options.selectSession === false ? [] : ['浏览全部历史对话…']), '取消']);
     notice = '';
     if (!selected || selected === '取消') return { exitCode: 0 };
     if (selected === '浏览全部历史对话…') {
       const session = await selectHistorySession(launchCwd, config.sessionDir,
         { allowAllProjects: true, initialScope: 'all' });
       if (!session) continue;
-      const cwd = readTargetSessionRoot(session);
+      let cwd = readTargetSessionRoot(session);
       if (!usableDirectory(cwd)) { notice = `历史对话的项目目录不可用：${cwd}`; continue; }
+      try { cwd = await validateProjectRoot(config, cwd); }
+      catch (error) { if (!(error instanceof ProjectDirectoryError)) throw error; notice = error.message; continue; }
       return { cwd, session };
     }
     let cwd: string;
@@ -66,7 +68,9 @@ export async function runStartupProjectMenu(config: ProjectLauncherConfig, launc
       cwd = entry.root;
     }
     if (!usableDirectory(cwd)) { notice = `目录不可用，请重新选择：${cwd}`; continue; }
-    cwd = canonicalProjectRoot(cwd);
+    try { cwd = await validateProjectRoot(config, cwd); }
+    catch (error) { if (!(error instanceof ProjectDirectoryError)) throw error; notice = error.message; continue; }
+    if (options.selectSession === false) return { cwd };
     const projectConfig = configForProject(cwd);
     const previousAgent = process.env.PI_CODING_AGENT_DIR;
     let choice: Awaited<ReturnType<typeof runStartupSessionMenu>>;

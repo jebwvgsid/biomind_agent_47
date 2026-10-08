@@ -1,6 +1,6 @@
 # Pi 0.87.1 + BioMind observer compatibility patch
 
-This runtime is **0.87.1+biomind-observer.4**, not unmodified upstream.
+This runtime is **0.87.1+biomind-observer.5**, not unmodified upstream.
 The original negative P15.d artifacts remain historical evidence.
 
 `pi-0.87.1-observer.patch.json` contains exact, unique replacement anchors and
@@ -192,3 +192,59 @@ upstream/.2/.3 upgrades, repeat-apply/check, exact revert/reapply, and rejection
 of unknown bytes or an unsupported Pi version before any dependency file is
 changed. Provider-facing compaction tests separately verify that the focus
 actually reaches manual, automatic, retry and split-turn summary requests.
+
+## .5: BioMind terminal failure and recovery presentation
+
+The installed 0.87.1 TUI listens for stdout/stderr errors but does not handle
+stdin errors. `.5` installs one listener on the actual `process.stdin` owned by
+`InteractiveMode`, only when `BIOMIND_PI_UI_COMMANDS=1`. Its controlled failure
+path stops input, uses Pi's existing `stop('resume-hint')` renderer/terminal
+cleanup, and disposes the existing runtime host once. Disposal is bounded to
+two seconds; a blocked final stderr write is bounded to one second. Further
+stream errors cannot recursively enter a second teardown. It exits nonzero,
+never retries input or replays a model request. The existing tracked detached
+child cleanup is reused; it does not enumerate or kill scientific jobs.
+
+The original exception stack plus bounded Linux terminal metadata (fd, PID,
+PPID, process/session/foreground groups, TTY, SIGTTIN ignored/blocked state,
+raw mode before/after and cleanup failures) are saved through Pi's existing
+`crashes.json` recorder. The global uncaught-exception fallback stays fatal
+and synchronous; unrelated file/tool EIO errors are not called stdin failures.
+Ctrl+C, quit, SIGHUP and ordinary session behavior remain Pi-owned.
+
+`pi-terminal-adapter.mjs` is the reviewed source. The exact-byte installer
+copies it to `dist/biomind-terminal-adapter.js` only after checking its declared
+SHA-256 and every installed target. Unknown source or installed adapter bytes
+are rejected. Both SDK `dist/modes/interactive/interactive-mode.js` and the
+actual CLI bundle import this same adapter; patching only the SDK is insufficient.
+The host's compatibility check includes the generated adapter digest.
+
+In BioMind mode, normal/fatal recovery messages use the persisted session file
+and its project: `biomind --project-dir <quoted-project> --session <quoted-file>`.
+Every path is shell quoted. Missing, temporary or not-yet-persisted sessions
+get no recovery promise. The adapter changes neither `APP_NAME` nor `.pi`,
+authentication, model discovery or session storage. A prior-crash notice stays
+distinct from this process's startup readiness. Pi's extension-update check is
+suppressed in BioMind mode; the host uses the installed version's supported
+`PI_SKIP_VERSION_CHECK=1` to disable the separate core-version check. Skills and
+Extensions remain loaded. Standalone Pi behavior is unchanged.
+
+Exact `.4` bundle bytes are a supported predecessor alongside `.2`/`.3`.
+Reverting `.5` restores upstream files and removes its generated adapter.
+To return to `.4`, first run this revision's `--revert`, restore the matching
+`.4` manifest/helper and product source, then apply that manifest and rebuild.
+Do not restore only source files while leaving incompatible dependency bytes.
+
+```bash
+node --test --experimental-test-isolation=none compat/pi-observer.test.mjs compat/pi-terminal.test.mjs
+python compat/pi-terminal-pty.py --evidence-dir /absolute/empty/evidence-directory
+```
+
+The first command covers exact installer upgrades/reverts, stdin fault cleanup,
+an unrelated fatal EIO, listener removal, Ctrl+C semantics, and recovery quoting.
+The second launches the actual bundled CLI in isolated controlling PTYs, with
+synthetic saved sessions and offline settings. It verifies a double injected
+stdin error produces one failure and one shutdown, raw terminal flags recover,
+and normal `/quit` and double Ctrl+C retain their behavior. These tests prove
+the handling path; the triggering cause of the user's original EIO remains
+unconfirmed. They do not reconnect or execute the user's TAD session.

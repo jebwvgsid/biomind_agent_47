@@ -9,7 +9,15 @@ export interface NativeSessionSelection {
   sessionDir?: string;
 }
 export class ProductSessionError extends Error {
-  constructor(readonly code: string) { super(code); this.name = 'ProductSessionError'; }
+  constructor(readonly code: string, message = code) { super(message); this.name = 'ProductSessionError'; }
+}
+/** Only constructed at a terminal-owned stdin error boundary. */
+export class TerminalInputError extends Error {
+  readonly code = 'TERMINAL_INPUT_FAILED';
+  constructor(readonly inputError: NodeJS.ErrnoException) {
+    super(`BioMind 终端输入失败 (${inputError.code ?? 'UNKNOWN'}): ${inputError.message}`, { cause: inputError });
+    this.name = 'TerminalInputError';
+  }
 }
 export function validateSessionSelection(selection: NativeSessionSelection): void {
   if (selection.sessionMode !== undefined && !['persistent', 'temporary'].includes(selection.sessionMode)) throw new ProductSessionError('SESSION_MODE_INVALID');

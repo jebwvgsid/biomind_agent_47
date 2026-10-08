@@ -212,7 +212,8 @@ def build_pi_command(args: argparse.Namespace, *, environment: Mapping[str, str]
     if installed.get("version") != "0.87.1":
         raise PiEntryError("Pi package mismatch: this candidate requires 0.87.1")
     command = [str(node), str(host), "--mode", args.pi_mode,
-               "--launch-cwd", str(launch_cwd), "--entry-python", str(Path(sys.executable).resolve())]
+               "--launch-cwd", str(launch_cwd), "--project-source", "explicit" if explicit_project else "cwd",
+               "--entry-python", str(Path(sys.executable).resolve())]
     if explicit_project:
         command.extend(["--project-dir", str(project)])
     if project_action == "open":

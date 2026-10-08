@@ -1,7 +1,7 @@
 {
   "package": "@earendil-works/pi-coding-agent",
   "originalVersion": "0.87.1",
-  "runtimeLabel": "0.87.1+biomind-observer.4",
+  "runtimeLabel": "0.87.1+biomind-observer.5",
   "files": [
     {
       "path": "dist/core/model-runtime.js",
@@ -36,7 +36,7 @@
     {
       "path": "dist/bundle/chunks/chunk-OJP47DM6.js",
       "originalSha256": "81c81a21ec81e84200205f561687408ff5e3738fbbbb3c2a6c186b348d376020",
-      "patchedSha256": "daebb6c96f486b6b9baebef53d6c7017c3e7fb42bad7136385419276686e35aa",
+      "patchedSha256": "ef3529628e680bd6271dbb2b1420ad26b64e7841929abe8c442d72b78a70d35b",
       "replacements": [
         {
           "before": "return prepared.provider.stream(prepared.model,transcript,prepared.options)",
@@ -93,6 +93,38 @@
         {
           "before": "${TURN_PREFIX_SUMMARIZATION_PROMPT2}`,response=await completeSummarization",
           "after": "${TURN_PREFIX_SUMMARIZATION_PROMPT2}`+(customInstructions?`\\n\\nAdditional focus: ${customInstructions}`:\"\"),response=await completeSummarization"
+        },
+        {
+          "before": "import { createRequire as __piCreateRequire } from \"node:module\";",
+          "after": "import * as biomindTerminal from \"../../biomind-terminal-adapter.js\";\nimport { createRequire as __piCreateRequire } from \"node:module\";"
+        },
+        {
+          "before": "function formatResumeCommand(sessionManager){",
+          "after": "function formatResumeCommand(sessionManager){if(biomindTerminal.isBioMindTerminal())return biomindTerminal.formatBioMindResumeCommand(sessionManager);"
+        },
+        {
+          "before": "crashReportInstructions(){",
+          "after": "crashReportInstructions(){if(biomindTerminal.isBioMindTerminal())return biomindTerminal.bioMindCrashInstructions(this,getAgentDir());"
+        },
+        {
+          "before": "this.signalCleanupHandlers.push(()=>process.off(\"uncaughtException\",uncaughtExceptionHandler))}",
+          "after": "this.signalCleanupHandlers.push(()=>process.off(\"uncaughtException\",uncaughtExceptionHandler));const biomindInputCleanup = biomindTerminal.installBioMindTerminalInputHandler(this, { agentDir: getAgentDir(), killTrackedDetachedChildren }); if (biomindInputCleanup) this.signalCleanupHandlers.push(biomindInputCleanup);}"
+        },
+        {
+          "before": "console.error(`${APP_NAME} exiting due to uncaughtException:`),console.error(error);",
+          "after": "if (biomindTerminal.isBioMindTerminal()) { biomindTerminal.reportBioMindUncaught(this, error, getAgentDir()); process.exit(1); }console.error(`${APP_NAME} exiting due to uncaughtException:`),console.error(error);"
+        },
+        {
+          "before": "`${APP_NAME} crashed on ${when} (${crash.message}). Run /bug to report it; the crash details are attached automatically.`",
+          "after": "(biomindTerminal.isBioMindTerminal() ? `BioMind 上次于 ${when} 异常退出（${crash.message}）。诊断记录：${getAgentDir()}/crashes.json。当前项目与后台状态请以本次启动结果为准。` : `${APP_NAME} crashed on ${when} (${crash.message}). Run /bug to report it; the crash details are attached automatically.`)"
+        },
+        {
+          "before": "source_default.dim(\"To resume this session:\")",
+          "after": "source_default.dim(biomindTerminal.isBioMindTerminal() ? \"恢复已落盘的会话记录：\" : \"To resume this session:\")"
+        },
+        {
+          "before": "async checkForPackageUpdates(){",
+          "after": "async checkForPackageUpdates(){if(biomindTerminal.isBioMindTerminal())return [];"
         }
       ],
       "previousPatches": [
@@ -103,6 +135,10 @@
         {
           "sha256": "69b184da56577dda43d788becb05716547b3831996d97ae54b7030ec44e2423b",
           "replacementCount": 7
+        },
+        {
+          "sha256": "daebb6c96f486b6b9baebef53d6c7017c3e7fb42bad7136385419276686e35aa",
+          "replacementCount": 14
         }
       ]
     },
@@ -190,6 +226,51 @@
         }
       ],
       "patchedSha256": "89291243302b24963ea1f04d047d283204ec7e49390428509945ce6b7f11ce70"
+    },
+    {
+      "path": "dist/modes/interactive/interactive-mode.js",
+      "originalSha256": "7dc366e8609d7d1e81fb85952e466aea9933b13e74842c2a9b9df678d267d12e",
+      "replacements": [
+        {
+          "before": "import * as crypto from \"node:crypto\";",
+          "after": "import * as biomindTerminal from \"../../biomind-terminal-adapter.js\";\nimport * as crypto from \"node:crypto\";"
+        },
+        {
+          "before": "export function formatResumeCommand(sessionManager) {",
+          "after": "export function formatResumeCommand(sessionManager) {\n    if (biomindTerminal.isBioMindTerminal()) return biomindTerminal.formatBioMindResumeCommand(sessionManager);"
+        },
+        {
+          "before": "    crashReportInstructions() {",
+          "after": "    crashReportInstructions() {\n        if (biomindTerminal.isBioMindTerminal()) return biomindTerminal.bioMindCrashInstructions(this, getAgentDir());"
+        },
+        {
+          "before": "        this.signalCleanupHandlers.push(() => process.off(\"uncaughtException\", uncaughtExceptionHandler));",
+          "after": "        this.signalCleanupHandlers.push(() => process.off(\"uncaughtException\", uncaughtExceptionHandler));\n        const biomindInputCleanup = biomindTerminal.installBioMindTerminalInputHandler(this, { agentDir: getAgentDir(), killTrackedDetachedChildren }); if (biomindInputCleanup) this.signalCleanupHandlers.push(biomindInputCleanup);"
+        },
+        {
+          "before": "        console.error(`${APP_NAME} exiting due to uncaughtException:`);",
+          "after": "        if (biomindTerminal.isBioMindTerminal()) { biomindTerminal.reportBioMindUncaught(this, error, getAgentDir()); process.exit(1); }\n        console.error(`${APP_NAME} exiting due to uncaughtException:`);"
+        },
+        {
+          "before": "`${APP_NAME} crashed on ${when} (${crash.message}). Run /bug to report it; the crash details are attached automatically.`",
+          "after": "(biomindTerminal.isBioMindTerminal() ? `BioMind 上次于 ${when} 异常退出（${crash.message}）。诊断记录：${getAgentDir()}/crashes.json。当前项目与后台状态请以本次启动结果为准。` : `${APP_NAME} crashed on ${when} (${crash.message}). Run /bug to report it; the crash details are attached automatically.`)"
+        },
+        {
+          "before": "chalk.dim(\"To resume this session:\")",
+          "after": "chalk.dim(biomindTerminal.isBioMindTerminal() ? \"恢复已落盘的会话记录：\" : \"To resume this session:\")"
+        },
+        {
+          "before": "    async checkForPackageUpdates() {",
+          "after": "    async checkForPackageUpdates() {\n        if (biomindTerminal.isBioMindTerminal()) return [];"
+        }
+      ],
+      "patchedSha256": "30a28729430f7cc3213546e2d0eaaf65253da292b4ec400078f9a90b06a02453"
+    },
+    {
+      "path": "dist/biomind-terminal-adapter.js",
+      "generatedSource": "pi-terminal-adapter.mjs",
+      "originalSha256": null,
+      "patchedSha256": "ceebdf57e826591c799658670077736964b72a32bfca5a4fcf311739edfaa338"
     }
   ]
 }

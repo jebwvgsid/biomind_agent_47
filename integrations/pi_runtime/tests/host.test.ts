@@ -112,6 +112,22 @@ async function launch(steps: any[] | ((cwd: string) => any[] | Promise<any[]>), 
     } };
 }
 
+test('JSON reload revokes admission before another frame from the same input chunk', async () => {
+  const h = await launch([text('only explicitly resubmitted input')]);
+  try {
+    await h.wait(frame => frame.type === 'ready', 60000);
+    h.child.stdin.write(JSON.stringify({ type: 'reload', id: 'reload-boundary' }) + '\n' +
+      JSON.stringify({ type: 'prompt', id: 'blocked-during-reload', text: 'must not send' }) + '\n');
+    const blocked = await h.wait(frame => frame.type === 'error' && frame.id === 'blocked-during-reload');
+    assert.equal(blocked.code, 'BACKEND_NOT_READY');
+    await h.wait(frame => frame.type === 'reload_result' && frame.id === 'reload-boundary');
+    h.send({ type: 'prompt', id: 'after-reload', text: 'explicit submission after initialization' });
+    const result = await h.wait(frame => frame.type === 'result' && frame.requestId === 'after-reload');
+    assert.equal(result.runtime_status, 'completed');
+    assert.equal((await readFile(path.join(h.cwd, 'provider-requests.jsonl'), 'utf8')).trim().split('\n').length, 1);
+  } finally { assert.equal(await h.close('startup-reload-admission'), 0); }
+});
+
 test('real host + same extension + real Python: one agent, correlated question, files and next request', async () => {
   const h = await launch([text('咨询中文答复'), tool('question-1', 'ask_user', { question: '输入清单是什么？' }),
     tool('read-1', 'read', { path: 'samples.tsv' }), text('读取两行，未执行科学作业'), text('下一轮纯答复')]);

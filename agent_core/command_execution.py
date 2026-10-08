@@ -32,6 +32,7 @@ from typing import Any, Mapping
 
 from agent_core.process_registry import ACTIVE_PROCESS_GROUPS
 from agent_core.command_inspection_owner import InspectionOwnerMixin
+from agent_core.project_directory import ProjectDirectoryError, validate_project_directory
 
 
 class CommandInspectionError(ValueError):
@@ -110,13 +111,12 @@ def _tracked_process(process):
 
 
 def _directory(value: str | Path) -> Path:
-    path = Path(value).expanduser().resolve(strict=True)
-    if not path.is_dir():
-        raise CommandInspectionError(f"Not a directory: {path}")
-    if path in {Path('/'), Path('/home'), Path('/public'), Path('/public/home'),
-                Path('/tmp'), Path('/etc'), Path('/proc'), Path('/root'), Path.home().resolve()}:
-        raise CommandInspectionError(f"Choose a project directory, not a shared/home root: {path}")
-    return path
+    try:
+        return validate_project_directory(value)
+    except ProjectDirectoryError as error:
+        failure = CommandInspectionError(str(error))
+        failure.code = error.code
+        raise failure from error
 
 
 @dataclass(frozen=True)

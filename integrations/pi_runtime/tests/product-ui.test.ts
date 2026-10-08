@@ -19,7 +19,7 @@ function fixture(commandsEnabled = true) {
   const created: Component[] = [];
   let header!: Component, footer: Component | undefined, widget!: Component;
   let state: BioMindProductState | undefined;
-  let detail: BioMindProductDetails = { instructions: '全局偏好已加载 · 项目 AGENTS.md 已加载',
+  let detail: BioMindProductDetails = { backend: { state: 'ready' }, instructions: '全局偏好已加载 · 项目 AGENTS.md 已加载',
     memory: '项目按需检索开启 · 自动整理关闭', authentication: '已配置 · 尚未验证连通性' };
   let failDetails = false, idle = true, editor = '', expanded = false, shutdowns = 0;
   let leaf = 0, projections = 0, branchReads = 0, titleReads = 0, redraws = 0, session = 'synthetic-session';
@@ -69,9 +69,9 @@ function fixture(commandsEnabled = true) {
     if (key in target) return target[key as keyof typeof target];
     throw new Error(`non-UI API access forbidden: ${String(key)}`);
   } }) as unknown as ExtensionAPI;
-  installBioMindProductUI(pi, () => { projections++; return state; }, { commands: commandsEnabled,
+  const refresh = installBioMindProductUI(pi, () => { projections++; return state; }, { commands: commandsEnabled,
     details: () => { if (failDetails) throw new Error('synthetic read failure'); return detail; } });
-  return { handlers, commands, notices, created, writes, ctx,
+  return { handlers, commands, notices, created, writes, ctx, refresh,
     start: async (reason = 'startup') => { await handlers.get('session_start')!({ type: 'session_start', reason }, ctx); },
     message: async (role = 'user', content: unknown = []) => { await handlers.get('message_start')!({ type: 'message_start', message: { role, content } }, ctx); },
     header: () => header, footer: () => footer, widget: () => widget,
@@ -79,7 +79,7 @@ function fixture(commandsEnabled = true) {
     setBranch: (value: any[]) => { branch = value; leaf++; }, setSession: (value: string) => { session = value; },
     setName: (value: string | undefined) => { sessionName = value; leaf++; },
     setIdle: (value: boolean) => { idle = value; }, setEditor: (value: string) => { editor = value; },
-    setDetails: (value: BioMindProductDetails) => { detail = value; }, failDetails: () => { failDetails = true; },
+    setDetails: (value: BioMindProductDetails) => { detail = { backend: { state: 'ready' }, ...value }; }, failDetails: () => { failDetails = true; },
     resize: (columns: number, rows: number) => { tui.terminal.columns = columns; tui.terminal.rows = rows; },
     editor: () => editor, expanded: () => expanded, shutdowns: () => shutdowns,
     projections: () => projections, branchReads: () => branchReads, titleReads: () => titleReads, redraws: () => redraws,
@@ -89,6 +89,28 @@ const lines = (component: Component, width = 120): string[] => component.render(
 const contents = (component: Component, width = 120) => lines(component, width).join('\n');
 const historicalMessage = { type: 'message', id: 'old-user', message: { role: 'user', content: [{ type: 'text', text: '历史问题' }] } };
 const completeCommands = ['/login', '/model', '/project', '/instructions', '/biomind-memory status', '/new  /resume  /name'];
+
+test('welcome and compact views advertise analysis only after initialization, and stay unavailable across redraws', async () => {
+  const f = fixture(); f.setDetails({ backend: undefined }); await f.start();
+  assert.doesNotMatch(contents(f.widget()), /直接输入问题即可开始/);
+  assert.match(contents(f.widget()), /正在初始化后台/);
+  f.setDetails({ backend: { state: 'ready' } }); f.refresh();
+  assert.match(contents(f.widget()), /直接输入问题即可开始/);
+  for (const state of ['unavailable', 'failed', 'closed'] as const) {
+    f.setDetails({ backend: { state, stage: 'runtime', message: 'synthetic service stopped' } }); f.refresh();
+    for (const [width, height] of [[120, 35], [60, 20], [31, 10]]) {
+      f.resize(width, height);
+      assert.doesNotMatch(contents(f.widget(), width), /直接输入问题即可开始/);
+      assert.match(contents(f.widget(), width), /后台/);
+    }
+    f.resize(120, 35); await f.start('reload');
+    assert.doesNotMatch(contents(f.widget()), /直接输入问题即可开始/);
+  }
+  f.setDetails({ backend: { state: 'failed', stage: 'startup', message: '请选择项目目录' } });
+  f.setBranch([historicalMessage]); await f.start('resume');
+  assert.match(contents(f.widget()), /后台初始化失败.*请选择项目目录/);
+  assert(f.commands.has('status')); assert(f.commands.has('exit'));
+});
 
 test('native footer survives welcome/quiet/new/resume; current session uses name, accepted question and stable short ID', async () => {
   const f = fixture(); f.setSession('12345678-90ab-cdef-1234-1234567890ab');
@@ -357,7 +379,8 @@ test('missing model and failed or unknown details stay truthful and keep native 
   f.failDetails(); text = contents(f.widget());
   assert.match(text, /读取失败/); assert.match(text, /认证 +未核对/);
   assert.doesNotMatch(text, /已联网|已连接|已配置|已加载|检索开启/);
-  assert.match(text, /直接输入问题即可开始/);
+  assert.doesNotMatch(text, /直接输入问题即可开始/);
+  assert.match(text, /尚未接受分析输入/);
 });
 
 test('BioMind local commands retain permissions, details and shutdown without taking editor ownership', async () => {

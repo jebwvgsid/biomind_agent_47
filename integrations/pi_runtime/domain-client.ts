@@ -25,9 +25,34 @@ export function resolveHandshakeTimeoutMs(value: unknown = process.env.BIOMIND_P
   }
   return timeout;
 }
-export class DomainHandshakeTimeoutError extends Error {
-  constructor(readonly timeoutMs: number) {
-    super(`DOMAIN_HANDSHAKE_TIMEOUT: Python domain service did not become ready within ${timeoutMs} ms`);
+export interface DomainDiagnostics {
+  stderr: string; exitCode: number | null; signal: string | null; spawnCode?: string; events: string[];
+}
+export interface DomainLifecycle {
+  state: 'starting' | 'ready' | 'unavailable' | 'failed' | 'closed';
+  stage: 'startup' | 'runtime'; error?: Error;
+}
+/** Public diagnostics are bounded and scrubbed; the private tail never leaves the transport. */
+export function sanitizeDomainDiagnostic(value: string): string {
+  return value.replace(/\x1b(?:\][^\x07\x1b]*(?:\x07|\x1b\\|$)|\[[0-?]*[ -/]*[@-~]|[@-_])/g, '')
+    .replace(/[\x00-\x08\x0b-\x1f\x7f-\x9f]/g, '')
+    .replace(/-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?(?:-----END [A-Z ]*PRIVATE KEY-----|$)/g, '[REDACTED PRIVATE KEY]')
+    .replace(/(\b(?:api[_-]?key|access[_-]?key|access[_-]?token|refresh[_-]?token|host[_-]?token|token|password|passwd|secret|cookie)\b["']?\s*[:=]\s*)(?:"[^"\r\n]*"|'[^'\r\n]*'|[^\s,;}]+)/gi, '$1[REDACTED]')
+    .replace(/(\bbearer\s+)[^\s,;"'}]+/gi, '$1[REDACTED]')
+    .replace(/\b(?:sk-|ragflow-)[A-Za-z0-9_-]{8,}\b/g, '[REDACTED]')
+    .slice(-4096);
+}
+export class DomainProcessError extends Error {
+  constructor(readonly code: string, readonly stage: 'startup' | 'runtime', message: string,
+    readonly diagnostics: DomainDiagnostics) {
+    super(message); this.name = 'DomainProcessError';
+  }
+}
+export class DomainHandshakeTimeoutError extends DomainProcessError {
+  constructor(readonly timeoutMs: number,
+    diagnostics: DomainDiagnostics = { stderr: '', exitCode: null, signal: null, events: [] }) {
+    super('DOMAIN_HANDSHAKE_TIMEOUT', 'startup',
+      `DOMAIN_HANDSHAKE_TIMEOUT: Python domain service did not become ready within ${timeoutMs} ms`, diagnostics);
     this.name = 'DomainHandshakeTimeoutError';
   }
 }
@@ -39,7 +64,7 @@ const CONTROL_METHODS = new Set(['hello', 'request.cancel', 'request.pause', 're
   'exec.status', 'session.lifecycle', 'archive.status', 'permissions.status', 'permissions.revoke']);
 const HOST_METHODS = new Set(['environments.launch', 'environments.register_observed', 'files.list', 'files.read_authorize', 'files.mutation_snapshot', 'files.mutation_replay', 'request.begin', 'request.cancel', 'request.pause', 'request.resume', 'request.revise', 'request.status', 'permissions.mode', 'exec.probe', 'shutdown', 'approval.decide', 'settings.update',
   'memory.maintenance.prepare', 'memory.maintenance.apply', 'archive.append', 'archive.status', 'permissions.status', 'permissions.revoke']);
-interface Pending { resolve(value: unknown): void; reject(error: Error): void; cleanup(): void }
+interface Pending { method: string; resolve(value: unknown): void; reject(error: Error): void; cleanup(): void }
 
 export class DomainClient extends EventEmitter {
   #child: ChildProcessWithoutNullStreams;
@@ -56,11 +81,22 @@ export class DomainClient extends EventEmitter {
   #queuedBytes = 0;
   #stdout = '';
   #stderr = '';
+  #discardStderrLine = false;
   #decoder = new StringDecoder('utf8');
+  #stderrDecoder = new StringDecoder('utf8');
+  #handshakeDone = false;
+  #lifecycle: DomainLifecycle = { state: 'starting', stage: 'startup' };
+  #candidate?: { code: string; message: string; priority: number; error?: Error };
+  #diagnostics: DomainDiagnostics = { stderr: '', exitCode: null, signal: null, events: [] };
+  #failureTimer?: ReturnType<typeof setTimeout>;
+  #timeoutMs: number;
+  #resolveFailure!: (error: Error) => void;
+  #failureResult = new Promise<Error>(resolve => { this.#resolveFailure = resolve; });
 
   constructor(options: DomainOptions) {
     super();
     const handshakeTimeoutMs = resolveHandshakeTimeoutMs(options.handshakeTimeoutMs);
+    this.#timeoutMs = handshakeTimeoutMs;
     const runtime = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
     const installRoot = path.resolve(options.installRoot ?? path.join(runtime, '..', '..'));
     const dataRoot = path.resolve(options.dataRoot ?? path.join(options.cwd, '.biomind', 'pi-domain'));
@@ -93,62 +129,122 @@ export class DomainClient extends EventEmitter {
           .flatMap(key => process.env[key] ? [[key,process.env[key]!]] : [])),
         ...(process.env.BIOMIND_PI_PREFERENCES_SOURCE ? { BIOMIND_PI_PREFERENCES_SOURCE: process.env.BIOMIND_PI_PREFERENCES_SOURCE } : {}),
         PYTHONDONTWRITEBYTECODE: '1', PYTHONUNBUFFERED: '1' } });
-    this.#child.on('error', () => this.#fail(new Error('DOMAIN_PROCESS_START_FAILED')));
+    this.#child.on('error', error => {
+      this.#diagnostics.spawnCode = (error as NodeJS.ErrnoException).code;
+      this.#unavailable('DOMAIN_PROCESS_START_FAILED', error.message, 2);
+    });
     this.#child.on('exit', (code, signal) => {
-      this.#fail(new Error(`DOMAIN_PROCESS_EXIT code=${code} signal=${signal ?? ''}`));
+      this.#diagnostics.exitCode = code; this.#diagnostics.signal = signal;
+      this.#unavailable('DOMAIN_PROCESS_EXIT');
       this.emit('exit', { code, signal });
     });
-    this.#child.stdin.on('error', () => this.#fail(new Error('DOMAIN_STDIN_CLOSED')));
+    this.#child.on('close', (code, signal) => {
+      this.#diagnostics.exitCode = code; this.#diagnostics.signal = signal;
+      this.#unavailable('DOMAIN_PROCESS_CLOSE'); this.#finalize();
+    });
+    this.#child.stdin.on('error', error => this.#unavailable('DOMAIN_STDIN_CLOSED', error.message));
+    this.#child.stdout.on('error', error => this.#unavailable('DOMAIN_STDOUT_ERROR', error.message));
     this.#child.stdout.on('data', (chunk: Buffer) => this.#receive(this.#decoder.write(chunk)));
     this.#child.stdout.on('end', () => {
       this.#receive(this.#decoder.end());
-      if (this.#stdout.trim()) this.#fail(new Error('DOMAIN_TRUNCATED_FRAME'));
-      else this.#fail(new Error('DOMAIN_STDOUT_EOF'));
+      this.#unavailable(this.#stdout.trim() ? 'DOMAIN_TRUNCATED_FRAME' : 'DOMAIN_STDOUT_EOF', undefined,
+        this.#stdout.trim() ? 2 : 0);
     });
-    this.#child.stderr.on('data', (chunk: Buffer) => {
-      // Diagnostics may contain application failures. Keep a bounded private tail,
-      // publish only its size; never send credential-shaped data to tool results.
-      const tail = Buffer.from(this.#stderr + chunk.toString('utf8'));
-      let offset = Math.max(0, tail.length - DOMAIN_TRANSPORT_LIMITS.diagnosticBytes);
-      while (offset < tail.length && (tail[offset]! & 0xc0) === 0x80) offset++;
-      this.#stderr = tail.subarray(offset).toString('utf8');
-      this.emit('diagnostic', { code: 'DOMAIN_STDERR', retained_chars: this.#stderr.length });
-    });
-    this.#ready = this.#handshake(handshakeTimeoutMs);
-    // Constructor starts the handshake; delayed callers must not produce an
-    // unhandled rejection if startup fails before their first tool.
+    this.#child.stderr.on('error', error => this.#unavailable('DOMAIN_STDERR_ERROR', error.message));
+    this.#child.stderr.on('data', (chunk: Buffer) => this.#retainDiagnostic(this.#stderrDecoder.write(chunk)));
+    this.#child.stderr.on('end', () => this.#retainDiagnostic(this.#stderrDecoder.end()));
+    // The existing handshake deadline also bounds diagnostic collection when a
+    // failed child's descendants retain a pipe. No fixed sleep or job killing.
+    this.#failureTimer = setTimeout(() => {
+      if (!this.#candidate) {
+        const error = new DomainHandshakeTimeoutError(handshakeTimeoutMs, this.#diagnostics);
+        this.#unavailable('DOMAIN_HANDSHAKE_TIMEOUT', error.message, 2, error);
+      }
+      this.#finalize();
+    }, handshakeTimeoutMs);
+    this.#ready = this.#handshake();
     void this.#ready.catch(() => undefined);
   }
 
-  async #handshake(timeoutMs: number): Promise<void> {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(new Error('DOMAIN_HANDSHAKE_TIMEOUT')), timeoutMs);
+  #retainDiagnostic(text: string): void {
+    if (this.#discardStderrLine) {
+      const newline = text.indexOf('\n');
+      if (newline < 0) return;
+      text = text.slice(newline + 1); this.#discardStderrLine = false;
+    }
+    const tail = Buffer.from(this.#stderr + text);
+    let offset = Math.max(0, tail.length - DOMAIN_TRANSPORT_LIMITS.diagnosticBytes);
+    while (offset < tail.length && (tail[offset]! & 0xc0) === 0x80) offset++;
+    // A cut credential assignment must not become a bare value in public output.
+    const retained = tail.subarray(offset).toString('utf8');
+    this.#discardStderrLine = offset > 0 && !retained.includes('\n');
+    this.#stderr = offset ? (retained.includes('\n') ? retained.slice(retained.indexOf('\n') + 1) : '') : retained;
+    this.#diagnostics.stderr = sanitizeDomainDiagnostic(this.#stderr);
+    if (text) this.emit('diagnostic', { code: 'DOMAIN_STDERR', retained_chars: this.#stderr.length });
+  }
+
+  #setLifecycle(state: DomainLifecycle['state'], error?: Error): void {
+    this.#lifecycle = { state, stage: this.#handshakeDone ? 'runtime' : 'startup', ...(error ? { error } : {}) };
+    this.emit('lifecycle', this.lifecycle);
+  }
+  get lifecycle(): DomainLifecycle { return { ...this.#lifecycle }; }
+
+  #unavailable(code: string, message = code, priority = 0, error?: Error): void {
+    if (this.#closed || this.#failed) return;
+    if (!this.#diagnostics.events.includes(code)) this.#diagnostics.events.push(code);
+    if (!this.#candidate || priority > this.#candidate.priority) this.#candidate = { code, message, priority, error };
+    if (this.#lifecycle.state !== 'unavailable') {
+      if (!this.#handshakeDone) this.#startupFailed = true;
+      this.#setLifecycle('unavailable');
+      if (!this.#failureTimer) this.#failureTimer = setTimeout(() => this.#finalize(), this.#timeoutMs);
+      // Disconnect only: existing independent workers keep their owners.
+      this.#child.stdin.end();
+    }
+  }
+
+  #finalize(): void {
+    if (this.#closed || this.#failed) return;
+    clearTimeout(this.#failureTimer); this.#failureTimer = undefined;
+    const cause = this.#candidate ?? { code: 'DOMAIN_CONNECTION_ENDED', message: '连接提前结束，原因未知', priority: 0 };
+    const diagnostic = this.#diagnostics;
+    const fallback = diagnostic.stderr.trim().split('\n').filter(line => line.trim()).at(-1);
+    const detail = cause.priority > 0 ? sanitizeDomainDiagnostic(cause.message) : fallback || cause.message;
+    const stage = this.#handshakeDone ? 'runtime' : 'startup';
+    this.#failed = cause.error ?? new DomainProcessError(cause.code, stage,
+      `BioMind 后台${stage === 'startup' ? '启动失败' : '连接中断'} [${cause.code}]：${detail}` +
+      ` (exit=${diagnostic.exitCode ?? 'unknown'}${diagnostic.signal ? ` signal=${diagnostic.signal}` : ''}` +
+      `${diagnostic.spawnCode ? ` spawn=${diagnostic.spawnCode}` : ''})`, diagnostic);
+    this.#resolveFailure(this.#failed);
+    this.#rejectPending(this.#failed);
+    this.#setLifecycle('failed', this.#failed);
+  }
+
+  async #handshake(): Promise<void> {
     try {
-      const value = await this.#request('hello', {}, { signal: controller.signal }, false) as Record<string, unknown>;
+      const value = await this.#request('hello', {}, {}, false) as Record<string, unknown>;
       if (value.protocol !== 'biomind-domain-v1' || typeof value.host_token !== 'string' || !value.host_token) {
         throw new Error('DOMAIN_HANDSHAKE_MISMATCH');
       }
-      this.#token = value.host_token;
+      if (this.#closed) throw new Error('DOMAIN_CLIENT_DISCONNECTED');
+      if (this.#candidate) throw await this.#failureResult;
+      this.#token = value.host_token; this.#handshakeDone = true;
+      clearTimeout(this.#failureTimer); this.#failureTimer = undefined;
+      this.#setLifecycle('ready');
     } catch (error) {
-      // Only a failed initial handshake is safe to replace: this connection
-      // has never dispatched a request or started an independent job.
+      if (this.#closed) throw error;
       this.#startupFailed = true;
-      // Constructor-time profile failures precede hello. Forward only the
-      // typed configuration code, never Python's private diagnostic tail.
-      const profileFailure = this.#stderr.match(/\bEXECUTION_PROFILE_[A-Z_]+\b/g)?.at(-1);
-      const failure = controller.signal.aborted ? new DomainHandshakeTimeoutError(timeoutMs)
-        : profileFailure ? new Error(profileFailure) : error instanceof Error ? error : new Error('DOMAIN_HANDSHAKE_FAILED');
-      this.#fail(failure);
-      this.#child.stdin.end();
-      throw failure;
-    } finally { clearTimeout(timer); }
+      if (!this.#failed) this.#unavailable('DOMAIN_HANDSHAKE_FAILED', String(error), 2);
+      throw await this.#failureResult;
+    }
+  }
+
+  #rejectPending(error: Error): void {
+    for (const waiter of this.#pending.values()) { waiter.cleanup(); waiter.reject(error); }
+    this.#pending.clear(); this.#stdout = '';
   }
 
   #fail(error: Error): void {
-    if (!this.#failed) this.#failed = error;
-    for (const waiter of this.#pending.values()) { waiter.cleanup(); waiter.reject(this.#failed); }
-    this.#pending.clear();
-    this.#stdout = '';
+    this.#unavailable(error.message, error.message, 2);
   }
 
   #receive(text: string): void {
@@ -169,21 +265,28 @@ export class DomainClient extends EventEmitter {
       }
       const waiter = this.#pending.get(frame.id);
       if (!waiter) { this.emit('diagnostic', { code: 'DOMAIN_UNKNOWN_OR_LATE_RESPONSE', id: frame.id }); continue; }
-      this.#pending.delete(frame.id); waiter.cleanup();
       if (Object.hasOwn(frame, 'error')) {
-        const value = frame.error as { code?: string; message?: string } | string;
+        const value = frame.error as { code?: string; message?: string; stage?: string } | string;
         const code = typeof value === 'object' ? value?.code : undefined;
         // The service sanitizes errors. Preserve its bounded, actionable reason,
         // but never reflect the whole protocol frame or private handshake data.
-        const message = typeof value === 'object' ? String(value?.message ?? '').slice(0, 2000) : '';
+        const message = typeof value === 'object' ? sanitizeDomainDiagnostic(String(value?.message ?? '')).slice(0, 2000) : '';
+        if (waiter.method === 'hello') {
+          this.#unavailable(code ?? 'DOMAIN_INITIALIZATION_FAILED', message || code, 3);
+          continue;
+        }
+        this.#pending.delete(frame.id); waiter.cleanup();
         waiter.reject(new Error(`DOMAIN_CALL_FAILED:${code ?? 'EXECUTION_ERROR'}${message ? ': ' + message : ''}`));
-      } else waiter.resolve(frame.result);
+      } else {
+        this.#pending.delete(frame.id); waiter.cleanup(); waiter.resolve(frame.result);
+      }
     }
     if (Buffer.byteLength(this.#stdout) > MAX_FRAME_BYTES) this.#fail(new Error('DOMAIN_FRAME_TOO_LARGE'));
   }
 
   #request(method: string, params: Record<string, unknown>, options: CallOptions, trusted: boolean): Promise<unknown> {
     if (this.#closed || this.#failed) return Promise.reject(this.#failed ?? new Error('DOMAIN_CLOSED'));
+    if (this.#candidate) return this.#failureResult.then(error => { throw error; });
     options.signal?.throwIfAborted();
     const control = CONTROL_METHODS.has(method);
     const pendingLimit = DOMAIN_TRANSPORT_LIMITS.pendingRequests - (control ? 0 : DOMAIN_TRANSPORT_LIMITS.reservedControlRequests);
@@ -206,12 +309,12 @@ export class DomainClient extends EventEmitter {
         reject(new Error('DOMAIN_WAIT_ABORTED_EXECUTION_OUTCOME_MUST_BE_QUERIED'));
       };
       options.signal?.addEventListener('abort', aborted, { once: true });
-      this.#pending.set(id, { resolve, reject, cleanup: () => options.signal?.removeEventListener('abort', aborted) });
+      this.#pending.set(id, { method, resolve, reject, cleanup: () => options.signal?.removeEventListener('abort', aborted) });
       this.#writeTail = this.#writeTail.then(async () => {
         if (!this.#pending.has(id)) return; // Aborted before dispatch.
-        if (this.#failed) throw this.#failed;
+        if (this.#failed || this.#candidate) return;
         await new Promise<void>((done, failed) => this.#child.stdin.write(frame, error => error ? failed(error) : done()));
-      }).catch(() => this.#fail(new Error('DOMAIN_WRITE_FAILED')))
+      }).catch(error => this.#unavailable('DOMAIN_WRITE_FAILED', String(error)))
         .finally(() => { this.#queuedWrites--; this.#queuedBytes -= bytes; });
     });
   }
@@ -238,7 +341,10 @@ export class DomainClient extends EventEmitter {
   async close(_options: { disconnectOnly: true }): Promise<void> {
     if (this.#closed) return;
     this.#closed = true;
-    this.#fail(new Error('DOMAIN_CLIENT_DISCONNECTED'));
+    clearTimeout(this.#failureTimer); this.#failureTimer = undefined;
+    const error = this.#failed ?? new Error('DOMAIN_CLIENT_DISCONNECTED');
+    this.#resolveFailure(error); this.#rejectPending(error);
+    this.#setLifecycle('closed', this.#failed);
     // EOF is a lifecycle notification. Never send cancel_job, kill the service,
     // or destroy its workers simply because a UI/session was closed.
     await this.#writeTail;

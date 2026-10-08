@@ -2,7 +2,7 @@
 
 This private package uses `@earendil-works/pi-coding-agent`, `pi-agent-core` and
 `pi-ai` **0.87.1**, with the documented reversible dependency observer patch
-**0.87.1+biomind-observer.2** (see `compat/README.md`). Native interactive mode launches the upstream fullscreen CLI;
+**0.87.1+biomind-observer.5** (see `compat/README.md`). Native interactive mode launches the upstream fullscreen CLI;
 JSON mode calls its public `createAgentSession`. Both load
 `extensions/biomind.ts`. Pi owns model calls, tool continuation, retry,
 compaction, messages and branches. Python owns authorization, execution
@@ -94,9 +94,35 @@ JSON or `BIOMIND_PI_HANDSHAKE_TIMEOUT_MS` in the launch environment to override 
 (integer milliseconds, 1–600000; JSON takes precedence). For example,
 `BIOMIND_PI_HANDSHAKE_TIMEOUT_MS=120000 biomind` allows two minutes.
 Startup timeouts report `DOMAIN_HANDSHAKE_TIMEOUT` and the actual limit. After a
-failed startup, resubmit the input to create a fresh connection. Requests are not
+failed startup, use `/reload` explicitly to retry initialization before submitting
+new input. Requests are not
 replayed automatically, and services that completed their handshake are retained
 when a request is rejected, so existing jobs keep their original owner.
+
+### Project selection and startup failures
+
+`biomind` keeps a legal launch directory as its project. From HOME, interactive
+startup first offers the existing project/open/create selector. Cancellation,
+`--help`, and `--version` do not start the scientific backend. Explicit
+`--project-dir` values use the same directory validation as the backend; HOME is
+still prohibited as an analysis root. Noninteractive invalid roots return an
+explanatory error instead of opening a menu. Exact `--session` metadata selects
+the owning project, and an explicit conflicting project is rejected. A trusted
+project's existing custom session directory remains a locator fallback.
+
+The welcome view advertises analysis only after the backend handshake and
+execution binding succeed. A lost connection immediately revokes admission;
+structured initialization errors take precedence over EOF, while bounded,
+redacted stderr and exit details are collected until process close. JSON output
+keeps the existing frame protocol and never contains welcome text.
+
+The pinned Pi patch handles errors on the actual terminal input stream using
+its existing stop/dispose lifecycle. BioMind suppresses upstream update commands
+only in its own child process, retains Pi's configuration and authentication
+paths, and generates recovery instructions from an existing persisted session
+and its project. Restoring conversation records does not automatically resume
+scientific jobs. Input-EIO injection verifies cleanup, not the original incident's
+unknown trigger. See `../../docs/fixes/startup_boundary_20261008.md` for evidence.
 
 History reads start disabled unless explicitly enabled. An existing preference
 file still refreshes at request boundaries. Existing memory stores are opened

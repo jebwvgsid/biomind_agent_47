@@ -56,7 +56,7 @@ def protect_secret_files(event,args):
             raise PermissionError('PI_DOMAIN_SECRET_FILE_FORBIDDEN')
 
 
-async def serve(service):
+async def serve(service, initial_raw=None):
     from agent_core.cli_display import safe_text
     write_lock=asyncio.Lock(); pending=set();seen=set();recent=deque();limit=asyncio.Semaphore(64)
     controls=asyncio.Semaphore(64)
@@ -100,7 +100,10 @@ async def serve(service):
         await send(reply)
     try:
         while not service._closed:
-            try:raw=await reader.readline()
+            try:
+                if initial_raw is not None:
+                    raw,initial_raw=initial_raw,None
+                else:raw=await reader.readline()
             except (BrokenPipeError,ConnectionResetError):break
             except ValueError:
                 await send({'id':None,'error':{'code':'PROTOCOL_ERROR','message':'FRAME_TOO_LARGE'}})
@@ -129,6 +132,42 @@ async def serve(service):
         finally:input_transport.close()
 
 
+def report_startup_failure(exc, initial_raw, options):
+    """Keep constructor failures on the existing hello reply, before serve exists."""
+    # Import failures can include the sanitizer itself. In that case publish only
+    # the exception type, never an unsanitized diagnostic or credential literal.
+    try:
+        from agent_core.cli_display import safe_text
+        message=safe_text(str(exc))
+    except Exception:
+        message='BioMind initialization failed: '+type(exc).__name__
+        if isinstance(exc,ModuleNotFoundError) and exc.name:
+            message+=' ('+str(exc.name)[:200]+')'
+    code=getattr(exc,'code',None)
+    if not isinstance(code,str):
+        code='DOMAIN_INITIALIZATION_FAILED'
+        if str(exc).startswith('EXECUTION_PROFILE_'):
+            code=str(exc).split(':',1)[0]
+    error={'code':code,'message':message,'stage':'startup',
+           'project_dir':options['cwd'],'session_id':options['session_id']}
+    try:
+        frame=json.loads(initial_raw)
+        if (not isinstance(frame,dict) or not isinstance(frame.get('id'),str)
+                or frame.get('method')!='hello'):
+            raise ValueError('Expected hello')
+        PROTOCOL_OUT.write(json.dumps({'id':frame['id'],'error':error},ensure_ascii=False)+'\n')
+        PROTOCOL_OUT.flush()
+    except (ValueError,TypeError,BrokenPipeError,OSError):
+        pass
+    try:
+        import traceback
+        diagnostic=safe_text(traceback.format_exc())
+    except Exception:
+        diagnostic=code+': '+message
+    print(diagnostic,file=sys.stderr,flush=True)
+    return 1
+
+
 def main():
     parser=argparse.ArgumentParser()
     for key in ('cwd','data-root','install-root','session-id'):parser.add_argument('--'+key,required=True)
@@ -142,8 +181,17 @@ def main():
     options=vars(parser.parse_args())
     sys.path.insert(0,str(Path(options['install_root']).resolve()))
     sys.meta_path.insert(0,NoLegacyRuntime());sys.addaudithook(protect_secret_files)
-    from domain_adapter.service import DomainService
-    asyncio.run(serve(DomainService(**options)))
+    # Retain the first request identity before imports or construction can fail.
+    # Reading one bounded protocol line does not initialize a project/session.
+    initial_raw=sys.stdin.buffer.raw.readline(MAX_FRAME+1)
+    if not initial_raw:return 0
+    try:
+        from domain_adapter.service import DomainService
+        service=DomainService(**options)
+    except Exception as exc:
+        return report_startup_failure(exc,initial_raw,options)
+    asyncio.run(serve(service,initial_raw))
+    return 0
 
 
-if __name__=='__main__':main()
+if __name__=='__main__':sys.exit(main())

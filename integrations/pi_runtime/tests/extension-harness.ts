@@ -87,7 +87,7 @@ export async function createHarness(options: HarnessOptions = {}) {
   let domainCreations = 0;
   const requests: TranscriptContext[] = []; const events: any[] = []; const errors: any[] = []; const busEvents: any[] = [];
   const bus = createEventBus(); const manager = options.sessionManager ?? SessionManager.inMemory(cwd);
-  for (const channel of ['biomind:state', 'biomind:settled', 'biomind:ui_request', 'biomind:diagnostic', 'biomind:disconnected']) {
+  for (const channel of ['biomind:state', 'biomind:settled', 'biomind:ui_request', 'biomind:diagnostic', 'biomind:disconnected', 'biomind:backend']) {
     bus.on(channel, value => { busEvents.push({ channel, value: clone(value) }); });
   }
   const settingsManager = SettingsManager.inMemory({

@@ -34,7 +34,7 @@ test('P01 production module loads by native file path; factory only registers', 
     const nativeTools = [...loader.getExtensions().extensions[0].tools.keys()].sort();
     assert.deepEqual(nativeTools, [...h.resourceLoader.getExtensions().extensions[0].tools.keys()].sort());
     assert(nativeTools.includes('ask_user') && nativeTools.includes('run_command'));
-    assert.equal(h.domain.calls.length, 0, 'loading must not start a request or domain service');
+    assert.deepEqual(h.domain.calls.map(row => row.method), ['request.status'], 'binding confirms the backend but never starts an analysis request');
     assert.equal(createHash('sha256').update(await readFile(path)).digest('hex').length, 64);
   } finally { await h.close(); }
 });
@@ -343,19 +343,22 @@ test('Domain initialization failure is handled before Pi starts the provider', a
   } finally { await h.close(); }
 });
 
-test('failed startup is disconnected and the next input creates a fresh service before sending to the provider', async () => {
+test('failed startup blocks inputs until explicit reload creates a fresh service, without replay', async () => {
   const failed = new FakeDomain(); Object.defineProperty(failed, 'startupFailed', { value: true });
-  failed.receipts.set('request.begin', () => { throw new DomainHandshakeTimeoutError(60000); });
+  failed.receipts.set('request.status', () => { throw new DomainHandshakeTimeoutError(60000); });
   const recovered = new FakeDomain(); let creations = 0;
   const h = await createHarness({ domain: recovered,
     domainFactory: () => ++creations === 1 ? failed : recovered, script: [text('重新连接成功。')] });
   try {
     await h.prompt('首次启动超时');
     assert.equal(h.requests.length, 0); assert.equal(state(h), undefined);
-    assert.equal(failed.closed, 1); assert.equal(h.getDomainCreationCount(), 1);
+    assert.equal(failed.closed, 0); assert.equal(h.getDomainCreationCount(), 1);
     assert(h.busEvents.some(event => event.channel === 'biomind:diagnostic'
       && event.value.message?.includes('DOMAIN_HANDSHAKE_TIMEOUT')));
-    await h.prompt('再次提交');
+    await h.prompt('后台未就绪时再次提交');
+    assert.equal(h.requests.length, 0); assert.equal(h.getDomainCreationCount(), 1);
+    await h.session.reload();
+    await h.prompt('明确重载后提交');
     healthy(h, 1); assert.equal(h.getDomainCreationCount(), 2);
     assert.equal(recovered.calls.filter(row => row.method === 'request.begin' && !row.params.boundary_id).length, 1);
     assert.equal(failed.calls.length, 1, 'never reuse or replay into the failed connection');

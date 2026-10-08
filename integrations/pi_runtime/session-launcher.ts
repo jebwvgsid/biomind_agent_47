@@ -5,6 +5,7 @@ import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { stripVTControlCharacters } from 'node:util';
 import { getAgentDir, initTheme, keyHint, SessionManager, SessionSelectorComponent, type SessionInfo } from '@earendil-works/pi-coding-agent';
+import { TerminalInputError } from './native-session-selection.js';
 
 type Progress = Parameters<typeof SessionManager.list>[2];
 export interface HistorySessionOptions {
@@ -143,13 +144,16 @@ export async function selectHistorySession(cwd: string, sessionDir?: string, opt
   let started = false;
   let stopped = false;
   let resolveSelection!: (selected?: string) => void;
-  const selected = new Promise<string | undefined>(resolve => { resolveSelection = resolve; });
-  const finish = (sessionPath?: string) => {
+  let rejectSelection!: (error: Error) => void;
+  const selected = new Promise<string | undefined>((resolve, reject) => { resolveSelection = resolve; rejectSelection = reject; });
+  const inputError = (error: NodeJS.ErrnoException) => finish(undefined, new TerminalInputError(error));
+  const finish = (sessionPath?: string, error?: Error) => {
     if (stopped) return;
     stopped = true;
-    picker?.dispose();
-    if (started) tui.stop();
-    resolveSelection(sessionPath);
+    process.stdin.removeListener('error', inputError);
+    try { picker?.dispose(); if (started) tui.stop(); }
+    catch (cleanupError) { error ??= cleanupError as Error; }
+    if (error) rejectSelection(error); else resolveSelection(sessionPath);
   };
   try {
     picker = await createHistorySessionSelector(cwd, sessionDir, {
@@ -163,10 +167,12 @@ export async function selectHistorySession(cwd: string, sessionDir?: string, opt
       tui.addChild(picker.component);
       tui.setFocus(picker.component);
       started = true;
+      process.stdin.once('error', inputError);
       tui.start();
     }
     return await selected;
   } finally {
+    process.stdin.removeListener('error', inputError);
     picker?.dispose();
     if (started && !stopped) tui.stop();
   }

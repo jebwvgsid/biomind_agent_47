@@ -23,10 +23,19 @@ if (observationMode === 'public' && (process.env.BIOMIND_PI_CANARY_LEDGER || pro
 // Validate every target before mutating any file. Unknown bytes are never overwritten.
 const plan = patch.files.map(file => {
   const filename = path.join(packageRoot, file.path);
+  if (file.generatedSource) {
+    const source = fs.readFileSync(path.join(directory, file.generatedSource));
+    if (sha(source) !== file.patchedSha256) throw new Error(`Adapter source checksum mismatch: ${file.path}`);
+    const current = fs.existsSync(filename) ? fs.readFileSync(filename) : undefined;
+    if (current && sha(current) !== file.patchedSha256) throw new Error(`Unknown installed bytes: ${file.path}`);
+    if (mode === 'check' && !current) throw new Error(`Patch missing: ${file.path}`);
+    return { filename, next: source, remove: mode === 'revert', changed: mode === 'revert' ? !!current : !current,
+      path: file.path, sha256: mode === 'revert' ? null : file.patchedSha256 };
+  }
   const original = fs.readFileSync(filename, 'utf8');
   const currentHash = sha(original);
   // Keep the earlier single-predecessor manifest format readable while allowing
-  // exact upgrades from both known .2 and .3 installations to this revision.
+  // exact upgrades from known .2, .3 and .4 installations to this revision.
   const predecessors = [...(file.previousPatches ?? []), ...(file.previousSha256
     ? [{ sha256: file.previousSha256, replacementCount: file.previousReplacementCount }] : [])];
   for (const previous of predecessors) {
@@ -57,7 +66,10 @@ const plan = patch.files.map(file => {
   }
   return { filename, next, changed: next !== original, path: file.path, sha256: sha(next) };
 });
-for (const entry of plan) if (entry.changed) fs.writeFileSync(entry.filename, entry.next);
+for (const entry of plan) if (entry.changed) {
+  if (entry.remove) fs.unlinkSync(entry.filename);
+  else fs.writeFileSync(entry.filename, entry.next);
+}
 process.stdout.write(JSON.stringify({ mode, package: patch.package, version: patch.originalVersion,
   runtimeLabel: mode === 'revert' ? patch.originalVersion : patch.runtimeLabel,
   patchSha256: sha(patchBytes), files: plan.map(({ path, sha256, changed }) => ({ path, sha256, changed })) }) + '\n');

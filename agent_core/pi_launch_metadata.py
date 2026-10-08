@@ -10,14 +10,22 @@ import sys
 
 def main(argv=None):
     parser = argparse.ArgumentParser()
-    parser.add_argument("operation", choices=("model", "roots", "register"))
+    parser.add_argument("operation", choices=("model", "roots", "register", "validate"))
     parser.add_argument("--project")
     parser.add_argument("--record")
     parser.add_argument("--memory-root")
     parser.add_argument("--wiki-root")
     args = parser.parse_args(argv)
     try:
-        if args.operation == "model":
+        if args.operation == "validate":
+            from agent_core.project_directory import ProjectDirectoryError, validate_project_directory
+            try:
+                if not args.project:
+                    raise ProjectDirectoryError("Project directory is required")
+                result = {"valid": True, "project_dir": str(validate_project_directory(args.project))}
+            except ProjectDirectoryError as error:
+                result = {"valid": False, "code": error.code, "message": str(error)}
+        elif args.operation == "model":
             from agent_core.pi_model_config import resolve_model_config
             selection, source = resolve_model_config(record_path=args.record,
                 repo=Path(__file__).resolve().parents[1], project=args.project)

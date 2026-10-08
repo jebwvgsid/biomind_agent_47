@@ -47,6 +47,7 @@ test('target session decides implicit project before services; conflict never re
   const selection={session:path.relative(f.root,a.getSessionFile()!),sessionDir:f.sessions};
   assert.equal(await resolveSessionTarget(f.b,selection,f.root,false),f.a);
   await assert.rejects(resolveSessionTarget(f.b,{session:a.getSessionFile()!,sessionDir:f.sessions},f.root,true),{code:'SESSION_PROJECT_MISMATCH'});
+  await assert.rejects(resolveSessionTarget(f.b,{session:a.getSessionId(),sessionDir:f.sessions},f.root,true),{code:'SESSION_PROJECT_MISMATCH'});
   assert.deepEqual(fs.readFileSync(a.getSessionFile()!),before);
 });
 test('missing, empty, invalid and read-only explicit sessions fail without replacement',()=>{

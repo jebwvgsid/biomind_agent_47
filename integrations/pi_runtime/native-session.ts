@@ -37,7 +37,7 @@ export async function resolveSessionTarget(cwd: string, selection: NativeSession
   const reference = selection.session;
   let filename = reference.includes('/') || reference.includes('\\') || reference.endsWith('.jsonl')
     ? path.resolve(launchCwd, reference) : SessionManager.findById(cwd, reference, selection.sessionDir);
-  if (!filename && !explicitProject) {
+  if (!filename) {
     const matches = (await SessionManager.listAll(selection.sessionDir)).filter(row => row.id === reference);
     if (matches.length > 1) throw new ProductSessionError('SESSION_REFERENCE_AMBIGUOUS');
     filename = matches[0]?.path;
@@ -46,7 +46,8 @@ export async function resolveSessionTarget(cwd: string, selection: NativeSession
   const target = readTargetSessionRoot(filename);
   try {
     if (!fs.statSync(target).isDirectory()) throw new Error();
-    if (explicitProject && fs.realpathSync(target) !== fs.realpathSync(cwd)) throw new ProductSessionError('SESSION_PROJECT_MISMATCH');
+    if (explicitProject && fs.realpathSync(target) !== fs.realpathSync(cwd)) throw new ProductSessionError('SESSION_PROJECT_MISMATCH',
+      `SESSION_PROJECT_MISMATCH: 会话属于 ${target}，与显式项目 ${cwd} 冲突；请使用会话所属项目的 --project-dir，或移除显式项目参数。`);
   } catch (error) {
     if (error instanceof ProductSessionError) throw error;
     throw new ProductSessionError('SESSION_PROJECT_UNAVAILABLE');

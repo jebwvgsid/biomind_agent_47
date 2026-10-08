@@ -11,7 +11,12 @@ export interface BioMindProductState {
   status?: 'active' | 'settled' | 'aborted' | 'error' | 'paused';
 }
 export type BioMindProductStateGetter = (ctx: ExtensionContext) => Readonly<BioMindProductState> | undefined;
-export interface BioMindProductDetails { memory?: string; instructions?: string; authentication?: string; }
+export interface BioMindBackendState {
+  state: 'starting' | 'ready' | 'unavailable' | 'failed' | 'closed';
+  stage?: 'startup' | 'runtime';
+  message?: string;
+}
+export interface BioMindProductDetails { memory?: string; instructions?: string; authentication?: string; backend?: BioMindBackendState; }
 export const PRODUCT_RESUME_HINT = '恢复会话请在终端运行 biomind --resume 选择历史，或 biomind --session <会话ID>。恢复会话不会修复执行保护错误；临时会话无法恢复。';
 export interface BioMindPermissionUI {
   status(ctx: ExtensionContext): Promise<Record<string, any>>;
@@ -62,6 +67,16 @@ function status(ctx: ExtensionContext, getState: BioMindProductStateGetter): str
 
 function modelSelected(ctx: ExtensionContext): boolean {
   return !!ctx.model && !(ctx.model.provider === 'unknown' && ctx.model.id === 'unknown');
+}
+
+function backendLabel(detail: BioMindProductDetails): string {
+  switch (detail.backend?.state) {
+    case 'ready': return '直接输入问题即可开始';
+    case 'failed': return `${detail.backend.stage === 'runtime' ? '后台连接中断' : '后台初始化失败'}：${field(detail.backend.message, '请查看错误提示')}`;
+    case 'unavailable': return '后台连接已断开，正在收集诊断；分析输入已停止';
+    case 'closed': return '后台已关闭；分析输入已停止';
+    default: return '正在初始化后台，请稍候；尚未接受分析输入';
+  }
 }
 function modelText(ctx: ExtensionContext): string {
   const model = ctx.model;
@@ -117,9 +132,10 @@ function welcomeRows(ctx: ExtensionContext, detail: BioMindProductDetails, width
   const project = field(path.basename(ctx.cwd)), model = modelText(ctx);
   const instructions = field(detail.instructions, '未核对');
   const memory = field(detail.memory, '未知');
+  const readiness = backendLabel(detail);
   if (height < 12 || width < 32) {
     // At extremely small sizes, keep a usable native editor ahead of decoration.
-    return [sessionRow(6), `项目 ${project}`, '输入 / 搜索命令'].slice(0, Math.max(1, height - 8)).map(text => fit(text));
+    return [readiness, sessionRow(6), `项目 ${project}`].slice(0, Math.max(1, height - 8)).map(text => fit(text));
   }
   if (width < 72 || height < 22) {
     const summary = (label: string, value: string) => {
@@ -130,14 +146,15 @@ function welcomeRows(ctx: ExtensionContext, detail: BioMindProductDetails, width
     };
     return [WELCOME, column('项目', project, 6), sessionRow(6), column('模型', model, 6),
       ...summary('说明', instructions), ...summary('记忆', memory), '',
-      '/project  /instructions', '/login /model /new /resume /name', '输入 / 搜索全部命令'].map(text => fit(text));
+      '/project  /instructions', '/login /model /new /resume /name',
+      detail.backend?.state === 'ready' ? '输入 / 搜索全部命令' : readiness].map(text => fit(text));
   }
   const fields = [column('项目', project), sessionRow(), column('目录', field(ctx.cwd)), '',
     column('模型', model), column('认证', field(detail.authentication, '未核对 · 连通性未验证')),
     column('说明', instructions), column('记忆', memory)];
   if (width < 96 || height < 28) return [WELCOME, '', ...fields, '', '常用操作  /login  /model',
     '/project  /instructions  /biomind-memory status', '/new  /resume  /name', '',
-    '输入 / 搜索全部命令 · 直接输入问题即可开始'].map(text => fit(text));
+    `输入 / 搜索全部命令 · ${readiness}`].map(text => fit(text));
   return [WELCOME, '', ...fields, '', '常用操作',
     column('/login', '登录模型服务或配置 API Key', 26),
     column('/model', '选择模型', 26),
@@ -145,15 +162,16 @@ function welcomeRows(ctx: ExtensionContext, detail: BioMindProductDetails, width
     column('/instructions', '全局说明与项目说明', 26),
     column('/biomind-memory status', '查看记忆设置', 26),
     column('/new  /resume  /name', '新会话 / 恢复 / 改名', 26), '',
-    '输入 / 搜索全部命令', '直接输入问题即可开始'];
+    '输入 / 搜索全部命令', readiness];
 }
 
 export function installBioMindProductUI(pi: ExtensionAPI, getState: BioMindProductStateGetter,
-  options: { commands?: boolean; details?: (ctx: ExtensionContext) => BioMindProductDetails; permissions?: BioMindPermissionUI } = {}): void {
+  options: { commands?: boolean; details?: (ctx: ExtensionContext) => BioMindProductDetails; permissions?: BioMindPermissionUI } = {}): () => void {
   // Display-only lifecycle scalar. Pi owns the editor, branch and accepted messages.
   let active: { session: string; hasConversation: boolean; firstQuestion?: string; redraw: () => void } | undefined;
   let startedAt: number | undefined, finishedAt: number | undefined;
   let ticker: ReturnType<typeof setInterval> | undefined;
+  const refresh = () => active?.redraw();
   const stopTicker = () => { if (ticker !== undefined) clearInterval(ticker); ticker = undefined; };
   const resetActivity = () => { stopTicker(); startedAt = undefined; finishedAt = undefined; };
   const activityText = () => startedAt === undefined ? undefined
@@ -229,8 +247,8 @@ export function installBioMindProductUI(pi: ExtensionAPI, getState: BioMindProdu
           const full = !quiet.enabled && !presentation.hasConversation;
           const elapsed = activityText();
           const rows = full ? welcomeRows(ctx, detail, columns, height, tools, sessionRow) : height < 12
-            ? [elapsed ?? sessionRow(6), '输入 / 搜索命令'].slice(0, Math.max(1, height - 8)) : [
-            `BioMind · ${elapsed ? elapsed + ' · ' : ''}${field(path.basename(ctx.cwd))} · ${status(ctx, displayedState)}`,
+            ? [detail.backend?.state === 'ready' ? elapsed ?? sessionRow(6) : backendLabel(detail), '输入 / 搜索命令'].slice(0, Math.max(1, height - 8)) : [
+            `BioMind · ${elapsed ? elapsed + ' · ' : ''}${field(path.basename(ctx.cwd))} · ${detail.backend?.state === 'ready' ? status(ctx, displayedState) : backendLabel(detail)}`,
             sessionRow(6),
             `模型 ${modelText(ctx)} · 说明 ${field(detail.instructions, '未核对')}`,
             `记忆 ${field(detail.memory, '未知')} · ${ctx.isIdle() ? '输入 / 搜索命令' : '草稿区 · 尚未提交'}`,
@@ -278,7 +296,7 @@ export function installBioMindProductUI(pi: ExtensionAPI, getState: BioMindProdu
 
   // The product's native host opts in. Headless callers retain their existing
   // prompt/slash-command semantics instead of silently swallowing UI commands.
-  if (!(options.commands ?? process.env.BIOMIND_PI_UI_COMMANDS === '1')) return;
+  if (!(options.commands ?? process.env.BIOMIND_PI_UI_COMMANDS === '1')) return refresh;
 
   // Verified against 0.87.1's builtin slash-command list: these names are not reserved.
   // Keep /quit, model/login/branch commands, editor and all keybindings with their original Pi owner.
@@ -340,4 +358,5 @@ export function installBioMindProductUI(pi: ExtensionAPI, getState: BioMindProdu
     description: '退出 BioMind',
     handler: async (_args, ctx) => { ctx.shutdown(); },
   });
+  return refresh;
 }

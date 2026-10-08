@@ -6,7 +6,7 @@ import { auditedCanaryDispatcher, observeCanaryDispatch } from './canary-dispatc
 import { hasUnverifiedModelPricing } from './model-config.js';
 
 export const USAGE_ENTRY = 'biomind.usage_attempt.v1';
-export const PATCH_LABEL = '0.87.1+biomind-observer.4';
+export const PATCH_LABEL = '0.87.1+biomind-observer.5';
 export type ObservationMode = 'compat' | 'public';
 /** Opt-in only: public events do not meet the existing strict attempt/send contract. */
 export function observationMode(): ObservationMode {

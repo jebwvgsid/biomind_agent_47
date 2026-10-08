@@ -17,6 +17,7 @@ const sha = text => createHash('sha256').update(text).digest('hex');
 // Recover fixture inputs from declared, known bytes. The assertions below use
 // manifest hashes and separate helper processes, not imported Pi internals.
 function originalBytes(file) {
+  if (file.generatedSource) return undefined;
   let bytes = fs.readFileSync(path.join(runtime, 'node_modules', manifest.package, file.path), 'utf8');
   const hash = sha(bytes);
   if (hash === file.originalSha256) return bytes;
@@ -36,11 +37,14 @@ function originalBytes(file) {
 const originals = new Map(manifest.files.map(file => [file.path, originalBytes(file)]));
 const newFiles = new Set(['dist/core/extensions/types.d.ts', 'dist/core/compaction/compaction.js']);
 function oldReplacementCount(file, revision) {
-  if (revision === 'upstream' || newFiles.has(file.path)) return 0;
+  if (revision === 'upstream' || file.path === 'dist/modes/interactive/interactive-mode.js') return 0;
+  if (revision === '.4') return file.path === 'dist/bundle/chunks/chunk-OJP47DM6.js'
+    ? file.previousPatches.at(-1).replacementCount : file.replacements.length;
+  if (newFiles.has(file.path)) return 0;
   if (revision === '.2' && ['dist/core/extensions/runner.js', 'dist/core/agent-session.js'].includes(file.path)) return 0;
   const previous = file.previousPatches ?? [];
   if (file.path === 'dist/bundle/chunks/chunk-OJP47DM6.js') {
-    assert.deepEqual(previous.map(item => item.replacementCount), [5, 7]);
+    assert.deepEqual(previous.map(item => item.replacementCount), [5, 7, 14]);
     return revision === '.2' ? 5 : 7;
   }
   if (file.path === 'dist/core/agent-session.js') {
@@ -57,6 +61,7 @@ function fixture(t, revision) {
   fs.mkdirSync(packageRoot, { recursive: true });
   fs.writeFileSync(path.join(packageRoot, 'package.json'), JSON.stringify({ version: manifest.originalVersion }));
   for (const file of manifest.files) {
+    if (file.generatedSource) continue;
     let bytes = originals.get(file.path);
     for (const edit of file.replacements.slice(0, oldReplacementCount(file, revision))) {
       assert.equal(bytes.split(edit.before).length, 2);
@@ -70,8 +75,11 @@ function fixture(t, revision) {
 }
 
 function run(root, ...args) {
+  return invokeHelper(helper, root, args);
+}
+function invokeHelper(script, root, args = []) {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [helper, '--runtime', root, ...args], {
+    const child = spawn(process.execPath, [script, '--runtime', root, ...args], {
       cwd: root, env: { BIOMIND_PI_OBSERVABILITY: 'compat' }, stdio: ['ignore', 'pipe', 'pipe'],
     });
     let stdout = '', stderr = '';
@@ -82,28 +90,50 @@ function run(root, ...args) {
     child.once('close', (status, signal) => resolve({ status, signal, stdout, stderr }));
   });
 }
+
+test('reverting .5 permits the matching .4 manifest to restore its exact prior installation', async t => {
+  const { root, packageRoot } = fixture(t, '.4');
+  const expected = hashes(packageRoot);
+  await successful(root);
+  await successful(root, '--revert');
+  const predecessorDirectory = path.join(root, 'compat4');
+  fs.mkdirSync(predecessorDirectory);
+  const predecessorHelper = path.join(predecessorDirectory, 'apply-pi-observer.mjs');
+  fs.copyFileSync(helper, predecessorHelper);
+  const previousManifest = { ...manifest, runtimeLabel: '0.87.1+biomind-observer.4', files: manifest.files
+    .filter(file => !file.generatedSource && file.path !== 'dist/modes/interactive/interactive-mode.js')
+    .map(file => {
+      const count = oldReplacementCount(file, '.4');
+      return { ...file, patchedSha256: expected[file.path], replacements: file.replacements.slice(0, count),
+        previousPatches: file.previousPatches?.filter(previous => previous.replacementCount < count) };
+    }) };
+  fs.writeFileSync(path.join(predecessorDirectory, 'pi-0.87.1-observer.patch.json'), JSON.stringify(previousManifest));
+  const result = await invokeHelper(predecessorHelper, root);
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(hashes(packageRoot), expected);
+});
 async function successful(root, ...args) {
   const result = await run(root, ...args);
   assert.equal(result.status, 0, result.stderr);
 }
 function hashes(packageRoot) {
   return Object.fromEntries(manifest.files.map(file => [file.path,
-    sha(fs.readFileSync(path.join(packageRoot, file.path)))]));
+    fs.existsSync(path.join(packageRoot, file.path)) ? sha(fs.readFileSync(path.join(packageRoot, file.path))) : null]));
 }
 function expectedHashes(key) {
   return Object.fromEntries(manifest.files.map(file => [file.path, file[key]]));
 }
 function modificationTimes(packageRoot) {
   return Object.fromEntries(manifest.files.map(file => [file.path,
-    fs.statSync(path.join(packageRoot, file.path), { bigint: true }).mtimeNs.toString()]));
+    fs.existsSync(path.join(packageRoot, file.path)) ? fs.statSync(path.join(packageRoot, file.path), { bigint: true }).mtimeNs.toString() : null]));
 }
 
-for (const revision of ['upstream', '.2', '.3']) {
-  test(`compatibility .4 applies to ${revision}, checks, reverts and reapplies exact bytes`, async t => {
+for (const revision of ['upstream', '.2', '.3', '.4']) {
+  test(`compatibility .5 applies to ${revision}, checks, reverts and reapplies exact bytes`, async t => {
     const { root, packageRoot } = fixture(t, revision);
     assert.notEqual((await run(root, '--check')).status, 0, 'check cannot accept an older revision');
     await successful(root);
-    assert.equal(manifest.runtimeLabel, '0.87.1+biomind-observer.4');
+    assert.equal(manifest.runtimeLabel, '0.87.1+biomind-observer.5');
     assert.deepEqual(hashes(packageRoot), expectedHashes('patchedSha256'));
     const appliedTimes = modificationTimes(packageRoot);
     await successful(root);

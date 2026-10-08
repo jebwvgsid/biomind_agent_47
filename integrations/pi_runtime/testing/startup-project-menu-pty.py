@@ -24,12 +24,12 @@ import time
 
 
 ANSI = re.compile(r'\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)|\x1b\[[0-?]*[ -/]*[@-~]|\x1b[()][A-Za-z0-9]|\x1b[=>]')
-SCENARIOS = ('bare-arbitrary-cwd-menu', 'empty-project-back', 'history-back-navigation',
+SCENARIOS = ('home-cancel', 'home-input-eio', 'cwd-first-direct', 'empty-project-back', 'history-back-navigation',
     'open-directory-back', 'create-project-back', 'all-history-back', 'all-history-cross-project',
     'open-directory-new-conversation', 'explicit-empty-project-direct', 'explicit-session-direct',
     'explicit-resume-picker', 'resume-nontty', 'resume-json')
 NATIVE_SCENARIOS = {'all-history-cross-project', 'open-directory-new-conversation',
-    'explicit-empty-project-direct', 'explicit-session-direct'}
+    'explicit-empty-project-direct', 'explicit-session-direct', 'cwd-first-direct'}
 
 
 def rows(filename):
@@ -86,6 +86,10 @@ def main():
         'BIOMIND_PI_TEST_ROOT': str(root), 'BIOMIND_PI_GUARD_TRACE': str(evidence / 'guard.jsonl')}
     base = [sys.executable, str(repo / 'bio_agents.py'), '--pi-config', str(config), '--pi-node', str(node)]
     checks, commands = [], []
+    # Inject only at this menu's owned stdin listener. This verifies cleanup;
+    # it cannot establish the cause of the original terminal incident.
+    eio_injector = root / 'inject-menu-eio.mjs'
+    eio_injector.write_text("let sent=false;process.stdin.on('newListener',name=>{if(name==='error'&&!sent){sent=true;setTimeout(()=>{const e=new Error('read EIO SYNTHETIC_MENU_INPUT');e.code='EIO';e.syscall='read';process.stdin.emit('error',e);},500);}});\n")
 
     # Pi's public manager writes valid native history without starting BioMind or
     # submitting a model request. Read-only resume assertions need no task ledger.
@@ -121,7 +125,10 @@ def main():
         commands.append({'scenario': label, 'argv': command, 'cwd': str(cwd)})
         master, slave = pty.openpty()
         fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack('HHHH', 45, 180, 0, 0))
-        process = subprocess.Popen(command, cwd=cwd, env={**env, 'BIOMIND_PI_UI_TRACE': str(ui_trace)},
+        scenario_env = {**env, 'BIOMIND_PI_UI_TRACE': str(ui_trace)}
+        if label == 'home-input-eio':
+            scenario_env['NODE_OPTIONS'] += ' --import=' + str(eio_injector)
+        process = subprocess.Popen(command, cwd=cwd, env=scenario_env,
             stdin=slave, stdout=slave, stderr=slave, close_fds=True, start_new_session=True)
         os.close(slave)
         started = time.monotonic()
@@ -178,7 +185,10 @@ def main():
             action(send, wait, choose, request, screen)
             process.wait(timeout=15)
             pump()
-            check(label + '-process', process.returncode == 0, exit_code=process.returncode)
+            check(label + '-process', process.returncode == (2 if label == 'home-input-eio' else 0), exit_code=process.returncode)
+            if label == 'home-input-eio':
+                flags = termios.tcgetattr(master)[3]
+                check(label + '-terminal-restored', bool(flags & termios.ICANON) and bool(flags & termios.ECHO))
         except Exception as error:
             check(label + '-process', False, error=repr(error), exit_code=process.poll(),
                 last_event=events[-1] if events else None)
@@ -202,18 +212,24 @@ def main():
         if label not in selected:
             return None
         before = snapshot(root)
-        result = run(label, extra or [], launch, action)
+        result = run(label, extra or [], home if label != 'explicit-resume-picker' else launch, action)
         check(label + '-no-files', snapshot(root) == before)
         check(label + '-no-runtime-or-model', not result['ui'] and not result['requests'])
         return result
 
     def cancel(send, wait, choose, request, screen):
         wait('打开其他目录'); wait('浏览全部历史对话')
-        for project in (project_a, project_b, empty, launch):
+        for project in (project_a, project_b, empty, home):
             assert str(project) in screen(), 'Missing selectable project: ' + str(project)
         send(b'\x1b', 'cancel project menu from arbitrary cwd')
 
-    read_only('bare-arbitrary-cwd-menu', cancel)
+    read_only('home-cancel', cancel)
+
+    def input_eio(send, wait, choose, request, screen):
+        wait('BioMind 终端输入失败')
+        assert 'SYNTHETIC_MENU_INPUT' in screen()
+
+    read_only('home-input-eio', input_eio)
 
     def empty_back(send, wait, choose, request, screen):
         wait('浏览全部历史对话'); choose(2, 'choose empty registered project')
@@ -266,7 +282,7 @@ def main():
         send('/exit\r', 'exit restored B session without model request')
 
     before = set(sessions.glob('*.jsonl'))
-    result = run('all-history-cross-project', [], launch, all_history_resume)
+    result = run('all-history-cross-project', [], home, all_history_resume)
     if result is not None:
         ids = {entry['sessionId'] for entry in result['ui'] if entry.get('type') == 'session_start'}
         check('all-history-same-session', ids == {saved['ENTRY_B_HISTORY']['id']}, session_ids=sorted(ids))
@@ -280,7 +296,7 @@ def main():
         wait('execution:native'); request(); send('/exit\r', 'exit new conversation')
 
     before = set(sessions.glob('*.jsonl'))
-    result = run('open-directory-new-conversation', [], launch, open_new)
+    result = run('open-directory-new-conversation', [], home, open_new)
     if result is not None:
         added = set(sessions.glob('*.jsonl')) - before
         headers = [json.loads(filename.read_text().splitlines()[0]) for filename in added]
@@ -295,6 +311,7 @@ def main():
         send('/exit\r', 'exit directly selected empty project')
 
     run('explicit-empty-project-direct', ['--project-dir', str(empty)], launch, explicit_empty)
+    run('cwd-first-direct', [], launch, explicit_empty)
 
     def explicit_session(send, wait, choose, request, screen):
         wait('execution:'); wait('ENTRY_A_HISTORY_RESTORED')

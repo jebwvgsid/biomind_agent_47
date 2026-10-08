@@ -7,6 +7,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { ExtensionInputComponent, ExtensionSelectorComponent, getAgentDir, initTheme, SessionManager } from '@earendil-works/pi-coding-agent';
 import { listProjectSessions, selectHistorySession } from './session-launcher.js';
+import { TerminalInputError } from './native-session-selection.js';
 
 const runFile = promisify(execFile);
 const installation = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -19,6 +20,22 @@ export interface ProjectEntry {
   projectIds: string[];
 }
 export interface ProjectList { projects: ProjectEntry[]; incomplete: string[]; }
+export class ProjectDirectoryError extends Error {
+  readonly code = 'PROJECT_DIRECTORY_INVALID';
+  constructor(message: string) { super(message); this.name = 'ProjectDirectoryError'; }
+}
+/** Same stdlib validator as the backend; no model, memory database or agent is opened. */
+export async function validateProjectRoot(config: ProjectLauncherConfig, root: string): Promise<string> {
+  const result = await runFile(config.launcherPython ?? process.env.BIOMIND_PI_LAUNCHER_PYTHON ?? 'python3',
+    ['-m', 'agent_core.pi_launch_metadata', 'validate', '--project', root],
+    { cwd: config.installRoot ?? installation, env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' },
+      timeout: 15000, maxBuffer: 1024 * 1024 });
+  const value = JSON.parse(result.stdout);
+  if (value.valid === false && value.code === 'PROJECT_DIRECTORY_INVALID' && typeof value.message === 'string')
+    throw new ProjectDirectoryError(value.message);
+  if (value.valid !== true || typeof value.project_dir !== 'string') throw new Error('PROJECT_VALIDATION_UNAVAILABLE');
+  return value.project_dir;
+}
 export function canonicalProjectRoot(root: string): string {
   const absolute = path.resolve(root);
   try { return fs.realpathSync(absolute); } catch { return absolute; }
@@ -100,6 +117,7 @@ export async function createProject(config: ProjectLauncherConfig, cwd: string, 
     const existing = fs.lstatSync(root, { throwIfNoEntry: false });
     if (existing && !fs.statSync(root).isDirectory()) throw new Error('PROJECT_NOT_DIRECTORY');
     if (!existing) { fs.mkdirSync(root, { recursive: true }); receipt.directoryCreated = true; }
+    await validateProjectRoot(config, root);
     const instructions = path.join(root, 'AGENTS.md');
     if (!fs.lstatSync(instructions, { throwIfNoEntry: false })) {
       fs.writeFileSync(instructions, projectInstructions, { flag: 'wx' }); receipt.instructionsCreated = true;
@@ -137,11 +155,20 @@ export async function menuPrompt(title: string, options?: string[]): Promise<str
   const { TuiMainScreen, ProcessTerminal } = await import(pathToFileURL(require.resolve('@earendil-works/pi-tui')).href);
   initTheme('dark');
   const terminal = new ProcessTerminal(); const tui = new TuiMainScreen(terminal);
-  return await new Promise(resolve => {
+  return await new Promise((resolve, reject) => {
     let done = false;
-    const finish = (value?: string) => { if (done) return; done = true; component.dispose(); tui.stop(); resolve(value); };
+    const finish = (value?: string, error?: Error) => {
+      if (done) return; done = true;
+      process.stdin.removeListener('error', inputError);
+      try { component.dispose(); tui.stop(); } catch (cleanupError) { error ??= cleanupError as Error; }
+      if (error) reject(error); else resolve(value);
+    };
+    const inputError = (error: NodeJS.ErrnoException) => {
+      finish(undefined, new TerminalInputError(error));
+    };
     const component = options ? new ExtensionSelectorComponent(title, options, finish, () => finish(), { tui })
       : new ExtensionInputComponent(title, '目录路径', finish, () => finish(), { tui });
+    process.stdin.once('error', inputError);
     tui.addChild(component); tui.setFocus(component); tui.start();
   });
 }

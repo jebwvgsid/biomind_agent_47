@@ -17,10 +17,10 @@ import { configuredProvider, validateModelSelection } from '../model-config.js';
 import { Type, type TSchema } from 'typebox';
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
 import type { ExtensionAPI, ExtensionContext, SessionEntry, ToolDefinition } from '@earendil-works/pi-coding-agent';
-import { createDomainClient, DomainHandshakeTimeoutError, type DomainOptions } from '../domain-client.js';
+import { createDomainClient, DomainHandshakeTimeoutError, type DomainOptions, type DomainLifecycle } from '../domain-client.js';
 import { canaryTools, installUsageObservation, isCanaryMode } from '../usage-observer.js';
 import { toolRenderers, receiptDetails, projectToolReceipt, displayPreview } from '../tool-display.js';
-import { installBioMindProductUI, formatPermissionStatus } from '../product-ui.js';
+import { installBioMindProductUI, formatPermissionStatus, type BioMindBackendState } from '../product-ui.js';
 import { inspectWelcomePreference, inspectNativeWelcomeInstructions, describeWelcomeInstructions, describeWelcomeMemory, describeWelcomeAuthentication,
   type PreferenceStatus, type ProjectInstructionStatus } from '../welcome-status.js';
 import { formatApprovalProposal, selectApprovalProposal } from '../approval-display.js';
@@ -31,6 +31,9 @@ import { loadCompactionInstructions } from '../compaction-addendum.js';
 
 export interface DomainConnection {
   readonly startupFailed?: boolean;
+  readonly lifecycle?: DomainLifecycle;
+  on?(event: 'lifecycle', listener: (event: DomainLifecycle) => void): unknown;
+  off?(event: 'lifecycle', listener: (event: DomainLifecycle) => void): unknown;
   call(method: string, params: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }): Promise<unknown>;
   hostCall(method: string, params: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }): Promise<unknown>;
   close(options: { disconnectOnly: true }): void | Promise<void>;
@@ -179,6 +182,10 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
     const setActiveTools = (names: readonly string[]) => pi.setActiveTools(toolNames(names));
     const existingSessions = new Set<string>();
     const readySessions = new Set<string>();
+    const backendStates = new Map<string, BioMindBackendState>();
+    const backendObservers = new Map<string, { connection: DomainConnection; listener: (event: DomainLifecycle) => void }>();
+    const notifiedFailures = new Set<string>();
+    let backendEpoch = 0;
     let migrationConsumed = false;
     const clients = connections;
     const pendingUI = new Map<string, { request: BioMindUIRequest; resolve: (response: BioMindUIResponse) => void; reject: (error: Error) => void }>();
@@ -207,7 +214,8 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
       const value=requestFromBranch(ctx.sessionManager.getBranch());
       return value?.ownerSessionId && value.ownerSessionId !== ctx.sessionManager.getSessionId() ? undefined : value;
     };
-    installBioMindProductUI(pi, state, { details: ctx => ({
+    const refreshProductUI = installBioMindProductUI(pi, state, { details: ctx => ({
+      backend: backendStates.get(ctx.sessionManager.getSessionId()) ?? { state: 'starting' },
       memory: describeWelcomeMemory(snapshotKnown ? snapshot : undefined, process.env, snapshotFailed),
       instructions: describeWelcomeInstructions(snapshotKnown ? asObject(snapshot.preferences) : welcomePreference,
         welcomeProject, savedInstructions, instructionsFailed, savedGlobalInstructions),
@@ -219,6 +227,26 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
     } });
     installUsageObservation(pi, state);
     const sessionId = (ctx: ExtensionContext) => ctx.sessionManager.getSessionId();
+    const updateBackend = (ctx: ExtensionContext, next: BioMindBackendState) => {
+      const id = sessionId(ctx);
+      if (next.state === 'failed' && backendStates.get(id)?.state === 'failed') return;
+      backendStates.set(id, next);
+      if (next.state !== 'ready') {
+        readySessions.delete(id);
+        setActiveTools([]);
+      }
+      pi.events.emit('biomind:backend', { sessionId: id, ...next });
+      refreshProductUI();
+      if (next.state === 'failed' && !notifiedFailures.has(id)) {
+        notifiedFailures.add(id);
+        ctx.ui.notify(`BioMind ${next.stage === 'runtime' ? '后台连接中断' : '后台初始化失败'}，分析输入已停止：${next.message ?? '原因未知'}`, 'error');
+      }
+    };
+    const unobserveBackend = (id: string) => {
+      const observed = backendObservers.get(id);
+      if (observed) observed.connection.off?.('lifecycle', observed.listener);
+      backendObservers.delete(id);
+    };
     const publish = (ctx: ExtensionContext, value: RequestState) => {
       pi.appendEntry(REQUEST, value);
       pi.events.emit('biomind:state', { ...value, sessionId: sessionId(ctx) });
@@ -239,6 +267,24 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
           wikiRoot: process.env.BIOMIND_PI_WIKI_ROOT, historyEnabled: process.env.BIOMIND_PI_HISTORY_ENABLED === '1' });
         clients.set(id, value);
         migrationConsumed = true;
+      }
+      if (backendObservers.get(id)?.connection !== value) {
+        unobserveBackend(id);
+        const connection = value;
+        const listener = (event: DomainLifecycle) => {
+          const currentContext = activeContext;
+          if (!currentContext || sessionId(currentContext) !== id || clients.get(id) !== connection) return;
+          if (!['unavailable', 'failed', 'closed'].includes(event.state)) return;
+          updateBackend(currentContext, { state: event.state, stage: event.stage, message: event.error?.message });
+          if (event.state === 'unavailable') {
+            inputQueue.splice(0); preparedInputRequestId = undefined;
+            currentContext.abort();
+            currentContext.ui.setStatus('biomind-execution', '后台不可用 · 分析输入已停止');
+          }
+        };
+        backendObservers.set(id, { connection, listener });
+        connection.on?.('lifecycle', listener);
+        if (connection.lifecycle) listener(connection.lifecycle);
       }
       return value;
     };
@@ -856,22 +902,44 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
 
     pi.on('session_start', async (event, ctx) => {
       activeContext = ctx; snapshotKnown = false; snapshotFailed = false; instructionsFailed = false;
+      const id = sessionId(ctx);
+      const initialization = ++backendEpoch;
+      notifiedFailures.delete(id);
+      updateBackend(ctx, { state: 'starting', stage: 'startup' });
+      // Only an explicit reload retries a failed initial handshake. Accepted
+      // requests and scientific jobs are never recreated or replayed here.
+      const previous = clients.get(id);
+      if (event.reason === 'reload' && previous?.startupFailed) {
+        unobserveBackend(id); clients.delete(id);
+        await previous.close({ disconnectOnly: true });
+      }
       if (event.reason === 'resume' || event.reason === 'startup' &&
         (process.env.BIOMIND_PI_SESSION_EXISTING === '1' || ctx.sessionManager.getEntries().some(entry =>
           entry.type === 'message' || entry.type === 'custom' && entry.customType === REQUEST))) existingSessions.add(sessionId(ctx));
-      if (native || process.env.BIOMIND_PI_MIGRATE_PROFILE === '1' || options.executionProfile) {
+      {
         if (ctx.hasUI) ctx.ui.setStatus('biomind-execution', '正在初始化运行环境…');
         try {
-          const live = asObject(await client(ctx).hostCall('request.status', {}));
+          const connection = client(ctx);
+          const live = asObject(await connection.hostCall('request.status', {}));
+          if (initialization !== backendEpoch || id !== sessionId(ctx)) return;
+          if (connection.lifecycle && connection.lifecycle.state !== 'ready') {
+            // A status response and a pipe failure can arrive in the same turn.
+            // The transport refuses this read-only call and waits for close to
+            // collect the real failure; do not overwrite unavailable with ready.
+            await connection.hostCall('request.status', {});
+            throw connection.lifecycle.error ?? new Error('BACKEND_NOT_READY');
+          }
           if (live.execution_profile && live.execution_profile !== profile) throw new Error('EXECUTION_PROFILE_RESTART_REQUIRED');
           readySessions.add(sessionId(ctx));
+          updateBackend(ctx, { state: 'ready', stage: 'startup' });
         } catch (error) {
+          if (initialization !== backendEpoch || id !== sessionId(ctx)) return;
           pi.events.emit('biomind:diagnostic', { code: 'EXECUTION_PROFILE_BINDING_FAILED',
             reason: String(error).match(/EXECUTION_PROFILE_[A-Z_]+/)?.[0], message: String(error) });
           setActiveTools([]); ctx.abort(); ctx.ui.setStatus('biomind-execution', `execution:unbound · requested:${profile}`);
-          ctx.ui.notify('执行配置未绑定，已停止工具入口：' + String(error), 'error'); return;
+          updateBackend(ctx, { state: 'failed', stage: 'startup', message: String(error) }); return;
         }
-      } else readySessions.add(sessionId(ctx)); // Protected tools retain lazy Domain binding and their existing dispatch guard.
+      }
       const epoch = ++welcomeEpoch;
       setActiveTools(MAIN_TOOLS);
       ctx.ui.setStatus('biomind-execution', `execution:${profile}${process.env.BIOMIND_PI_BUILD_ID ? ' · build:'+process.env.BIOMIND_PI_BUILD_ID : ''}`);
@@ -952,6 +1020,11 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
       },
     });
     pi.on('input', async (event, ctx) => {
+      if (!readySessions.has(sessionId(ctx))) {
+        pi.events.emit('biomind:diagnostic', { code: 'BACKEND_NOT_READY', sessionId: sessionId(ctx),
+          state: backendStates.get(sessionId(ctx))?.state ?? 'starting' });
+        return { action: 'handled' };
+      }
       if (!ctx.isIdle()) {
         if (/^(?:\[新任务\]|新任务[：:])/.test(event.text.trim())) { ctx.ui.notify('当前模型运行中；请结束后明确开始新任务。', 'warning'); return { action: 'handled' }; }
         if (event.streamingBehavior) inputQueue.push({ text: event.text, kind: event.streamingBehavior });
@@ -1008,6 +1081,7 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
       }
     });
     pi.on('before_agent_start', async (event, ctx) => {
+      if (!readySessions.has(sessionId(ctx))) { ctx.abort(); throw new Error('BACKEND_NOT_READY'); }
       event.systemPromptOptions.contextFiles = filterNativeContextFiles(event.systemPromptOptions.contextFiles, ctx.cwd, getAgentDir());
       if (state(ctx)?.status !== 'active') { ctx.abort(); throw new Error('REQUEST_NOT_ACTIVE'); }
       preparedInputRequestId = undefined; initialUserPending = true;
@@ -1150,6 +1224,7 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
       pi.events.emit('biomind:settled', { requestId: value.requestId, sessionId: sessionId(ctx), role: value.role, outcome: lastOutcome, scientificSuccess: null });
     });
     pi.on('tool_call', (event, ctx) => {
+      if (!readySessions.has(sessionId(ctx))) return { block: true, reason: 'BioMind backend is unavailable', terminate: true };
       const value = state(ctx);
       if (native && (NATIVE_TOOLS as readonly string[]).includes(event.toolName) || native && event.toolName === 'file_stat') {
         if (!readySessions.has(sessionId(ctx)) || value?.status === 'paused' || value?.maintenance?.outboxId)
@@ -1199,11 +1274,15 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
       }
     });
     pi.on('session_tree', async (_event, ctx) => {
+      if (!readySessions.has(sessionId(ctx))) return;
       setActiveTools(MAIN_TOOLS);
       await refreshApprovalStatus(ctx);
     });
     pi.on('session_shutdown', async (event, ctx) => {
       welcomeEpoch++;
+      backendEpoch++;
+      unobserveBackend(sessionId(ctx));
+      updateBackend(ctx, { state: 'closed' });
       rejectPending('Session connection closed; no approval was granted', sessionId(ctx));
       inputQueue.splice(0); initialUserPending = false; preparedInputRequestId = undefined; activeContext = undefined;
       if (event.reason === 'reload') {

@@ -24,6 +24,7 @@ def command(tmp_path, argv, monkeypatch):
 def test_implicit_project_is_distinct_and_session_uses_launch_directory(tmp_path, monkeypatch):
     argv, cwd = command(tmp_path, ['--session', './history/file.jsonl', '--session-dir', './sessions'], monkeypatch)
     assert '--project-dir' not in argv
+    assert argv[argv.index('--project-source') + 1] == 'cwd'
     assert argv[argv.index('--launch-cwd') + 1] == str(tmp_path)
     assert argv[argv.index('--session') + 1] == './history/file.jsonl'
     assert argv[argv.index('--session-dir') + 1] == 'sessions'
@@ -45,6 +46,7 @@ def test_project_open_explicit_root_and_model_record_survive(tmp_path, monkeypat
     target = tmp_path / 'B 空格'; target.mkdir()
     argv, cwd = command(tmp_path, ['project', 'open', str(target), '--pi-model-record', 'selection.json'], monkeypatch)
     assert argv[argv.index('--project-dir') + 1] == str(target)
+    assert argv[argv.index('--project-source') + 1] == 'explicit'
     assert argv[argv.index('--model-record') + 1] == str(tmp_path / 'selection.json')
     assert '--project-command' not in argv
     assert '--project-open' in argv

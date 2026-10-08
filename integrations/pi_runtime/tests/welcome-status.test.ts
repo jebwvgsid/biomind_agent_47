@@ -96,7 +96,7 @@ test('authentication displays source presence from safe native metadata and neve
   assert.equal(metadataReads, 3); assert.equal(keyReads, 0);
 });
 
-test('production extension startup stays passive, settings and instruction saves refresh truthful cached details, JSON installs no UI', async () => {
+test('startup confirms backend without model calls; settings and instructions retain their sources and JSON installs no UI', async () => {
   const root = await mkdtemp(path.join(tmpdir(), 'biomind-welcome-wiring-'));
   const cwd = path.join(root, 'project'), agentDir = path.join(root, 'agent'), preference = path.join(root, 'preferences.md');
   await mkdir(cwd); await mkdir(agentDir); await writeFile(preference, 'GLOBAL_A');
@@ -138,7 +138,7 @@ test('production extension startup stays passive, settings and instruction saves
     const emit = async (name: string, event: any) => { for (const hook of hooks.get(name) ?? []) await hook(event, ctx); };
     const status = async () => { await commands.get('status').handler('', ctx); return notices.at(-1)!; };
     await emit('session_start', { reason: 'startup' });
-    assert.equal(domainCreations, 0); assert.equal(domainCalls, 0); assert.equal(keyReads, 0); assert.equal(promptReads, 1);
+    assert.equal(domainCreations, 1); assert.equal(domainCalls, 1); assert.equal(keyReads, 0); assert.equal(promptReads, 1);
     let displayed = await status();
     assert.match(displayed, /全局偏好可用（请求时加载）/); assert.match(displayed, /AGENTS.override.md 已加载/);
     assert.match(displayed, /启动配置：检索关闭/); assert.doesNotMatch(displayed, /GLOBAL_A|PROJECT_A/);
@@ -164,7 +164,7 @@ test('production extension startup stays passive, settings and instruction saves
     assert.match(await status(), /状态读取失败/);
     const uiBefore = uiInstalls, readsBefore = promptReads, callsBefore = domainCalls;
     Object.assign(ctx, { mode: 'json', hasUI: false }); await emit('session_start', { reason: 'new' });
-    assert.equal(uiInstalls, uiBefore); assert.equal(promptReads, readsBefore); assert.equal(domainCalls, callsBefore); assert.equal(keyReads, 0);
+    assert.equal(uiInstalls, uiBefore); assert.equal(promptReads, readsBefore); assert.equal(domainCalls, callsBefore + 1); assert.equal(keyReads, 0);
     assert(!await readdir(root).then(files => files.includes('memory')), 'startup and display never create memory storage');
   } finally {
     for (const [key, value] of Object.entries(previous)) { if (value === undefined) delete process.env[key]; else process.env[key] = value; }

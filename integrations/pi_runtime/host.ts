@@ -9,9 +9,10 @@ import { randomUUID, createHash } from 'node:crypto';
 import { StringDecoder } from 'node:string_decoder';
 import { resolveHandshakeTimeoutMs } from './domain-client.js';
 import { assertObservationMode, observationMode, runtimeObservationLabel, projectObservedUsage } from './usage-observer.js';
-import { validateSessionSelection, resolveSessionDir, ProductSessionError, type NativeSessionSelection } from './native-session-selection.js';
+import { validateSessionSelection, resolveSessionDir, ProductSessionError, TerminalInputError, type NativeSessionSelection } from './native-session-selection.js';
 import { selectConfiguredModel, validateConfiguredCustomModel, validateModelSelection, type ModelSelection } from './model-config.js';
 import { chooseExecutionProfile, sessionProfile, type ExecutionProfile } from './execution-profile.js';
+import { validateProjectRoot, ProjectDirectoryError } from './project-launcher.js';
 
 
 const runtime = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -129,17 +130,11 @@ async function startNative(config: Config, cwd: string, prompt?: string): Promis
   if (config.thinkingLevel) args.push('--thinking', config.thinkingLevel);
   if (prompt !== undefined) args.push('--', prompt);
   const env = { ...process.env, ...(agentDir !== undefined ? { PI_CODING_AGENT_DIR: agentDir } : {}),
-    BIOMIND_PI_UI_COMMANDS: '1', BIOMIND_PI_QUIET_STARTUP: 'native',
+    BIOMIND_PI_UI_COMMANDS: '1', BIOMIND_PI_QUIET_STARTUP: 'native', PI_SKIP_VERSION_CHECK: '1',
     ...(config.modelSelection ? { BIOMIND_PI_MODEL_SELECTION: JSON.stringify(config.modelSelection) } : {}),
     ...(config.providerFixture ? { PI_OFFLINE: '1', BIOMIND_PI_PROVIDER_FIXTURE: path.resolve(config.providerFixture) } : {}) };
   const child = spawn(process.execPath, args, { cwd, env, stdio: 'inherit' });
   const code = await new Promise<number>((resolve, reject) => { child.once('error', reject); child.once('exit', (code, signal) => resolve(code ?? (signal ? 130 : 1))); });
-  // Public product presentation after the native terminal is restored. Do not
-  // patch Pi's private APP_NAME or intercept its terminal stream.
-  if (config.sessionMode !== 'temporary') {
-    const { PRODUCT_RESUME_HINT } = await import('./product-ui.js');
-    process.stdout.write(PRODUCT_RESUME_HINT + '\n');
-  }
   return code;
 }
 
@@ -195,7 +190,7 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
       ...resources.getExtensions().extensions.flatMap(extension => [...extension.tools.keys()])])] });
   session.agent.toolExecution = 'sequential';
   let writeTail = Promise.resolve(); let detached = false; let active: Promise<void> | undefined;
-  let exitCode = 0; let usageAccountingFailed = false; let profileBindingFailed = false;
+  let exitCode = 0; let usageAccountingFailed = false; let profileBindingFailed = false; let backendReady = false;
   let activeInputId: string | undefined; let outcome: string = 'unknown';
   const executionFacts: Json[] = [];
   const identity = { execution_profile: config.executionProfile, profile_source: config.profileSource,
@@ -219,6 +214,15 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
       businessRequestId: request.requestId, type_alias: 'ui_request', payload: request.proposal });
   });
   events.on('biomind:state', (data: unknown) => write({ type: 'biomind_state', data, inputId: activeInputId }));
+  events.on('biomind:backend', (raw: unknown) => {
+    const data = raw as Json;
+    backendReady = data.state === 'ready';
+    if (data.state === 'unavailable' || data.state === 'failed') {
+      outcome = 'error'; exitCode = 2;
+      write({ type: 'diagnostic', code: data.state === 'failed' ? 'BACKEND_FAILED' : 'BACKEND_UNAVAILABLE',
+        stage: data.stage, ...(data.message ? { message: data.message } : {}) });
+    }
+  });
   events.on('biomind:settings_result', (raw: unknown) => write({ type: 'settings_result', ...(raw as Json) }));
   events.on('biomind:job_result', (raw: unknown) => write({ type: 'job_result', ...(raw as Json) }));
   events.on('biomind:permissions_result', (raw: unknown) => write({ type: 'permissions_result', ...(raw as Json) }));
@@ -248,7 +252,7 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
   await session.bindExtensions({ mode: 'json', onError: error => {
     write({ type: 'extension_error', event: error });
   } });
-  if (profileBindingFailed) {
+  if (profileBindingFailed || !backendReady) {
     await session.extensionRunner?.emit({ type: 'session_shutdown', reason: 'quit' });
     session.dispose(); await writeTail; return 2;
   }
@@ -261,6 +265,9 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
     void operation.catch(() => write({ type: 'error', id, code: 'PI_CONTROL_FAILED' }));
   };
   const handle = (frame: Json) => {
+    if (!backendReady && ['prompt', 'steer', 'follow_up', 'compact'].includes(frame.type)) {
+      write({ type: 'error', id: frame.id, code: 'BACKEND_NOT_READY' }); return;
+    }
     if (frame.type === 'prompt') {
       if (active) { write({ type: 'error', id: frame.id, code: 'REQUEST_ACTIVE_USE_STEER_OR_FOLLOW_UP' }); return; }
       if (typeof frame.text !== 'string') { write({ type: 'error', id: frame.id, code: 'TEXT_REQUIRED' }); return; }
@@ -269,7 +276,7 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
       active = (async () => {
         try {
           await session.prompt(frame.text); await session.waitForIdle();
-          write({ type: 'result', ...sessionIdentity(), requestId: inputId, runtime_status: usageAccountingFailed ? 'error' : outcome,
+          write({ type: 'result', ...sessionIdentity(), requestId: inputId, runtime_status: usageAccountingFailed || !backendReady ? 'error' : outcome,
             model_conclusion: session.getLastAssistantText() ?? '', execution_facts: [...executionFacts], scientific_success: null,
             usage_scope: projectObservedUsage(session.sessionManager.getEntries()).scope, usage: projectObservedUsage(session.sessionManager.getEntries()), pi_entry_usage: session.getSessionStats() });
         } catch {
@@ -327,6 +334,7 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
         ...(frame.memory_mode !== undefined ? { memory_mode: frame.memory_mode } : {}) });
     } else if (frame.type === 'reload') {
       if (active) { write({ type: 'error', id: frame.id, code: 'REQUEST_ACTIVE_RELOAD_PENDING' }); return; }
+      backendReady = false;
       control(session.reload().then(() => write({ type: 'reload_result', id: frame.id, status: 'reloaded' })), frame.id);
     } else if (frame.type === 'compact') {
       if (active) { write({ type: 'error', id: frame.id, code: 'REQUEST_ACTIVE' }); return; }
@@ -367,7 +375,7 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
 
 export async function main(): Promise<number> {
   const { values } = parseArgs({ options: { mode: { type: 'string', default: 'interactive' },
-    'project-dir': { type: 'string' }, config: { type: 'string' },
+    'project-dir': { type: 'string' }, 'project-source': { type: 'string' }, config: { type: 'string' },
     'execution-profile': { type: 'string' }, 'migrate-execution-profile': { type: 'boolean' },
     'launch-cwd': { type: 'string' }, 'session-dir': { type: 'string' },
     'project-command': { type: 'string' }, 'project-target': { type: 'string' },
@@ -375,9 +383,13 @@ export async function main(): Promise<number> {
     'entry-python': { type: 'string' }, 'resolve-entry-model': { type: 'boolean' }, 'model-record': { type: 'string' },
     'model-selection': { type: 'string' }, 'registry-path': { type: 'string' }, prompt: { type: 'string' },
     session: { type: 'string' }, continue: { type: 'boolean' }, resume: { type: 'boolean', short: 'r' }, 'no-session': { type: 'boolean' } } });
+  if (values['project-command'] && !['list', 'create', 'menu'].includes(values['project-command']))
+    throw new Error('PROJECT_COMMAND_INVALID');
   const launchCwd = path.resolve(values['launch-cwd'] ?? process.cwd());
   let cwd = path.resolve(values['project-dir'] ?? launchCwd);
-  if (!fs.statSync(cwd).isDirectory()) throw new Error('Project cwd is not a directory');
+  const projectSource = values['project-source'] ?? (values['project-dir'] === undefined ? 'cwd' : 'explicit');
+  if (!['cwd', 'explicit'].includes(projectSource)) throw new Error('PROJECT_SOURCE_INVALID');
+  const explicitProject = projectSource === 'explicit' || !!values['project-open'];
   locatePackage('@earendil-works/pi-coding-agent'); locatePackage('@earendil-works/pi-ai'); locatePackage('@earendil-works/pi-agent-core');
   // Verify the actual SDK and published CLI bundle bytes before any session can send.
   // Extension-load errors alone are not fail-closed in upstream Pi.
@@ -411,74 +423,86 @@ export async function main(): Promise<number> {
   const automaticSessionChoice = values.mode === 'interactive' && terminal && values.prompt === undefined &&
     !config.session && !config.continueSession && config.sessionMode !== 'temporary' && !values.resume;
   const explicitAgentDir = config.agentDir !== undefined;
-  // Resolve sessions in the host before native startup so menus and exact resumes
-  // use the selected project's settings and execution profile.
-  const chooseProject = automaticSessionChoice && !values['project-dir'] && !values['project-command'];
-  const parentSessionSelection = values.mode !== 'interactive' || !!values['project-command'] ||
-    automaticSessionChoice || !!values.resume || !!config.session || !!config.continueSession;
-  const unusualAgentEnv = !!process.env.PI_CODING_AGENT_DIR && !path.isAbsolute(process.env.PI_CODING_AGENT_DIR);
-  let agentDir = config.agentDir !== undefined ? path.resolve(config.agentDir)
-    : config.providerFixture ? path.join(cwd, '.biomind/pi-agent') : undefined;
-  if (agentDir === undefined && (parentSessionSelection || unusualAgentEnv)) {
-    const { getAgentDir } = await import('@earendil-works/pi-coding-agent');
-    agentDir = path.resolve(getAgentDir());
-  }
-  if (agentDir !== undefined) {
-    config.agentDir = agentDir;
+  const { SettingsManager, getAgentDir } = await import('@earendil-works/pi-coding-agent');
+  const { resolveSessionTarget, createProductSettings } = await import('./native-session.js');
+  let agentDir = path.resolve(config.agentDir ?? getAgentDir());
+  config.agentDir = agentDir;
+  process.env.PI_CODING_AGENT_DIR = agentDir;
+  const sessionDirOverride = config.sessionDir;
+  // Global preferences may locate saved sessions. Do not read launch-cwd project
+  // settings until a valid project (or its bound session) has been selected.
+  config.sessionDir = resolveSessionDir(launchCwd, config,
+    SettingsManager.create(launchCwd, agentDir, { projectTrusted: false }));
+  const configForProject = (root: string) => {
+    const selectedAgent = !explicitAgentDir && config.providerFixture ? path.join(root, '.biomind/pi-agent') : agentDir;
+    return { ...config, agentDir: selectedAgent,
+      sessionDir: resolveSessionDir(root, { sessionDir: sessionDirOverride }, SettingsManager.create(root, selectedAgent)) };
+  };
+  const bindProjectSettings = () => {
+    const selected = configForProject(cwd);
+    agentDir = selected.agentDir;
+    config.agentDir = agentDir; config.sessionDir = selected.sessionDir;
     process.env.PI_CODING_AGENT_DIR = agentDir;
+  };
+  let startupSelection = false;
+  if (values['project-command'] === 'list' || values['project-command'] === 'create') {
+    const { runProjectCommand } = await import('./project-launcher.js');
+    return (await runProjectCommand(config, cwd, values['project-command'], values['project-target'])).exitCode ?? 0;
   }
-  if (parentSessionSelection) {
-    const { SettingsManager } = await import('@earendil-works/pi-coding-agent');
-    const { resolveSessionTarget } = await import('./native-session.js');
-    const sessionDirOverride = config.sessionDir;
-    config.sessionDir = resolveSessionDir(cwd, config, SettingsManager.create(cwd, agentDir!));
-    let startupSelection = false;
-    if (chooseProject || (values['project-command'] === 'menu' && automaticSessionChoice)) {
-      const { runStartupProjectMenu } = await import('./startup-menu.js');
-      const configForProject = (root: string) => {
-        const selectedAgent = !explicitAgentDir && config.providerFixture ? path.join(root, '.biomind/pi-agent') : agentDir!;
-        return { ...config, agentDir: selectedAgent,
-          sessionDir: resolveSessionDir(root, { sessionDir: sessionDirOverride }, SettingsManager.create(root, selectedAgent)) };
-      };
-      const result = await runStartupProjectMenu(config, cwd, configForProject);
-      if (result.exitCode !== undefined) return result.exitCode;
-      cwd = result.cwd!;
-      if (result.session) config.session = result.session;
-      if (result.continueSession) config.continueSession = true;
-      startupSelection = true;
-    } else if (values['project-command']) {
-      if (values['project-command'] === 'menu' && (values.mode !== 'interactive' || !process.stdin.isTTY)) throw new Error('PROJECT_MENU_REQUIRES_TERMINAL');
-      const { runProjectCommand } = await import('./project-launcher.js');
-      const result = await runProjectCommand(config, cwd, values['project-command'], values['project-target']);
-      if (result.exitCode !== undefined) return result.exitCode;
-      if (result.cwd) cwd = result.cwd;
-    }
-    // Resolve the chosen project's storage before showing its saved conversations.
-    // Keep the original override for any later cross-project selection.
-    if (!explicitAgentDir && config.providerFixture) {
-      agentDir = path.join(cwd, '.biomind/pi-agent'); config.agentDir = agentDir;
-      process.env.PI_CODING_AGENT_DIR = agentDir;
-    }
-    config.sessionDir = resolveSessionDir(cwd, { sessionDir: sessionDirOverride }, SettingsManager.create(cwd, agentDir!));
-    if (values.resume || (automaticSessionChoice && !startupSelection)) {
-      const { runStartupSessionMenu } = await import('./project-launcher.js');
-      const choice = await runStartupSessionMenu(config, cwd, { resume: values.resume,
-        allowAllProjects: values['project-dir'] === undefined && values['project-command'] === undefined });
-      if (choice.exitCode !== undefined) return choice.exitCode;
-      if (choice.session) config.session = choice.session;
-      if (choice.continueSession) config.continueSession = true;
-    }
-    cwd = await resolveSessionTarget(cwd, config, launchCwd, startupSelection || values['project-dir'] !== undefined || values['project-command'] !== undefined);
-    if (!explicitAgentDir && config.providerFixture) {
-      agentDir = path.join(cwd, '.biomind/pi-agent'); config.agentDir = agentDir;
-      process.env.PI_CODING_AGENT_DIR = agentDir;
-    }
-    // Re-resolve after selection: the target project's settings remain authoritative.
-    config.sessionDir = resolveSessionDir(cwd, { sessionDir: sessionDirOverride }, SettingsManager.create(cwd, agentDir!));
-  } else {
-    // Keep existing explicit/environment path handling; Pi alone reads native settings.
-    config.sessionDir = resolveSessionDir(cwd, config, { getSessionDir: () => undefined });
+  if (explicitProject) {
+    cwd = await validateProjectRoot(config, cwd);
+    bindProjectSettings();
   }
+  // Exact session ownership wins over an implicit cwd. An explicit conflicting
+  // project is rejected by the native metadata resolver, never silently rebound.
+  if (config.session) {
+    try { cwd = await resolveSessionTarget(cwd, config, launchCwd, explicitProject); }
+    catch (error) {
+      if (explicitProject || !(error instanceof ProductSessionError) || error.code !== 'SESSION_NOT_FOUND' ||
+          config.session.includes('/') || config.session.includes('\\') || config.session.endsWith('.jsonl')) throw error;
+      // A known session may live in this cwd's trusted custom sessionDir. This
+      // fallback only locates native metadata: no project resources/model are
+      // initialized, and HOME must pass the shared validator before any read.
+      let candidate: string;
+      try { candidate = await validateProjectRoot(config, cwd); }
+      catch (failure) { if (failure instanceof ProjectDirectoryError) throw error; throw failure; }
+      const selectedAgent = !explicitAgentDir && config.providerFixture ? path.join(candidate, '.biomind/pi-agent') : agentDir;
+      const directory = resolveSessionDir(candidate, { sessionDir: sessionDirOverride }, createProductSettings(candidate, selectedAgent));
+      if (directory === config.sessionDir) throw error;
+      config.sessionDir = directory;
+      cwd = await resolveSessionTarget(candidate, config, launchCwd, false);
+    }
+  }
+  let projectFailure: ProjectDirectoryError | undefined;
+  try { cwd = await validateProjectRoot(config, cwd); }
+  catch (error) { if (!(error instanceof ProjectDirectoryError)) throw error; projectFailure = error; }
+  const chooseProject = values['project-command'] === 'menu' ||
+    (!!projectFailure && !explicitProject && !config.session && values.mode === 'interactive' && terminal);
+  if (chooseProject) {
+    if (values.mode !== 'interactive' || !terminal) throw new ProjectDirectoryError('选择项目需要交互终端；请使用 biomind --project-dir <项目目录>。');
+    const { runStartupProjectMenu } = await import('./startup-menu.js');
+    const result = await runStartupProjectMenu(config, launchCwd, configForProject,
+      { selectSession: automaticSessionChoice });
+    if (result.exitCode !== undefined) return result.exitCode;
+    cwd = await validateProjectRoot(config, result.cwd!);
+    if (result.session) { config.session = result.session; delete config.continueSession; }
+    if (result.continueSession) config.continueSession = true;
+    startupSelection = true;
+  } else if (projectFailure) {
+    throw new ProjectDirectoryError(`${projectFailure.message}；请使用 biomind --project-dir <项目目录>，或在交互终端选择项目。`);
+  }
+  bindProjectSettings();
+  if (values.resume || (automaticSessionChoice && !startupSelection)) {
+    const { runStartupSessionMenu } = await import('./project-launcher.js');
+    const choice = await runStartupSessionMenu(config, cwd, { resume: values.resume,
+      allowAllProjects: !explicitProject && values['project-command'] === undefined });
+    if (choice.exitCode !== undefined) return choice.exitCode;
+    if (choice.session) config.session = choice.session;
+    if (choice.continueSession) config.continueSession = true;
+  }
+  cwd = await resolveSessionTarget(cwd, config, launchCwd, startupSelection || explicitProject || values['project-command'] !== undefined);
+  cwd = await validateProjectRoot(config, cwd);
+  bindProjectSettings();
   if (values.mode === 'interactive') {
     if (!fs.existsSync(nativeExtensionPath)) throw new Error('PI_NATIVE_EXTENSION_BUILD_REQUIRED');
     if (terminal) process.stderr.write('正在初始化聊天环境，请稍候…\n');
@@ -532,13 +556,17 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     // Never print unfiltered settings/provider exceptions (they can contain URLs
     // with credentials). Full typed fixture assertions live in test evidence.
     if (error instanceof ProductSessionError) {
-      process.stderr.write(`BioMind Pi session error: ${error.code}. No temporary fallback was used.\n`);
+      process.stderr.write(`BioMind 会话错误: ${error.message}. No temporary fallback was used.\n`);
     }
     if (error instanceof Error && error.message.startsWith('EXECUTION_PROFILE_'))
       process.stderr.write(error.message + '\nUse a new process with --execution-profile protected, or explicitly migrate an idle --session.\n');
     if (error instanceof Error && error.message === 'PI_NATIVE_EXTENSION_BUILD_REQUIRED')
       process.stderr.write('PI_NATIVE_EXTENSION_BUILD_REQUIRED: run npm run build in integrations/pi_runtime.\n');
-    if (process.argv.includes('json')) process.stdout.write(JSON.stringify({ type: 'error', code: error instanceof ProductSessionError ? error.code : 'PI_INITIALIZATION_FAILED' }) + '\n');
+    if (error instanceof ProjectDirectoryError) process.stderr.write(`BioMind: ${error.message}\n`);
+    if (error instanceof TerminalInputError) process.stderr.write(`${error.message}\n${error.inputError.stack ?? ''}\n`);
+    if (process.argv.includes('json')) process.stdout.write(JSON.stringify({ type: 'error',
+      code: error instanceof ProductSessionError || error instanceof ProjectDirectoryError || error instanceof TerminalInputError ? error.code : 'PI_INITIALIZATION_FAILED',
+      ...(error instanceof ProjectDirectoryError || error instanceof ProductSessionError ? { message: error.message } : {}) }) + '\n');
     process.stderr.write('BioMind Pi host failed to initialize or run; no legacy fallback was attempted.\n');
     process.exitCode = 2;
   }
