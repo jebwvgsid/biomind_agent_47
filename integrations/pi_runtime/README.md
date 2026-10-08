@@ -117,7 +117,8 @@ original proposal and its bookkeeping without recording an approval. The
 original domain payload and offered decisions remain authoritative.
 
 Choose the project boundary at startup with `biomind --project-dir /absolute/project`;
-without this option the startup directory is used. Ordinary file tools access
+ordinary interactive `biomind` offers a project menu from any launch directory.
+The launch directory remains the default for noninteractive use. Ordinary file tools access
 this project and its descendants, with private/protected paths excluded and
 separate host-issued read-only sources such as Skills. `/permissions` explains
 the current project boundary and how to change it; it does not grant access.
@@ -200,9 +201,47 @@ actual run. EOF/`shutdown` disconnects and leaves independent Python workers
 with their owner until terminal. A live owner restricts session changes;
 `reload` keeps its process-local bridge. Process-crash or SSH reattachment is
 not certified. JSON and native modes use Pi's persistent SessionManager by
-default. Ordinary startup creates a new session; `--session` selects an exact ID
-or file, and `--continue` explicitly selects the latest session in that project.
-`--no-session` is temporary. Session restore does not take over an existing job.
+default. Ordinary interactive `biomind` and `biomind project` first show a project
+menu regardless of the launch directory. Choose a known project, open another
+existing directory, create a project, or browse all saved conversations directly.
+The history entry starts in Pi's **All** scope; selecting a conversation restores
+its own project before initialization. All means the configured Pi history store,
+not a search of arbitrary files on disk.
+
+After choosing a project, the actions offer **新建对话 / 继续最近对话 / 选择历史对话**
+when history exists, or **新建对话** for an empty project. Both offer **返回项目选择**.
+Esc from history returns to the actions; Esc from the actions returns to projects;
+Esc at the project menu exits. Opening a directory does not create AGENTS.md;
+creating a project asks before creating it and missing instructions.
+
+An explicit `--project-dir` or `project open` skips project selection, retaining
+the existing session menu for projects with history and direct startup for empty
+projects. Explicit `--session`, `--continue`, `--no-session`, or `--prompt` skips
+automatic menus. JSON and non-TTY startup also bypass automatic menus.
+
+Use `biomind --resume` (or `biomind -r`) to open Pi's searchable history selector
+directly. It initially lists the current project; without an explicit project,
+Tab can switch to all projects and a selected session restores its own project
+before runtime initialization. An explicitly selected project limits the list
+to that project. `biomind project open /absolute/project` also offers the startup
+menu when that project has saved history.
+
+```bash
+biomind --resume
+biomind --project-dir /absolute/project --resume
+biomind --project-dir /absolute/project --continue
+biomind --session /absolute/path/to/session.jsonl
+```
+
+`--session` selects an exact ID or file, `--continue` selects the latest session
+in the project, and `--no-session` is temporary. These options and `--resume` are
+mutually exclusive. `--resume` requires an interactive terminal and cannot be
+combined with `--pi-mode json` or `project list/create`; `project` (the menu) and
+`project open` support it. The existing in-chat `/resume` command and its project,
+execution-profile, and active-job checks remain unchanged. Session restore does
+not take over an existing job. Pi conversation history browsing is independent
+of the domain memory `historyEnabled` setting described above; legacy BioMind
+conversations are not imported automatically.
 
 ## Product identity and development baseline
 

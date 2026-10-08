@@ -1,0 +1,301 @@
+{
+  "date": "2026-10-08",
+  "status": "PASS_WITH_DOCUMENTED_PROCESS_INTERRUPTS",
+  "build": "PASS",
+  "unit_tests": {
+    "passed": 22,
+    "failed": 0
+  },
+  "pty_scenarios": 11,
+  "effective_checks": [
+    {
+      "id": "bare-arbitrary-cwd-menu-process",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "bare-arbitrary-cwd-menu-no-files",
+      "status": "PASS"
+    },
+    {
+      "id": "bare-arbitrary-cwd-menu-no-runtime-or-model",
+      "status": "PASS"
+    },
+    {
+      "id": "empty-project-back-process",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "empty-project-back-no-files",
+      "status": "PASS"
+    },
+    {
+      "id": "empty-project-back-no-runtime-or-model",
+      "status": "PASS"
+    },
+    {
+      "id": "history-back-navigation-process",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "history-back-navigation-no-files",
+      "status": "PASS"
+    },
+    {
+      "id": "history-back-navigation-no-runtime-or-model",
+      "status": "PASS"
+    },
+    {
+      "id": "open-directory-back-process",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "open-directory-back-no-files",
+      "status": "PASS"
+    },
+    {
+      "id": "open-directory-back-no-runtime-or-model",
+      "status": "PASS"
+    },
+    {
+      "id": "create-project-back-process",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "create-project-back-no-files",
+      "status": "PASS"
+    },
+    {
+      "id": "create-project-back-no-runtime-or-model",
+      "status": "PASS"
+    },
+    {
+      "id": "all-history-back-process",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "all-history-back-no-files",
+      "status": "PASS"
+    },
+    {
+      "id": "all-history-back-no-runtime-or-model",
+      "status": "PASS"
+    },
+    {
+      "id": "all-history-cross-project-process",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "all-history-same-session",
+      "status": "PASS",
+      "session_ids": [
+        "01a11984-e633-74c1-9a89-76ed130b31e0"
+      ]
+    },
+    {
+      "id": "all-history-no-extra-session",
+      "status": "PASS"
+    },
+    {
+      "id": "all-history-no-model",
+      "status": "PASS"
+    },
+    {
+      "id": "open-directory-new-conversation-process",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "open-directory-selected-cwd",
+      "status": "PASS",
+      "headers": [
+        {
+          "type": "session",
+          "version": 3,
+          "id": "01a11986-fa5c-775c-af5d-07073a32ebc9",
+          "timestamp": "2026-10-08T03:20:38.749Z",
+          "cwd": "/tmp/biomind-startup-project-z4xlmbzm/D 另一个目录"
+        }
+      ]
+    },
+    {
+      "id": "open-directory-clean-context",
+      "status": "PASS"
+    },
+    {
+      "id": "open-directory-no-project-instructions",
+      "status": "PASS"
+    },
+    {
+      "id": "explicit-empty-project-direct-process",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "explicit-session-direct-process",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "explicit-session-preserved",
+      "status": "PASS"
+    },
+    {
+      "id": "explicit-resume-picker-process",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "explicit-resume-picker-no-files",
+      "status": "PASS"
+    },
+    {
+      "id": "explicit-resume-picker-no-runtime-or-model",
+      "status": "PASS"
+    },
+    {
+      "id": "resume-nontty-still-rejected",
+      "status": "PASS",
+      "exit_code": 2
+    },
+    {
+      "id": "resume-json-still-rejected",
+      "status": "PASS",
+      "exit_code": 2
+    },
+    {
+      "id": "offline-no-network-attempts",
+      "status": "PASS"
+    },
+    {
+      "id": "offline-no-real-credentials",
+      "status": "PASS"
+    },
+    {
+      "id": "native-reuses-embedded-sdk",
+      "status": "PASS"
+    }
+  ],
+  "pty_runs": [
+    {
+      "label": "initial",
+      "status": "FAIL",
+      "selected_scenarios": "all",
+      "raw_evidence": "/tmp/biomind-project-entry-acceptance-20261008-1",
+      "result_file": "initial-results.json"
+    },
+    {
+      "label": "targeted",
+      "status": "FAIL",
+      "selected_scenarios": [
+        "history-back-navigation",
+        "open-directory-new-conversation"
+      ],
+      "raw_evidence": "/tmp/biomind-project-entry-acceptance-20261008-targeted",
+      "result_file": "targeted-results.json"
+    },
+    {
+      "label": "history",
+      "status": "PASS",
+      "selected_scenarios": [
+        "history-back-navigation"
+      ],
+      "raw_evidence": "/tmp/biomind-project-entry-acceptance-20261008-history",
+      "result_file": "history-results.json"
+    }
+  ],
+  "interrupts": "Three process runs received SIGKILL (-9), including one before any UI output. Each affected scenario passed a later isolated rerun; cause was not determined. Original FAIL results are retained.",
+  "scope": "Offline synthetic Pi sessions and scripted provider; no real model calls or scientific jobs. Existing production sessions were not changed.",
+  "source_sha256": {
+    "integrations/pi_runtime/host.ts": "06f11bc9bb1b23cda18ac8e654e053c7bf789832da13d92fb022a591a707f643",
+    "integrations/pi_runtime/startup-menu.ts": "344576c88884e56fa009517b404761dcadc3721c9c26404728cf894ba7b197dd",
+    "integrations/pi_runtime/project-launcher.ts": "c4623ac234c1f04df2df2d277de00214c7f1cf09467cf3da9391917f17ab7d26",
+    "integrations/pi_runtime/session-launcher.ts": "af39bd052a56a4c47879bdc31f95cc24315facbe02b0e54f8aa564ed2ada6914"
+  },
+  "validated_tree": "Installed working tree, including pre-existing uncommitted runtime changes. Startup-only staged subset is checked separately; this is not a clean-checkout full-build claim.",
+  "staged_validation": {
+    "worktree_or_index_modified": false,
+    "staging_script": "/tmp/biomind-startup-stage-168f3ad5/stage.py",
+    "baseline_manifest": "/tmp/biomind-startup-stage-168f3ad5/baseline-manifest.json",
+    "final_manifest": "/tmp/biomind-startup-stage-168f3ad5/final-manifest.json",
+    "tests": {
+      "baseline_scoped_tsc": "PASS",
+      "final_scoped_tsc": "PASS (serial retry after parallel SIGKILL 137)",
+      "final_node_startup_tests": {
+        "passed": 21,
+        "failed": 0
+      },
+      "final_python_entry_tests": {
+        "passed": 17,
+        "failed": 0
+      },
+      "pure_head_full_tsc": "FAIL: 15 existing errors in extensions/biomind.ts and runtime-binding/session-domain/unified-agent tests",
+      "baseline_full_tsc": "identical 15 existing errors; no new startup diagnostics"
+    },
+    "sdk": "Temporary private copy of Pi restored to HEAD observer.2 patch hashes; real installed SDK was not changed",
+    "excluded": [
+      "execution profile host/parser changes and migration test",
+      "native ProductSettings project trust function and test",
+      "JSON RPC permissions/reload/compact changes",
+      "native extension bundle/build pipeline",
+      "model config changes",
+      "doctor/integrate dispatch",
+      "wiki record_status field",
+      "unrelated README changes"
+    ],
+    "feature_changed_files": [
+      {
+        "file": "integrations/pi_runtime/README.md",
+        "added": 43,
+        "removed": 4,
+        "same_as_worktree": false
+      },
+      {
+        "file": "integrations/pi_runtime/host.ts",
+        "added": 19,
+        "removed": 11,
+        "same_as_worktree": false
+      },
+      {
+        "file": "integrations/pi_runtime/project-launcher.ts",
+        "added": 6,
+        "removed": 4,
+        "same_as_worktree": true
+      },
+      {
+        "file": "integrations/pi_runtime/session-launcher.ts",
+        "added": 6,
+        "removed": 1,
+        "same_as_worktree": true
+      },
+      {
+        "file": "integrations/pi_runtime/startup-menu.ts",
+        "added": 86,
+        "removed": 0,
+        "same_as_worktree": true
+      },
+      {
+        "file": "integrations/pi_runtime/testing/startup-project-menu-pty.py",
+        "added": 343,
+        "removed": 0,
+        "same_as_worktree": true
+      },
+      {
+        "file": "integrations/pi_runtime/tests/startup-menu.test.ts",
+        "added": 40,
+        "removed": 0,
+        "same_as_worktree": true
+      }
+    ],
+    "notes": [
+      "The new PTY acceptance script validates the current full runtime working tree, whose parent already reported real user-entry acceptance; it was not run against the HEAD-derived partial baseline due existing whole-tree build errors.",
+      "Source/current worktree contents were never rewritten by staging preparation."
+    ]
+  }
+}

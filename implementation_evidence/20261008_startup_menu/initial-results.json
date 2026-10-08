@@ -1,0 +1,341 @@
+{
+  "status": "FAIL",
+  "checks": [
+    {
+      "id": "bare-arbitrary-cwd-menu-process",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "bare-arbitrary-cwd-menu-no-files",
+      "status": "PASS"
+    },
+    {
+      "id": "bare-arbitrary-cwd-menu-no-runtime-or-model",
+      "status": "PASS"
+    },
+    {
+      "id": "empty-project-back-process",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "empty-project-back-no-files",
+      "status": "PASS"
+    },
+    {
+      "id": "empty-project-back-no-runtime-or-model",
+      "status": "PASS"
+    },
+    {
+      "id": "history-back-navigation-process",
+      "status": "FAIL",
+      "error": "RuntimeError('Exited -9 before ENTRY_A_HISTORY')"
+    },
+    {
+      "id": "history-back-navigation-no-files",
+      "status": "PASS"
+    },
+    {
+      "id": "history-back-navigation-no-runtime-or-model",
+      "status": "PASS"
+    },
+    {
+      "id": "open-directory-back-process",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "open-directory-back-no-files",
+      "status": "PASS"
+    },
+    {
+      "id": "open-directory-back-no-runtime-or-model",
+      "status": "PASS"
+    },
+    {
+      "id": "create-project-back-process",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "create-project-back-no-files",
+      "status": "PASS"
+    },
+    {
+      "id": "create-project-back-no-runtime-or-model",
+      "status": "PASS"
+    },
+    {
+      "id": "all-history-back-process",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "all-history-back-no-files",
+      "status": "PASS"
+    },
+    {
+      "id": "all-history-back-no-runtime-or-model",
+      "status": "PASS"
+    },
+    {
+      "id": "all-history-cross-project-process",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "all-history-same-session",
+      "status": "PASS",
+      "session_ids": [
+        "01a11984-e633-74c1-9a89-76ed130b31e0"
+      ]
+    },
+    {
+      "id": "all-history-no-extra-session",
+      "status": "PASS"
+    },
+    {
+      "id": "all-history-no-model",
+      "status": "PASS"
+    },
+    {
+      "id": "open-directory-new-conversation-process",
+      "status": "FAIL",
+      "error": "RuntimeError('Exited -9 before 浏览全部历史对话')"
+    },
+    {
+      "id": "open-directory-selected-cwd",
+      "status": "FAIL",
+      "headers": []
+    },
+    {
+      "id": "open-directory-clean-context",
+      "status": "FAIL"
+    },
+    {
+      "id": "open-directory-no-project-instructions",
+      "status": "PASS"
+    },
+    {
+      "id": "explicit-empty-project-direct-process",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "explicit-session-direct-process",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "explicit-session-preserved",
+      "status": "PASS"
+    },
+    {
+      "id": "explicit-resume-picker-process",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "explicit-resume-picker-no-files",
+      "status": "PASS"
+    },
+    {
+      "id": "explicit-resume-picker-no-runtime-or-model",
+      "status": "PASS"
+    },
+    {
+      "id": "resume-nontty-still-rejected",
+      "status": "PASS",
+      "exit_code": 2
+    },
+    {
+      "id": "resume-json-still-rejected",
+      "status": "PASS",
+      "exit_code": 2
+    },
+    {
+      "id": "offline-no-network-attempts",
+      "status": "PASS"
+    },
+    {
+      "id": "offline-no-real-credentials",
+      "status": "PASS"
+    },
+    {
+      "id": "native-reuses-embedded-sdk",
+      "status": "PASS"
+    }
+  ],
+  "commands": [
+    {
+      "scenario": "bare-arbitrary-cwd-menu",
+      "argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/bio_agents.py",
+        "--pi-config",
+        "/tmp/biomind-startup-project-g4cwr40g/runtime.json",
+        "--pi-node",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.runtime/node/bin/node"
+      ],
+      "cwd": "/tmp/biomind-startup-project-g4cwr40g/Z 任意启动目录"
+    },
+    {
+      "scenario": "empty-project-back",
+      "argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/bio_agents.py",
+        "--pi-config",
+        "/tmp/biomind-startup-project-g4cwr40g/runtime.json",
+        "--pi-node",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.runtime/node/bin/node"
+      ],
+      "cwd": "/tmp/biomind-startup-project-g4cwr40g/Z 任意启动目录"
+    },
+    {
+      "scenario": "history-back-navigation",
+      "argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/bio_agents.py",
+        "--pi-config",
+        "/tmp/biomind-startup-project-g4cwr40g/runtime.json",
+        "--pi-node",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.runtime/node/bin/node"
+      ],
+      "cwd": "/tmp/biomind-startup-project-g4cwr40g/Z 任意启动目录"
+    },
+    {
+      "scenario": "open-directory-back",
+      "argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/bio_agents.py",
+        "--pi-config",
+        "/tmp/biomind-startup-project-g4cwr40g/runtime.json",
+        "--pi-node",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.runtime/node/bin/node"
+      ],
+      "cwd": "/tmp/biomind-startup-project-g4cwr40g/Z 任意启动目录"
+    },
+    {
+      "scenario": "create-project-back",
+      "argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/bio_agents.py",
+        "--pi-config",
+        "/tmp/biomind-startup-project-g4cwr40g/runtime.json",
+        "--pi-node",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.runtime/node/bin/node"
+      ],
+      "cwd": "/tmp/biomind-startup-project-g4cwr40g/Z 任意启动目录"
+    },
+    {
+      "scenario": "all-history-back",
+      "argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/bio_agents.py",
+        "--pi-config",
+        "/tmp/biomind-startup-project-g4cwr40g/runtime.json",
+        "--pi-node",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.runtime/node/bin/node"
+      ],
+      "cwd": "/tmp/biomind-startup-project-g4cwr40g/Z 任意启动目录"
+    },
+    {
+      "scenario": "all-history-cross-project",
+      "argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/bio_agents.py",
+        "--pi-config",
+        "/tmp/biomind-startup-project-g4cwr40g/runtime.json",
+        "--pi-node",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.runtime/node/bin/node"
+      ],
+      "cwd": "/tmp/biomind-startup-project-g4cwr40g/Z 任意启动目录"
+    },
+    {
+      "scenario": "open-directory-new-conversation",
+      "argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/bio_agents.py",
+        "--pi-config",
+        "/tmp/biomind-startup-project-g4cwr40g/runtime.json",
+        "--pi-node",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.runtime/node/bin/node"
+      ],
+      "cwd": "/tmp/biomind-startup-project-g4cwr40g/Z 任意启动目录"
+    },
+    {
+      "scenario": "explicit-empty-project-direct",
+      "argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/bio_agents.py",
+        "--pi-config",
+        "/tmp/biomind-startup-project-g4cwr40g/runtime.json",
+        "--pi-node",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.runtime/node/bin/node",
+        "--project-dir",
+        "/tmp/biomind-startup-project-g4cwr40g/C 空项目"
+      ],
+      "cwd": "/tmp/biomind-startup-project-g4cwr40g/Z 任意启动目录"
+    },
+    {
+      "scenario": "explicit-session-direct",
+      "argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/bio_agents.py",
+        "--pi-config",
+        "/tmp/biomind-startup-project-g4cwr40g/runtime.json",
+        "--pi-node",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.runtime/node/bin/node",
+        "--session",
+        "/tmp/biomind-startup-project-g4cwr40g/sessions/2026-10-08T03-18-22-506Z_01a11984-e614-74c1-9a89-76ea3a7bd7fb.jsonl"
+      ],
+      "cwd": "/tmp/biomind-startup-project-g4cwr40g/Z 任意启动目录"
+    },
+    {
+      "scenario": "explicit-resume-picker",
+      "argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/bio_agents.py",
+        "--pi-config",
+        "/tmp/biomind-startup-project-g4cwr40g/runtime.json",
+        "--pi-node",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.runtime/node/bin/node",
+        "--resume"
+      ],
+      "cwd": "/tmp/biomind-startup-project-g4cwr40g/Z 任意启动目录"
+    },
+    {
+      "scenario": "resume-nontty",
+      "argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/bio_agents.py",
+        "--pi-config",
+        "/tmp/biomind-startup-project-g4cwr40g/runtime.json",
+        "--pi-node",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.runtime/node/bin/node",
+        "--resume"
+      ],
+      "cwd": "/tmp/biomind-startup-project-g4cwr40g/Z 任意启动目录"
+    },
+    {
+      "scenario": "resume-json",
+      "argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/bio_agents.py",
+        "--pi-config",
+        "/tmp/biomind-startup-project-g4cwr40g/runtime.json",
+        "--pi-node",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.runtime/node/bin/node",
+        "--resume",
+        "--pi-mode",
+        "json"
+      ],
+      "cwd": "/tmp/biomind-startup-project-g4cwr40g/Z 任意启动目录"
+    }
+  ],
+  "synthetic_root": "/tmp/biomind-startup-project-g4cwr40g",
+  "evidence_type": "PRODUCT_TUI",
+  "host_sha256": "41dd96b03dc6626d4eecab5ef7cde7dd62e3066843f861fa88b492b2e68b558e",
+  "project_launcher_sha256": "ff4c910f7c01dd9ce10f5b92a7d0f622ff8373031953dad60cfa3214fb5bdd22"
+}

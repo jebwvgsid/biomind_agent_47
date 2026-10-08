@@ -1,0 +1,136 @@
+TAP version 13
+# Subtest: project list reads existing roots without knowledge pages, merges real Pi cwd, and is repeatably read-only
+ok 1 - project list reads existing roots without knowledge pages, merges real Pi cwd, and is repeatably read-only
+  ---
+  duration_ms: 512.748085
+  type: 'test'
+  ...
+# Subtest: create empty Unicode/quoted project writes only AGENTS and necessary paths; repeat preserves all existing bytes
+ok 2 - create empty Unicode/quoted project writes only AGENTS and necessary paths; repeat preserves all existing bytes
+  ---
+  duration_ms: 19.27164
+  type: 'test'
+  ...
+# Subtest: configured registry create reuses existing table and never duplicates launcher metadata; partial failures have receipts
+ok 3 - configured registry create reuses existing table and never duplicates launcher metadata; partial failures have receipts
+  ---
+  duration_ms: 269.419972
+  type: 'test'
+  ...
+# Subtest: relative Wiki roots use the selected project cwd, independently from the host launch directory
+ok 4 - relative Wiki roots use the selected project cwd, independently from the host launch directory
+  ---
+  duration_ms: 150.069849
+  type: 'test'
+  ...
+# Subtest: missing paths remain visible; symlink duplicate roots merge; corrupt metadata marks incomplete
+ok 5 - missing paths remain visible; symlink duplicate roots merge; corrupt metadata marks incomplete
+  ---
+  duration_ms: 1.167475
+  type: 'test'
+  ...
+# Subtest: restart command safely quotes directory and retains only explicit restart options
+ok 6 - restart command safely quotes directory and retains only explicit restart options
+  ---
+  duration_ms: 20.209127
+  type: 'test'
+  ...
+# Subtest: actual product CLI list/create bypass nonexistent scientific Python and model config
+ok 7 - actual product CLI list/create bypass nonexistent scientific Python and model config
+  ---
+  duration_ms: 8135.664994
+  type: 'test'
+  ...
+# Subtest: history discovery filters shared directories by project and resolves relative sessionDir
+ok 8 - history discovery filters shared directories by project and resolves relative sessionDir
+  ---
+  duration_ms: 4.685491
+  type: 'test'
+  ...
+# Subtest: default discovery respects PI_CODING_AGENT_DIR and empty discovery creates no session files
+ok 9 - default discovery respects PI_CODING_AGENT_DIR and empty discovery creates no session files
+  ---
+  duration_ms: 4.02747
+  type: 'test'
+  ...
+# Subtest: native selector searches and selects an absolute path without writes
+ok 10 - native selector searches and selects an absolute path without writes
+  ---
+  duration_ms: 17.19083
+  type: 'test'
+  ...
+# Subtest: history scope includes other projects only when explicitly allowed
+ok 11 - history scope includes other projects only when explicitly allowed
+  ---
+  duration_ms: 28.425447
+  type: 'test'
+  ...
+# Subtest: configured delete and rename shortcuts cannot mutate native sessions
+ok 12 - configured delete and rename shortcuts cannot mutate native sessions
+  ---
+  duration_ms: 9.088859
+  type: 'test'
+  ...
+# Subtest: cancelling pending discovery aborts the loader and leaves files unchanged
+ok 13 - cancelling pending discovery aborts the loader and leaves files unchanged
+  ---
+  duration_ms: 1.924572
+  type: 'test'
+  ...
+# Subtest: sessionDir overrides, environment and native merged settings resolve once
+ok 14 - sessionDir overrides, environment and native merged settings resolve once
+  ---
+  duration_ms: 0.79027
+  type: 'test'
+  ...
+# Subtest: shared custom directory filters exact IDs, list and continuation by cwd; open then new retains directory
+ok 15 - shared custom directory filters exact IDs, list and continuation by cwd; open then new retains directory
+  ---
+  duration_ms: 4.442023
+  type: 'test'
+  ...
+# Subtest: target session decides implicit project before services; conflict never rewrites history
+ok 16 - target session decides implicit project before services; conflict never rewrites history
+  ---
+  duration_ms: 0.909725
+  type: 'test'
+  ...
+# Subtest: missing, empty, invalid and read-only explicit sessions fail without replacement
+ok 17 - missing, empty, invalid and read-only explicit sessions fail without replacement
+  ---
+  duration_ms: 1.212555
+  type: 'test'
+  ...
+# Subtest: native legacy versionless session header remains supported
+ok 18 - native legacy versionless session header remains supported
+  ---
+  duration_ms: 0.770471
+  type: 'test'
+  ...
+# Subtest: native loader recovers an interrupted JSONL tail without host truncation or session replacement
+ok 19 - native loader recovers an interrupted JSONL tail without host truncation or session replacement
+  ---
+  duration_ms: 0.783354
+  type: 'test'
+  ...
+# Subtest: actual native settings honor saved trust and user default, no automatic trust write
+ok 20 - actual native settings honor saved trust and user default, no automatic trust write
+  ---
+  duration_ms: 4.293723
+  type: 'test'
+  ...
+# Subtest: pure selection and session APIs share one error identity and all current option checks
+ok 21 - pure selection and session APIs share one error identity and all current option checks
+  ---
+  duration_ms: 0.45477
+  type: 'test'
+  ...
+1..21
+# tests 21
+# suites 0
+# pass 21
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 23196.823117

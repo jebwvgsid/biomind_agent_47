@@ -347,10 +347,9 @@ export async function main(): Promise<number> {
   const explicitAgentDir = config.agentDir !== undefined;
   // Resolve sessions in the host before native startup so menus and exact resumes
   // use the selected project's settings and execution profile.
-  const suggestProject = !values['project-dir'] && !config.session && !config.continueSession && !values.resume &&
-    values.mode === 'interactive' && values.prompt === undefined && process.stdin.isTTY;
+  const chooseProject = automaticSessionChoice && !values['project-dir'] && !values['project-command'];
   const parentSessionSelection = values.mode !== 'interactive' || !!values['project-command'] ||
-    suggestProject || automaticSessionChoice || !!values.resume || !!config.session || !!config.continueSession;
+    automaticSessionChoice || !!values.resume || !!config.session || !!config.continueSession;
   const unusualAgentEnv = !!process.env.PI_CODING_AGENT_DIR && !path.isAbsolute(process.env.PI_CODING_AGENT_DIR);
   let agentDir = config.agentDir !== undefined ? path.resolve(config.agentDir)
     : config.providerFixture ? path.join(cwd, '.biomind/pi-agent') : undefined;
@@ -367,17 +366,26 @@ export async function main(): Promise<number> {
     const { resolveSessionTarget } = await import('./native-session.js');
     const sessionDirOverride = config.sessionDir;
     config.sessionDir = resolveSessionDir(cwd, config, SettingsManager.create(cwd, agentDir!));
-    if (values['project-command']) {
+    let startupSelection = false;
+    if (chooseProject || (values['project-command'] === 'menu' && automaticSessionChoice)) {
+      const { runStartupProjectMenu } = await import('./startup-menu.js');
+      const configForProject = (root: string) => {
+        const selectedAgent = !explicitAgentDir && config.providerFixture ? path.join(root, '.biomind/pi-agent') : agentDir!;
+        return { ...config, agentDir: selectedAgent,
+          sessionDir: resolveSessionDir(root, { sessionDir: sessionDirOverride }, SettingsManager.create(root, selectedAgent)) };
+      };
+      const result = await runStartupProjectMenu(config, cwd, configForProject);
+      if (result.exitCode !== undefined) return result.exitCode;
+      cwd = result.cwd!;
+      if (result.session) config.session = result.session;
+      if (result.continueSession) config.continueSession = true;
+      startupSelection = true;
+    } else if (values['project-command']) {
       if (values['project-command'] === 'menu' && (values.mode !== 'interactive' || !process.stdin.isTTY)) throw new Error('PROJECT_MENU_REQUIRES_TERMINAL');
       const { runProjectCommand } = await import('./project-launcher.js');
       const result = await runProjectCommand(config, cwd, values['project-command'], values['project-target']);
       if (result.exitCode !== undefined) return result.exitCode;
       if (result.cwd) cwd = result.cwd;
-    } else if (suggestProject) {
-      const { maybeSuggestProjectRoot } = await import('./project-launcher.js');
-      const selected = await maybeSuggestProjectRoot(config, cwd);
-      if (!selected) return 0;
-      cwd = selected;
     }
     // Resolve the chosen project's storage before showing its saved conversations.
     // Keep the original override for any later cross-project selection.
@@ -386,7 +394,7 @@ export async function main(): Promise<number> {
       process.env.PI_CODING_AGENT_DIR = agentDir;
     }
     config.sessionDir = resolveSessionDir(cwd, { sessionDir: sessionDirOverride }, SettingsManager.create(cwd, agentDir!));
-    if (values.resume || automaticSessionChoice) {
+    if (values.resume || (automaticSessionChoice && !startupSelection)) {
       const { runStartupSessionMenu } = await import('./project-launcher.js');
       const choice = await runStartupSessionMenu(config, cwd, { resume: values.resume,
         allowAllProjects: values['project-dir'] === undefined && values['project-command'] === undefined });
@@ -394,7 +402,7 @@ export async function main(): Promise<number> {
       if (choice.session) config.session = choice.session;
       if (choice.continueSession) config.continueSession = true;
     }
-    cwd = await resolveSessionTarget(cwd, config, launchCwd, values['project-dir'] !== undefined || values['project-command'] !== undefined);
+    cwd = await resolveSessionTarget(cwd, config, launchCwd, startupSelection || values['project-dir'] !== undefined || values['project-command'] !== undefined);
     if (!explicitAgentDir && config.providerFixture) {
       agentDir = path.join(cwd, '.biomind/pi-agent'); config.agentDir = agentDir;
       process.env.PI_CODING_AGENT_DIR = agentDir;

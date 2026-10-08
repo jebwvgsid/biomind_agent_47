@@ -130,7 +130,7 @@ export function restartProjectCommand(root: string, options: { configPath?: stri
   for (const [flag, value] of [['--pi-config', options.configPath], ['--session-dir', options.sessionDir], ['--session', options.session], ['--pi-node', options.node], ['--pi-model-record', options.modelRecord]]) if (value) args.push(flag!, value);
   return args.map(shellQuote).join(' ');
 }
-async function menuPrompt(title: string, options?: string[]): Promise<string | undefined> {
+export async function menuPrompt(title: string, options?: string[]): Promise<string | undefined> {
   // Resolve the installed dependency through Pi, using package public exports;
   // no dependency install, copied picker, private source import or session.
   const require = createRequire(import.meta.resolve('@earendil-works/pi-coding-agent'));
@@ -147,7 +147,7 @@ async function menuPrompt(title: string, options?: string[]): Promise<string | u
 }
 /** Select before opening a session so the host can bind its project and execution profile. */
 export async function runStartupSessionMenu(config: ProjectLauncherConfig, cwd: string,
-  options: { resume?: boolean; allowAllProjects?: boolean } = {}): Promise<{ session?: string; continueSession?: boolean; exitCode?: number }> {
+  options: { resume?: boolean; allowAllProjects?: boolean; allowBack?: boolean; showEmpty?: boolean } = {}): Promise<{ session?: string; continueSession?: boolean; exitCode?: number; back?: boolean }> {
   if (!process.stdin.isTTY || !process.stdout.isTTY) throw new Error('SESSION_MENU_REQUIRES_TERMINAL');
   if (options.resume) {
     const session = await selectHistorySession(cwd, config.sessionDir, { allowAllProjects: options.allowAllProjects ?? false });
@@ -155,10 +155,12 @@ export async function runStartupSessionMenu(config: ProjectLauncherConfig, cwd: 
   }
   const sessions = await listProjectSessions(cwd, config.sessionDir);
   // A fresh project can start immediately. Do not create an empty saved session just to show a menu.
-  if (!sessions.length) return {};
+  if (!sessions.length && !options.showEmpty) return {};
   for (;;) {
     const action = await menuPrompt(`项目对话：${cwd}（${sessions.length} 个历史会话）`,
-      ['新建对话', '继续最近对话', '选择历史对话…', '取消']);
+      ['新建对话', ...(sessions.length ? ['继续最近对话', '选择历史对话…'] : []),
+        ...(options.allowBack ? ['返回项目选择'] : []), '取消']);
+    if (action === '返回项目选择' || (!action && options.allowBack)) return { back: true };
     if (!action || action === '取消') return { exitCode: 0 };
     if (action === '新建对话') return {};
     if (action === '继续最近对话') return { continueSession: true };

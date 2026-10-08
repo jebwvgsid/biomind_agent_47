@@ -9,6 +9,7 @@ import { getAgentDir, initTheme, keyHint, SessionManager, SessionSelectorCompone
 type Progress = Parameters<typeof SessionManager.list>[2];
 export interface HistorySessionOptions {
   allowAllProjects?: boolean;
+  initialScope?: 'current' | 'all';
   signal?: AbortSignal;
 }
 export interface HistorySelectorOptions extends HistorySessionOptions {
@@ -89,6 +90,7 @@ export async function createHistorySessionSelector(cwd: string, sessionDir?: str
   list.onDeleteSession = undefined;
   list.onRenameSession = undefined;
   if (!allowAllProjects) list.onToggleScope = undefined;
+  if (allowAllProjects && options.initialScope === 'all') list.onToggleScope?.();
   const nativeInput = component.handleInput.bind(component);
   component.handleInput = data => {
     if (done) return;
@@ -154,7 +156,10 @@ export async function selectHistorySession(cwd: string, sessionDir?: string, opt
       ...options, onSelect: finish, onCancel: () => finish(), requestRender: () => { if (!stopped) tui.requestRender(); },
     });
     if (!stopped) {
-      tui.addChild(new Text(`历史对话：${path.resolve(cwd)}${options.allowAllProjects === false ? '（仅当前项目）' : ''}\n输入关键词搜索，Enter 继续，Esc 取消（只读选择）`, 1, 0));
+      const title = options.initialScope === 'all' && options.allowAllProjects !== false
+        ? '历史对话：全部项目（Tab 切换范围）'
+        : `历史对话：${path.resolve(cwd)}${options.allowAllProjects === false ? '（仅当前项目）' : ''}`;
+      tui.addChild(new Text(`${title}\n输入关键词搜索，Enter 继续，Esc 返回（只读选择）`, 1, 0));
       tui.addChild(picker.component);
       tui.setFocus(picker.component);
       started = true;

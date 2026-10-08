@@ -1,0 +1,92 @@
+{
+  "status": "FAIL",
+  "checks": [
+    {
+      "id": "history-back-navigation-process",
+      "status": "FAIL",
+      "error": "RuntimeError('Exited -9 before 浏览全部历史对话')",
+      "exit_code": -9,
+      "last_event": null
+    },
+    {
+      "id": "history-back-navigation-no-files",
+      "status": "PASS"
+    },
+    {
+      "id": "history-back-navigation-no-runtime-or-model",
+      "status": "PASS"
+    },
+    {
+      "id": "open-directory-new-conversation-process",
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "id": "open-directory-selected-cwd",
+      "status": "PASS",
+      "headers": [
+        {
+          "type": "session",
+          "version": 3,
+          "id": "01a11986-fa5c-775c-af5d-07073a32ebc9",
+          "timestamp": "2026-10-08T03:20:38.749Z",
+          "cwd": "/tmp/biomind-startup-project-z4xlmbzm/D 另一个目录"
+        }
+      ]
+    },
+    {
+      "id": "open-directory-clean-context",
+      "status": "PASS"
+    },
+    {
+      "id": "open-directory-no-project-instructions",
+      "status": "PASS"
+    },
+    {
+      "id": "offline-no-network-attempts",
+      "status": "PASS"
+    },
+    {
+      "id": "offline-no-real-credentials",
+      "status": "PASS"
+    },
+    {
+      "id": "native-reuses-embedded-sdk",
+      "status": "PASS"
+    }
+  ],
+  "commands": [
+    {
+      "scenario": "history-back-navigation",
+      "argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/bio_agents.py",
+        "--pi-config",
+        "/tmp/biomind-startup-project-z4xlmbzm/runtime.json",
+        "--pi-node",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.runtime/node/bin/node"
+      ],
+      "cwd": "/tmp/biomind-startup-project-z4xlmbzm/Z 任意启动目录"
+    },
+    {
+      "scenario": "open-directory-new-conversation",
+      "argv": [
+        "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/bio_agents.py",
+        "--pi-config",
+        "/tmp/biomind-startup-project-z4xlmbzm/runtime.json",
+        "--pi-node",
+        "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.runtime/node/bin/node"
+      ],
+      "cwd": "/tmp/biomind-startup-project-z4xlmbzm/Z 任意启动目录"
+    }
+  ],
+  "synthetic_root": "/tmp/biomind-startup-project-z4xlmbzm",
+  "evidence_type": "PRODUCT_TUI",
+  "selected_scenarios": [
+    "history-back-navigation",
+    "open-directory-new-conversation"
+  ],
+  "host_sha256": "41dd96b03dc6626d4eecab5ef7cde7dd62e3066843f861fa88b492b2e68b558e",
+  "project_launcher_sha256": "ff4c910f7c01dd9ce10f5b92a7d0f622ff8373031953dad60cfa3214fb5bdd22"
+}
