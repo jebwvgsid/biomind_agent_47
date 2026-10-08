@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { ModelRuntime, type ExtensionAPI, type SessionEntry } from '@earendil-works/pi-coding-agent';
-import { configuredProvider, selectConfiguredModel, validateModelSelection } from '../model-config.js';
+import { configuredProvider, selectConfiguredModel, validateConfiguredCustomModel, validateModelSelection } from '../model-config.js';
 import { createBioMindExtension } from '../extensions/biomind.js';
 import { createUsageObserver, projectUsage, USAGE_ENTRY } from '../usage-observer.js';
 
@@ -68,4 +68,51 @@ test('unverified custom price remains unknown when Pi supplies zero placeholders
   const total = projectUsage(entries);
   assert.equal(total.tokens.total, 5); assert.equal(total.unknownUsageAttempts, 0);
   assert.equal(total.unknownCostAttempts, 1); assert.equal(total.nativePiStatsAdditive, false);
+});
+
+
+test('pure custom validation preserves the fourteen prior accept/reject and fallback cases', async t => {
+  const runtime = await ModelRuntime.create({ credentials, modelsPath: null, allowModelNetwork: false, refreshOnCreate: false });
+  const priorSelection = { ...selection, endpoint_base_url: 'https://api.deepseek.com' };
+  const oldSchema = { ...priorSelection, schema: 'biomind-active-model-config-v1' } as Record<string, unknown>;
+  delete oldSchema.endpoint_base_url;
+  const cases: [string, unknown, 'accept' | 'reject' | 'fallback'][] = [
+    ...(['off', 'minimal', 'low', 'medium', 'high'] as const).map(thinking =>
+      [`thinking_${thinking}`, { ...priorSelection, thinking }, thinking === 'off' || thinking === 'high' ? 'accept' : 'reject'] as [string, unknown, 'accept' | 'reject']),
+    ['wrong_exact_hostname', { ...priorSelection, endpoint_hostname: 'example.invalid', endpoint_base_url: 'https://example.invalid' }, 'reject'],
+    ['endpoint_mismatch', { ...priorSelection, endpoint_base_url: 'https://example.invalid' }, 'reject'],
+    ['credential_url', { ...priorSelection, endpoint_base_url: 'https://user:secret@api.deepseek.com' }, 'reject'],
+    ['schema_v1_custom', oldSchema, 'reject'],
+    ['unconfirmed', { ...priorSelection, confirmed_active: false }, 'reject'],
+    ['unknown_builtin_fallback', { ...priorSelection, provider: 'example-absent', model: 'example-absent' }, 'fallback'],
+    ['known_builtin_fallback', { ...priorSelection, provider: 'openai', model: 'gpt-4o', endpoint_hostname: 'api.openai.com', endpoint_base_url: 'https://api.openai.com/v1' }, 'fallback'],
+    ['provider_suffix_not_custom', { ...priorSelection, model: 'deepseek-chat' }, 'fallback'],
+    ['extra_field_rejected', { ...priorSelection, extra: 'x' }, 'reject'],
+  ];
+  const verdict = (run: () => unknown) => { try { run(); return { ok: true }; } catch (error) { return { ok: false, error: (error as Error).message }; } };
+  for (const [name, raw, route] of cases) await t.test(name, () => {
+    const catalog = verdict(() => selectConfiguredModel(runtime, raw));
+    let actualRoute = 'reject';
+    const pure = verdict(() => {
+      if (validateConfiguredCustomModel(raw)) { actualRoute = 'accept'; return; }
+      actualRoute = 'fallback'; selectConfiguredModel(runtime, raw);
+    });
+    assert.deepEqual(pure, catalog);
+    assert.equal(actualRoute, route);
+    assert.equal(pure.ok, route === 'accept');
+  });
+});
+
+test('a non-custom public catalog model succeeds through the same SDK fallback offline', async t => {
+  const runtime = await ModelRuntime.create({ credentials, modelsPath: null, allowModelNetwork: false, refreshOnCreate: false });
+  const builtin = runtime.getModels('openrouter').find(model => model.api === 'openai-completions' &&
+    /^[A-Za-z0-9][A-Za-z0-9._:/+-]{0,127}$/.test(model.id) &&
+    /^https:\/\/[A-Za-z0-9.-]+(?:\/[A-Za-z0-9._~/-]*)?$/.test(model.baseUrl));
+  assert(builtin, 'installed public catalog must contain a representative compatible model');
+  const raw = { ...selection, provider: builtin.provider, model: builtin.id,
+    endpoint_hostname: new URL(builtin.baseUrl).hostname, endpoint_base_url: builtin.baseUrl };
+  assert.equal(validateConfiguredCustomModel(raw), false);
+  const selected = selectConfiguredModel(runtime, raw);
+  assert.equal(selected.id, builtin.id); assert.equal(selected.provider, builtin.provider);
+  t.diagnostic(JSON.stringify({ provider: selected.provider, model: selected.id, baseUrl: selected.baseUrl, realRequests: 0 }));
 });

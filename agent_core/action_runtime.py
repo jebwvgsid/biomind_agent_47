@@ -816,7 +816,8 @@ def freeze_execution_environment(
         if not Path(prefix).is_absolute():
             raise ActionRuntimeContractError("ACTION_ENV_SNAPSHOT_PATH_INVALID")
         effective["CONDA_PREFIX"] = prefix
-        effective["PATH"] = str(Path(prefix) / "bin") + os.pathsep + effective["PATH"]
+        target_bin=str(Path(prefix) / 'bin')
+        effective['PATH']=os.pathsep.join([target_bin,*[p for p in effective['PATH'].split(os.pathsep) if p!=target_bin]])
     # PATH/TMPDIR are explicit locations; empty/relative PATH components would
     # reintroduce a dependence on a later process working directory.
     if any(not part or not Path(part).is_absolute() for part in effective["PATH"].split(os.pathsep)):
@@ -1308,7 +1309,7 @@ def assert_current_action_runtime_scope(action: Mapping[str, Any]) -> None:
         )
 
 
-def registered_execution_environment(state: Mapping[str, Any], explicit: Mapping[str, Any]) -> Dict[str, str]:
+def registered_execution_environment(state: Mapping[str, Any], explicit: Mapping[str, Any], *, runtime_binding=None) -> Dict[str, str]:
     """Materialize accepted registration for this step, without a fresh probe.
 
     An explicit reviewed environment stays explicit. Ambiguous task bindings do
@@ -1316,10 +1317,27 @@ def registered_execution_environment(state: Mapping[str, Any], explicit: Mapping
     """
     environment = {str(k): str(v) for k, v in explicit.items()}
     task = state.get("task_state") or {}
+    if runtime_binding:
+        from agent_core.runtime_evidence import registered_execution_binding
+        registered_execution_binding(state,binding_ref=runtime_binding.get('binding_ref',''),runtime_scope=runtime_binding.get('scope',''))
+        # Domain already resolved the shared launch, including runner-only
+        # records. Reapplying it here would double-wrap command and PATH.
+        return environment
     explicit_prefix = environment.get("ENV_PREFIX") or environment.get("CONDA_PREFIX")
     if explicit_prefix:
-        if any(row.get("prefix") == explicit_prefix for row in (task.get("runtime_invalidations") or {}).values()):
-            raise ActionRuntimeContractError("REGISTERED_RUNTIME_REQUIRES_TARGETED_DIAGNOSIS")
+        # Prior dependency errors remain observations. They do not mandate a
+        # diagnosis before the model can choose another authorized command.
+        return environment
+    if task.get('pi_request_id'):
+        from agent_core.runtime_evidence import registered_execution_binding
+        binding=registered_execution_binding(state)
+        if binding:
+            from agent_core.runtime_launch import prepare_runtime_launch
+            # This compatibility projection handles only environment facts.
+            # Domain prepares the command/runner once before permission hashing.
+            descriptor=dict(binding['launch']);descriptor.pop('env_runner',None);descriptor.pop('runner_argv',None)
+            launch=prepare_runtime_launch(descriptor,['/bin/true'],base_env={'PATH':os.environ.get('PATH','/usr/bin:/bin')},extra_env=environment)
+            return launch['env']
         return environment
     if not task.get("runtime_evidence"):
         return environment
@@ -1337,8 +1355,6 @@ def registered_execution_environment(state: Mapping[str, Any], explicit: Mapping
     if any((value.get("runtime.environment.prefix") or {}).get("availability") in {"AMBIGUOUS", "UNAVAILABLE"}
            for value in evaluations) or len(prefixes) > 1:
         raise ActionRuntimeContractError("REGISTERED_EXECUTION_ENVIRONMENT_UNRESOLVED")
-    if any(row.get("prefix") in prefixes for row in (task.get("runtime_invalidations") or {}).values()):
-        raise ActionRuntimeContractError("REGISTERED_RUNTIME_REQUIRES_TARGETED_DIAGNOSIS")
     if len(prefixes) == 1:
         environment["ENV_PREFIX"] = next(iter(prefixes))
     return environment
@@ -1364,7 +1380,7 @@ async def execute_formal_command(service, arguments, *, task_id, call_id, stage=
     from execution.script_validation import check_executable_action, resolve_direct_script_argv, explicit_script_diagnostic
 
     if not isinstance(arguments, Mapping) or set(arguments) - {
-        'cmd', 'argv', 'workdir', 'env', 'timeout_ms', 'max_output_chars', 'script_path', 'helper_paths', 'expected_sha256', 'legacy_action', 'script_args', 'interpreter', 'write_paths', 'delete_paths'}:
+        'cmd', 'argv', 'workdir', 'env', 'timeout_ms', 'max_output_chars', 'script_path', 'helper_paths', 'expected_sha256', 'legacy_action', 'script_args', 'interpreter', 'write_paths', 'delete_paths', 'read_paths', '_biomind_probe', '_runtime_binding'}:
         raise ValueError('EXEC_COMMAND_ARGUMENTS_INVALID')
     if not call_id:
         raise ValueError('EXECUTION_INTENT_ID_MISSING')
@@ -1396,9 +1412,10 @@ async def execute_formal_command(service, arguments, *, task_id, call_id, stage=
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
             from agent_core.execution_permissions import (request_permission, command_payload,
-                                                          PermissionPending)
-            waiting = request_permission(service.data_path, task_id, call_id,
-                                         command_payload(service, arguments, task_id))
+                                                          PermissionPending, derive_permission_call_id)
+            waiting = request_permission(service.data_path, task_id,
+                derive_permission_call_id(call_id, 'command'),
+                command_payload(service, arguments, task_id, call_id=call_id))
             if waiting['status'] == 'pending':
                 raise PermissionPending(waiting)
             return {'status': 'running', 'attempt_id': attempt_id, 'exit_code': None,
@@ -1430,9 +1447,12 @@ async def execute_formal_command(service, arguments, *, task_id, call_id, stage=
                         'retained': True, 'rolled_back': False}],
             'boundary': 'exclusive_intent_before_starting_and_delegation'}
         from agent_core.execution_permissions import (authorize_command, claim_permission,
-            validate_permit, execution_context, command_payload, digest as permission_digest)
+            validate_permit, execution_context, command_payload, request_allows_command, digest as permission_digest)
         permission = await authorize_command(service, arguments, task_id=task_id,
             call_id=call_id, cancel_event=cancel_event)
+        if permission['payload'].get('access_projection') is not None:
+            from agent_core.command_execution import formal_protection_capability
+            formal_protection_capability(permission['payload']['access_projection'])
         durable = load_plan_state(service.data_path, task_id)
         check_cancelled()
         if current_finish(durable):
@@ -1440,7 +1460,7 @@ async def execute_formal_command(service, arguments, *, task_id, call_id, stage=
         if observation.get('expected_request_scope') is not None and observation['expected_request_scope'] != scope:
             raise PrelaunchAdmissionRejected('FORMAL_REQUEST_SCOPE_CHANGED', phase='dynamic_admission')
         admission = (durable.get('task_state') or {}).get('intent_admission') or {}
-        if admission.get('request_kind') != 'execute' or admission.get('execution_scope') not in {'simple', 'managed'}:
+        if not request_allows_command(durable,arguments) or admission.get('execution_scope') not in {'simple', 'managed'}:
             raise PrelaunchAdmissionRejected('CURRENT_REQUEST_HAS_NO_EXECUTION_AUTHORIZATION', phase='dynamic_admission')
         approval = durable.get('current_approval') or {}
         requested_review_done = approval.get('status') == 'approved' and approval.get('plan_snapshot_ref') == durable.get('plan_snapshot_ref')
@@ -1458,7 +1478,7 @@ async def execute_formal_command(service, arguments, *, task_id, call_id, stage=
             raise PrelaunchAdmissionRejected('EXECUTION_CWD_NOT_DIRECTORY', phase='dynamic_admission')
         from agent_core.work_outputs import file_fingerprint
         from agent_core.work_plan import action_targets, authority_identity
-        output_rows = action_targets(durable, arguments, project)
+        output_rows = action_targets(durable, arguments, project,command_service=service,task_id=task_id)
         step = {}
         draft = ((durable.get('task_state') or {}).get('generate_context_episode') or {}).get('draft_file') or {}
         draft_scope = draft.get('scope') or {}
@@ -1475,7 +1495,12 @@ async def execute_formal_command(service, arguments, *, task_id, call_id, stage=
                 if isinstance(selected,dict) and selected.get('script_path'):
                     selected_source, selected_sha = selected['script_path'], selected.get('expected_sha256')
         legacy = arguments.get('legacy_action') or {}
+        host_generated_source = None
         actual_arguments = dict(arguments)
+        actual_arguments.pop('_runtime_binding',None)
+        # Resource references belong to the permission projection, never to
+        # the strict executable carrier/argv contract.
+        actual_arguments.pop('read_paths', None)
         if legacy:
             from agent_core.step_effects import executable_carrier
             carrier = executable_carrier(legacy)
@@ -1503,10 +1528,11 @@ async def execute_formal_command(service, arguments, *, task_id, call_id, stage=
                     if not inline.exists():
                         with inline.open('x') as stream:
                             stream.write(carrier['body'])
+                    host_generated_source = inline
                     actual_arguments.update(script_path=str(inline), script_args=[], interpreter=interpreter)
             else:
                 raise ValueError('EXECUTABLE_CARRIER_MISSING')
-        env = freeze_execution_environment(os.environ, registered_execution_environment(durable, actual_arguments.get('env') or {}))
+        env = freeze_execution_environment(os.environ, registered_execution_environment(durable, actual_arguments.get('env') or {},runtime_binding=arguments.get('_runtime_binding')))
         diagnostic = explicit_script_diagnostic({k:v for k,v in actual_arguments.items() if k != 'legacy_action'})
         if diagnostic:
             raise PrelaunchAdmissionRejected(diagnostic['error'], phase='carrier_admission',
@@ -1558,14 +1584,26 @@ async def execute_formal_command(service, arguments, *, task_id, call_id, stage=
             if syntax.get('required') and syntax.get('check_status') != 'PASS':
                 return {'status': 'not_run', 'syntax_check': syntax, 'execution_started': False}
         if source:
+            lexical_source = cwd / source
             try:
                 source = (cwd / source).resolve(strict=True)
             except FileNotFoundError:
                 raise PrelaunchAdmissionRejected('EXPLICIT_SCRIPT_MISSING', phase='source_identity')
             if script_index is None:
                 raise PrelaunchAdmissionRejected('EXPLICIT_SCRIPT_REQUIRES_DIRECT_INTERPRETER_ARGV', phase='carrier_admission')
-            content = source.read_bytes()
+            from agent_core.workspace_files import WorkspaceFileService
+            from agent_core.execution_permissions import open_authorized_source
+            source_files = WorkspaceFileService(service, draft_root=(
+                attempt_dir if host_generated_source == lexical_source else
+                Path(selected_source).parent if selected_source and source == Path(selected_source)
+                    and source.is_relative_to(Path(service.data_path) / 'task_outputs' / task_id)
+                else None))
+            with open_authorized_source(source_files, lexical_source, task_id, call_id) as stream:
+                content = stream.read()
             sha = hashlib.sha256(content).hexdigest()
+            approved_source_hash = permission['payload'].get('source_hashes', {}).get(str(lexical_source))
+            if approved_source_hash and sha != approved_source_hash:
+                raise PrelaunchAdmissionRejected('APPROVED_SOURCE_CHANGED', phase='source_version')
             expected = actual_arguments.get('expected_sha256') or (draft.get('sha256') if str(source) == draft.get('path') else '')
             if (expected and expected != sha) or (selected_sha and selected_sha != sha):
                 raise PrelaunchAdmissionRejected('SCRIPT_VERSION_CHANGED', phase='source_version', instruction='Read and explicitly select the current file; retain expected_sha256.')
@@ -1581,12 +1619,19 @@ async def execute_formal_command(service, arguments, *, task_id, call_id, stage=
             layout.mkdir(exist_ok=True)
             selected_files = [source]
             for helper in actual_arguments.get('helper_paths') or []:
-                path = (source.parent / helper).resolve(strict=True)
-                if not path.is_relative_to(source.parent):
+                path = source.parent / helper
+                if '..' in Path(helper).parts or not path.is_relative_to(source.parent):
                     raise PrelaunchAdmissionRejected('HELPER_OUTSIDE_EXPLICIT_SCRIPT_LAYOUT', phase='dynamic_admission')
                 selected_files.append(path)
             for path in dict.fromkeys(selected_files):
-                body = content if path == source else path.read_bytes()
+                if path == source:
+                    body = content
+                else:
+                    with open_authorized_source(source_files, path, task_id, call_id) as stream:
+                        body = stream.read()
+                    approved_helper_hash = permission['payload'].get('source_hashes', {}).get(str(path))
+                    if approved_helper_hash and hashlib.sha256(body).hexdigest() != approved_helper_hash:
+                        raise PrelaunchAdmissionRejected('APPROVED_HELPER_CHANGED', phase='source_version')
                 target = layout / path.relative_to(source.parent)
                 _output_path_state(target)  # Refuse a symlink in the frozen layout.
                 target.parent.mkdir(parents=True, exist_ok=True)
@@ -1610,7 +1655,7 @@ async def execute_formal_command(service, arguments, *, task_id, call_id, stage=
         paths = []
         step = {}
         from agent_core.work_outputs import file_fingerprint
-        output_rows = action_targets(durable, arguments, project)
+        output_rows = action_targets(durable, arguments, project,command_service=service,task_id=task_id)
         paths.extend(row['canonical_path'] for row in output_rows)
         def observe():
             result = {}
@@ -1631,7 +1676,7 @@ async def execute_formal_command(service, arguments, *, task_id, call_id, stage=
             return result
         check_cancelled()
         # Claim before any mutation of a user target, not just before spawn.
-        if permission_digest(command_payload(service, arguments, task_id)) != permission['action_hash']:
+        if permission_digest(command_payload(service, arguments, task_id, call_id=call_id)) != permission['action_hash']:
             raise ActionRuntimeContractError('PERMISSION_ACTION_CHANGED_BEFORE_CLAIM')
         permit = claim_permission(service.data_path, task_id, permission, attempt_id)
         durable = load_plan_state(service.data_path, task_id)
@@ -1673,6 +1718,8 @@ async def execute_formal_command(service, arguments, *, task_id, call_id, stage=
             'shell': None if tokens is not None else '/bin/sh', 'shell_login': False,
             'frozen_files': frozen_files, 'syntax_check': syntax,
             'dependency_scope': 'explicit script and helper paths only; complex shell dependencies not inferred'}
+        if arguments.get('_runtime_binding'):
+            action['runtime_binding']=deepcopy(arguments['_runtime_binding'])
         # Complete write admission before persisting STARTING or charging a
         # dispatch/repair. No await separates this check from the actual runner.
         # A rejected target must not leave a phantom active process to reconcile.
@@ -1700,6 +1747,7 @@ async def execute_formal_command(service, arguments, *, task_id, call_id, stage=
             save_plan_state(service.data_path, task_id, state)
         try:
             check_cancelled()
+            from agent_core.command_execution import FormalProtectionError
             from agent_core.cli_tool_activity import runtime_event
             runtime_event('preparing', {'cmd': command, 'argv': tokens, 'cwd': str(cwd),
                 'environment_names': sorted(env), 'action_id': action_id,
@@ -1709,9 +1757,24 @@ async def execute_formal_command(service, arguments, *, task_id, call_id, stage=
                 stdout, stderr, rc = await run_command(tokens if tokens is not None else command, cwd=cwd, env=env,
                     runtime_observation=observation, cancel_event=cancel_event, original_deadline=original_deadline,
                     timeout=float(arguments['timeout_ms'])/1000 if arguments.get('timeout_ms') else None,
+                    max_output_bytes=65536 if arguments.get('_biomind_probe') is True else None,
+                    short_check=arguments.get('_biomind_probe') is True,
                     lifecycle_callback=lifecycle, profile=False,
                     capture_log_paths={'stdout': str(attempt_dir/'stdout.log'), 'stderr': str(attempt_dir/'stderr.log')},
                     display_context={'task_id': task_id, 'node': stage, 'execution_attempt_id': attempt_id})
+        except FormalProtectionError as exc:
+            # The mount adapter raises only before create_subprocess. Retain
+            # prior preparation effects but do not leave a phantom STARTING
+            # process or manufacture a command exit code.
+            state = load_plan_state(service.data_path, task_id)
+            record_provenance_event(state, 'attempt_state_changed', {'attempt_id': attempt_id,
+                'status': 'FAILED', 'execution_started': False, 'error': str(exc),
+                'capability_missing': True})
+            save_plan_state(service.data_path, task_id, state)
+            observation.update(launch_delegated=False, process_alive=False, cleanup_confirmed=True)
+            observation['preparation_settlement'].update(safe_to_release=True,
+                phase='protected_spawn_preflight')
+            raise
         except asyncio.CancelledError:
             state = load_plan_state(service.data_path, task_id)
             attempt = state['provenance_state']['attempts'][attempt_id]
@@ -1734,6 +1797,8 @@ async def execute_formal_command(service, arguments, *, task_id, call_id, stage=
                 'receipt_ref': str(receipt_path), 'runtime_metadata': cancellation,
                 'stdout_path': str(attempt_dir/'stdout.log'), 'stderr_path': str(attempt_dir/'stderr.log'),
                 'scientific_validation': 'not_assessed', 'cleanup_confirmed': complete}
+            if arguments.get('_runtime_binding'):
+                cancelled_result['runtime_binding']=deepcopy(arguments['_runtime_binding'])
             from agent_core.command_inspection_owner import _once
             if complete and not receipt_path.exists():
                 _once(receipt_path, cancelled_result)
@@ -1776,6 +1841,8 @@ async def execute_formal_command(service, arguments, *, task_id, call_id, stage=
                 'workflow_stage_ids','execution_capability_id','operation','validation') if key in step},
             'finished_at': time.time(), 'runtime_metadata': dict(observation) or get_last_execution_metadata()}
         result['cleanup_confirmed'] = bool(result['runtime_metadata'].get('cleanup_confirmed', True))
+        if arguments.get('_runtime_binding'):
+            result['runtime_binding']=deepcopy(arguments['_runtime_binding'])
         from agent_core.command_inspection_owner import _once
         _once(receipt_path, result)
         _record_formal_receipt(service.data_path, task_id, result)
@@ -1791,7 +1858,9 @@ async def execute_formal_command(service, arguments, *, task_id, call_id, stage=
             import traceback
             issue = deepcopy(getattr(exc, 'issue', None) or getattr(exc, 'diagnostic', None) or {})
             code = getattr(exc, 'code', None) or issue.pop('code', None) or type(exc).__name__
-            issue.pop('phase', None)
+            protection_phase = issue.pop('phase', None)
+            if isinstance(protection_phase, str):
+                issue['protection_phase'] = protection_phase
             raise PrelaunchAdmissionRejected(code, phase=settlement['phase'],
                 original_error=type(exc).__name__ + ': ' + str(exc),
                 original_traceback=traceback.format_exc(), **issue) from exc

@@ -6,12 +6,12 @@ import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createAssistantMessageEventStream, type AssistantMessage, type TranscriptContext } from '@earendil-works/pi-ai';
-import { createAgentSession, createEventBus, DefaultResourceLoader, ModelRuntime, SessionManager, SettingsManager, type ProviderConfig } from '@earendil-works/pi-coding-agent';
+import { createAgentSession, createEventBus, DefaultResourceLoader, ModelRuntime, SessionManager, SettingsManager, type ProviderConfig, type SessionStartEvent } from '@earendil-works/pi-coding-agent';
 import { filterNativeContextFiles } from '../native-context.js';
 import { createBioMindExtension, type BioMindExtensionOptions, type DomainConnection } from '../extensions/biomind.js';
 
 export const text = (value: string): AssistantMessage['content'] => [{ type: 'text', text: value }];
-export const call = (id: string, name: string, args: Record<string, any> = {}): AssistantMessage['content'] => [{ type: 'toolCall', id, name, arguments: args }];
+export const call = (id: string, name: string, args: Record<string, any> = {}): AssistantMessage['content'] => [{ type: 'toolCall', id, name, arguments: name === 'handoff_generate' ? { execution: { readiness: 'ready', objects: [], capabilities: [], checks: [], stop_conditions: [], pending: [], decisions: [] }, ...args } : args }];
 export type ScriptEntry = AssistantMessage['content'] | Error | ((context: TranscriptContext, options: any) => AssistantMessage['content'] | Promise<AssistantMessage['content']>);
 export const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 export function deferred<T = void>() {
@@ -42,6 +42,7 @@ export class FakeDomain implements DomainConnection {
   calls: Array<{ method: string; params: Record<string, any>; requestId?: string; privileged: boolean }> = [];
   receipts = new Map<string, unknown | ((params: Record<string, any>, options?: any) => unknown | Promise<unknown>)>();
   active = 0; maxActive = 0; closed = 0;
+  requestId?: string;
   async call(method: string, params: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) {
     assert(!['request.begin', 'approval.decide', 'settings.update'].includes(method), 'privileged operation exposed as tool dispatch');
     return this.dispatch(method, params, false, options);
@@ -54,7 +55,10 @@ export class FakeDomain implements DomainConnection {
     this.active++; this.maxActive = Math.max(this.maxActive, this.active);
     try {
       if (this.receipts.has(method)) { const receipt = this.receipts.get(method); return typeof receipt === 'function' ? await receipt(params, options) : clone(receipt); }
-      if (method === 'request.begin') return { status: 'begun', ...params };
+      if (method === 'request.status') return {request_id:this.requestId};
+      if (method === 'permissions.status') return {approval_mode:{mode:'manual'},grants:[]};
+      if (['request.pause', 'request.resume', 'request.revise'].includes(method)) return { status: method === 'request.pause' ? 'paused' : 'ready' };
+      if (method === 'request.begin') { this.requestId=String(params.request_id); return { status: 'begun', ...params }; }
       if (method === 'context.snapshot') return clone(this.snapshot);
       if (method === 'session.lifecycle') return { active_jobs: false, count: 0, run_refs: [] };
       throw new Error(`Unscripted domain request: ${method}`);
@@ -63,6 +67,8 @@ export class FakeDomain implements DomainConnection {
   close(options: { disconnectOnly: true }) { assert.equal(options.disconnectOnly, true); this.closed++; }
 }
 export interface HarnessOptions {
+  sessionStartEvent?: SessionStartEvent;
+  executionProfile?: BioMindExtensionOptions['executionProfile'];
   name?: string;
   cwd?: string;
   sessionManager?: SessionManager;
@@ -95,7 +101,7 @@ export async function createHarness(options: HarnessOptions = {}) {
     noExtensions: true, additionalSkillPaths: options.skillPaths ?? [], noPromptTemplates: true, noThemes: true, noContextFiles: false,
     agentsFilesOverride: ({ agentsFiles }) => ({ agentsFiles: filterNativeContextFiles(agentsFiles, cwd, cwd) }),
     systemPrompt: options.nativePrompt ? undefined : 'Isolated BioMind integration test.', appendSystemPrompt: [],
-    extensionFactories: [{ name: 'production-biomind', factory: createBioMindExtension({ domainFactory: domainOptions => {
+    extensionFactories: [{ name: 'production-biomind', factory: createBioMindExtension({ executionProfile: options.executionProfile, domainFactory: domainOptions => {
       domainCreations++; return options.domainFactory ? options.domainFactory(domainOptions) : domain;
     } }) }],
   });
@@ -139,8 +145,9 @@ export async function createHarness(options: HarnessOptions = {}) {
   const model = modelRuntime.getModel(options.provider?.name ?? scriptedName, options.provider?.modelId ?? 'scripted');
   assert(model);
   const { session } = await createAgentSession({ cwd, agentDir: cwd, modelRuntime, model, thinkingLevel: 'off',
+    sessionStartEvent: options.sessionStartEvent,
     resourceLoader, sessionManager: manager, settingsManager,
-    tools: [...resourceLoader.getExtensions().extensions[0].tools.keys()] });
+    tools: [...(options.executionProfile === 'native' ? ['read','write','edit','bash','ls','find','grep'] : []), ...resourceLoader.getExtensions().extensions[0].tools.keys()] });
   session.agent.toolExecution = 'sequential';
   session.subscribe(event => { events.push(clone(event)); });
   await session.bindExtensions({ mode: 'json', onError: error => { errors.push(clone(error)); } });

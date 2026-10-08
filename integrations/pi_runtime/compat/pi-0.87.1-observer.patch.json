@@ -1,7 +1,7 @@
 {
   "package": "@earendil-works/pi-coding-agent",
   "originalVersion": "0.87.1",
-  "runtimeLabel": "0.87.1+biomind-observer.2",
+  "runtimeLabel": "0.87.1+biomind-observer.4",
   "files": [
     {
       "path": "dist/core/model-runtime.js",
@@ -36,7 +36,7 @@
     {
       "path": "dist/bundle/chunks/chunk-OJP47DM6.js",
       "originalSha256": "81c81a21ec81e84200205f561687408ff5e3738fbbbb3c2a6c186b348d376020",
-      "patchedSha256": "69f57978f86a78b57d35948d3041134dbc49deae886a0dedfef1c6d860671fe7",
+      "patchedSha256": "daebb6c96f486b6b9baebef53d6c7017c3e7fb42bad7136385419276686e35aa",
       "replacements": [
         {
           "before": "return prepared.provider.stream(prepared.model,transcript,prepared.options)",
@@ -57,6 +57,52 @@
         {
           "before": "(undici.install?.(),installedGlobalFetch=globalThis.fetch)}var build_exports={}",
           "after": "(undici.install?.(),installedGlobalFetch=globalThis.fetch);globalThis[Symbol.for(\"biomind.pi.http-dispatcher.v1\")] = Object.freeze({ fetch: installedGlobalFetch, dispatcher, dispatch: dispatcher.dispatch, getGlobalDispatcher: undici.getGlobalDispatcher });}var build_exports={}"
+        },
+        {
+          "before": "if(result?.action===\"handled\")return result;result?.action===\"transform\"&&(currentText=result.text",
+          "after": "if(result?.action===\"handled\"||result?.biomindBoundary)return result;result?.action===\"transform\"&&(currentText=result.text"
+        },
+        {
+          "before": "let inputResult=await this._extensionRunner.emitInput(text,images,source,streamingBehavior);if(inputResult.action!==\"handled\")",
+          "after": "let inputResult=await this._extensionRunner.emitInput(text,images,source,streamingBehavior);if(inputResult.biomindBoundary){if(this.isStreaming||inputResult.biomindBoundary.leafId!==this.sessionManager.getLeafId())throw new Error(\"BIOMIND_BOUNDARY_OWNER_CHANGED\");this._commitBoundaryDrafts(inputResult.biomindBoundary.entries)}if(inputResult.action!==\"handled\")"
+        },
+        {
+          "before": "result?.compaction&&(extensionCompaction=result.compaction,fromExtension=!0)",
+          "after": "result?.customInstructions!==void 0&&(customInstructions=result.customInstructions);result?.compaction&&(extensionCompaction=result.compaction,fromExtension=!0)"
+        },
+        {
+          "before": "let extensionCompaction;if(this._extensionRunner.hasHandlers(\"session_before_compact\")){let extensionResult=",
+          "after": "let customInstructions,extensionCompaction;if(this._extensionRunner.hasHandlers(\"session_before_compact\")){let extensionResult="
+        },
+        {
+          "before": "extensionResult?.compaction&&(extensionCompaction=extensionResult.compaction,fromExtension=!0)",
+          "after": "extensionResult?.customInstructions!==void 0&&(customInstructions=extensionResult.customInstructions);extensionResult?.compaction&&(extensionCompaction=extensionResult.compaction,fromExtension=!0)"
+        },
+        {
+          "before": "this._runDefaultCompaction(preparation,requestModel,apiKey,headers,void 0,abortController.signal,env2,reason)",
+          "after": "this._runDefaultCompaction(preparation,requestModel,apiKey,headers,customInstructions,abortController.signal,env2,reason)"
+        },
+        {
+          "before": "generateTurnPrefixSummary2(turnPrefixMessages,model,settings2.reserveTokens,apiKey,headers,env2,signal,thinkingLevel,streamFn,retry,callbacks,sessionId)",
+          "after": "generateTurnPrefixSummary2(turnPrefixMessages,model,settings2.reserveTokens,apiKey,headers,env2,signal,thinkingLevel,streamFn,retry,callbacks,sessionId,customInstructions)"
+        },
+        {
+          "before": "async function generateTurnPrefixSummary2(messages,model,reserveTokens,apiKey,headers,env2,signal,thinkingLevel,streamFn,retry,callbacks,sessionId)",
+          "after": "async function generateTurnPrefixSummary2(messages,model,reserveTokens,apiKey,headers,env2,signal,thinkingLevel,streamFn,retry,callbacks,sessionId,customInstructions)"
+        },
+        {
+          "before": "${TURN_PREFIX_SUMMARIZATION_PROMPT2}`,response=await completeSummarization",
+          "after": "${TURN_PREFIX_SUMMARIZATION_PROMPT2}`+(customInstructions?`\\n\\nAdditional focus: ${customInstructions}`:\"\"),response=await completeSummarization"
+        }
+      ],
+      "previousPatches": [
+        {
+          "sha256": "69f57978f86a78b57d35948d3041134dbc49deae886a0dedfef1c6d860671fe7",
+          "replacementCount": 5
+        },
+        {
+          "sha256": "69b184da56577dda43d788becb05716547b3831996d97ae54b7030ec44e2423b",
+          "replacementCount": 7
         }
       ]
     },
@@ -70,6 +116,80 @@
           "after": "        installedGlobalFetch = globalThis.fetch;\n    }\n    globalThis[Symbol.for(\"biomind.pi.http-dispatcher.v1\")] = Object.freeze({ fetch: installedGlobalFetch, dispatcher, dispatch: dispatcher.dispatch, getGlobalDispatcher: undici.getGlobalDispatcher });\n}"
         }
       ]
+    },
+    {
+      "path": "dist/core/extensions/runner.js",
+      "originalSha256": "67c7ca2d24197ff46cb5f0a49d7c19a76825ab7c66bc942015a484b550396441",
+      "replacements": [
+        {
+          "before": "                    if (result?.action === \"transform\") {\n                        currentText = result.text;",
+          "after": "                    if (result?.biomindBoundary) return result;\n                    if (result?.action === \"transform\") {\n                        currentText = result.text;"
+        }
+      ],
+      "patchedSha256": "f8e6efb5049a3bcb030c0cfadda965f712270a5303d91ad42ce8fe98d4ebad59"
+    },
+    {
+      "path": "dist/core/agent-session.js",
+      "originalSha256": "5ebfae51db5a900596145159428e7cb57d195af9d54a28f41d4ac8ff1bfd5729",
+      "replacements": [
+        {
+          "before": "        if (inputResult.action === \"handled\") {\n            return undefined;\n        }",
+          "after": "        if (inputResult.biomindBoundary) {\n            if (this.isStreaming || inputResult.biomindBoundary.leafId !== this.sessionManager.getLeafId())\n                throw new Error(\"BIOMIND_BOUNDARY_OWNER_CHANGED\");\n            this._commitBoundaryDrafts(inputResult.biomindBoundary.entries);\n        }\n        if (inputResult.action === \"handled\") {\n            return undefined;\n        }"
+        },
+        {
+          "before": "                if (result?.compaction) {\n                    extensionCompaction = result.compaction;",
+          "after": "                if (result?.customInstructions !== undefined) {\n                    customInstructions = result.customInstructions;\n                }\n                if (result?.compaction) {\n                    extensionCompaction = result.compaction;"
+        },
+        {
+          "before": "            abortController.signal.throwIfAborted();\n            let extensionCompaction;",
+          "after": "            abortController.signal.throwIfAborted();\n            let customInstructions;\n            let extensionCompaction;"
+        },
+        {
+          "before": "                if (extensionResult?.compaction) {\n                    extensionCompaction = extensionResult.compaction;",
+          "after": "                if (extensionResult?.customInstructions !== undefined) {\n                    customInstructions = extensionResult.customInstructions;\n                }\n                if (extensionResult?.compaction) {\n                    extensionCompaction = extensionResult.compaction;"
+        },
+        {
+          "before": "this._runDefaultCompaction(preparation, requestModel, apiKey, headers, undefined, abortController.signal, env, reason)",
+          "after": "this._runDefaultCompaction(preparation, requestModel, apiKey, headers, customInstructions, abortController.signal, env, reason)"
+        }
+      ],
+      "patchedSha256": "eb69ee26f04f47e9420d90f4852a04671903356898bc475494d916cce6f8c667",
+      "previousPatches": [
+        {
+          "sha256": "c79179ec645ed922c958e674c6facdb91fe9be5804f1490a352dfbcef5b8a110",
+          "replacementCount": 1
+        }
+      ]
+    },
+    {
+      "path": "dist/core/extensions/types.d.ts",
+      "originalSha256": "14d00e645b453f4361440da6fcda86ed6cef9a8fc36d483a621a0250e0d4a396",
+      "replacements": [
+        {
+          "before": "export interface SessionBeforeCompactResult {\n    cancel?: boolean;",
+          "after": "export interface SessionBeforeCompactResult {\n    /** BioMind 0.87.1 compatibility: additional focus for Pi's default summarizer. */\n    customInstructions?: string;\n    cancel?: boolean;"
+        }
+      ],
+      "patchedSha256": "9bfdded2da080d85e39bddca2390e0ddd304c71b25b640acb81ebc05afe54642"
+    },
+    {
+      "path": "dist/core/compaction/compaction.js",
+      "originalSha256": "871f81769ef67a78c63cfc674e09f13097899effe4677f156a3613878c387640",
+      "replacements": [
+        {
+          "before": "generateTurnPrefixSummary(turnPrefixMessages, model, settings.reserveTokens, apiKey, headers, env, signal, thinkingLevel, streamFn, retry, callbacks, sessionId)",
+          "after": "generateTurnPrefixSummary(turnPrefixMessages, model, settings.reserveTokens, apiKey, headers, env, signal, thinkingLevel, streamFn, retry, callbacks, sessionId, customInstructions)"
+        },
+        {
+          "before": "async function generateTurnPrefixSummary(messages, model, reserveTokens, apiKey, headers, env, signal, thinkingLevel, streamFn, retry, callbacks, sessionId)",
+          "after": "async function generateTurnPrefixSummary(messages, model, reserveTokens, apiKey, headers, env, signal, thinkingLevel, streamFn, retry, callbacks, sessionId, customInstructions)"
+        },
+        {
+          "before": "const promptText = `# Conversation\\n${conversationText}\\n\\n# Instructions\\n${TURN_PREFIX_SUMMARIZATION_PROMPT}`;",
+          "after": "const promptText = `# Conversation\\n${conversationText}\\n\\n# Instructions\\n${TURN_PREFIX_SUMMARIZATION_PROMPT}` + (customInstructions ? `\\n\\nAdditional focus: ${customInstructions}` : \"\");"
+        }
+      ],
+      "patchedSha256": "89291243302b24963ea1f04d047d283204ec7e49390428509945ce6b7f11ce70"
     }
   ]
 }

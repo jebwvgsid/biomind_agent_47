@@ -71,7 +71,7 @@ class FormalCommandObserver(InspectionOwnerMixin):
                     raise ValueError('FORMAL_TERMINAL_INCOMPLETE')
                 if result.get('task_id') != record['task_id'] or result.get('attempt_id') != ref:
                     raise ValueError('FORMAL_TERMINAL_IDENTITY_MISMATCH')
-                if result.get('status') == 'not_run':
+                if result.get('status') in {'not_run', 'stage_blocked'}:
                     payload = {k: v for k, v in result.items() if k != 'terminal_sha256'}
                     if (result.get('observation_schema_version') != 1
                             or result.get('terminal_sha256') != hashlib.sha256(_canonical(payload).encode()).hexdigest()
@@ -198,7 +198,7 @@ class FormalCommandObserver(InspectionOwnerMixin):
                 from agent_core.work_plan import action_targets
                 try:
                     if not native:
-                        action_targets(load_plan_state(self.data_path, task_id), arguments, self.service.project_for_task(task_id))
+                        action_targets(load_plan_state(self.data_path, task_id), arguments, self.service.project_for_task(task_id),command_service=self.service,task_id=task_id)
                 except ValueError as exc:
                     return {**self._refusal(str(exc)), 'execution_started': False, 'phase': 'action_admission'}
                 policy = EXECUTION_RUNTIME_POLICY
@@ -320,7 +320,8 @@ class FormalCommandObserver(InspectionOwnerMixin):
                             'cleanup_confirmed':False, 'preparation_effects':settlement}
             return
         path = owner.directory / 'observation_result.json'
-        result = {**diagnostic, 'status': 'not_run', 'terminal': True,
+        capability_missing = diagnostic.get('status') == 'capability_missing'
+        result = {**diagnostic, 'status': 'stage_blocked' if capability_missing else 'not_run', 'terminal': True,
                   'execution_started': False, 'exit_code': None, 'cleanup_confirmed': True,
                   'task_id': owner.task_id, 'attempt_id': owner.run_ref, 'run_ref': owner.run_ref,
                   'scope_key': owner.scope_key, 'call_id': owner.call_id,
@@ -331,6 +332,9 @@ class FormalCommandObserver(InspectionOwnerMixin):
                       'directory': str(owner.directory), 'retained': True, 'rolled_back': False,
                       'settlement': settlement},
                   'duration_seconds': time.monotonic()-owner.started}
+        if capability_missing:
+            result['capability_missing'] = True
+            result['affected_capability'] = 'formal_input_read_only_execution'
         result['terminal_sha256'] = hashlib.sha256(_canonical(result).encode()).hexdigest()
         try:
             _once(path, result)

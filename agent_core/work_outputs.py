@@ -76,13 +76,21 @@ def _absolute(state, value, project_dir):
     return Path(os.path.abspath(base / path))
 
 
-def authorized_output(state, target, project_dir):
-    """Project outputs plus explicitly authorized external TaskSpec locations."""
+def authorized_output(state, target, project_dir, *, path_authorizer=None):
+    """Resolve output declarations; actual execution supplies live path authority.
+
+    TaskSpec sources remain planning constraints, never filesystem grants in
+    the command runner. The callable is host constructed, not an input field.
+    """
     from agent_core.workspace_files import _PRIVATE_PATTERN
     lexical, resolved = Path(target).absolute(), Path(target).resolve()
     if any(_PRIVATE_PATTERN.fullmatch(part.lower()) or part in {'.biomind','.git','task_outputs'} for candidate in (lexical,resolved) for part in candidate.parts):
         raise WorkOutputError('OUTPUT_PATH_NOT_AUTHORIZED', str(target), reason='private path')
     project = Path(project_dir).resolve()
+    if path_authorizer is not None:
+        if not path_authorizer(lexical) or not path_authorizer(resolved):
+            raise WorkOutputError('OUTPUT_PATH_NOT_AUTHORIZED',str(target),resolved_path=str(resolved))
+        return resolved
     allowed_roots = [project]
     exact = []
     for row in _spec(state).get('output_contracts') or []:

@@ -1,6 +1,6 @@
 # Pi 0.87.1 + BioMind observer compatibility patch
 
-This runtime is **0.87.1+biomind-observer.2**, not unmodified upstream.
+This runtime is **0.87.1+biomind-observer.4**, not unmodified upstream.
 The original negative P15.d artifacts remain historical evidence.
 
 `pi-0.87.1-observer.patch.json` contains exact, unique replacement anchors and
@@ -18,6 +18,10 @@ Both execution layouts are patched: the SDK's `dist/core/model-runtime.js` and
 `dist/core/model-registry.js`, `dist/core/http-dispatcher.js`, and the CLI's actual bundled
 `dist/bundle/chunks/chunk-OJP47DM6.js`. Patching the unbundled CLI entry alone
 would miss the published `bin.pi` path.
+The input-boundary bridge also patches `dist/core/extensions/runner.js` and
+`dist/core/agent-session.js`. The .4 summarization bridge additionally patches
+`dist/core/compaction/compaction.js` and declares its extension return field in
+`dist/core/extensions/types.d.ts`.
 
 After the locked install (`npm ci`), the package `postinstall` runs:
 
@@ -129,3 +133,62 @@ three .1 target files first, then applying/checking this four-file .2 manifest.
 The .2 helper intentionally refuses mixed .1/.2 bytes. Reverting .2 restores all
 four upstream files; restore a matching source tree/package manifest and rebuild
 before enabling its entrypoint. Restoring source alone does not undo dependencies.
+
+The .3 patch also returns a host-generated `biomindBoundary` from the existing
+input hook. Before accepting that input, Pi verifies idle state and the expected
+branch leaf, then delegates to its original `_commitBoundaryDrafts`. This enables
+new-task isolation and idempotent repair before any provider request. Ordinary
+C→G commits continue using upstream `turn_end` BoundaryResult. No writable
+SessionManager is exposed to extensions, no transcript rewrite or second store
+is introduced. Both SDK and native bundle use this same change.
+
+Public usage observation still uses public events; it does not disable this
+required context boundary. Startup verifies compatibility in both observation
+modes. Known .2 and .3 bytes can upgrade through exact prior checksums; unknown bytes
+are refused. Input hook drafts are a BioMind compatibility contract, not an
+upstream Pi API. Restart running clients after deployment.
+
+## .4: additional summary focus without a replacement summarizer
+
+Upstream 0.87.1 exposes `customInstructions` on `session_before_compact` events,
+but only consumes `cancel` or a complete replacement `compaction` result. The .4
+bridge adds an optional `customInstructions` result field, explicitly marked as
+a BioMind compatibility API in the declaration. Manual compaction and automatic
+threshold/overflow compaction pass that field to Pi's existing default
+summarizer. An omitted field preserves the original instructions; an explicit
+empty string has the same override semantics as Pi's tree-summary hook.
+
+The split-turn prefix receives the same focus and appends it using the existing
+`Additional focus:` convention. Its original prompt, smaller output budget,
+summary combination and usage accounting remain unchanged. The ordinary and
+previous-summary paths already support this convention. No summary template
+constant, trigger threshold, recent-token setting, authentication path, retry,
+cancellation, file-operation tracking or session write is replaced. The bridge
+does not add a provider request and does nothing extra when no focus is returned.
+
+Both the SDK implementation and the CLI's actual `compact2` /
+`generateTurnPrefixSummary2` bundle path carry this bridge. The bundle also
+contains a separate similarly named compaction implementation; that unrelated
+path is not changed. Tree summaries already accept `customInstructions` and
+`replaceInstructions` natively and require no dependency patch. BioMind's
+application extension owns the additional content and merges it with any user
+focus; the compatibility layer itself contains no biological instructions.
+
+The installer recognizes exact predecessor hashes and replacement counts for
+both .2 and .3. It validates every target before writing, reverses a known prior
+patch to its upstream bytes, then applies the current manifest. Reverting .4
+restores upstream bytes, not .3; restoring an older product revision requires
+its matching manifest/helper and a rebuild. Unknown byte combinations are never
+accepted as an upgrade. The earlier single-predecessor metadata remains readable.
+
+Run the installer regression checks without a model, credentials, or network:
+
+```bash
+node --test compat/pi-observer.test.mjs
+```
+
+These checks use isolated copies of the declared dependency files. They verify
+upstream/.2/.3 upgrades, repeat-apply/check, exact revert/reapply, and rejection
+of unknown bytes or an unsupported Pi version before any dependency file is
+changed. Provider-facing compaction tests separately verify that the focus
+actually reaches manual, automatic, retry and split-turn summary requests.

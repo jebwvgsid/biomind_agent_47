@@ -89,3 +89,8 @@ def test_resume_rejects_noninteractive_commands_before_node(tmp_path, monkeypatc
     monkeypatch.setattr(pi_entry, 'node_executable', lambda *args: pytest.fail('Node selected for invalid command'))
     with pytest.raises(pi_entry.PiEntryError, match=error):
         command(tmp_path, argv, monkeypatch)
+
+
+def test_resume_selector_cannot_replace_exact_session_for_profile_migration(tmp_path, monkeypatch):
+    with pytest.raises(pi_entry.PiEntryError, match='Migration requires --session and --execution-profile'):
+        command(tmp_path, ['--resume', '--execution-profile', 'protected', '--migrate-execution-profile'], monkeypatch)

@@ -522,7 +522,7 @@ async def _run_command(
     """
     require_dispatch = _dispatch_check
     # short_check adjusts lifecycle/cleanup only; it is not permission.
-    require_dispatch(command,cwd=cwd,env=env)
+    dispatch = require_dispatch(command,cwd=cwd,env=env)
     direct_argv = list(command) if isinstance(command, list) else None
     if direct_argv is not None:
         if not direct_argv or not direct_argv[0] or any(not isinstance(a,str) or '\x00' in a for a in direct_argv):
@@ -620,7 +620,21 @@ async def _run_command(
             env={str(key):str(value) for key,value in env.items()} if env is not None else None,
             **popen_kwargs)
         require_dispatch(command,cwd=cwd,env=env)
-        if direct_argv is not None:
+        projection = dispatch['payload'].get('access_projection')
+        if projection is None and dispatch['payload'].get('kind') in {'command', 'installation'}:
+            from agent_core.command_execution import FormalProtectionError
+            raise FormalProtectionError('approved_action_missing_access_projection')
+        if projection is not None:
+            from agent_core.command_execution import formal_protected_spawn
+            # Validate the original business command, then wrap that exact
+            # command internally. The bwrap argv is not a new approved action.
+            require_dispatch(command,cwd=cwd,env=env)
+            with formal_protected_spawn(projection, command, cwd=cwd or projection['cwd'], env=env,
+                                        observation=observation) as (protected_argv, mount_fds):
+                require_dispatch(command,cwd=cwd,env=env)
+                spawn_options.update(pass_fds=mount_fds, close_fds=True, cwd='/', env={})
+                process = await asyncio.create_subprocess_exec(*protected_argv, **spawn_options)
+        elif direct_argv is not None:
             process = await asyncio.create_subprocess_exec(*direct_argv, **spawn_options)
         else:
             process = await asyncio.create_subprocess_shell(command, executable='/bin/sh', **spawn_options)

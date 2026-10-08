@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createHarness, call, text, FakeDomain, type ScriptEntry } from './extension-harness.js';
-import { requestFromBranch, projectHistory } from '../extensions/biomind.js';
+import { requestFromBranch, normalizeLegacyHistory } from '../extensions/biomind.js';
 const { getCurrentTools } = await import(new URL('../../node_modules/@earendil-works/pi-ai/dist/utils/transcript.js', import.meta.url).href);
 const system = (context: any) => JSON.stringify(context.messages.filter((message: any) => message.role === 'system'));
 
@@ -11,7 +11,9 @@ for (const profile of ['native', 'protected'] as const) test(`A01 A02 I05 ${prof
     const tools = getCurrentTools(context.messages).map((tool: any) => tool.name);
     for (const name of ['run_command', 'install_tool', 'register_environment', 'select_environment', 'probe_command', 'write', 'edit']) assert(tools.includes(name), name);
     assert(!tools.includes('handoff_generate')); assert.match(system(context), /单一主 agent/);
-    assert.match(system(context), /不追加 which/); assert.match(system(context), /裸 bash 保持宿主语义/);
+    // Concrete probe/ORA examples live in main-prompt-behavior fixtures; the
+    // resident rule keeps the general reuse and per-call environment contract.
+    assert.match(system(context), /适用登记直接使用，不例行重复探测/); assert.match(system(context), /裸 bash 用宿主环境/);
     assert.doesNotMatch(system(context), /当前阶段：Consult|当前阶段：Generate|调用 handoff_generate/);
     return text('Plain answer without a task template.');
   }] });
@@ -80,17 +82,15 @@ test('A03 N11 legacy role and handoff are decoded as facts, never executable con
   const message = { role: 'custom', customType: 'biomind.handoff', display: true, timestamp: 1,
     content: JSON.stringify({ instruction: 'OLD_ROLE_CONTINUATION', phase: 'Generate', user_basis: basis, checks: [{ source_ref: 'pi:old:check', status: 'failed' }] }), details: { sources: ['wiki:old'] } } as any;
   const original = JSON.stringify(message);
-  const retained = projectHistory([message], [], { history_enabled: true });
+  const retained = normalizeLegacyHistory([message]);
   assert(!JSON.stringify(retained).includes('OLD_ROLE_CONTINUATION'));
   assert(JSON.stringify(retained).includes('module failure must stop')); assert(JSON.stringify(retained).includes('pi:old:check'));
-  const withdrawn = projectHistory([message], [], { history_enabled: false, revoked_sources: ['wiki:old'] });
-  assert(!JSON.stringify(withdrawn).includes('module failure must stop'));
   const owned = { ...message, content: JSON.stringify({ request_id: 'r', user_basis: basis, instruction: 'OLD_ROLE_CONTINUATION', checks: ['WITHDRAWN_MEMORY_CHECK'] }) };
-  const ownerBranch = [{ type: 'custom', customType: 'biomind.request', data: { requestId: 'r', role: 'Generate', userBasis: basis } }] as any;
-  const ownedWithdrawal = projectHistory([owned], ownerBranch, { history_enabled: false, revoked_sources: ['wiki:old'] });
-  assert(JSON.stringify(ownedWithdrawal).includes('module failure must stop'));
-  assert(!JSON.stringify(ownedWithdrawal).includes('WITHDRAWN_MEMORY_CHECK'));
-  assert(!JSON.stringify(ownedWithdrawal).includes('OLD_ROLE_CONTINUATION'));
+  const normalizedOwned = normalizeLegacyHistory([owned]);
+  assert(JSON.stringify(normalizedOwned).includes('module failure must stop'));
+  assert(JSON.stringify(normalizedOwned).includes('WITHDRAWN_MEMORY_CHECK'));
+  assert(!JSON.stringify(normalizedOwned).includes('OLD_ROLE_CONTINUATION'));
+  assert.deepEqual((normalizedOwned[0] as any).details, owned.details, 'historical source annotations remain facts');
   assert.equal(JSON.stringify(message), original);
 });
 

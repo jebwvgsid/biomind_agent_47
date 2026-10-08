@@ -12,6 +12,8 @@ export interface DomainOptions {
   memoryRoot?: string; wikiRoot?: string; historyEnabled?: boolean;
   archivePath?: string; memoryMode?: 'ask' | 'auto' | 'manual' | 'disabled';
   handshakeTimeoutMs?: number;
+  executionProfile?: 'native' | 'protected'; profileSource?: string;
+  sessionExisting?: boolean; migrateProfile?: boolean;
 }
 export interface CallOptions { signal?: AbortSignal; requestId?: string }
 export const DEFAULT_HANDSHAKE_TIMEOUT_MS = 60000;
@@ -33,10 +35,10 @@ const MAX_FRAME_BYTES = 1024 * 1024;
 export const DOMAIN_TRANSPORT_LIMITS = Object.freeze({ frameBytes: MAX_FRAME_BYTES, diagnosticBytes: 65536,
   pendingRequests: 64, reservedControlRequests: 4, queuedWrites: 64, queuedBytes: 5 * 1024 * 1024,
   reservedControlBytes: 1024 * 1024 });
-const CONTROL_METHODS = new Set(['hello', 'request.cancel', 'shutdown', 'approval.decide', 'exec.cancel',
-  'exec.status', 'session.lifecycle', 'archive.status']);
-const HOST_METHODS = new Set(['files.list', 'files.read_authorize', 'files.mutation_snapshot', 'files.mutation_replay', 'request.begin', 'request.cancel', 'shutdown', 'approval.decide', 'settings.update',
-  'memory.maintenance.prepare', 'memory.maintenance.apply', 'archive.append', 'archive.status']);
+const CONTROL_METHODS = new Set(['hello', 'request.cancel', 'request.pause', 'request.resume', 'request.revise', 'request.status', 'permissions.mode', 'shutdown', 'approval.decide', 'exec.cancel',
+  'exec.status', 'session.lifecycle', 'archive.status', 'permissions.status', 'permissions.revoke']);
+const HOST_METHODS = new Set(['environments.launch', 'environments.register_observed', 'files.list', 'files.read_authorize', 'files.mutation_snapshot', 'files.mutation_replay', 'request.begin', 'request.cancel', 'request.pause', 'request.resume', 'request.revise', 'request.status', 'permissions.mode', 'exec.probe', 'shutdown', 'approval.decide', 'settings.update',
+  'memory.maintenance.prepare', 'memory.maintenance.apply', 'archive.append', 'archive.status', 'permissions.status', 'permissions.revoke']);
 interface Pending { resolve(value: unknown): void; reject(error: Error): void; cleanup(): void }
 
 export class DomainClient extends EventEmitter {
@@ -67,6 +69,9 @@ export class DomainClient extends EventEmitter {
     const args = ['-B', '-u', options.servicePath ?? process.env.BIOMIND_PI_DOMAIN_SERVICE ?? path.join(runtime, 'python_service.py'),
       '--cwd', path.resolve(options.cwd), '--data-root', dataRoot, '--install-root', installRoot,
       '--session-id', options.sessionId];
+    args.push('--execution-profile', options.executionProfile ?? 'protected', '--profile-source', options.profileSource ?? 'host');
+    if (options.sessionExisting) args.push('--session-existing');
+    if (options.migrateProfile) args.push('--migrate-profile');
     for (const [flag, value] of [['registry-path', options.registryPath ?? process.env.BIOMIND_PI_REGISTRY_PATH],
       ['environment-inventory', options.environmentInventory ?? process.env.BIOMIND_PI_ENVIRONMENT_INVENTORY],
       ['skills-root', options.skillsRoot], ['preferences-path', options.preferencesPath ?? process.env.BIOMIND_PI_PREFERENCES_PATH],
@@ -82,6 +87,11 @@ export class DomainClient extends EventEmitter {
     // No inherited provider credentials, shell startup, dotenv or Python path.
     this.#child = spawn(python, args, { cwd: options.cwd, stdio: ['pipe', 'pipe', 'pipe'],
       env: { PATH: `${path.dirname(python)}:/usr/bin:/bin`, LC_ALL: 'C.UTF-8',
+        ...(process.env.HOME ? { HOME: process.env.HOME } : {}),
+        ...(process.env.XDG_CONFIG_HOME ? { XDG_CONFIG_HOME: process.env.XDG_CONFIG_HOME } : {}),
+        ...Object.fromEntries(['XDG_CACHE_HOME','XDG_DATA_HOME','XDG_STATE_HOME','TMPDIR','TMP','TEMP']
+          .flatMap(key => process.env[key] ? [[key,process.env[key]!]] : [])),
+        ...(process.env.BIOMIND_PI_PREFERENCES_SOURCE ? { BIOMIND_PI_PREFERENCES_SOURCE: process.env.BIOMIND_PI_PREFERENCES_SOURCE } : {}),
         PYTHONDONTWRITEBYTECODE: '1', PYTHONUNBUFFERED: '1' } });
     this.#child.on('error', () => this.#fail(new Error('DOMAIN_PROCESS_START_FAILED')));
     this.#child.on('exit', (code, signal) => {
@@ -123,8 +133,11 @@ export class DomainClient extends EventEmitter {
       // Only a failed initial handshake is safe to replace: this connection
       // has never dispatched a request or started an independent job.
       this.#startupFailed = true;
+      // Constructor-time profile failures precede hello. Forward only the
+      // typed configuration code, never Python's private diagnostic tail.
+      const profileFailure = this.#stderr.match(/\bEXECUTION_PROFILE_[A-Z_]+\b/g)?.at(-1);
       const failure = controller.signal.aborted ? new DomainHandshakeTimeoutError(timeoutMs)
-        : error instanceof Error ? error : new Error('DOMAIN_HANDSHAKE_FAILED');
+        : profileFailure ? new Error(profileFailure) : error instanceof Error ? error : new Error('DOMAIN_HANDSHAKE_FAILED');
       this.#fail(failure);
       this.#child.stdin.end();
       throw failure;
@@ -216,7 +229,9 @@ export class DomainClient extends EventEmitter {
     return this.#request(method, params, options, false);
   }
   async hostCall(method: string, params: Record<string, unknown>, options: CallOptions = {}): Promise<unknown> {
-    if (!HOST_METHODS.has(method)) throw new Error('NOT_A_HOST_METHOD');
+    // Environment selection also supports ordinary name-only queries. Only
+    // the host variant may attach Pi's already-loaded Skill identities.
+    if (!HOST_METHODS.has(method) && method !== 'environments.select') throw new Error('NOT_A_HOST_METHOD');
     await this.#ready;
     return this.#request(method, params, options, true);
   }

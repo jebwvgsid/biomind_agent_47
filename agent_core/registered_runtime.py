@@ -4,13 +4,13 @@ from __future__ import annotations
 from pathlib import Path
 import re
 import shlex
+import copy
 from typing import Mapping
 
 from agent_core.action_runtime import _runtime_binding_identity
 from agent_core.runtime_evidence import digest
 
-_INVALID = {"broken", "disabled", "invalid", "failed"}
-_SUCCESS = {"success", "verified", "installed"}
+_REVOKED = {"disabled", "revoked", "removed", "uninstalled"}
 
 
 def _items(value):
@@ -20,7 +20,7 @@ def _items(value):
 
 
 def _package_covered(requirement, recorded, versions):
-    """An unversioned registration cannot satisfy a newly constrained version."""
+    """Compare recorded facts: True known match, False known conflict, None unknown."""
     from packaging.requirements import Requirement
     from packaging.utils import canonicalize_name
     from packaging.version import Version, InvalidVersion
@@ -28,19 +28,19 @@ def _package_covered(requirement, recorded, versions):
         wanted = Requirement(requirement)
         known = [Requirement(item) for item in recorded]
     except Exception:
-        return requirement in recorded
+        return True if requirement in recorded else None
     name = canonicalize_name(wanted.name)
     matches = [item for item in known if canonicalize_name(item.name) == name]
-    if not matches:
-        return False
-    if not wanted.specifier:
-        return True
     version = next((str(v) for k, v in versions.items() if canonicalize_name(k) == name), "")
     if version:
         try:
             return Version(version) in wanted.specifier
         except InvalidVersion:
-            return False
+            return None
+    if not matches:
+        return None
+    if not wanted.specifier:
+        return True
     # Persisted exact versions or the same declared constraint are evidence;
     # do not guess overlap between arbitrary version ranges.
     for item in matches:
@@ -53,106 +53,238 @@ def _package_covered(requirement, recorded, versions):
                     return True
             except InvalidVersion:
                 pass
-    return False
+            else:
+                return False
+    return None
 
 
-def registered_runtime_reuse(pm, requirements: Mapping, *, skill_record: Mapping, target_env=""):
-    declared = str(target_env or requirements.get("env") or requirements.get("default_env") or "")
-    has_requirements = any(requirements.get(key) for key in
-        ("tools", "packages", "capabilities", "required_binding_ids", "inspection_probes"))
-    if not declared and not has_requirements:
-        return {"decision": "no_runtime_required", "availability": "NOT_REQUIRED",
-                "selected_candidate": {}, "candidates": [], "install_required": False,
-                "reason_code": "NO_RUNTIME_REQUIREMENTS"}
+def _source(pm):
+    return {"registry_path": str(getattr(pm, "path", None) or getattr(pm, "registry_path", "") or ""),
+            "source_type": "software_registry"}
+
+
+def _facts(pm, declared, records):
+    packages = sorted({item for record in records for item in _items(record.get("packages"))})
+    caps = sorted({item for record in records for item in _items(record.get("capabilities"))})
+    tools = {item.casefold() for record in records for key in ("tools", "bound_tools") for item in _items(record.get(key))}
+    entries = {key: value for record in records for key, value in (record.get("entries") or {}).items()}
+    for tool, info in ((pm.registry or {}).get("tools") or {}).items():
+        if (info.get("env") or info.get("env_name")) == declared and str(info.get("status") or "").lower() not in _REVOKED:
+            tools.add(tool.casefold())
+            if info.get("source_executable"):
+                entries[tool] = info["source_executable"]
+    tools.update(re.split(r"[<>=!~\s]", item)[0].casefold() for item in packages)
+    tools.update(item.removeprefix("tool:").casefold() for item in caps if item.startswith("tool:"))
+    tools.update(str(item).casefold() for item in entries)
+    languages = {str(record.get("language") or "").lower() for record in records}
+    if "python" in languages:
+        tools.update({"python", "python3"})
+    if languages & {"r", "rscript"}:
+        tools.update({"r", "rscript"})
+    return packages, caps, tools, entries
+
+
+def _registered_candidate(pm, requirements, skill_record, declared, trusted_backend, trusted_host):
     environments = (pm.registry or {}).get("environments") or {}
-    known = pm._known_environment_prefixes()
-    names = list(dict.fromkeys([declared, str(skill_record.get("env") or ""), *environments]))
-    candidates = []
-    for name in filter(None, names):
-        if (target_env and name != target_env) or (declared and not has_requirements and name != declared):
-            continue
-        environment = dict(environments.get(name) or {})
-        skill = dict(skill_record) if skill_record.get("env") == name else {}
-        # A specific invalidation always wins over historical success elsewhere.
-        if any(str(record.get("status") or "").lower() in _INVALID for record in (environment, skill)):
-            candidates.append({"env": name, "availability": "UNKNOWN", "reason_code": "REGISTERED_RUNTIME_INVALIDATED"})
-            continue
-        records = [r for r in (environment, skill) if str(r.get("status") or "").lower() in _SUCCESS]
-        if not records:
-            continue
-        merged = {**skill, **environment}
-        explicit_prefixes = {str(record.get("prefix") or record.get("path") or "") for record in records} - {""}
-        prefixes = sorted(explicit_prefixes) if explicit_prefixes else pm._registered_prefixes(name, merged, known)
-        row = {"env": name, "availability": "UNKNOWN", "inspection_status": "not_run",
-               "reason_code": "REGISTERED_RUNTIME_LOCATION_UNRESOLVED", "prefix_candidates": prefixes}
-        candidates.append(row)
-        if len(prefixes) != 1 or not Path(prefixes[0]).is_absolute():
-            if len(prefixes) > 1:
-                row["reason_code"] = "REGISTERED_RUNTIME_LOCATION_AMBIGUOUS"
-            continue
-        prefix = Path(prefixes[0]).resolve()
-        if not prefix.is_dir():
-            continue
-        packages = sorted({item for record in records for item in _items(record.get("packages"))})
-        caps = sorted({item for record in records for item in _items(record.get("capabilities"))})
-        tools = {item.casefold() for record in records for key in ("tools", "bound_tools") for item in _items(record.get(key))}
-        for tool, info in ((pm.registry or {}).get("tools") or {}).items():
-            if (info.get("env") or info.get("env_name")) == name and str(info.get("status") or "").lower() in _SUCCESS:
-                tools.add(tool.casefold())
-        # A declared tool capability (e.g. hicfindtads) or package of the same
-        # name is explicit metadata; never infer tools from an environment name.
-        tools.update(re.split(r"[<>=!~\s]", item)[0].casefold() for item in packages)
-        tools.update(item.removeprefix("tool:").casefold() for item in caps)
-        if any(str(record.get("language") or "").lower() == "python" for record in records):
-            tools.update({"python", "python3"})
-        versions = {key: value for record in records for key, value in (record.get("versions") or {}).items()}
-        missing_packages = [item for item in _items(requirements.get("packages")) if not _package_covered(item, packages, versions)]
-        missing_tools = [item for item in _items(requirements.get("tools")) if item.casefold() not in tools]
-        missing_caps = sorted(set(_items(requirements.get("capabilities"))) - set(caps))
-        row.update(prefix=str(prefix), prefix_present=True, missing_packages=missing_packages,
-                   missing_tools=missing_tools, missing_capabilities=missing_caps)
-        if missing_packages or missing_tools or missing_caps:
-            row["reason_code"] = "REGISTERED_RUNTIME_COVERAGE_GAP"
-            continue
-        paths = {"RESOLVED_ENV_PREFIX": str(prefix)}
-        paths.update({key: value for record in records for key, value in (record.get("resolved_runtime_paths") or {}).items()
-                      if isinstance(value, str) and Path(value).is_absolute()})
-        for probe in requirements.get("inspection_probes") or []:
-            value = str(probe.get("value") or "").replace("{prefix}", str(prefix))
-            output = str(probe.get("output") or "")
-            # Resolving the declared launch location is path metadata only. No
-            # probe checks are executed and no fresh verification is claimed.
-            if output and Path(value).is_absolute() and "{" not in value:
-                paths[output] = value
-        coverage = {_runtime_binding_identity(key)[0]: {
-            "availability": "AVAILABLE", "output_name": key,
-            "value_kind": _runtime_binding_identity(key)[2], "conclusion_complete": True,
-            "reason_code": "REGISTERED_RUNTIME_REUSED"} for key in paths}
-        required = set(requirements.get("required_binding_ids") or [])
-        if required - set(coverage):
-            row.update(reason_code="REGISTERED_RUNTIME_BINDING_UNDECLARED", missing_binding_ids=sorted(required - set(coverage)))
-            continue
-        source_ref = "registered-runtime:" + digest({"env": name, "prefix": str(prefix), "records": records})
-        runner = str(merged.get("env_runner") or requirements.get("env_runner") or "")
-        # A name-only launcher must not reintroduce ambiguity after a prefix
-        # has been resolved. Keep the registered launch method, pin its target.
-        runner = re.sub(r"(\b(?:conda|mamba|micromamba)\s+run\s+)-n\s+" + re.escape(name) + r"(?=\s|$)",
-                        lambda match: match.group(1) + "-p " + shlex.quote(str(prefix)), runner)
-        audit = {"skill_id": str(requirements.get("skill_id") or skill.get("skill_id") or ""),
-                 "env": name, "checked_env": name, "declared_env": declared, "status": "ready",
-                 "declared_ok": True, "decision": "registered_runtime_reused", "runtime_source": "registered_runtime",
-                 "healthcheck_status": "not_run", "inspection_status": "not_run", "source_ref": source_ref,
-                 "resolved_runtime_paths": paths, "coverage": coverage,
-                 "env_runner": runner,
-                 "last_verified_at": str(merged.get("last_verified_at") or ""),
-                 "reason": "Using existing successful registration; no health check performed in this task."}
-        row.update(availability="AVAILABLE", reason_code="REGISTERED_RUNTIME_REUSED", coverage=coverage,
-                   resolved_runtime_paths=paths, source_ref=source_ref, audit=audit)
-        return {"decision": "registry_reused", "availability": "AVAILABLE", "selected_candidate": row,
-                "candidates": candidates, "install_required": False, "reason_code": "REGISTERED_RUNTIME_REUSED"}
-    return {"decision": "registry_unresolved", "availability": "UNKNOWN", "selected_candidate": {},
-            "candidates": candidates, "install_required": False,
-            "reason_code": candidates[0]["reason_code"] if candidates else "REGISTERED_RUNTIME_NOT_FOUND"}
+    environment = dict(environments.get(declared) or {})
+    skill = dict(skill_record) if skill_record.get("env") == declared else {}
+    records = [record for record in (skill, environment) if record]
+    row = {"env": declared, "availability": "UNKNOWN", "inspection_status": "not_run", **_source(pm)}
+    def unresolved(reason):
+        row["reason_code"] = reason
+        return row
+    if not records:
+        return unresolved("REGISTERED_RUNTIME_NOT_FOUND")
+    if any(str(record.get("status") or "").lower() in _REVOKED or record.get("enabled") is False
+           or record.get("revoked") is True for record in records):
+        return unresolved("REGISTERED_RUNTIME_REVOKED")
+    merged = {**skill, **environment}
+    for field, trusted in (("backend", trusted_backend), ("host", trusted_host)):
+        recorded = {str(record[field]) for record in records if record.get(field)}
+        requested = str(requirements.get(field) or "")
+        if len(recorded) > 1 or (trusted and any(value != trusted for value in recorded)):
+            return unresolved("REGISTERED_RUNTIME_" + field.upper() + "_CONFLICT")
+        actual = trusted or next(iter(recorded), "")
+        if requested and requested != actual:
+            return unresolved("REGISTERED_RUNTIME_" + field.upper() + "_CONFLICT")
+        row[field] = actual
+    explicit = {str(value) for record in records for value in
+                (record.get("prefix"), record.get("path"),
+                 (record.get("resolved_runtime_paths") or {}).get("RESOLVED_ENV_PREFIX")) if value}
+    packages, caps, tools, entries = _facts(pm, declared, records)
+    has_other_launch = bool(entries or merged.get("runner_argv"))
+    # Exact registrations never enumerate inventory. Entry/runner-only backends
+    # also require no Conda prefix or Conda inventory.
+    prefixes = sorted(explicit) if explicit else ([] if has_other_launch else
+        pm._registered_prefixes(declared, merged, pm._known_environment_prefixes()))
+    prefixes = sorted({str(Path(value).resolve()) if Path(value).is_absolute() else str(value) for value in prefixes})
+    row["prefix_candidates"] = prefixes
+    if len(prefixes) > 1:
+        return unresolved("REGISTERED_RUNTIME_LOCATION_AMBIGUOUS")
+    if (prefixes and not Path(prefixes[0]).is_absolute()) or (not prefixes and not has_other_launch):
+        return unresolved("REGISTERED_RUNTIME_LOCATION_UNRESOLVED")
+    prefix = prefixes[0] if prefixes else ""
+    requested_prefix = str(requirements.get("prefix") or "")
+    if requested_prefix and (not Path(requested_prefix).is_absolute() or str(Path(requested_prefix).resolve()) != prefix):
+        return unresolved("REGISTERED_RUNTIME_PREFIX_CONFLICT")
+    row["prefix"] = prefix
+    versions = {key: value for record in records for key, value in (record.get("versions") or {}).items()}
+    comparisons = {item: _package_covered(item, packages, versions) for item in _items(requirements.get("packages"))}
+    requested_versions = requirements.get("versions") or {}
+    if not isinstance(requested_versions, Mapping):
+        return unresolved("REGISTERED_RUNTIME_REQUIREMENTS_INVALID")
+    for name, value in requested_versions.items():
+        constraint = str(value)
+        requirement = str(name) + (constraint if constraint.startswith(("=", ">", "<", "!", "~")) else "==" + constraint)
+        comparisons[requirement] = _package_covered(requirement, packages, versions)
+    capability_evidence = {key: value for record in records for key, value in (record.get("capability_evidence") or {}).items()}
+    unknown_strength, conflicts = set(), set()
+    for kind, wanted in (("package", list(comparisons)), ("capability", _items(requirements.get("capabilities"))),
+                         ("tool", _items(requirements.get("tools")))):
+        for item in wanted:
+            name = re.split(r"[<>=!~\s]", item)[0] if kind == "package" else item
+            evidence = capability_evidence.get(kind + ":" + name, {})
+            if kind == "tool" and not evidence:
+                evidence = capability_evidence.get("package:" + name, {})
+            if evidence.get("status") in {"unavailable", "missing", "failed", "revoked"}:
+                conflicts.add(kind + ":" + name)
+            elif evidence and evidence.get("status") not in {"verified", "success", "observed", "historically_observed"}:
+                unknown_strength.add(kind + ":" + name)
+    row.update(conflicting_packages=[item for item, value in comparisons.items() if value is False],
+               conflicting_capabilities=sorted(conflicts),
+               unknown_packages=[item for item, value in comparisons.items() if value is None or
+                   "package:" + re.split(r"[<>=!~\s]", item)[0] in unknown_strength],
+               unknown_tools=[item for item in _items(requirements.get("tools")) if item.casefold() not in tools or "tool:" + item in unknown_strength],
+               unknown_capabilities=sorted(set(_items(requirements.get("capabilities"))) - set(caps) |
+                   {item.removeprefix("capability:") for item in unknown_strength if item.startswith("capability:")}),
+               versions=versions, capability_evidence=capability_evidence)
+    if row["conflicting_packages"] or conflicts:
+        return unresolved("REGISTERED_RUNTIME_REQUIREMENT_CONFLICT")
+    paths = {"RESOLVED_ENV_PREFIX": prefix} if prefix else {}
+    paths.update({key: value for record in records for key, value in (record.get("resolved_runtime_paths") or {}).items()
+                  if isinstance(value, str) and Path(value).is_absolute() and key != "RESOLVED_ENV_PREFIX"})
+    if not prefix and entries:
+        paths["RESOLVED_RUNTIME_ENTRY"] = str(next(iter(entries.values())))
+    elif not prefix and isinstance(merged.get("runner_argv"), list) and merged["runner_argv"]:
+        paths["RESOLVED_RUNTIME_ENTRY"] = str(merged["runner_argv"][0])
+    for probe in requirements.get("inspection_probes") or []:
+        value = str(probe.get("value") or "").replace("{prefix}", prefix) if prefix else ""
+        output = str(probe.get("output") or "")
+        if output and Path(value).is_absolute() and "{" not in value and output != "RESOLVED_ENV_PREFIX":
+            paths[output] = value
+    coverage = {_runtime_binding_identity(key)[0]: {
+        "availability": "AVAILABLE", "output_name": key, "value_kind": _runtime_binding_identity(key)[2],
+        "conclusion_complete": True, "reason_code": "REGISTERED_RUNTIME_REUSED"} for key in paths}
+    row["unknown_binding_ids"] = sorted(set(requirements.get("required_binding_ids") or []) - set(coverage))
+    row["requirements_status"] = "unknown" if any(row[key] for key in
+        ("unknown_packages", "unknown_tools", "unknown_capabilities", "unknown_binding_ids")) else "recorded"
+    source_ref = "registered-runtime:" + digest({"env": declared, "prefix": prefix, "records": records})
+    launch = {key: copy.deepcopy(merged[key]) for key in
+        ("env_runner", "runner_argv", "launcher", "runtime_env", "versions", "capability_evidence") if merged.get(key) is not None}
+    launch.update(env=declared, prefix=prefix, entries=entries, backend=row["backend"], host=row["host"], source_ref=source_ref,
+                  packages=packages, capabilities=caps, tools=sorted(tools | set(entries)),
+                  language=str(merged.get("language") or ""))
+    if launch["language"].lower() in {"r", "rscript"}:
+        launch["tools"] = sorted(set(launch["tools"]) | {"R", "Rscript"})
+    if any(not isinstance(value, str) or not Path(value).is_absolute() for value in entries.values()):
+        return unresolved("REGISTERED_RUNTIME_ENTRY_INVALID")
+    if launch.get("env_runner") and not launch.get("launcher"):
+        configured_root = str(getattr(pm, "conda_root", "") or "")
+        if configured_root and Path(configured_root).is_absolute():
+            launch["launcher"] = str(Path(configured_root) / "bin" / "conda")
+            row["launcher_source"] = "configured_manager_root"
+        elif prefix and Path(prefix).parent.name == "envs":
+            launch["launcher"] = str(Path(prefix).parent.parent / "bin" / "conda")
+            row["launcher_source"] = "registered_prefix_structure"
+    # The shared interpreter validates launch syntax without running it. Exact
+    # executable validation remains part of explicit verification/execution.
+    from agent_core.runtime_launch import prepare_runtime_launch, RuntimeLaunchError
+    try:
+        representative = [next(iter(entries), "runtime-command")]
+        if launch.get("env_runner"):
+            parts = shlex.split(str(launch["env_runner"]))
+            representative = [parts[-1]] if parts else representative
+        prepare_runtime_launch(launch, representative, base_env={})
+    except (RuntimeLaunchError, ValueError, TypeError) as exc:
+        row["launch_error"] = str(exc)
+        return unresolved("REGISTERED_RUNTIME_LAUNCH_UNSUPPORTED")
+    # Keep the historical audit spelling, but only registered runner facts are
+    # supplied to execution. Requirement text cannot manufacture setup code.
+    runner = str(launch.get("env_runner") or "")
+    if prefix:
+        runner = re.sub(r"(\b(?:conda|mamba|micromamba)\s+run\s+)-n\s+" + re.escape(declared) + r"(?=\s|$)",
+                        lambda match: match.group(1) + "-p " + shlex.quote(prefix), runner)
+    audit = {"skill_id": str(requirements.get("skill_id") or skill.get("skill_id") or ""),
+             "env": declared, "checked_env": declared, "declared_env": declared, "status": "ready",
+             "declared_ok": True, "decision": "registered_runtime_reused", "runtime_source": "registered_runtime",
+             "healthcheck_status": "not_run", "inspection_status": "not_run", "source_ref": source_ref,
+             "resolved_runtime_paths": paths, "coverage": coverage, "env_runner": runner,
+             "last_verified_at": str(merged.get("last_verified_at") or ""),
+             "reason": "使用已登记环境", "requirements_status": row["requirements_status"],
+             "launch_description": launch, **_source(pm)}
+    row.update(availability="AVAILABLE", reason_code="REGISTERED_RUNTIME_REUSED", coverage=coverage,
+               resolved_runtime_paths=paths, source_ref=source_ref, audit=audit, launch_description=launch)
+    return row
+
+
+def registered_runtime_reuse(pm, requirements: Mapping, *, skill_record: Mapping, target_env="",
+                             trusted_backend="", trusted_host=""):
+    """Resolve existing registration facts; queries never run health checks."""
+    requirements, skill_record = dict(requirements or {}), dict(skill_record or {})
+    def result(reason, rows=(), selected=None, availability="UNKNOWN"):
+        return {"decision": "registry_reused" if selected else ("no_runtime_required" if availability == "NOT_REQUIRED" else "registry_unresolved"),
+                "availability": "AVAILABLE" if selected else availability,
+                "selected_candidate": selected or {}, "candidates": list(rows)[:3],
+                "candidate_count": len(rows), "candidates_truncated": len(rows) > 3,
+                "install_required": False, "reason_code": reason, **_source(pm)}
+    if getattr(pm, "read_error", None):
+        error = pm.read_error
+        return {**result(error["reason_code"]), "registry_error": dict(error)}
+    explicit_names = {str(value) for value in (target_env, requirements.get("env"), requirements.get("env_name")) if value}
+    if len(explicit_names) > 1:
+        return result("REGISTERED_RUNTIME_TARGET_CONFLICT")
+    declared = next(iter(explicit_names), "") or str(requirements.get("default_env") or "")
+    has_requirements = any(requirements.get(key) for key in
+        ("tools", "packages", "capabilities", "required_binding_ids", "inspection_probes", "prefix", "versions", "backend", "host"))
+    if not declared and not has_requirements and not skill_record:
+        return result("NO_RUNTIME_REQUIREMENTS", availability="NOT_REQUIRED")
+    for field, trusted in (("backend", trusted_backend), ("host", trusted_host)):
+        if requirements.get(field) and trusted and str(requirements[field]) != trusted:
+            return result("REGISTERED_RUNTIME_" + field.upper() + "_CONFLICT")
+    environments = (pm.registry or {}).get("environments") or {}
+    if declared:
+        names = [declared]
+    else:
+        names = list(environments)
+        if skill_record.get("env") and skill_record["env"] not in names:
+            names.append(skill_record["env"])
+        relevant = []
+        wanted_packages = [re.split(r"[<>=!~\s]", item)[0].casefold() for item in _items(requirements.get("packages"))]
+        for name in names:
+            records = [environments.get(name) or {}]
+            if skill_record.get("env") == name:
+                records.append(skill_record)
+            packages, caps, tools, _ = _facts(pm, name, records)
+            package_names = {re.split(r"[<>=!~\s]", item)[0].casefold() for item in packages}
+            matches = (set(wanted_packages) & package_names or set(_items(requirements.get("capabilities"))) & set(caps)
+                       or {item.casefold() for item in _items(requirements.get("tools"))} & tools)
+            if matches or requirements.get("prefix") or requirements.get("versions") or (not has_requirements and skill_record.get("env") == name):
+                relevant.append(name)
+        names = relevant
+    if not names:
+        return result("REGISTERED_RUNTIME_NOT_FOUND" if has_requirements else "REGISTERED_RUNTIME_TARGET_MISSING")
+    rows = [_registered_candidate(pm, requirements, skill_record, name, trusted_backend, trusted_host) for name in names]
+    available = [row for row in rows if row["availability"] == "AVAILABLE"]
+    if not available:
+        return result(rows[0]["reason_code"] if len(rows) == 1 else "REGISTERED_RUNTIME_NO_APPLICABLE_CANDIDATE", rows)
+    # Prefer complete recorded matches over candidates with unknown requirements;
+    # never break a tie by registry ordering, timestamp, version or path.
+    best = min(sum(len(row[key]) for key in ("unknown_packages", "unknown_tools", "unknown_capabilities", "unknown_binding_ids")) for row in available)
+    applicable = [row for row in available if sum(len(row[key]) for key in
+                  ("unknown_packages", "unknown_tools", "unknown_capabilities", "unknown_binding_ids")) == best]
+    if len(applicable) != 1:
+        return result("REGISTERED_RUNTIME_CANDIDATE_AMBIGUOUS", applicable)
+    return result("REGISTERED_RUNTIME_REUSED", rows, selected=applicable[0])
 
 
 def record_execution_invalidation(state, receipt):
@@ -165,13 +297,36 @@ def record_execution_invalidation(state, receipt):
             or receipt.get('status') != 'exited' or not receipt.get('receipt_ref')):
         return []
     stderr = str(receipt.get('stderr') or '')
+    # Transport/permission failures do not establish missing runtime capability,
+    # even when a wrapper also repeats an earlier dependency diagnostic.
+    if (receipt.get('timed_out') or receipt.get('exit_code') == 124
+            or re.search(r'TIMEOUT after|permission denied|operation not permitted', stderr, re.I)):
+        return []
+    failure_kind = 'missing_package'
     missing = re.search(r"(?:^|\n)ModuleNotFoundError: No module named ['\"]([A-Za-z_][A-Za-z0-9_.]*)['\"](?:\n|$)", stderr)
     if not missing:
-        missing = re.search(r"(?:^|\n)[^\n]*:\s*([A-Za-z_][A-Za-z0-9_.+-]*): command not found(?:\n|$)", stderr)
+        missing = re.search(r"(?:^|\n)(?:[^\n]*:\s*)?([A-Za-z_][A-Za-z0-9_.+-]*): (?:command )?not found(?:\n|$)", stderr)
+        if missing:
+            failure_kind = 'missing_entry'
+    if not missing:
+        missing = re.search(r"there is no package called [\"'‘’]([A-Za-z][A-Za-z0-9_.]*)[\"'‘’]", stderr)
+    library_path = None
+    if not missing and re.search(r'unable to load shared object|Error in dyn\.load\(', stderr):
+        # Preserve the exact failing library location for a bounded, targeted
+        # diagnostic. Never infer that the entire environment is unusable.
+        missing = re.search(r"unable to load shared object\s+[\"'‘’]([^\"'‘’\n]+)[\"'‘’]", stderr)
+        if missing:
+            library_path = missing.group(1)
+        else:
+            missing = re.search(r"(?:^|\n)\s*([^:\n]*\.so(?:\.[0-9]+)*):\s*(?:cannot open shared object file|undefined symbol|wrong ELF class)", stderr)
+        if missing:
+            failure_kind = 'library_path'
+            library_path = missing.group(1)
     if not missing:
         return []
     prefix = str((receipt.get('env') or {}).get('ENV_PREFIX') or (receipt.get('env') or {}).get('CONDA_PREFIX') or '')
-    if not prefix:
+    binding_ref = str((receipt.get('runtime_binding') or {}).get('binding_ref') or '')
+    if not prefix and not binding_ref:
         return []
     from agent_core.runtime_evidence import project_registered_runtime_scopes
     task = state.setdefault('task_state', {})
@@ -183,12 +338,23 @@ def record_execution_invalidation(state, receipt):
     changed = []
     for audit in audits:
         paths = audit.get('resolved_runtime_paths') or {}
-        if audit.get('runtime_source') != 'registered_runtime' or prefix != (paths.get('RESOLVED_ENV_PREFIX') or paths.get('ENV_PREFIX')):
+        if audit.get('runtime_source') != 'registered_runtime' or (prefix and prefix != (paths.get('RESOLVED_ENV_PREFIX') or paths.get('ENV_PREFIX'))):
+            continue
+        if binding_ref and audit.get('runtime_audit_id') != binding_ref:
+            continue
+        accepted = next((record.get('acceptance') or {} for record in (task.get('runtime_evidence') or {}).get('records', [])
+                         if record.get('evidence_id') == audit.get('runtime_audit_id')), {})
+        if accepted.get('request_scope') and receipt.get('request_scope') != accepted['request_scope']:
             continue
         sid = audit['skill_id']
         row = {'environment': audit['env'], 'prefix': prefix, 'missing_dependency': missing.group(1),
+               'failure_kind': failure_kind,
                'reason_code': 'REGISTERED_RUNTIME_DEPENDENCY_FAILED', 'receipt_ref': receipt['receipt_ref'],
-               'attempt_id': receipt.get('attempt_id'), 'step_id': receipt.get('step_id')}
-        task.setdefault('runtime_invalidations', {})[sid] = row
+               'attempt_id': receipt.get('attempt_id'), 'step_id': receipt.get('step_id'),
+               'binding_ref': binding_ref or audit.get('runtime_audit_id'),
+               'request_scope': receipt.get('request_scope'), 'runtime_scope': sid}
+        if library_path:
+            row['library_path'] = library_path
+        task.setdefault('runtime_invalidations', {})[binding_ref or sid] = row
         changed.append(row)
     return changed

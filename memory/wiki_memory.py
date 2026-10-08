@@ -845,6 +845,7 @@ SessionArchive event refs:
             return None
         return {**fm, 'path':self._relative_page_path(path), 'absolute_path':str(path.resolve()),
             'source_ref':'wiki:' + self._relative_page_path(path), 'project_id':page_scope,
+            'record_status':fm.get('status') if isinstance(fm.get('status'), str) and fm['status'] else 'unknown',
             'status':status, 'available':not inactive, 'sources':sources, 'content':body,
             'content_hash':hashlib.sha256(text.encode()).hexdigest(), 'text':text,
             'links':self._wikilinks(body)}

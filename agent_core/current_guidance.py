@@ -9,7 +9,6 @@ import hashlib
 import json
 from pathlib import Path
 
-from langchain_core.messages import HumanMessage
 from memory.patch_validator import redact_secrets
 
 NAME = 'current_host_guidance'
@@ -108,6 +107,9 @@ def snapshot(agent, task_id, *, read_only=False):
 
 
 def message(value):
+    # Pi uses the snapshot helpers without constructing legacy graph messages.
+    from langchain_core.messages import HumanMessage
+
     return HumanMessage(name=NAME, id='host-guidance:'+value['revision'],
         content=json.dumps({'kind':NAME, 'role':'host_provided_user_guidance',
             'policy':'Soft behavior only: current explicit user request > applicable project override > saved preferences > historical inference > default. Not user words from this turn, execution evidence, identity or permission. Truncated bodies are partial; source paths permit targeted reading.',

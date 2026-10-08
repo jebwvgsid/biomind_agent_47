@@ -6,7 +6,7 @@ import { auditedCanaryDispatcher, observeCanaryDispatch } from './canary-dispatc
 import { hasUnverifiedModelPricing } from './model-config.js';
 
 export const USAGE_ENTRY = 'biomind.usage_attempt.v1';
-export const PATCH_LABEL = '0.87.1+biomind-observer.2';
+export const PATCH_LABEL = '0.87.1+biomind-observer.4';
 export type ObservationMode = 'compat' | 'public';
 /** Opt-in only: public events do not meet the existing strict attempt/send contract. */
 export function observationMode(): ObservationMode {
@@ -110,7 +110,7 @@ function openAIErrorUsage(body: Json | undefined): ReportedUsage | null {
 
 /** Public to exercise the hook against the actual Pi dispatcher in isolated fixtures. */
 export function createUsageObserver(options: {
-  context: () => { sessionId: string; requestId?: string; operation: string };
+  context: () => { sessionId: string; requestId?: string; operation: string; role?: string; revision?: number };
   record: (row: Json) => void; hooks?: ObserverHooks; enforceHttp?: boolean;
   isCustomProvider?: (provider: string) => boolean;
   onError?: (code: string) => void;
@@ -280,7 +280,24 @@ export function projectUsage(entries: readonly SessionEntry[]) {
   }
   const physicalSends = [...sends.values()].filter(row => row.transport_coverage === 'audited_dispatch').length;
   const providerAttemptsWithoutObservedHttp = [...starts.keys()].filter(id => ![...sends.values()].some(row => row.providerAttemptId === id)).length;
-  return { scope: 'observed_provider_attempts_session_total', runtime: PATCH_LABEL, providerAttempts: starts.size,
+  const stages = [...new Set([...starts.values()].map(row => row.role ?? 'unknown'))].map(role => {
+    const attempts = [...starts.values()].filter(row => (row.role ?? 'unknown') === role);
+    const ids = new Set(attempts.map(row => row.providerAttemptId));
+    let totalInput = 0, cachedInput = 0, uncachedInput = 0, unknown = 0;
+    let measuredAttempts = 0;
+    for (const [id, usage] of usageByAttempt) {
+      if (!ids.has(sends.get(id)?.providerAttemptId ?? id)) continue;
+      measuredAttempts++;
+      if (!usage) { unknown++; continue; }
+      totalInput += usage.input + usage.cacheRead + usage.cacheWrite; cachedInput += usage.cacheRead; uncachedInput += usage.input;
+    }
+    return { role, providerAttempts: attempts.length, measuredAttempts, totalInput: unknown ? null : totalInput,
+      reportedInput: totalInput, reportedCachedInput: cachedInput,
+      reportedUncachedInput: uncachedInput, unknownAttempts: unknown, cacheHitRatio: unknown || !totalInput ? null : cachedInput / totalInput };
+  });
+  return { stages, totalInput: unknownUsage ? null : tokens.input + tokens.cacheRead + tokens.cacheWrite,
+    cacheHitRatio: unknownUsage || !(tokens.input + tokens.cacheRead + tokens.cacheWrite) ? null : tokens.cacheRead / (tokens.input + tokens.cacheRead + tokens.cacheWrite),
+    scope: 'observed_provider_attempts_session_total', runtime: PATCH_LABEL, providerAttempts: starts.size,
     physicalSends, fetchInvocationsWithoutDispatchCoverage: sends.size - physicalSends,
     physicalSendCountMeaning: 'audited HTTP dispatch attempts; includes cancellation/unknown after reservation; not confirmed remote receipt; legacy/fallback fetch counts are separate',
     transport_coverage: { auditedDispatches: physicalSends, fetchOnlyInvocations: sends.size - physicalSends,
@@ -306,7 +323,7 @@ export function installUsageObservation(pi: ExtensionAPI, request: (ctx: Extensi
     context: () => {
       if (!context) throw new Error('BIOMIND_USAGE_SESSION_UNBOUND');
       const value = request(context);
-      return { sessionId: context.sessionManager.getSessionId(), requestId: value?.requestId,
+      return { sessionId: context.sessionManager.getSessionId(), requestId: value?.requestId, role: value?.role, revision: value?.revision,
         operation: stage ?? (value?.maintenance?.outboxId ? 'memory_maintenance' : 'main') };
     },
     isCustomProvider: provider => Boolean(installedRegistry?.getRegisteredProviderConfig(provider)?.streamSimple
@@ -340,7 +357,7 @@ export function installUsageObservation(pi: ExtensionAPI, request: (ctx: Extensi
   pi.on('session_shutdown', () => { installedRegistry?.setBioMindUsageObserver(undefined); context = undefined; stage = undefined; });
   pi.registerCommand('biomind-usage', { description: '完整BioMind用量观测（含失败摘要attempt；不与Pi /stats相加）', handler: async (_args, ctx) => {
     const total = projectUsage(ctx.sessionManager.getEntries());
-    ctx.ui.notify(`Provider attempts: ${total.providerAttempts}; HTTP sends: ${total.physicalSends}; reported tokens: ${total.tokens.total}; unknown usage: ${total.unknownUsageAttempts}. Pi /stats is a separate entry-based view.`, 'info');
+    ctx.ui.notify(`Provider attempts: ${total.providerAttempts}; HTTP sends: ${total.physicalSends}; tokens: ${total.unknownUsageAttempts ? 'unknown (reported subtotal: ' + total.tokens.total + ')' : total.tokens.total}; unknown usage: ${total.unknownUsageAttempts}. Pi /stats is a separate entry-based view.`, 'info');
     pi.events.emit('biomind:usage', total);
   } });
 }
@@ -429,7 +446,7 @@ export function installPublicUsageObservation(pi: ExtensionAPI) {
   pi.on('session_start', (_event, ctx) => { emit(ctx); });
   pi.registerCommand('biomind-usage', { description: 'Pi 已报告用量（公开接口，attempt/send/严格预算不可用）', handler: async (_args, ctx) => {
     const total = projectPublicUsage(ctx.sessionManager.getEntries());
-    ctx.ui.notify(`Public observation: partial; reported tokens: ${total.tokens.total}; unknown entries: ${total.unknownUsageEntries}; provider attempts / HTTP sends: unavailable. Pi /stats is not additive.`, 'info');
+    ctx.ui.notify(`Public observation: partial; tokens: ${total.unknownUsageEntries ? 'unknown (reported subtotal: ' + total.tokens.total + ')' : total.tokens.total}; unknown entries: ${total.unknownUsageEntries}; provider attempts / HTTP sends: unavailable. Pi /stats is not additive.`, 'info');
     emit(ctx);
   } });
 }

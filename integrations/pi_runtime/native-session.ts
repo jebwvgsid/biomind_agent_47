@@ -1,7 +1,7 @@
 /** Session selection only. Pi owns JSONL, indexes, branches, queueing and saves. */
 import fs from 'node:fs';
 import path from 'node:path';
-import { SessionManager, CURRENT_SESSION_VERSION } from '@earendil-works/pi-coding-agent';
+import { SessionManager, CURRENT_SESSION_VERSION, SettingsManager, ProjectTrustStore, hasTrustRequiringProjectResources } from '@earendil-works/pi-coding-agent';
 
 import { ProductSessionError, validateSessionSelection, resolveSessionDir, type NativeSessionSelection } from './native-session-selection.js';
 export { ProductSessionError, validateSessionSelection, resolveSessionDir, type NativeSessionSelection } from './native-session-selection.js';
@@ -84,4 +84,12 @@ export function describeProductSession(manager: SessionManager) {
   return { sessionId: manager.getSessionId(), sessionFile: manager.getSessionFile() ?? null,
     sessionPersistence: manager.isPersisted() ? 'persistent' as const : 'temporary' as const,
     sessionSaved: !!manager.getSessionFile() && fs.existsSync(manager.getSessionFile()!) };
+}
+
+/** Pi public trust store + native settings, with no prompt or trust writes in JSON mode. */
+export function createProductSettings(cwd: string, agentDir: string): SettingsManager {
+  const user = SettingsManager.create(cwd, agentDir, { projectTrusted: false });
+  const saved = new ProjectTrustStore(agentDir).get(cwd);
+  const trusted = !hasTrustRequiringProjectResources(cwd) || (saved ?? user.getDefaultProjectTrust() === 'always');
+  return SettingsManager.create(cwd, agentDir, { projectTrusted: trusted });
 }

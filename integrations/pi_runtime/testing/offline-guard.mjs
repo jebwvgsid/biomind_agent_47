@@ -4,7 +4,7 @@ import promises from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Socket } from 'node:net';
-import { syncBuiltinESMExports } from 'node:module';
+import { registerHooks, syncBuiltinESMExports } from 'node:module';
 
 const root = process.env.BIOMIND_PI_TEST_ROOT;
 const trace = process.env.BIOMIND_PI_GUARD_TRACE;
@@ -12,6 +12,19 @@ if (!root || !path.isAbsolute(root) || !trace) throw new Error('Explicit isolate
 const append = fs.appendFileSync.bind(fs);
 const realpath = fs.realpathSync.bind(fs);
 const record = event => append(trace, JSON.stringify({ pid: process.pid, ...event }) + '\n');
+// Performance regression guard for real native startup tests. The launcher
+// legitimately uses the SDK; only the bundled CLI must reuse its embedded copy.
+if (process.env.BIOMIND_PI_EXPECT_EMBEDDED_SDK === '1' &&
+    process.argv[1]?.endsWith('/@earendil-works/pi-coding-agent/dist/bundle/cli.js')) {
+  registerHooks({ load(url, context, nextLoad) {
+    if (url.startsWith('file:') && fileURLToPath(url).endsWith('/@earendil-works/pi-coding-agent/dist/index.js')) {
+      record({ kind: 'duplicate_sdk_import', allowed: false });
+      throw new Error('NATIVE_STARTUP_DUPLICATE_SDK');
+    }
+    return nextLoad(url, context);
+  } });
+  record({ kind: 'native_embedded_sdk_guard', allowed: true });
+}
 // These installed SDK modules define the API-key management endpoints. Their
 // basenames are source files, not user credential stores. Keep the exception to
 // exact source paths; a similarly named file or a symlink elsewhere is denied.
@@ -29,6 +42,8 @@ function guardRead(filename) {
   const base = path.basename(absolute);
   const environmentFile = base.startsWith('.env');
   const credentialFile = /^(?:auth\.json|credentials?(?:\..*)?|api[_-]?keys?(?:\..*)?|\.netrc|\.npmrc)$/i.test(base);
+  if (process.env.BIOMIND_PI_TRACE_SYNTHETIC_READS === '1' && (absolute === root || absolute.startsWith(root + path.sep)))
+    record({ kind: 'synthetic_file_access', path: absolute });
   if (!environmentFile && !credentialFile) return;
   if (sdkKeySourceFiles.has(absolute)) {
     record({ kind: 'installed_sdk_source_read', allowed: true, path: absolute });

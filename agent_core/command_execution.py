@@ -201,16 +201,17 @@ def _private_paths(roots, *, recursive=True, check=None, metrics=None):
                 metrics['scan_seconds'] += time.monotonic() - started
 
 
-def _readonly_mounts(root: Path, hidden: set[Path]) -> list[str]:
+def _readonly_mounts(root: Path, hidden: set[Path], *, bind=None) -> list[str]:
     """Mirror only directories containing excluded entries; never open a secret.
 
     Overlaying a secret *after* binding its parent can fail under a surrounding
     filesystem policy. Excluding it before binding also avoids that transient
     exposure and preserves ordinary symlinks without granting their targets.
     """
+    bind = bind or (lambda path: ['--ro-bind', str(path), str(path)])
     excluded = {p for p in hidden if p == root or p.is_relative_to(root)}
     if not excluded:
-        return ['--ro-bind', str(root), str(root)]
+        return bind(root)
     argv = ['--tmpfs', str(root)]
     if root not in excluded:
         for child in sorted(root.iterdir()):
@@ -219,11 +220,541 @@ def _readonly_mounts(root: Path, hidden: set[Path]) -> list[str]:
             if child.is_symlink():
                 argv += ['--symlink', os.readlink(child), str(child)]
             elif child.is_dir() and any(p.is_relative_to(child) for p in excluded):
-                argv += _readonly_mounts(child, excluded)
+                argv += _readonly_mounts(child, excluded, bind=bind)
             else:
-                argv += ['--ro-bind', str(child), str(child)]
+                argv += bind(child)
     argv += ['--remount-ro', str(root)]
     return argv
+
+
+class FormalProtectionError(ValueError):
+    """Protected execution was not launched; never retry as a host command."""
+    def __init__(self, reason, **details):
+        self.code = 'FORMAL_READ_PROTECTION_UNAVAILABLE'
+        self.diagnostic = {'status': 'capability_missing', 'reason': reason,
+                           'phase': 'access_projection', **details}
+        super().__init__(reason)
+
+
+_FORMAL_CAPABILITY_CACHE = {}
+
+
+def formal_protection_capability(projection):
+    """One bounded namespace probe per installed bwrap identity, not per file."""
+    binary = str(projection.get('bwrap_path') or '')
+    if sys.platform != 'linux' or not binary or not Path(binary).is_file():
+        raise FormalProtectionError('bubblewrap_missing_or_platform_unsupported',
+                                    phase='backend_probe', backend='bubblewrap')
+    try: info = Path(binary).stat()
+    except OSError as exc:
+        raise FormalProtectionError('bubblewrap_probe_failed', phase='backend_probe',
+            backend='bubblewrap', errno=exc.errno) from exc
+    key = (binary, info.st_dev, info.st_ino, info.st_mtime_ns)
+    if key not in _FORMAL_CAPABILITY_CACHE:
+        argv = [binary, '--unshare-user', '--unshare-pid', '--die-with-parent',
+                '--cap-drop', 'ALL']
+        for name in ('/usr', '/bin', '/lib', '/lib64'):
+            if Path(name).exists(): argv += ['--ro-bind', str(Path(name).resolve()), name]
+        try:
+            result = subprocess.run(argv + ['--proc', '/proc', '--dev', '/dev',
+                '--', '/bin/true'], stdin=subprocess.DEVNULL, capture_output=True,
+                text=True, timeout=5, close_fds=True)
+            _FORMAL_CAPABILITY_CACHE[key] = (result.returncode, result.stderr[-2000:], None)
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            _FORMAL_CAPABILITY_CACHE[key] = (None, type(exc).__name__ + ': ' + str(exc), getattr(exc,'errno',None))
+    code, diagnostic, error_number = _FORMAL_CAPABILITY_CACHE[key]
+    if code != 0:
+        raise FormalProtectionError('bubblewrap_namespace_unavailable',
+                                    phase='backend_probe', backend='bubblewrap',
+                                    probe_exit_code=code, probe_stderr=diagnostic,
+                                    **({'errno':error_number} if error_number is not None else {}))
+    return {'status': 'available', 'bwrap_path': binary, 'probe_exit_code': code}
+
+
+def protected_path_roots(service, task_id, arguments=None):
+    """One host-derived classification shared by file I/O and command mounts.
+
+    Reuses registered runtime resolution; it grants no data access. Host draft
+    and ledger maintenance retain their own explicitly selected writers.
+    """
+    arguments = arguments or {}
+    project = Path(service.project_for_task(task_id)).resolve(strict=True)
+    data = Path(service.data_path).resolve(strict=True)
+    if hasattr(service, '_refresh_runtime'): service._refresh_runtime()
+    runtime = {Path(p).resolve() for p in getattr(service, 'prefixes', ())}
+    runtime.update(Path(p).resolve() for p in getattr(service, 'path', ()) if Path(p).is_dir())
+    # Registry selection supplies launch facts, never directory authority.
+    # Only host-configured runtime roots, the project, or an existing live
+    # directory grant can supply a selected prefix to protected execution.
+    runtime_grants=[]
+    for key in ('ENV_PREFIX', 'CONDA_PREFIX'):
+        prefix=(arguments.get('env') or {}).get(key)
+        if not prefix:continue
+        candidate=Path(prefix).resolve(strict=True)
+        known=candidate.is_relative_to(project) or any(candidate==p or candidate.is_relative_to(p) for p in runtime)
+        if not known:
+            from agent_core.execution_permissions import active_read_grants, path_grants, digest
+            path_ids={g['grant_id'] for g in path_grants(service,task_id,candidate,'read')}
+            grants=active_read_grants(service.data_path,task_id,project=project)
+            matches=[g for g in grants if g.get('target_kind')=='directory' and g.get('recursive') is True
+                     and (candidate==Path(g['root']) or candidate.is_relative_to(Path(g['root'])))
+                     and (g.get('operation')=='file_read' or g['grant_id'] in path_ids)]
+            if not matches:
+                raise FormalProtectionError('runtime_prefix_permission_required',path=str(candidate),
+                    instruction='Registered location is not directory permission; use the existing path-access approval for this exact runtime prefix.')
+            grant=max(matches,key=lambda g:len(Path(g['root']).parts))
+            ref={'grant_id':grant['grant_id'],'grant_hash':digest(grant),'prefix':str(candidate)}
+            if ref not in runtime_grants:runtime_grants.append(ref)
+        runtime.add(candidate)
+    runtime.add(Path(getattr(service, 'install_dir', Path(__file__).resolve().parents[1])).resolve())
+    runtime = {p for p in runtime if p.is_dir() and p not in {Path('/'), Path('/home'), Path('/public'), Path('/public/home'), Path('/tmp'), Path.home().resolve()}}
+    runtime = {p for p in runtime if not any(p != q and p.is_relative_to(q) for q in runtime)}
+    controls = {data, project / '.biomind', project / '.git'}
+    return {'project': project, 'data': data, 'runtime': runtime, 'runtime_grants':runtime_grants, 'controls': controls,
+            'denies': {Path(p).resolve() for p in getattr(service, 'deny_paths', ())}}
+
+
+def check_data_path(service, task_id, value, *, write=False):
+    """Classify lexical and canonical targets before any model file operation."""
+    facts = protected_path_roots(service, task_id)
+    try:targets={Path(value).absolute(),Path(value).resolve()}
+    except RuntimeError as exc:raise ValueError('FILE_SYMLINK_LOOP') from exc
+    for target in targets:
+        if any(_PRIVATE_PATTERN.fullmatch(part.lower()) or part.lower() in
+               {'auth.json', 'privatekeys', '.biomind', '.git'} for part in target.parts):
+            raise ValueError('PRIVATE_FILE_EXCLUDED')
+        if any(target == p or target.is_relative_to(p) for p in facts['controls'] | facts['denies']):
+            raise ValueError('PROTECTED_CONTROL_PATH')
+        if write and any(target == p or target.is_relative_to(p) for p in facts['runtime'] |
+                         {Path(p).resolve() for p in ('/usr','/bin','/sbin','/lib','/lib64','/etc')}):
+            raise ValueError('PROTECTED_RUNTIME_PATH: ordinary data approval cannot permit runtime writes')
+    return facts
+
+
+def snapshot_read_directory(service, task_id, root):
+    """Bounded metadata-only view; exact RO mounts, never a recursive data bind."""
+    from agent_core.execution_permissions import _safe_read_info
+    root=Path(root);files=[];directories=[];pending=[root];started=time.monotonic();entries=0;excluded=0
+    facts=protected_path_roots(service,task_id)
+    while pending:
+        current=pending.pop();info=_safe_read_info(current)
+        directories.append({'root':str(current),'anchor':[info.st_dev,info.st_ino]})
+        with os.scandir(current) as iterator:
+            for entry in iterator:
+                entries+=1
+                if entries>256 or time.monotonic()-started>2.0:
+                    raise FormalProtectionError('directory_snapshot_limit',path=str(root),phase='directory_projection',
+                        entries=entries,entry_limit=256,time_limit_seconds=2.0,mount_limit=512,
+                        instruction='目录已批准，但当前后端不能安全提供这种大小的目录视图。请声明更小子目录；未截断执行，不需要重新授权同一范围。')
+                path=Path(entry.path)
+                if (_PRIVATE_PATTERN.fullmatch(entry.name.lower()) or entry.name.lower() in {'auth.json','privatekeys','.biomind','.git'}
+                        or any(path==p or path.is_relative_to(p) for p in facts['controls']|facts['denies'])):
+                    excluded+=1;continue
+                if entry.is_symlink():
+                    raise FormalProtectionError('directory_snapshot_symlink',path=str(path),phase='directory_projection',
+                        instruction='目录快照不跟随链接；请明确声明所需链接文件，由原 canonical 文件授权路径核验。')
+                item=_safe_read_info(path)
+                if stat.S_ISDIR(item.st_mode):pending.append(path)
+                else:files.append(path)
+    return sorted(files),sorted(directories,key=lambda r:r['root']),{'root':str(root),'entries':entries,'files':len(files),'directories':len(directories),
+        'excluded_private_entries':excluded,'time_limit_seconds':2.0,'entry_limit':256,
+        'mount_limit':512,'visibility':'metadata snapshot; later additions are not visible'}
+
+
+def formal_access_projection(service, arguments, task_id, *, read_access):
+    """Trusted mount description included in the EXISTING command approval.
+
+    Resources are roots, never expanded sample lists. This does not grant any
+    resource: read_access is assembled by execution_permissions from live grants.
+    """
+    from copy import deepcopy
+    project = Path(service.project_for_task(task_id)).resolve(strict=True)
+    data = Path(service.data_path).resolve(strict=True)
+    for read in read_access.get('reads', []):
+        if read.get('recursive') is True or read.get('target_kind', read.get('anchor_type')) == 'directory':
+            raise FormalProtectionError('recursive_read_privacy_filter_unavailable',
+                path=read['root'], affected_capability='recursive_directory_formal_execution',
+                file_tools_read_grant_retained=True,
+                instruction='目录读取授权仍有效，但正式命令不支持递归目录挂载。请通过 read_paths 声明实际需要的精确文件；不要扩大目录或重复请求授权。')
+    cwd = (project / Path(arguments.get('workdir') or project)).resolve(strict=True)
+    if not cwd.is_relative_to(project) and not any(cwd == Path(r['root']) for r in read_access.get('read_directories', [])) and not any(
+            cwd == Path(r['root']) or cwd.is_relative_to(Path(r['root'])) for r in read_access.get('write_targets', [])):
+        raise FormalProtectionError('cwd_directory_permission_required', path=str(cwd), requested_workdir=str(cwd))
+    facts = protected_path_roots(service, task_id, arguments)
+    runtime, controls = facts['runtime'], facts['controls']
+    probe = arguments.get('_biomind_probe') is True
+    from agent_core.plan_tracker import load_plan_state
+    from agent_core.execution_permissions import _lifetime_current, path_grants, scoped_automatic_grants
+    live_state=load_plan_state(service.data_path,task_id)
+    automatic=live_state.get('task_state',{}).get('execution_permissions',{}).get('automation',{})
+    isolate_network=probe or (automatic.get('mode')=='auto' and _lifetime_current(live_state,automatic)) or bool(scoped_automatic_grants(live_state))
+    writable = set() if probe else {project}
+    if probe and (arguments.get('write_paths') or arguments.get('delete_paths')):
+        raise FormalProtectionError('probe_cannot_declare_writes')
+    # Explicit write_paths retain their existing reviewed output purpose. Do
+    # not create new directories before approval or widen missing paths to /.
+    for raw in [*(arguments.get('write_paths') or []), *(arguments.get('delete_paths') or [])]:
+        target = (cwd / Path(raw)).resolve()
+        if any(_PRIVATE_PATTERN.fullmatch(part.lower()) for part in target.parts):
+            raise FormalProtectionError('private_output_path', path=str(target))
+        if any(target == p or target.is_relative_to(p) for p in controls):
+            raise FormalProtectionError('control_state_not_writable', path=str(target))
+        if target.is_relative_to(project): continue
+        check_data_path(service,task_id,target,write=True)
+        if not path_grants(service,task_id,target,'read_write'):
+            raise FormalProtectionError('external_write_permission_required',path=str(target))
+        writable.add(target)
+    denies = {Path(p).absolute() for p in getattr(service, 'deny_paths', ())}
+    # Controls are host-owned even when the project itself is a result run.
+    for root in writable:
+        if root in {Path('/'), Path('/home'), Path('/public'), Path('/public/home'), Path('/tmp'), Path.home().resolve()}:
+            raise FormalProtectionError('writable_root_too_broad', path=str(root))
+        if any(root == p or root.is_relative_to(p) for p in controls):
+            raise FormalProtectionError('control_state_not_writable', path=str(root))
+        if not root.is_relative_to(project) and (any(root == p or root.is_relative_to(p) for p in runtime) or any(
+                root == p or root.is_relative_to(p) or p.is_relative_to(root)
+                for p in {Path('/usr'), Path('/bin'), Path('/sbin'), Path('/lib'), Path('/lib64'), Path('/etc')})):
+            raise FormalProtectionError('writable_system_runtime_overlap', path=str(root))
+        for read in [*read_access.get('reads', []),*read_access.get('directory_snapshots', [])]:
+            source = Path(read['root'])
+            if root == project: continue  # Explicit inputs are overlaid RO after the implicit project bind.
+            if source == root or source.is_relative_to(root) or root.is_relative_to(source):
+                raise FormalProtectionError('input_output_overlap', input=str(source), output=str(root))
+    writable = {p for p in writable if not any(p != q and p.is_relative_to(q) for q in writable)}
+    mount_anchors = {}
+    for root in runtime | {p for p in writable if p.exists()} | {data, project}:
+        try: info = root.stat()
+        except OSError as exc:
+            raise FormalProtectionError('mount_source_stat_failed', phase='mount_anchor_check',
+                backend='bubblewrap', path=str(root), errno=exc.errno) from exc
+        mount_anchors[str(root)] = [info.st_dev, info.st_ino]
+    return {**deepcopy(read_access), 'mount_policy': 'consult-probe-ro-v1' if probe else 'formal-input-ro-v1',
+            'probe':probe, 'limits':{'wall_seconds':15,'output_bytes':65536,'cpu_seconds':10,
+                'address_space_bytes':2147483648,'file_bytes':8388608,'processes':64} if probe else None,
+            'network_policy':'isolated' if isolate_network else 'manual-command-policy',
+            'project': str(project), 'data_path': str(data),
+            'task_read_root': str(data / 'task_outputs' / str(task_id)), 'cwd': str(cwd),
+            'runtime_roots': sorted(map(str, runtime)), 'runtime_grants':facts['runtime_grants'],
+            'runtime_grant_task_id':str(task_id), 'write_roots': sorted(map(str, writable)),
+            'control_roots': sorted(map(str, controls)), 'deny_paths': sorted(map(str, denies)),
+            'mount_anchors': mount_anchors,
+            'bwrap_path': str(getattr(service, 'bwrap', '') or shutil.which('bwrap', path='/usr/bin:/bin') or '')}
+
+
+def _check_formal_mount_layout(writable_roots, protected_roots, readonly_overlays, masks):
+    """Bounded static topology check for this launch, not a host stability proof.
+
+    Reject surviving RW submounts. Root/ancestor binds are interpreted through
+    mountinfo backing roots so a bind of protected data at the project root is
+    not mistaken for an ordinary directory. No filesystem-wide inode search.
+    """
+    def fail(reason, **details):
+        raise FormalProtectionError(reason, phase='mount_layout_check', backend='bubblewrap', **details)
+    try:
+        with open('/proc/self/mountinfo', encoding='utf-8') as stream:
+            raw=stream.read(4*1024*1024+1)
+    except OSError as exc:
+        fail('mountinfo_read_failed', errno=exc.errno)
+    if len(raw)>4*1024*1024: fail('mountinfo_limit_exceeded')
+    def path_field(value):
+        value=re.sub(r'\\(040|011|012|134)', lambda m: chr(int(m[1],8)), value)
+        path=Path(value)
+        if not path.is_absolute() or '..' in path.parts: raise ValueError('invalid mount path')
+        return path
+    records=[]
+    try:
+        for line in raw.splitlines():
+            fields=line.split(); separator=fields.index('-')
+            if len(fields)<10 or separator<6 or len(fields)<separator+4: raise ValueError('invalid mount row')
+            if not re.fullmatch(r'\d+:\d+',fields[2]): raise ValueError('invalid device')
+            records.append((int(fields[0]),fields[2],path_field(fields[3]),path_field(fields[4])))
+    except (ValueError,IndexError): fail('mountinfo_parse_failed')
+    def mounted(path):
+        candidates=[r for r in records if path.is_relative_to(r[3])]
+        if not candidates: fail('unsupported_writable_mount_layout',path=str(path))
+        depth=max(len(r[3].parts) for r in candidates)
+        matches=[r for r in candidates if len(r[3].parts)==depth]
+        # Stacked mountpoints need visibility information this limited checker
+        # does not have. Do not guess which backing root wins.
+        if len(matches)!=1: fail('unsupported_writable_mount_layout',path=str(path))
+        row=matches[0]
+        return row[1], row[2]/path.relative_to(row[3])
+    def excluded(path):
+        return (any(path.is_relative_to(p) for p in readonly_overlays | masks)
+                or any(_PRIVATE_PATTERN.fullmatch(part.lower()) for part in path.parts))
+    for root in writable_roots:
+        if any(p!=root and p.is_relative_to(root) and not excluded(p) for _,_,_,p in records):
+            fail('unsupported_writable_mount_layout',path=str(root),detail='Unaccounted writable submount')
+        device, backing=mounted(root)
+        # Include nested protected mounts: their backing root can differ from
+        # that of the protected parent. This list is finite mount topology.
+        sources=set(protected_roots)
+        sources.update(p for _,_,_,p in records if any(p.is_relative_to(r) for r in protected_roots))
+        for source in sources:
+            other_device, other_backing=mounted(source)
+            if device!=other_device: continue
+            if other_backing.is_relative_to(backing):
+                alias=root/other_backing.relative_to(backing)
+                original=source
+            elif backing.is_relative_to(other_backing):
+                alias=root
+                original=source/backing.relative_to(other_backing)
+            else: continue
+            # Same lexical entry is either covered by the later RO overlay or
+            # deliberately reopened (project inside runtime, runtime==project).
+            if alias==original or excluded(alias): continue
+            fail('unsupported_writable_mount_layout',path=str(alias),
+                 detail='Writable backing range aliases a protected mount source')
+    return {'mount_records_checked':len(records),'static_mount_layout':'checked'}
+
+
+@contextmanager
+def formal_protected_spawn(projection, command, *, cwd, env=None, observation=None):
+    """Wrap the original executor spawn, retaining its logs and process owner.
+
+    No network/env policy from inspection is copied. Only the process namespace
+    and mounts change. Sources are open FD anchors until bwrap consumes them;
+    unrelated and writable inherited FDs are closed by the original spawn.
+    """
+    formal_protection_capability(projection)
+    from agent_core.execution_permissions import digest
+    started = time.monotonic()
+    metrics = {'rw_directories': 0, 'rw_entries': 0, 'ro_subtrees_pruned':0,
+               'scan_complete':False, 'scan_roots':list(projection.get('write_roots', [])),
+               'private_scan': 'declared_roots_top_level_only'}
+    fds = []
+    observed = {}
+    created_anchors = {}
+    def bind(path, *, writable=False, expected=None):
+        path = Path(path)
+        flags = os.O_PATH | os.O_NOFOLLOW | os.O_CLOEXEC
+        try: fd = os.open(path, flags)
+        except OSError as exc:
+            raise FormalProtectionError('mount_source_open_failed',path=str(path),
+                phase='mount_anchor_check',backend='bubblewrap',errno=exc.errno) from exc
+        fds.append(fd)
+        try:
+            info = os.fstat(fd)
+            resolved = path.resolve(strict=True)
+        except OSError as exc:
+            raise FormalProtectionError('mount_source_stat_failed', phase='mount_anchor_check',
+                backend='bubblewrap', path=str(path), errno=exc.errno) from exc
+        if stat.S_ISLNK(info.st_mode) or not (stat.S_ISDIR(info.st_mode) or stat.S_ISREG(info.st_mode)):
+            raise FormalProtectionError('unsupported_mount_source', phase='mount_anchor_check', path=str(path))
+        identity = [info.st_dev, info.st_ino]
+        expected = expected if expected is not None else created_anchors.get(str(path), projection.get('mount_anchors', {}).get(str(path)))
+        if expected is not None and identity != list(expected):
+            raise FormalProtectionError('read_anchor_changed_at_mount', phase='mount_anchor_check', path=str(path))
+        if os.path.realpath('/proc/self/fd/' + str(fd)) != str(resolved):
+            raise FormalProtectionError('mount_path_changed', phase='mount_anchor_check', path=str(path))
+        observed[str(path)] = identity
+        return ['--bind' if writable else '--ro-bind', '/proc/self/fd/' + str(fd), str(path)]
+    try:
+        if projection.get('runtime_grants'):
+            from agent_core.execution_permissions import active_read_grants, digest, PermissionDenied
+            live={g['grant_id']:g for g in active_read_grants(projection['data_path'],projection['runtime_grant_task_id'],project=projection['project'])}
+            for ref in projection['runtime_grants']:
+                if ref['grant_id'] not in live or digest(live[ref['grant_id']])!=ref['grant_hash']:
+                    raise PermissionDenied('RUNTIME_DIRECTORY_GRANT_REVOKED_OR_CHANGED')
+        # Only reached inside the claimed executor. Reuse the file adapter's
+        # dirfd walk to create precisely the approved missing output, never its
+        # ancestor as a writable mount. The original payload remains immutable.
+        from agent_core.execution_permissions import _file_dispatch, _safe_read_info, _dispatch, record_created_directory
+        from agent_core.workspace_files import WorkspaceFileService
+        for target in projection.get('write_targets', []):
+            path=Path(target['root'])
+            if target.get('exists'):continue
+            if path.exists():raise FormalProtectionError('write_target_appeared_before_spawn',phase='mount_anchor_check',path=str(path))
+            anchor=Path(target['anchor_path']);info=_safe_read_info(anchor)
+            if [info.st_dev,info.st_ino]!=target['anchor']:
+                raise FormalProtectionError('write_anchor_changed',phase='mount_anchor_check',path=str(anchor))
+            dispatch=_dispatch.get();permit=dispatch[0] if dispatch else None
+            token=_file_dispatch.set((anchor,target['anchor'],permit))
+            try:
+                with WorkspaceFileService(None)._parent(anchor,path.relative_to(anchor),create=True) as (parent,name):
+                    if target['target_kind']=='directory':os.mkdir(name,0o755,dir_fd=parent)
+                    else:
+                        fd=os.open(name,os.O_CREAT|os.O_EXCL|os.O_WRONLY|os.O_NOFOLLOW,0o644,dir_fd=parent);os.close(fd)
+                info=_safe_read_info(path);created_anchors[str(path)]=[info.st_dev,info.st_ino]
+                if target['target_kind']=='directory' and permit:
+                    fd=os.open(path,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+                    try:record_created_directory(path,fd,permit)
+                    finally:os.close(fd)
+            except OSError as exc:
+                raise FormalProtectionError('output_creation_failed',phase='mount_anchor_check',path=str(path),errno=exc.errno) from exc
+            finally:_file_dispatch.reset(token)
+        masked_roots = set()
+        argv = [projection['bwrap_path'], '--unshare-user', '--unshare-pid',
+                '--die-with-parent', '--cap-drop', 'ALL', '--tmpfs', '/tmp']
+        probe = projection.get('probe') is True
+        if projection.get('network_policy')=='isolated':
+            # Reuse the inspection executor's existing kernel socket/io_uring
+            # filter. It also works where creating a network namespace's
+            # loopback NETLINK socket is forbidden by the outer sandbox.
+            with tempfile.TemporaryFile(prefix='biomind-network-filter-') as network_filter:
+                network_filter.write(_network_filter()); network_filter.flush(); network_filter.seek(0)
+                network_fd=os.dup(network_filter.fileno())
+            fds.append(network_fd)
+            argv += ['--seccomp',str(network_fd),'--unshare-ipc','--unshare-uts']
+        for name in ('/usr', '/bin', '/sbin', '/lib', '/lib64'):
+            if Path(name).exists():
+                # System aliases may be lexical symlinks; their immutable
+                # resolved targets are bound to the original spelling.
+                source = Path(name).resolve()
+                mount = bind(source); mount[-1] = name; argv += mount
+        for name in ('/etc/ld.so.cache', '/etc/localtime', '/etc/resolv.conf', '/etc/hosts', '/etc/nsswitch.conf', '/etc/passwd', '/etc/group', '/etc/ssl/certs'):
+            if Path(name).exists():
+                source = Path(name).resolve(); mount = bind(source); mount[-1] = name; argv += mount
+        hidden = {Path(p) for p in projection.get('deny_paths', [])}
+        ro_roots = {Path(p) for p in projection.get('runtime_roots', [])}
+        if probe: ro_roots.add(Path(projection['project']))
+        task_read_root = Path(projection['task_read_root'])
+        if not probe and task_read_root.is_dir(): ro_roots.add(task_read_root)
+        reads = projection.get('reads', [])
+        ro_roots.update(Path(row['root']) for row in reads)
+        expected = {str(row['root']): row['anchor'] for row in reads}
+        # Bind only known roots. Do not recurse through sample directories or
+        # discover all environments. Deep secret-name filtering is not claimed.
+        hidden.update(_private_paths((p for p in ro_roots if p.is_dir()), recursive=False))
+        controls = {Path(p) for p in projection.get('control_roots', [])}
+        if probe: hidden.update(controls)
+        runtime_roots = {Path(p) for p in projection.get('runtime_roots', [])}
+        writable_roots = {Path(p) for p in projection.get('write_roots', [])}
+        runtime_before = {p for p in runtime_roots if not any(p.is_relative_to(w) for w in writable_roots)}
+        runtime_after = runtime_roots - runtime_before - writable_roots
+        metrics.update(_check_formal_mount_layout(writable_roots,
+            ro_roots | controls | hidden | {Path(p).resolve() for p in ('/usr','/bin','/sbin','/lib','/lib64','/etc') if Path(p).exists()},
+            runtime_after | {Path(r['root']) for r in reads} | {Path(r['root']) for r in projection.get('directory_snapshots',[])}, controls | hidden))
+        # Keep the conservative deployed scan until the unresolved concurrent
+        # host-writer contract is settled. The isolated Phase B candidate uses
+        # the same runtime_after decision here; no model/config trust switch.
+        scan_readonly_roots = set()
+        scan_started=time.monotonic()
+        def scan_failed(exc):
+            raise FormalProtectionError('writable_scope_scan_failed',phase='writable_scope_scan',
+                backend='bubblewrap',path=str(exc.filename or root),errno=exc.errno,
+                scan_seconds=time.monotonic()-scan_started, **metrics) from exc
+        def checked_stat(path):
+            try: return path.lstat()
+            except OSError as exc: scan_failed(exc)
+        for root in sorted(runtime_before, key=lambda p: len(p.parts)):
+            if not root.exists(): raise FormalProtectionError('mount_source_missing', path=str(root))
+            argv += _readonly_mounts(root, hidden, bind=bind)
+        for raw in projection.get('write_roots', []):
+            root = Path(raw)
+            aliases = []
+            identities=set()
+            root_info = checked_stat(root)
+            if stat.S_ISREG(root_info.st_mode) and root_info.st_nlink > 1:
+                aliases.append(root)
+                identities.add((root_info.st_dev,root_info.st_ino))
+            masks = set(hidden)
+            if not (stat.S_ISREG(root_info.st_mode) or stat.S_ISDIR(root_info.st_mode)):
+                raise FormalProtectionError('writable_scope_scan_failed', phase='writable_scope_scan',
+                    backend='bubblewrap', path=str(root), detail='unsupported writable root type', scan_complete=False)
+            walk = os.walk(root, followlinks=False, onerror=scan_failed) if stat.S_ISDIR(root_info.st_mode) else ()
+            for directory, dirs, files in walk:
+                metrics['rw_directories'] += 1
+                metrics['rw_entries'] += len(dirs) + len(files)
+                parent = Path(directory)
+                for name in list(dirs) + files:
+                    path = parent / name
+                    if path in scan_readonly_roots:
+                        if name in dirs: dirs.remove(name)
+                        metrics['ro_subtrees_pruned']+=1
+                        continue
+                    if path in controls or path in hidden or _PRIVATE_PATTERN.fullmatch(name.lower()) or name.lower() in {'.biomind','.git','auth.json','privatekeys'}:
+                        masks.add(path)
+                        if name in dirs: dirs.remove(name)
+                        continue
+                    info = checked_stat(path)
+                    if stat.S_ISREG(info.st_mode) and info.st_nlink > 1:
+                        aliases.append(path)
+                        identities.add((info.st_dev,info.st_ino))
+            if aliases:
+                # Refuse the finite RW tree, without enumerating RO input inodes.
+                raise FormalProtectionError('hardlink_in_writable_scope', phase='writable_scope_scan',
+                    backend='bubblewrap', path=str(aliases[0]), count=len(aliases),
+                    unique_inode_count=len(identities), scan_complete=True,
+                    scan_seconds=time.monotonic()-scan_started, **{k:v for k,v in metrics.items() if k!='scan_complete'})
+            argv += bind(root, writable=True)
+            masks |= controls
+            masks = {p for p in masks if not any(p != q and p.is_relative_to(q) for q in masks)}
+            for path in sorted(masks, key=lambda p: len(p.parts)):
+                if not path.is_relative_to(root) or not path.exists(): continue
+                if path.is_symlink():
+                    raise FormalProtectionError('masked_writable_symlink', path=str(path))
+                if path.is_dir():
+                    argv += ['--tmpfs', str(path)]; masked_roots.add(path)
+                else: argv += ['--ro-bind', '/dev/null', str(path)]
+        metrics.update(scan_complete=True,scan_seconds=time.monotonic()-scan_started)
+        # A bounded directory snapshot is a synthetic RO tree of exact files.
+        # No recursive host bind means excluded entries and later additions are
+        # absent, even when the underlying directory has a session RW grant.
+        snapshot_roots={Path(r['root']) for r in projection.get('directory_snapshots',[])}
+        snapshot_roots={p for p in snapshot_roots if not any(p!=q and p.is_relative_to(q) for q in snapshot_roots)}
+        for row in projection.get('read_directories',[]):
+            info=_safe_read_info(row['root'])
+            if [info.st_dev,info.st_ino]!=row['anchor']:
+                raise FormalProtectionError('read_directory_anchor_changed',phase='mount_anchor_check',path=row['root'])
+        for root in sorted(snapshot_roots,key=lambda p:len(p.parts)):
+            argv += ['--tmpfs',str(root)];masked_roots.add(root)
+        for row in projection.get('read_directories',[]):
+            if Path(row['root']) not in snapshot_roots:argv += ['--dir',row['root']]
+        for root in sorted((ro_roots - runtime_roots) | runtime_after | {Path(r['root']) for r in reads}, key=lambda p: len(p.parts)):
+            if not root.exists(): raise FormalProtectionError('mount_source_missing', path=str(root))
+            if any(root == Path(raw) for raw in projection.get('write_roots', [])):
+                continue
+            anchor = expected.get(str(root))
+            if anchor is not None:
+                argv += bind(root, expected=anchor)
+                for path in sorted(hidden, key=lambda p: len(p.parts)):
+                    if not path.is_relative_to(root) or not path.exists(): continue
+                    if path.is_symlink():
+                        raise FormalProtectionError('masked_read_symlink', path=str(path))
+                    if path.is_dir():
+                        argv += ['--tmpfs', str(path)]; masked_roots.add(path)
+                    else: argv += ['--ro-bind', '/dev/null', str(path)]
+            else:
+                argv += _readonly_mounts(root, hidden, bind=bind)
+        for path in sorted(masked_roots, key=lambda p: -len(p.parts)):
+            argv += ['--remount-ro', str(path)]
+        argv += ['--proc', '/proc', '--dev', '/dev', '--remount-ro', '/', '--chdir', str(cwd)]
+        program = list(command) if isinstance(command, list) else ['/bin/sh', '-c', command]
+        if not Path('/usr/bin/python3').is_file():
+            raise FormalProtectionError('system_python_fd_cleanup_unavailable')
+        # This installed bwrap keeps passed mount FDs open after setup. The
+        # small trusted exec adapter closes them before the scientific process
+        # can run, without introducing another process owner or a service. It
+        # starts with env={} and -I -S so loader/site hooks cannot run before
+        # close; the exact approved environment is restored only for exec.
+        process_env=dict(os.environ if env is None else env)
+        if probe:process_env.update(HOME='/tmp',TMPDIR='/tmp',PYTHONDONTWRITEBYTECODE='1',PIP_NO_INDEX='1')
+        environment_bytes = json.dumps(process_env).encode()
+        # Conda's Python on some supported hosts has no os.memfd_create.
+        # TemporaryFile is an unlinked/O_TMPFILE inode with the same anonymous
+        # FD transport properties; it never becomes a persistent env file.
+        with tempfile.TemporaryFile(prefix='biomind-execution-environment-') as environment_file:
+            environment_file.write(environment_bytes)
+            environment_file.flush(); environment_file.seek(0)
+            environment_fd = os.dup(environment_file.fileno())
+        fds.append(environment_fd)
+        limits = ('import resource; resource.setrlimit(resource.RLIMIT_CPU,(10,10)); '
+                  'resource.setrlimit(resource.RLIMIT_AS,(2147483648,2147483648)); '
+                  'resource.setrlimit(resource.RLIMIT_FSIZE,(8388608,8388608)); '
+                  'resource.setrlimit(resource.RLIMIT_NPROC,(64,64)); '
+                  'resource.setrlimit(resource.RLIMIT_NOFILE,(64,64)); ') if probe else ''
+        bootstrap = ('import os,sys,json; e=json.load(os.fdopen(int(sys.argv[2]))); '
+                     'os.closerange(3, int(sys.argv[1])); '+limits+'a=sys.argv[3:]; os.execvpe(a[0],a,e)')
+        argv += ['--', '/usr/bin/python3', '-I', '-S', '-c', bootstrap,
+                 str(max(fds, default=2) + 1), str(environment_fd), *program]
+        if observation is not None:
+            observation['filesystem_protection'] = {'status': 'prepared', 'policy': projection['mount_policy'],
+                'projection_sha256': digest(projection), 'mount_anchors': observed,
+                'preparation_seconds': time.monotonic() - started, **metrics}
+        yield argv, tuple(fds)
+    finally:
+        for fd in fds: os.close(fd)
 
 
 def _runtime_locations():

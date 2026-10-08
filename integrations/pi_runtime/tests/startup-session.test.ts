@@ -3,9 +3,9 @@ import test from 'node:test';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { SessionManager, SettingsManager } from '@earendil-works/pi-coding-agent';
+import { SessionManager, SettingsManager, ProjectTrustStore } from '@earendil-works/pi-coding-agent';
 import { openProductSession, resolveSessionDir, resolveSessionTarget } from '../native-session.js';
-import { ProductSessionError as SessionError, validateSessionSelection as sessionValidation } from '../native-session.js';
+import { createProductSettings, ProductSessionError as SessionError, validateSessionSelection as sessionValidation } from '../native-session.js';
 import { ProductSessionError, validateSessionSelection } from '../native-session-selection.js';
 
 const fixture = () => {
@@ -84,6 +84,19 @@ test('native loader recovers an interrupted JSONL tail without host truncation o
   assert.deepEqual(after.subarray(0,before.length),before,'no original raw bytes are rewritten or truncated');
   assert.equal(after.subarray(before.length).toString(),'\n','native loader terminates the incomplete tail before future appends');
 });
+
+test('actual native settings honor saved trust and user default, no automatic trust write',()=>{
+  const f=fixture(); fs.mkdirSync(path.join(f.a,'.pi'));
+  fs.writeFileSync(path.join(f.agent,'settings.json'),JSON.stringify({quietStartup:false,defaultProjectTrust:'ask'}));
+  fs.writeFileSync(path.join(f.a,'.pi/settings.json'),JSON.stringify({quietStartup:true,sessionDir:f.sessions}));
+  const untrusted=createProductSettings(f.a,f.agent);
+  assert.equal(untrusted.isProjectTrusted(),false); assert.equal(untrusted.getQuietStartup(),false);
+  new ProjectTrustStore(f.agent).set(f.a,true);
+  const trusted=createProductSettings(f.a,f.agent);
+  assert.equal(trusted.isProjectTrusted(),true); assert.equal(trusted.getQuietStartup(),true);
+  assert.equal(trusted.getSessionDir(),f.sessions);
+});
+
 
 test('pure selection and session APIs share one error identity and all current option checks', () => {
   assert.equal(ProductSessionError, SessionError); assert.equal(validateSessionSelection, sessionValidation);

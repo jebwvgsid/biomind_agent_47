@@ -46,6 +46,15 @@ def _digest(value):
     return hashlib.sha256(value).hexdigest()
 
 
+def _require_regular_single_link(info):
+    if stat.S_ISDIR(info.st_mode):
+        raise ValueError('REGULAR_SINGLE_LINK_FILE_REQUIRED: directory; use an authorized run_command to list it')
+    if not stat.S_ISREG(info.st_mode):
+        raise ValueError('REGULAR_SINGLE_LINK_FILE_REQUIRED: non_regular')
+    if info.st_nlink != 1:
+        raise ValueError('REGULAR_SINGLE_LINK_FILE_REQUIRED: multiple_links')
+
+
 class WorkspaceFileService:
     def __init__(self, command_service, *, draft_root=None, read_sources=None):
         self.commands = command_service
@@ -54,7 +63,7 @@ class WorkspaceFileService:
         # ordinary project file tools retain their original protection policy.
         self.draft_root = Path(draft_root).absolute() if draft_root is not None else None
 
-    def _path(self, value, task_id):
+    def _path(self, value, task_id, *, write=True):
         if not isinstance(value, str) or not value.strip() or '\x00' in value:
             raise ValueError('FILE_PATH_REQUIRED')
         project = self.draft_root or self.commands.project_for_task(task_id)
@@ -65,7 +74,14 @@ class WorkspaceFileService:
         try:
             relative = path.relative_to(project)
         except ValueError as exc:
-            raise ValueError('FILE_OUTSIDE_PROJECT: select the intended --project-dir') from exc
+            from agent_core.command_execution import check_data_path
+            from agent_core.execution_permissions import path_grants, PermissionDenied
+            check_data_path(self.commands,task_id,path,write=write)
+            grants=path_grants(self.commands,task_id,path,'read_write' if write else 'read')
+            if not grants:raise PermissionDenied('PATH_WRITE_PERMISSION_REQUIRED') from exc
+            project=Path(grants[0]['anchor_path'])
+            try:relative=path.relative_to(project)
+            except ValueError as error:raise PermissionDenied('SYMLINK_MUTATION_PATH_NOT_SUPPORTED') from error
         if not relative.parts:
             raise ValueError('FILE_PATH_REQUIRED')
         if any(_PRIVATE_PATTERN.fullmatch(part.lower()) or part.lower() in {'auth.json', '启动.sh', 'privatekeys', '.biomind'}
@@ -79,6 +95,9 @@ class WorkspaceFileService:
                      *getattr(self.commands, 'deny_paths', ())]
         if any(path == root or path.is_relative_to(root) for root in protected):
             raise ValueError('PROTECTED_RUNTIME_PATH')
+        if self.draft_root is None:
+            from agent_core.command_execution import check_data_path
+            check_data_path(self.commands, task_id, path, write=write)
         return project, path, relative
 
     @contextmanager
@@ -91,29 +110,35 @@ class WorkspaceFileService:
             verify_file_directory(current, fd)
             for part in relative.parts[:-1]:
                 current = current / part
+                created=False
                 if create and may_create_file_directory(current):
                     try:
                         os.mkdir(part, 0o755, dir_fd=fd)
+                        created=True
                     except FileExistsError:
                         pass
                 child = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd)
                 os.close(fd)
                 fd = child
                 verify_file_directory(current, fd)
+                if created:
+                    from agent_core.execution_permissions import record_created_directory
+                    record_created_directory(current,fd)
             yield fd, relative.name
         finally:
             os.close(fd)
 
     @staticmethod
-    def _read(parent, name):
+    def _read(parent, name, expected_identity=None):
         try:
             fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent)
         except FileNotFoundError:
             return None, None
         with os.fdopen(fd, 'rb') as stream:
             info = os.fstat(stream.fileno())
-            if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
-                raise ValueError('REGULAR_SINGLE_LINK_FILE_REQUIRED')
+            if expected_identity and [info.st_dev,info.st_ino] != expected_identity:
+                raise ValueError('FILE_PERMISSION_TARGET_REPLACED')
+            _require_regular_single_link(info)
             if info.st_size > MAX_FILE_BYTES:
                 raise ValueError('FILE_TOO_LARGE: use exec_command for bounded inspection')
             data = stream.read(MAX_FILE_BYTES + 1)
@@ -122,47 +147,116 @@ class WorkspaceFileService:
         data.decode('utf-8')
         return data, stat.S_IMODE(info.st_mode)
 
-    def stat(self, args, *, task_id, trusted_skill_dirs=()):
-        """Metadata only. Skill directories come from Pi's trusted catalog, not model args."""
-        value = args.get('path')
-        supplied = Path(value).expanduser() if isinstance(value, str) else Path('.')
-        if not isinstance(value, str) or not value.strip() or '\x00' in value or '..' in supplied.parts:
+    def read_target(self, value, task_id, *, canonical=True):
+        """Validate a candidate without granting it or reading business content."""
+        if not isinstance(value, str) or not value.strip() or '\x00' in value:
             raise ValueError('FILE_PATH_REQUIRED')
+        project = Path(self.draft_root or self.commands.project_for_task(task_id))
+        supplied = Path(value).expanduser()
+        if '..' in supplied.parts:
+            raise ValueError('FILE_PATH_TRAVERSAL')
+        path = supplied if supplied.is_absolute() else project / supplied
         if any(_PRIVATE_PATTERN.fullmatch(part.lower()) or part.lower() in {
-                'auth.json', '启动.sh', 'privatekeys', '.biomind'} for part in supplied.parts):
+                'auth.json', '启动.sh', 'privatekeys', '.biomind'} for part in path.parts):
             raise ValueError('PRIVATE_FILE_EXCLUDED')
-        external = supplied.is_absolute() and (str(supplied) in self.read_sources or any(
-            supplied.is_relative_to(Path(root)) for root in trusted_skill_dirs))
-        if external:
-            path = supplied
-            project, relative = Path(path.anchor), path.relative_to(path.anchor)
+        runtime_root = self.commands.data_path / 'task_outputs'
+        own_root = self.commands._task_dir(task_id).parent
+        if path.is_relative_to(runtime_root) and not path.is_relative_to(own_root):
+            raise ValueError('PROTECTED_RUNTIME_PATH: another task')
+        protected = [*(() if self.draft_root is not None else (runtime_root,)),
+                     *getattr(self.commands, 'deny_paths', ())]
+        if any(path == root or path.is_relative_to(root) for root in protected):
+            raise ValueError('PROTECTED_RUNTIME_PATH')
+        if self.draft_root is None:
+            from agent_core.command_execution import check_data_path
+            check_data_path(self.commands, task_id, path)
+        if canonical:
+            # Authorize the resolved target, while callers retain the supplied
+            # spelling for launch-time revalidation. Reuse the same exclusions
+            # after resolution; a project symlink never grants its destination.
+            try: resolved = path.resolve(strict=True)
+            except RuntimeError as exc: raise ValueError('FILE_SYMLINK_LOOP') from exc
+            except FileNotFoundError as exc: raise FileNotFoundError(str(path)) from exc
+            if resolved != path:
+                return self.read_target(str(resolved), task_id, canonical=False)
+        return project, path
+
+    def resolve_read_path(self, value, *, task_id, call_id=None, trusted_skill_dirs=()):
+        """stat, native authorization and bounded legacy read share one policy."""
+        from agent_core.execution_permissions import prepare_file_read, active_read_grants, _safe_read_info
+        project, path = self.read_target(value, task_id)
+        if path.is_relative_to(project):
+            project, path, relative = self._path(str(path), task_id, write=False)
+            return project, path, relative, None, False
+        # Pi supplied these resource directories through the host-only adapter.
+        trusted_root = next((Path(root) for root in trusted_skill_dirs
+            if path.is_relative_to(Path(root)) and path != Path(root)), None)
+        pinned = str(path) in self.read_sources
+        if trusted_root is not None or pinned:
+            root = trusted_root or path.parent
+            info = _safe_read_info(root)
+            boundary = {'root':str(root),'anchor':[info.st_dev,info.st_ino],
+                        'target_kind':'directory','trusted_source':True}
         else:
-            project, path, relative = self._path(value, task_id)
-        with self._parent(project, relative) as (parent, name):
-            info = os.stat(name, dir_fd=parent, follow_symlinks=False)
-        if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
-            raise ValueError('REGULAR_SINGLE_LINK_FILE_REQUIRED')
+            row = prepare_file_read(self, str(path), task_id=task_id, call_id=call_id)
+            boundary = next((grant for grant in active_read_grants(self.commands.data_path,task_id,project=project)
+                if grant['grant_id']==row.get('grant_id')), None)
+            if boundary is None:
+                raise ValueError('FILE_READ_PERMISSION_NOT_CURRENT')
+            if boundary.get('operation')=='path_access':
+                from agent_core.execution_permissions import _file_read_projection
+                boundary=_file_read_projection(boundary,path)
+            root = Path(boundary['root'])
+        if boundary['target_kind']=='file': root = path.parent
+        return root, path, path.relative_to(root), boundary, True
+
+    @contextmanager
+    def _read_parent(self, root, relative, boundary):
+        from agent_core.execution_permissions import _file_dispatch
+        token = None
+        if boundary and boundary['target_kind']=='directory':
+            token = _file_dispatch.set((Path(boundary['root']), boundary['anchor']))
+        try:
+            with self._parent(root, relative) as handle:
+                yield handle
+        finally:
+            if token is not None: _file_dispatch.reset(token)
+
+    @staticmethod
+    def _verify_read_identity(info, boundary):
+        if (boundary and boundary['target_kind']=='file' and
+                [info.st_dev,info.st_ino] != boundary['anchor']):
+            raise ValueError('FILE_PERMISSION_TARGET_REPLACED')
+
+    def stat(self, args, *, task_id, trusted_skill_dirs=(), call_id=None):
+        """Metadata only. Skill roots are from the same Pi host proof as read."""
+        root, path, relative, boundary, external = self.resolve_read_path(args.get('path'),
+            task_id=task_id, call_id=call_id, trusted_skill_dirs=trusted_skill_dirs)
+        with self._read_parent(root, relative, boundary) as (parent, name):
+            info = (os.fstat(parent) if not relative.parts
+                    else os.stat(name, dir_fd=parent, follow_symlinks=False))
+            self._verify_read_identity(info, boundary)
+        if not stat.S_ISDIR(info.st_mode):
+            _require_regular_single_link(info)
+        from agent_core.execution_permissions import path_grants
+        externally_writable=external and bool(path_grants(self.commands,task_id,path,'read_write'))
         return {'status': 'completed', 'path': str(path), 'bytes': info.st_size,
+                'kind': 'directory' if stat.S_ISDIR(info.st_mode) else 'file',
                 'device': info.st_dev, 'inode': info.st_ino, 'mtime_ns': str(info.st_mtime_ns),
-                'mode': stat.S_IMODE(info.st_mode), 'read_only_source': bool(external),
+                'mode': stat.S_IMODE(info.st_mode), 'read_only_source': bool(external and not externally_writable),
                 'expected_sha256': self.read_sources.get(str(path))}
 
-    def read(self, args, *, task_id):
-        value = args.get('path')
-        pinned = self.read_sources.get(value) if isinstance(value, str) else None
-        if pinned:
-            path = Path(value)
-            if not path.is_absolute() or '..' in path.parts or any(
-                    _PRIVATE_PATTERN.fullmatch(part.lower()) for part in path.parts):
-                raise ValueError('PRIVATE_OR_INVALID_SOURCE')
-            project, relative = Path(path.anchor), path.relative_to(path.anchor)
-        else:
-            project, path, relative = self._path(value, task_id)
+    def read(self, args, *, task_id, call_id=None, trusted_skill_dirs=()):
+        root, path, relative, boundary, external = self.resolve_read_path(args.get('path'),
+            task_id=task_id, call_id=call_id, trusted_skill_dirs=trusted_skill_dirs)
+        pinned = self.read_sources.get(str(path))
         first, count = args.get('start_line', 1), args.get('max_lines', 200)
         if type(first) is not int or first < 1 or type(count) is not int or not 1 <= count <= 400:
             raise ValueError('INVALID_LINE_RANGE')
-        with self._parent(project, relative) as (parent, name):
-            data, _ = self._read(parent, name)
+        with self._read_parent(root, relative, boundary) as (parent, name):
+            info = os.stat(name, dir_fd=parent, follow_symlinks=False)
+            self._verify_read_identity(info, boundary)
+            data, _ = self._read(parent, name, expected_identity=[info.st_dev,info.st_ino])
         if data is None:
             raise FileNotFoundError(str(path))
         digest = _digest(data)
@@ -184,7 +278,8 @@ class WorkspaceFileService:
                 'offset_chars': offset, 'next_offset_chars': None if complete else end,
                 'total_chars': len(text), 'complete': complete,
                 'next_line': None if complete else text[:end].count('\n') + 1,
-                'truncated': {'content': not complete}, 'bytes': len(data)}
+                'truncated': {'content': not complete}, 'bytes': len(data),
+                'read_only_source':bool(external)}
 
     def write(self, args, *, task_id):
         project, path, relative = self._path(args.get('path'), task_id)
@@ -256,9 +351,13 @@ class WorkspaceFileService:
         filesystem boundary. A later approved write repeats the CAS under lock.
         """
         project, path, relative = self._path(args.get('path'), task_id)
+        from agent_core.execution_permissions import path_grants
+        grants=path_grants(self.commands,task_id,path,'read_write') if not path.is_relative_to(self.commands.project_for_task(task_id)) else []
+        boundary=({'root':grants[0]['anchor_path'],'anchor':grants[0]['anchor'],'target_kind':'directory'} if grants else None)
+        identity=(grants[0].get('target_anchor') if grants and grants[0]['target_kind']=='file' else None)
         try:
-            with self._parent(project, relative) as (parent, name):
-                data, _ = self._read(parent, name)
+            with self._read_parent(project, relative, boundary) as (parent, name):
+                data, _ = self._read(parent, name, expected_identity=identity)
         except FileNotFoundError:
             data = None
         return {'path': str(path), 'exists': data is not None,
@@ -295,7 +394,7 @@ class WorkspaceFileService:
             if not isinstance(args, dict):
                 raise ValueError('FILE_ARGUMENTS_MUST_BE_OBJECT')
             if name == 'read_file':
-                return self.read(args, task_id=task_id)
+                return self.read(args, task_id=task_id, call_id=call_id)
             if name in {'write_file','patch_file'}:
                 from agent_core.execution_permissions import authorize_file, file_dispatch_context, claim_permission, complete_permission
                 import uuid

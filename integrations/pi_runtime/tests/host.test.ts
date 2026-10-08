@@ -1,12 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
+import { mkdtemp, readFile, writeFile, mkdir, readdir, chmod, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { StringDecoder } from 'node:string_decoder';
+import { ProjectTrustStore } from '@earendil-works/pi-coding-agent';
 
 const runtime = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const text = (value: string) => ({ content: [{ type: 'text', text: value }] });
@@ -39,8 +40,9 @@ async function processSnapshot(root?: number): Promise<ProcessRow[]> {
   return result;
 }
 async function launch(steps: any[] | ((cwd: string) => any[] | Promise<any[]>), inheritHistory = false,
-  extraConfig: (cwd: string) => Record<string, unknown> = () => ({})) {
-  const cwd = await mkdtemp(path.join(tmpdir(), 'biomind-host-'));
+  extraConfig: (cwd: string) => Record<string, unknown> = () => ({}), reuseCwd?: string, productEntry = false) {
+  const cwd = reuseCwd ?? await mkdtemp(path.join(tmpdir(), 'biomind-host-'));
+  await mkdir(path.join(cwd, 'home'), { recursive: true });
   const fixture = path.join(cwd, 'fixture.json'), config = path.join(cwd, 'config.json');
   const script = typeof steps === 'function' ? await steps(cwd) : steps;
   script[0] = { ...script[0], trace_path: path.join(cwd, 'provider-requests.jsonl') };
@@ -49,17 +51,19 @@ async function launch(steps: any[] | ((cwd: string) => any[] | Promise<any[]>), 
   await writeFile(registryPath, JSON.stringify({ environments: { fixture: { status: 'verified',
     prefix: '/public/home/liusiqi/anaconda3/envs/biomind', language: 'python', packages: [] } }, tools: {} }));
   await writeFile(path.join(cwd, 'samples.tsv'), 'id\n样本一\n');
-  await writeFile(config, JSON.stringify({ providerFixture: fixture, preferencesPath: path.join(cwd, 'preference.md'),
+  await writeFile(config, JSON.stringify({ executionProfile: 'protected', providerFixture: fixture, preferencesPath: path.join(cwd, 'preference.md'),
     agentDir: path.join(cwd, 'agent'), dataRoot: path.join(cwd, 'domain'), registryPath,
+    memoryRoot: path.join(cwd, 'memory'), wikiRoot: path.join(cwd, 'wiki'), archivePath: path.join(cwd, 'archive.sqlite'),
     ...(inheritHistory ? {} : { historyEnabled: false }), ...extraConfig(cwd) }));
   const processSamples: { phase: string; processes: ProcessRow[] }[] = [];
   if (process.env.BIOMIND_PI_TEST_EVIDENCE) processSamples.push({ phase: 'before-launch', processes: await processSnapshot() });
   const launchedAt = performance.now(); let readyReceivedMs: number | undefined;
   const waitObservations: { timeout_ms: number; elapsed_ms: number; outcome: string; matched_frame_type?: string }[] = [];
   const child = spawn('/public/home/liusiqi/anaconda3/envs/biomind/bin/python',
-    ['-B', path.join(runtime, 'testing/posix-pipe-relay.py'), '/public/home/liusiqi/anaconda3/envs/biomind/bin/python',
-      '-B', path.resolve(runtime, '../../bio_agents.py'), '--engine', 'pi', '--pi-mode', 'json', '--project-dir', cwd, '--pi-config', config],
-    { env: { PATH: '/usr/bin:/bin', LC_ALL: 'C.UTF-8', PI_OFFLINE: '1',
+    ['-B', path.join(runtime, 'testing/posix-pipe-relay.py'),
+      ...(productEntry ? [path.resolve(runtime, '../../bin/biomind')] : ['/public/home/liusiqi/anaconda3/envs/biomind/bin/python', '-B', path.resolve(runtime, '../../bio_agents.py')]), '--engine', 'pi', '--pi-mode', 'json', '--project-dir', cwd, '--pi-config', config],
+    { env: { PATH: '/usr/bin:/bin', LC_ALL: 'C.UTF-8', PI_OFFLINE: '1', HOME: path.join(cwd, 'home'),
+      XDG_CONFIG_HOME: path.join(cwd, 'home/.config'), BIOMIND_PI_PYTHON: '/public/home/liusiqi/anaconda3/envs/biomind/bin/python', BIOMIND_DISABLE_DOTENV: '1', PYTHONDONTWRITEBYTECODE: '1',
       ...(inheritHistory ? { BIOMIND_PI_HISTORY_ENABLED: '1' } : {}) }, stdio: ['pipe', 'pipe', 'pipe'] });
   const frames: any[] = []; const decoder = new StringDecoder('utf8'); let pending = ''; let stderr = '';
   child.stdout.on('data', chunk => { pending += decoder.write(chunk); let end;
@@ -108,9 +112,8 @@ async function launch(steps: any[] | ((cwd: string) => any[] | Promise<any[]>), 
     } };
 }
 
-test('real host + same extension + real Python: Consult, correlated question, handoff, files and next Consult', async () => {
+test('real host + same extension + real Python: one agent, correlated question, files and next request', async () => {
   const h = await launch([text('咨询中文答复'), tool('question-1', 'ask_user', { question: '输入清单是什么？' }),
-    tool('handoff-1', 'handoff_generate', { goal: '读取用户清单' }),
     tool('read-1', 'read', { path: 'samples.tsv' }), text('读取两行，未执行科学作业'), text('下一轮纯答复')]);
   try {
     // The fresh first host reached ready after the previous 20 s cold-start
@@ -133,12 +136,79 @@ test('real host + same extension + real Python: Consult, correlated question, ha
     assert.equal(second.runtime_status, 'completed'); assert.equal(second.extension_sha256, ready.extension_sha256);
     const read = h.frames.find(frame => frame.type === 'event' && frame.event.type === 'tool_execution_end' && frame.event.toolName === 'read');
     assert(read); assert.equal(read.event.isError, false); assert(JSON.stringify(read).includes('样本一'));
-    h.send({ type: 'prompt', requestId: 'consult-3', text: '下一次普通输入' });
+    h.send({ type: 'prompt', requestId: 'consult-3', text: '[新任务] 下一次普通输入' });
     await h.wait(frame => frame.type === 'result' && frame.requestId === 'consult-3');
     const states = h.frames.filter(frame => frame.type === 'biomind_state');
-    assert.equal(states.at(-1).data.role, 'Consult');
+    assert.equal(states.at(-1).data.role, 'Main');
     assert.equal(h.frames.filter(frame => frame.type === 'extension_error').length, 0);
   } finally { assert.equal(await h.close('host-domain'), 0); }
+});
+
+test('B1/B3 actual JSON consumes trusted settings/sessionDir and refreshes AGENTS plus preferences without historical rewrites', async () => {
+  const h = await launch(async cwd => {
+    await mkdir(path.join(cwd,'agent')); await mkdir(path.join(cwd,'.pi'));
+    await writeFile(path.join(cwd,'agent/settings.json'), JSON.stringify({defaultProjectTrust:'ask',retry:{enabled:false}}));
+    new ProjectTrustStore(path.join(cwd,'agent')).set(cwd,true);
+    await writeFile(path.join(cwd,'.pi/settings.json'), JSON.stringify({sessionDir:path.join(cwd,'from-project-settings'),compaction:{enabled:true,keepRecentTokens:1}}));
+    await writeFile(path.join(cwd,'AGENTS.md'),'PROJECT_A_ONLY');
+    return [text('FIRST_REQUEST'),text('RELOADED_REQUEST'),text('EMPTY_PREFERENCE_REQUEST'),text('SYNTHETIC_NATIVE_COMPACTION_SUMMARY'),text('AFTER_COMPACTION')];
+  });
+  let savedFile: string | undefined;
+  try {
+    const ready=await h.wait(f=>f.type==='ready',60000);
+    assert.equal(ready.projectTrusted,true);
+    assert.equal(ready.sessionDir,path.join(h.cwd,'from-project-settings'));
+    await writeFile(path.join(h.cwd,'preference.md'),'GLOBAL_PREF_A');
+    h.send({type:'prompt',id:'before',text:'只返回合成见证'});
+    await h.wait(f=>f.type==='result' && f.requestId==='before');
+    await writeFile(path.join(h.cwd,'preference.md'),'GLOBAL_PREF_B');
+    await writeFile(path.join(h.cwd,'AGENTS.md'),'PROJECT_B_ONLY');
+    h.send({type:'reload',id:'reload-1'}); await h.wait(f=>f.type==='reload_result' && f.id==='reload-1');
+    h.send({type:'prompt',id:'after',text:'只返回新的合成见证'});
+    await h.wait(f=>f.type==='result' && f.requestId==='after');
+    await writeFile(path.join(h.cwd,'preference.md'),'');
+    h.send({type:'reload',id:'reload-2'}); await h.wait(f=>f.type==='reload_result' && f.id==='reload-2');
+    h.send({type:'prompt',id:'empty',text:'只返回空偏好见证'});
+    const empty=await h.wait(f=>f.type==='result' && f.requestId==='empty'); savedFile=empty.sessionFile;
+    h.send({type:'compact',id:'compact-1'}); await h.wait(f=>f.type==='compact_result' && f.id==='compact-1');
+    h.send({type:'prompt',id:'after-compact',text:'原生压缩后仅返回合成说明见证'});
+    await h.wait(f=>f.type==='result' && f.requestId==='after-compact');
+    const calls=(await readFile(path.join(h.cwd,'provider-requests.jsonl'),'utf8')).trim().split('\n').map(l=>JSON.parse(l));
+    assert(calls.length>=5);
+    const current=(call:any)=>JSON.stringify(call.context.messages.filter((m:any)=>m.role==='system').map((m:any)=>m.sections));
+    assert.match(current(calls[0]),/GLOBAL_PREF_A/); assert.match(current(calls[0]),/PROJECT_A_ONLY/);
+    assert.match(current(calls[1]),/GLOBAL_PREF_B/); assert.match(current(calls[1]),/PROJECT_B_ONLY/);
+    assert(!current(calls[1]).includes('PROJECT_A_ONLY'));
+    assert.match(current(calls[2]),/PROJECT_B_ONLY/);
+    assert.doesNotMatch(current(calls[2]),/\"role\":\"(?:Consult|Generate)\"/);
+    const latestBio=(call:any)=>JSON.stringify([...call.context.messages].reverse().find((m:any)=>m.role==='system' && m.sections?.['biomind-current']));
+    assert(!latestBio(calls[2]).includes('GLOBAL_PREF_B'));
+    assert.match(current(calls.at(-1)),/PROJECT_B_ONLY/);
+    assert(!latestBio(calls.at(-1)).includes('GLOBAL_PREF_B'));
+    assert.equal(h.frames.filter(f=>f.type==='ready').length,1);
+  } finally { assert.equal(await h.close('startup-settings-instructions'),0); }
+  assert(savedFile);
+  const resumed=await launch([text('RESUMED_INSTRUCTIONS')],false,()=>({session:savedFile}),h.cwd);
+  try {
+    const ready=await resumed.wait(f=>f.type==='ready',60000); assert.equal(ready.sessionFile,savedFile);
+    await writeFile(path.join(h.cwd,'preference.md'),'GLOBAL_PREF_B');
+    resumed.send({type:'prompt',id:'resumed-instructions',text:'恢复同项目后验证当前说明'});
+    await resumed.wait(f=>f.type==='result' && f.requestId==='resumed-instructions');
+    const calls=(await readFile(path.join(h.cwd,'provider-requests.jsonl'),'utf8')).trim().split('\n').map(l=>JSON.parse(l));
+    const current=JSON.stringify(calls.at(-1).context.messages.filter((m:any)=>m.role==='system').map((m:any)=>m.sections));
+    assert.match(current,/GLOBAL_PREF_B/); assert.match(current,/PROJECT_B_ONLY/);
+  } finally { assert.equal(await resumed.close('startup-resumed-instructions'),0); }
+});
+
+test('B1 actual JSON config sessionDir overrides Pi settings and environment', async () => {
+  const h=await launch([text('SESSION_DIR_OVERRIDE')],false,cwd=>({sessionDir:path.join(cwd,'explicit-sessions')}));
+  try {
+    const ready=await h.wait(f=>f.type==='ready',60000);
+    assert.equal(ready.sessionDir,path.join(h.cwd,'explicit-sessions'));
+    h.send({type:'prompt',id:'persist',text:'保存合成会话'});
+    const result=await h.wait(f=>f.type==='result'); assert.equal(result.sessionSaved,true);
+    assert(result.sessionFile.startsWith(ready.sessionDir+'/'));
+  } finally { assert.equal(await h.close('startup-session-dir'),0); }
 });
 
 test('runtime JSON handshake deadline reaches the real service and reports timeout without sending to the provider', async () => {
@@ -156,14 +226,14 @@ test('runtime JSON handshake deadline reaches the real service and reports timeo
   } finally { assert.equal(await h.close('host-startup-timeout'), 2); }
 });
 
-test('real product queue consumes steer within the request and follow-up as a new Consult without a durable ACK', async () => {
+test('real product queue consumes steer and follow-up as revisions of the same request without a durable ACK', async () => {
   const h = await launch([
     { ...text('合成流等待队列'), chunks: ['合成流', '等待队列'], delay_ms: 150 },
     { ...text('已接收当前约束'), expect_user_contains: '补充当前约束' },
     { ...text('后续独立咨询答复'), expect_user_contains: '后续独立咨询' },
   ]);
   try {
-    await h.wait(frame => frame.type === 'ready');
+    await h.wait(frame => frame.type === 'ready', 60000);
     h.send({ type: 'prompt', requestId: 'queue-root', text: '开始当前咨询' });
     await h.wait(frame => frame.type === 'event' && frame.event.type === 'message_start' && frame.event.message.role === 'assistant');
     h.send({ type: 'steer', id: 'steer-one', text: '补充当前约束' });
@@ -172,8 +242,8 @@ test('real product queue consumes steer within the request and follow-up as a ne
     assert.equal(result.runtime_status, 'completed'); assert.equal(result.model_conclusion, '后续独立咨询答复');
     assert.equal(result.usage.tokens.total, 6);
     const states = h.frames.filter(frame => frame.type === 'biomind_state').map(frame => frame.data);
-    const ids = [...new Set(states.map(state => state.requestId))]; assert.equal(ids.length, 2);
-    assert(states.every(state => state.role === 'Consult'));
+    const ids = [...new Set(states.map(state => state.requestId))]; assert.equal(ids.length, 1);
+    assert(states.every(state => state.role === 'Main'));
     assert.equal(h.frames.filter(frame => frame.type === 'result').length, 1);
     assert(!h.frames.some(frame => ['accepted', 'ack', 'durable_ack'].includes(frame.type)));
     assert(!h.frames.some(frame => frame.type === 'error' || frame.type === 'extension_error'));
@@ -181,13 +251,12 @@ test('real product queue consumes steer within the request and follow-up as a ne
 });
 
 test('real product EOF leaves its already approved worker with the original Python owner until terminal', async () => {
-  const h = await launch(cwd => [tool('eof-handoff', 'handoff_generate', { goal: '启动短合成作业后断开客户端' }),
-    tool('eof-worker', 'run_command', { argv: ['/public/home/liusiqi/anaconda3/envs/biomind/bin/python', '-I', '-u', '-c',
+  const h = await launch(cwd => [tool('eof-worker', 'run_command', { argv: ['/public/home/liusiqi/anaconda3/envs/biomind/bin/python', '-I', '-u', '-c',
       'from pathlib import Path;import time; p=Path("eof-count");p.write_text(p.read_text()+"x" if p.exists() else "x");print("EOF_WORKER_STARTED",flush=True);time.sleep(3);Path("eof-finished").write_text("done");print("EOF_WORKER_FINISHED",flush=True)'],
       workdir: cwd, env_name: 'fixture', description: '仅合成短作业' }), text('已启动，客户端随后断开。')]);
   let runRef = ''; let logPath = '';
   try {
-    await h.wait(frame => frame.type === 'ready');
+    await h.wait(frame => frame.type === 'ready', 60000);
     h.send({ type: 'prompt', requestId: 'eof-request', text: '启动一次合成短作业' });
     const approval = await h.wait(frame => frame.type === 'approval');
     h.send({ type: 'ui_response', id: approval.id, value: 'approve' });
@@ -222,7 +291,7 @@ for (const mode of ['ask', 'auto', 'disabled', 'ask-cancel'] as const) {
       false, cwd => ({ historyEnabled: true, memoryMode: mode === 'ask-cancel' ? 'ask' : mode,
         memoryRoot: path.join(cwd, 'memory'), wikiRoot: path.join(cwd, 'wiki') }));
     try {
-      await h.wait(frame => frame.type === 'ready');
+      await h.wait(frame => frame.type === 'ready', 60000);
       h.send({ type: 'prompt', requestId: 'memory-request', text: '仅记录合成公开事实：夹具只含三行，不运行科学作业。' });
       const calls = () => h.frames.filter(frame => frame.type === 'event' && frame.event.type === 'message_start' && frame.event.message.role === 'assistant').length;
       if (mode === 'ask' || mode === 'ask-cancel') {
@@ -257,7 +326,7 @@ for (const mode of ['ask', 'auto', 'disabled', 'ask-cancel'] as const) {
 test('headless shutdown ignores later prompt in same input chunk and exits', async () => {
   const h = await launch([text('must not be called')]);
   try {
-    await h.wait(frame => frame.type === 'ready');
+    await h.wait(frame => frame.type === 'ready', 60000);
     h.child.stdin.write('{"type":"shutdown"}\n{"type":"prompt","text":"ignored"}\n');
   } finally { assert.equal(await h.close('host-shutdown'), 0); }
   assert.equal(h.frames.filter(frame => frame.type === 'event' && frame.event.type === 'agent_start').length, 0);
@@ -267,7 +336,7 @@ test('real host archival projection uses the existing SQLite writer while histor
   const h = await launch([text('公开合成回答；没有科学运行。')], false,
     cwd => ({ archivePath: path.join(cwd, 'fresh-archive.sqlite') }));
   try {
-    await h.wait(frame => frame.type === 'ready');
+    await h.wait(frame => frame.type === 'ready', 60000);
     h.send({ type: 'prompt', requestId: 'archive-request', text: '公开合成问题。' });
     const result = await h.wait(frame => frame.type === 'result');
     assert.equal(result.runtime_status, 'completed');
@@ -295,7 +364,7 @@ test('real host archival projection uses the existing SQLite writer while histor
 test('headless malformed protocol exits nonzero without model request or legacy fallback', async () => {
   const h = await launch([text('must not be called')]);
   try {
-    await h.wait(frame => frame.type === 'ready');
+    await h.wait(frame => frame.type === 'ready', 60000);
     h.child.stdin.write('not-json\n');
   } finally { assert.equal(await h.close('host-malformed'), 2); }
   assert.equal(h.frames.filter(frame => frame.type === 'event' && frame.event.type === 'agent_start').length, 0);
@@ -305,7 +374,7 @@ test('real product top-level frame failure aborts a pending question and exits n
   const h = await launch([tool('failure-question', 'ask_user', { question: '等待真实用户输入' })]);
   h.child.stdin.on('error', () => { /* oversized frame can close the peer during a pending write */ });
   try {
-    await h.wait(frame => frame.type === 'ready');
+    await h.wait(frame => frame.type === 'ready', 60000);
     h.send({ type: 'prompt', requestId: 'failure-pending', text: '先询问，等待时模拟传输故障' });
     await h.wait(frame => frame.type === 'question');
     h.child.stdin.write('x'.repeat(4 * 1024 * 1024 + 1));
@@ -316,12 +385,11 @@ test('real product top-level frame failure aborts a pending question and exits n
 });
 
 test('real product delivers an existing file fact and an explicit missing file error without inventing download paths', async () => {
-  const h = await launch(cwd => [tool('delivery-handoff', 'handoff_generate', { goal: '核实合成文件存在性' }),
-    tool('delivery-existing', 'read', { path: 'samples.tsv' }),
+  const h = await launch(cwd => [tool('delivery-existing', 'read', { path: 'samples.tsv' }),
     tool('delivery-missing', 'read', { path: 'missing-result.tsv' }),
     text(`已读取 ${path.join(cwd, 'samples.tsv')}。missing-result.tsv 不存在，没有生成或下载该文件。`)]);
   try {
-    await h.wait(frame => frame.type === 'ready');
+    await h.wait(frame => frame.type === 'ready', 60000);
     h.send({ type: 'prompt', requestId: 'delivery-request', text: '核实 samples.tsv 和 missing-result.tsv，仅报告实际文件事实。' });
     const result = await h.wait(frame => frame.type === 'result');
     assert.equal(result.runtime_status, 'completed'); assert.equal(result.scientific_success, null);
@@ -336,7 +404,7 @@ test('real product delivers an existing file fact and an explicit missing file e
     assert(result.model_conclusion.includes('不存在'));
     assert(!/https?:\/\//.test(result.model_conclusion));
     const calls = (await readFile(path.join(h.cwd, 'provider-requests.jsonl'), 'utf8')).trim().split('\n').map(line => JSON.parse(line));
-    assert.equal(calls.length, 4);
+    assert.equal(calls.length, 3);
     const finalContext = JSON.stringify(calls.at(-1).context);
     assert(finalContext.includes('FileNotFoundError')); assert(finalContext.includes('样本一'));
   } finally { assert.equal(await h.close('host-file-delivery'), 0); }
@@ -357,7 +425,7 @@ test('real product reads synthetic historical evidence without replaying or chan
     const { skillsRoot: _seedSkills, ...config } = seed.configOverrides; return config;
   });
   try {
-    await h.wait(frame => frame.type === 'ready');
+    await h.wait(frame => frame.type === 'ready', 60000);
     h.send({ type: 'prompt', requestId: 'historical-read-only', text: '只读查阅 P16D_HISTORICAL_SENTINEL 对应的已有合成历史，不执行旧作业。' });
     const result = await h.wait(frame => frame.type === 'result');
     assert.equal(result.runtime_status, 'completed'); assert.equal(result.scientific_success, null);
@@ -379,13 +447,12 @@ test('real product reads synthetic historical evidence without replaying or chan
 });
 
 test('real headless control: settings, approved worker, observation and scoped cancel without extra model calls', async () => {
-  const h = await launch(cwd => [tool('control-handoff', 'handoff_generate', { goal: '启动合成标准库等待作业' }),
-    tool('control-run', 'run_command', { argv: ['/public/home/liusiqi/anaconda3/envs/biomind/bin/python', '-I', '-u', '-c',
+  const h = await launch(cwd => [tool('control-run', 'run_command', { argv: ['/public/home/liusiqi/anaconda3/envs/biomind/bin/python', '-I', '-u', '-c',
       'from pathlib import Path;import time;Path("start-count").write_text("x");print("synthetic-worker",flush=True);time.sleep(20)'],
       workdir: cwd, env_name: 'fixture', description: '合成等待作业；测试宿主随后取消' }), text('已启动合成作业，等待宿主观察')], true);
   let completed = false;
   try {
-    await h.wait(frame => frame.type === 'ready');
+    await h.wait(frame => frame.type === 'ready', 60000);
     h.send({ type: 'settings', id: 'settings-initial' });
     const initial = await h.wait(frame => frame.type === 'settings_result' && frame.id === 'settings-initial');
     assert.equal(initial.status, 'ok'); assert.equal(initial.history_enabled, true, 'explicit env switch survives omitted config');
@@ -413,7 +480,7 @@ test('real headless control: settings, approved worker, observation and scoped c
     assert(started, 'the actual approved executor must have started the worker');
     const count = () => h.frames.filter(frame => frame.type === 'event' && frame.event.type === 'message_start' && frame.event.message.role === 'assistant').length;
     const before = count();
-    h.send({ type: 'prompt', requestId: 'rejected-new-request', text: '活作业期间的新请求应明确拒绝并保留原owner' });
+    h.send({ type: 'prompt', requestId: 'rejected-new-request', text: '[新任务] 活作业期间的新请求应明确拒绝并保留原owner' });
     const rejected = await h.wait(frame => frame.type === 'result' && frame.requestId === 'rejected-new-request');
     assert.equal(rejected.runtime_status, 'error'); assert.equal(count(), before);
     h.send({ type: 'job', id: 'list', action: 'list' });
@@ -466,39 +533,48 @@ async function p06fFacts(name: string, facts: unknown): Promise<void> {
   if (directory) { await mkdir(directory, { recursive: true }); await writeFile(path.join(directory, name + '-facts.json'), JSON.stringify(facts, null, 2)); }
 }
 
-test('P06f actual host allows scoped native read and rejects hallucinated bash/write/edit', async () => {
+test('P06f actual host allows scoped native read; denied write pauses and prevents the following edit', async () => {
   const secret = 'P06F_READ_FIXTURE_MUST_NOT_ENTER_MODEL';
   const original = 'P06F_EDIT_ORIGINAL';
   const h = await launch(async cwd => {
     await writeFile(path.join(cwd, 'builtin-read-fixture.txt'), secret);
     await writeFile(path.join(cwd, 'builtin-edit-target.txt'), original);
-    return [tool('builtin-handoff', 'handoff_generate', { goal: '验证未注册入口不执行' }),
-      { content: [
+    return [{ content: [
         ...tool('builtin-bash', 'bash', { command: 'printf bypass > builtin-bash-marker' }).content,
         ...tool('builtin-read', 'read', { path: path.join(cwd, 'builtin-read-fixture.txt') }).content,
         ...tool('builtin-write', 'write', { path: path.join(cwd, 'builtin-write-marker'), content: 'bypass' }).content,
         ...tool('builtin-edit', 'edit', { path: path.join(cwd, 'builtin-edit-target.txt'), oldText: original, newText: 'BYPASSED' }).content,
-      ] }, text('内置入口不可用；没有执行这些操作。')];
+      ] }, text('bash 不可用；原生写入和编辑提案均被拒绝，没有修改文件。')];
   });
   try {
-    await h.wait(frame => frame.type === 'ready');
+    await h.wait(frame => frame.type === 'ready', 60000);
     h.send({ type: 'prompt', requestId: 'p06f-builtins', text: '仅测试未注册工具会被拒绝，不允许绕过领域入口。' });
+    const approval = await h.wait(frame => frame.type === 'approval' && frame.toolCallId === 'builtin-write');
+    h.send({ type: 'ui_response', id: approval.id, value: 'deny' });
     const result = await h.wait(frame => frame.type === 'result');
-    assert.equal(result.runtime_status, 'completed'); assert.equal(result.scientific_success, null);
+    assert.equal(result.runtime_status, 'aborted'); assert.equal(result.scientific_success, null);
+    assert(h.frames.some(frame => frame.type === 'biomind_state' && frame.data.status === 'paused' && frame.data.pauseReason === 'approval_denied'));
     const errors = h.frames.filter(frame => frame.type === 'event' && frame.event.type === 'tool_execution_end'
       && ['bash', 'write', 'edit'].includes(frame.event.toolName));
-    assert.equal(errors.length, 3);
-    for (const row of errors) { assert.equal(row.event.isError, true); assert.match(JSON.stringify(row.event.result), /not found/i); }
-    assert.equal(h.frames.filter(frame => frame.type === 'approval').length, 0);
-    assert.deepEqual(await p06fPermissions(h.cwd), []);
+    assert.deepEqual(errors.map(frame => frame.event.toolName), ['bash', 'write']);
+    for (const row of errors) {
+      if (row.event.toolName === 'bash') { assert.equal(row.event.isError, true); assert.match(JSON.stringify(row.event.result), /not found/i); }
+      else { assert.equal(row.event.isError, true); assert.match(JSON.stringify(row.event.result), /MUTATION_NOT_COMPLETED: denied/); }
+    }
+    assert.equal(h.frames.filter(frame => frame.type === 'approval').length, 1);
+    assert(!h.frames.some(frame => frame.type === 'event' && frame.event.type === 'tool_execution_start' && frame.event.toolName === 'edit'));
+    const permissions = await p06fPermissions(h.cwd);
+    assert.equal(permissions.length, 1); assert(permissions.every((row: any) => row.status === 'denied'));
     const files = await readdir(h.cwd);
     assert(!files.includes('builtin-bash-marker')); assert(!files.includes('builtin-write-marker'));
     assert.equal(await readFile(path.join(h.cwd, 'builtin-edit-target.txt'), 'utf8'), original);
     const providerRequests = (await readFile(path.join(h.cwd, 'provider-requests.jsonl'), 'utf8')).trim().split('\n').map(line => JSON.parse(line));
-    assert.equal(providerRequests.length, 3); assert(JSON.stringify(providerRequests).includes(secret));
-    assert(errors.every(row => JSON.stringify(providerRequests.at(-1).context).includes(`Tool ${row.event.toolName} not found`)));
+    assert.equal(providerRequests.length, 1, 'denial must stop later tools and the next provider turn');
+    const read = h.frames.find(frame => frame.type === 'event' && frame.event.type === 'tool_execution_end' && frame.event.toolName === 'read');
+    assert(read); assert.equal(read.event.isError, false); assert(JSON.stringify(read.event.result).includes(secret));
+    assert(!JSON.stringify(providerRequests).includes(secret), 'read receipt exists but denial stops its next provider delivery');
     await p06fFacts('host-p06f-builtins', { status: 'PASS', errors, markerFilesAbsent: true, editUnchanged: true,
-      scopedReadContentPresent: true, permissions: [], providerCalls: providerRequests.length });
+      scopedReadReceiptPresent: true, laterEditNotStarted: true, permissions, providerCalls: providerRequests.length });
   } finally { assert.equal(await h.close('host-p06f-builtins'), 0); }
 });
 
@@ -507,12 +583,11 @@ for (const decision of ['approve', 'deny'] as const) {
     const marker = `P06F_EXPLICIT_MEMORY_${decision.toUpperCase()}`;
     const filename = `explicit-${decision}.md`;
     const h = await launch([
-      tool('explicit-memory-handoff', 'handoff_generate', { goal: '提出显式Wiki写入并等待用户批准' }),
       tool('explicit-memory-write', 'memory_write', { target: 'wiki', operation: 'create', path: 'methods/' + filename,
         content: marker + '；合成事实，科学结果未评估。' }), text('只依据本次显式记忆写入回执回答。'),
     ], false, cwd => ({ historyEnabled: true, memoryMode: 'manual', memoryRoot: path.join(cwd, 'memory'), wikiRoot: path.join(cwd, 'wiki') }));
     try {
-      await h.wait(frame => frame.type === 'ready');
+      await h.wait(frame => frame.type === 'ready', 60000);
       h.send({ type: 'prompt', requestId: 'p06f-explicit-memory-' + decision, text: '只提出显式Wiki写入，等待用户审批；不要运行可选自动维护。' });
       const approval = await h.wait(frame => frame.type === 'approval');
       assert.equal(approval.toolCallId, 'explicit-memory-write');
@@ -525,11 +600,11 @@ for (const decision of ['approve', 'deny'] as const) {
       assert.equal((await p06fPermissions(h.cwd))[0].status, 'pending');
       h.send({ type: 'ui_response', id: approval.id, value: decision });
       const result = await h.wait(frame => frame.type === 'result');
-      assert.equal(result.runtime_status, 'completed'); assert.equal(result.scientific_success, null);
+      assert.equal(result.runtime_status, decision === 'approve' ? 'completed' : 'aborted'); assert.equal(result.scientific_success, null);
       const ends = h.frames.filter(frame => frame.type === 'event' && frame.event.type === 'tool_execution_end');
-      assert.deepEqual(ends.map(frame => frame.event.toolName), ['handoff_generate', 'memory_write']);
-      assert.equal(ends[1].event.isError, false);
-      assert.equal(ends[1].event.result.details.status, decision === 'approve' ? 'written' : 'denied');
+      assert.deepEqual(ends.map(frame => frame.event.toolName), ['memory_write']);
+      assert.equal(ends[0].event.isError, false);
+      assert.equal(ends[0].event.result.details.status, decision === 'approve' ? 'written' : 'denied');
       assert.equal(h.frames.filter(frame => frame.type === 'question').length, 0, 'manual mode cannot start maintenance consent');
       const files = await p06fFiles(path.join(h.cwd, 'wiki'));
       const written = files.filter(value => value.endsWith(filename)); assert.equal(written.length, decision === 'approve' ? 1 : 0);
@@ -541,7 +616,7 @@ for (const decision of ['approve', 'deny'] as const) {
       const outboxes = (await p06fFiles(path.join(h.cwd, 'domain'))).filter(value => value.includes('/outbox/') && value.endsWith('.json'));
       assert.equal(outboxes.length, 0, 'explicit memory_write must not be counted as maintenance');
       const requests = (await readFile(path.join(h.cwd, 'provider-requests.jsonl'), 'utf8')).trim().split('\n').map(line => JSON.parse(line));
-      assert.equal(requests.length, 3);
+      assert.equal(requests.length, decision === 'approve' ? 2 : 1);
       await p06fFacts('host-p06f-explicit-memory-' + decision, { status: 'PASS', decision, permissions, written,
         originalWikiContent: decision === 'approve' ? await readFile(path.join(h.cwd, 'wiki', written[0]), 'utf8') : null,
         maintenanceOutboxes: 0, providerCalls: requests.length, toolNames: ends.map(frame => frame.event.toolName) });
@@ -558,13 +633,12 @@ for (const carrier of ['shell', 'argv'] as const) for (const decision of ['appro
       await writeFile(helper, 'import argparse\nfrom pathlib import Path\np=argparse.ArgumentParser();p.add_argument("--marker",required=True);a=p.parse_args()\nf=Path(a.marker);f.write_text(f.read_text()+"x" if f.exists() else "x")\nprint("P06F_REAL_HELPER_FINISHED",flush=True)\n');
       const argv = [python, '-I', '-u', helper, '--marker', marker];
       const quote = (value: string) => "'" + value.replaceAll("'", "'\\''") + "'";
-      return [tool('helper-handoff', 'handoff_generate', { goal: '按真实授权执行一次合成helper' }),
-        tool('helper-command', 'run_command', { ...(carrier === 'argv' ? { argv } : { cmd: argv.map(quote).join(' ') }),
+      return [tool('helper-command', 'run_command', { ...(carrier === 'argv' ? { argv } : { cmd: argv.map(quote).join(' ') }),
           workdir: cwd, description: '只写合成marker的真实helper；-u和含空格路径必须保留' }),
         text('按真实helper回执说明结果，不推断科学成功。')];
     });
     try {
-      await h.wait(frame => frame.type === 'ready');
+      await h.wait(frame => frame.type === 'ready', 60000);
       h.send({ type: 'prompt', requestId: `p06f-helper-${carrier}-${decision}`, text: '运行合成helper前必须等待我的明确授权。' });
       const approval = await h.wait(frame => frame.type === 'approval');
       assert.equal(approval.toolCallId, 'helper-command'); assert.equal(approval.payload.payload.kind, 'command');
@@ -576,7 +650,7 @@ for (const carrier of ['shell', 'argv'] as const) for (const decision of ['appro
       const before = await p06fPermissions(h.cwd); assert.equal(before.length, 1); assert.equal(before[0].status, 'pending');
       h.send({ type: 'ui_response', id: approval.id, value: decision });
       const result = await h.wait(frame => frame.type === 'result');
-      assert.equal(result.runtime_status, 'completed'); assert.equal(result.scientific_success, null);
+      assert.equal(result.runtime_status, decision === 'approve' ? 'completed' : 'aborted'); assert.equal(result.scientific_success, null);
       const toolEnd = h.frames.find(frame => frame.type === 'event' && frame.event.type === 'tool_execution_end' && frame.event.toolName === 'run_command');
       assert(toolEnd); assert.equal(toolEnd.event.isError, false);
       let terminal: any;
@@ -600,10 +674,196 @@ for (const carrier of ['shell', 'argv'] as const) for (const decision of ['appro
       assert.equal(permissions[0].status, decision === 'approve' ? 'allowed' : 'denied');
       assert.equal(Boolean(permissions[0].claim), decision === 'approve');
       const requests = (await readFile(path.join(h.cwd, 'provider-requests.jsonl'), 'utf8')).trim().split('\n').map(line => JSON.parse(line));
-      assert.equal(requests.length, 3, 'host observation cannot request another model call');
+      assert.equal(requests.length, decision === 'approve' ? 2 : 1, 'host observation cannot request another model call; denial stops provider continuation');
       await p06fFacts(`host-p06f-helper-${carrier}-${decision}`, { status: 'PASS', carrier, decision, permissions,
         helperPath: helper, helperSource: await readFile(helper, 'utf8'), terminal: terminal ?? null,
         marker: decision === 'approve' ? await readFile(marker, 'utf8') : null, providerCalls: requests.length });
     } finally { assert.equal(await h.close(`host-p06f-helper-${carrier}-${decision}`), 0); }
   });
 }
+
+test('EXTERNAL_ACCESS local JSON host stdio resumes original scope once and exposes the same permission ledger', async () => {
+  // This is local SDK JSON over the actual product stdin/stdout and Python
+  // domain. Host choices are synthetic; remote clients/TUI/native RPC NOT_RUN.
+  const external = await mkdtemp(path.join(tmpdir(), 'biomind-external-json-'));
+  const data = path.join(external, 'Final'); await mkdir(data);
+  const leaf = path.join(data, 'leaf.txt'), bud = path.join(data, 'bud.txt');
+  const leafText = 'JSON_EXTERNAL_LEAF\n', budText = 'JSON_EXTERNAL_BUD\n';
+  await writeFile(leaf, leafText); await writeFile(bud, budText);
+  const h = await launch([
+    { content: [...tool('json-leaf-stat', 'file_stat', { path: leaf }).content,
+      ...tool('json-bud-stat', 'file_stat', { path: bud }).content] },
+    tool('json-leaf-read', 'read', { path: leaf }),
+    tool('json-bud-read', 'read', { path: bud }), text('Synthetic external input reads completed.'),
+  ], false, () => ({ memoryMode: 'disabled' }));
+  try {
+    const ready = await h.wait(frame => frame.type === 'ready', 60000);
+    assert.equal(ready.cwd, h.cwd);
+    h.send({ type: 'prompt', requestId: 'external-json-input', text: 'Read these two synthetic external inputs without changing the project.' });
+    const approval = await h.wait(frame => frame.type === 'approval' && frame.toolCallId === 'json-leaf-stat');
+    assert.equal(approval.requestId, 'external-json-input'); assert.equal(approval.sessionId, ready.sessionId);
+    assert.equal(approval.payload.payload.kind, 'file_read'); assert.equal(approval.payload.payload.scope_candidate.root, data);
+    assert.equal(approval.choices[0], '拒绝'); assert.match(approval.question, /当前持久会话/);
+    assert.match(approval.question, /不含 \/new 或 fork/);
+    const staleReplies = [
+      { sessionId: 'different-session' },
+      { businessRequestId: 'different-business-request' },
+      { action_hash: 'different-action' },
+    ];
+    for (const wrong of staleReplies) {
+      const after = h.frames.length;
+      h.send({ type: 'ui_response', id: approval.id, ...wrong, value: { choice: 'scope' } });
+      await h.wait(frame => h.frames.indexOf(frame) >= after && frame.type === 'error' && frame.code === 'STALE_UI_RESPONSE');
+      assert.equal(h.frames.filter(frame => frame.type === 'approval').length, 1);
+      assert(!h.frames.some(frame => frame.type === 'event' && frame.event.type === 'tool_execution_end' && frame.event.toolCallId === 'json-leaf-stat'));
+    }
+    const beforeDecision = (await readFile(path.join(h.cwd, 'provider-requests.jsonl'), 'utf8')).trim().split('\n').map(line => JSON.parse(line));
+    assert.equal(beforeDecision.length, 1); assert(!JSON.stringify(beforeDecision).includes(leafText.trim()));
+    h.send({ type: 'ui_response', id: approval.id, requestId: 'external-json-input',
+      sessionId: approval.sessionId, businessRequestId: approval.businessRequestId, action_hash: approval.proposal.action_hash,
+      value: { choice: 'scope', requestId: approval.businessRequestId, sessionId: approval.sessionId, action_hash: approval.proposal.action_hash } });
+    const result = await h.wait(frame => frame.type === 'result' && frame.requestId === 'external-json-input');
+    assert.equal(result.runtime_status, 'completed'); assert.equal(result.sessionId, ready.sessionId);
+    assert.equal(result.extension_sha256, ready.extension_sha256);
+    assert.equal(h.frames.filter(frame => frame.type === 'approval').length, 1);
+    for (const [identity, expected] of [['json-leaf-read', leafText.trim()], ['json-bud-read', budText.trim()]]) {
+      const read = h.frames.find(frame => frame.type === 'event' && frame.event.type === 'tool_execution_end' && frame.event.toolCallId === identity);
+      assert(read); assert.equal(read.event.isError, false); assert.match(JSON.stringify(read), new RegExp(expected));
+      assert.equal(read.event.result.details.write_path, undefined);
+    }
+    const states = h.frames.filter(frame => frame.type === 'biomind_state').map(frame => frame.data);
+    assert(states.length > 0); assert(states.every(value => value.role === 'Main'));
+    assert(states.every(value => value.requestId === approval.businessRequestId));
+    h.send({ type: 'permissions', id: 'external-ledger', action: 'status' });
+    const permissions = await h.wait(frame => frame.type === 'permissions_result' && frame.id === 'external-ledger');
+    assert.equal(permissions.status, 'ok'); assert.equal(permissions.result.project_root, h.cwd);
+    assert.equal(permissions.result.session_id, ready.sessionId);
+    assert.equal(permissions.result.request_scope.request_key, approval.businessRequestId);
+    const grants = permissions.result.grants.filter((grant: any) => grant.active);
+    assert.equal(grants.length, 1); assert.equal(grants[0].root, data); assert.equal(grants[0].operation, 'file_read');
+    assert.equal(grants[0].target_kind, 'directory'); assert.equal(grants[0].recursive, true);
+    assert.equal(await readFile(leaf, 'utf8'), leafText); assert.equal(await readFile(bud, 'utf8'), budText);
+    assert.equal(h.frames.filter(frame => frame.type === 'extension_error').length, 0);
+    await p06fFacts('external-access-local-json', { status: 'PASS', layer: 'real local product SDK JSON stdin/stdout with synthetic provider/host responses',
+      real_human_tui: 'NOT_RUN', remote_client: 'NOT_RUN', native_rpc: 'NOT_RUN', real_mcool: 'NOT_RUN',
+      project: h.cwd, external_input_directory: data, sessionId: ready.sessionId, businessRequestId: approval.businessRequestId,
+      stale_replies_rejected: staleReplies, approvals: 1, source_contents_unchanged: true, permissions, result });
+  } finally { assert.equal(await h.close('external-access-local-json'), 0); }
+});
+
+// Offline wiring witnesses: answers are scripted, commands and receipts are real.
+// These do not establish that a remote model naturally chooses this sequence.
+async function latestFixture(cwd: string) {
+  const install = path.join(cwd, 'install'), prefix = path.join(cwd, '登记 环境');
+  const skills = path.join(install, 'skills'), skill = path.join(skills, 'different-directory');
+  await mkdir(skill, { recursive: true }); await mkdir(path.join(prefix, 'bin'), { recursive: true });
+  await writeFile(path.join(skill, 'SKILL.md'), '---\nname: native-runtime-fixture\ndescription: synthetic runtime mapping\n---\nUse the registered environment for the requested task. Explicit user QC remains part of the task.\n');
+  await writeFile(path.join(skills, '.skill_runtime_registry.json'), JSON.stringify({skills:{'different-directory': {env:'fixture'}}}));
+  await writeFile(path.join(cwd, 'runtime-registry.json'), JSON.stringify({environments:{fixture:{prefix,status:'failed'}},tools:{}}));
+  const program = path.join(prefix, 'bin/fake-science');
+  await writeFile(program, '#!/usr/bin/python3\nimport sys,json\nfrom pathlib import Path\nwith open("invocations.jsonl","a") as f:f.write(json.dumps(sys.argv[1:])+"\\n")\nif sys.argv[1:]==["--task"]:\n Path("异常 结果.bed").write_text("chr1\\t10\\t2\\n"); print("ACTUAL_TASK_RC0")\nelif sys.argv[1:]==["--fail"]:\n print("ACTUAL_FAILURE",file=sys.stderr);sys.exit(7)\nelif sys.argv[1:]==["--version"]:print("synthetic-user-requested-version")\nelse:sys.exit(91)\n');
+  await chmod(program,0o755);
+  // A synthetic install uses the real domain code, while Skills and registries
+  // remain fixtures. No real configuration or auth directory is linked.
+  for (const name of ['agent_core','execution','memory','utils','package_manager.py','session_database.py']) {
+    await symlink(path.resolve(runtime,'../..',name),path.join(install,name));
+  }
+  return {install, prefix, program};
+}
+function latestConfig(cwd: string) {return {installRoot:path.join(cwd,'install'),registryPath:path.join(cwd,'runtime-registry.json')};}
+const lastTool = (id:string,name:string,args:object) => ({...tool(id,name,args),resolve_last_run_ref:true});
+function recordedRun(id:string,argv:string[],cwd:string) { return [
+  tool(id,'run_command',{argv,workdir:cwd,env_name:'fixture'}),
+  ...[0,1,2].map(i=>lastTool(id+'-wait-'+i,'wait_run',{run_ref:'from-real-receipt',max_wait_ms:30000, ...(i ? {after_cursor:'$last_cursor'} : {})})),
+  lastTool(id+'-default','inspect_run',{run_ref:'from-real-receipt'}),
+  lastTool(id+'-record','inspect_run',{run_ref:'from-real-receipt',record:'command'}),
+  lastTool(id+'-log','read_run_log',{run_ref:'from-real-receipt'}),
+]; }
+async function finishSyntheticRequest(h: Awaited<ReturnType<typeof launch>>,id:string) {
+  const approved=new Set<string>(); const end=performance.now()+90000;
+  while(performance.now()<end) {
+    for(const f of h.frames.filter(f=>f.type==='approval'&&!approved.has(f.id))) {
+      approved.add(f.id);h.send({type:'ui_response',id:f.id,value:'approve'});
+    }
+    const result=h.frames.find(f=>f.type==='result'&&f.requestId===id);if(result)return result;
+    if(h.child.exitCode!==null)throw new Error('product exited during synthetic request');
+    await new Promise(resolve=>setTimeout(resolve,25));
+  }
+  throw new Error('synthetic request deadline: '+JSON.stringify(h.frames.slice(-3)));
+}
+function toolDetails(h: Awaited<ReturnType<typeof launch>>,id:string) {
+  const f=h.frames.find(f=>f.type==='event'&&f.event.type==='tool_execution_end'&&f.event.toolCallId===id);
+  assert(f,'missing actual tool result '+id);assert.equal(f.event.isError,false,JSON.stringify(f));
+  return JSON.parse(f.event.result.content.find((p:any)=>p.type==='text').text);
+}
+
+test('LATEST E14 M01 M02 M06 M08 real biomind skill-only direct execution without implicit probes',async()=>{
+  let registryBefore='';
+  const h=await launch(async cwd=>{
+    await latestFixture(cwd);registryBefore=await readFile(path.join(cwd,'runtime-registry.json'),'utf8');
+    return [tool('skill-only','select_environment',{skill_id:'native-runtime-fixture'}),
+      tool('direct-run','run_command',{argv:['fake-science','--task'],workdir:cwd}),
+      ...[0,1,2].map(i=>lastTool('direct-wait-'+i,'wait_run',{run_ref:'real',max_wait_ms:30000,...(i?{after_cursor:'$last_cursor'}:{})})),
+      text('合成命令已结束；没有检查科研产物，不声称科学验证通过。')];
+  },false,latestConfig,undefined,true);
+  try {
+    const ready=await h.wait(f=>f.type==='ready',60000);
+    h.send({type:'prompt',id:'latest-direct',text:'用 native-runtime-fixture 已登记环境执行一次合成任务，无需报告或独立环境检查。'});
+    const result=await finishSyntheticRequest(h,'latest-direct');
+    assert.equal(result.runtime_status,'completed');assert.equal(result.scientific_success,null);
+    const selected=toolDetails(h,'skill-only');assert.equal(selected.selected_candidate.env,'fixture');assert.equal(selected.availability,'AVAILABLE');
+    assert.equal(selected.skill_resolution.skill_id,'different-directory');
+    assert.equal(toolDetails(h,'direct-wait-2').exit_code,0);
+    assert.equal(toolDetails(h,'direct-wait-2').scientific_validation,'not_assessed');
+    assert.equal(await readFile(path.join(h.cwd,'invocations.jsonl'),'utf8'),'["--task"]\n');
+    assert.equal(await readFile(path.join(h.cwd,'runtime-registry.json'),'utf8'),registryBefore);
+    assert.equal(await readFile(path.join(h.cwd,'异常 结果.bed'),'utf8'),'chr1\t10\t2\n');
+    for(const name of ['report.md','reproduce.sh','stage_status.tsv','manifest.json'])await assert.rejects(readFile(path.join(h.cwd,name)),{code:'ENOENT'});
+    const requests=(await readFile(path.join(h.cwd,'provider-requests.jsonl'),'utf8')).trim().split('\n').map(x=>JSON.parse(x));
+    const active=JSON.stringify(requests.at(-1).context.messages.filter((m:any)=>m.role==='system'));
+    assert.match(active,/适用登记直接使用/);assert.match(active,/不例行重复探测/);
+    assert.match(active,/registered 不等于本次检查通过/);assert.match(active,/settled、isError:false、文件存在或管道末尾 rc 不能单独证明成功/);
+    assert(JSON.stringify(requests.at(-1)).includes(selected.selected_candidate.source_ref));
+    assert.equal(result.extension_sha256,ready.extension_sha256);
+    assert.equal(h.frames.filter(f=>f.type==='event'&&f.event.type==='tool_execution_end'&&f.event.toolName==='run_command').length,1);
+    const saved=await readFile(result.sessionFile,'utf8');assert(saved.includes(selected.selected_candidate.source_ref));
+  }finally{assert.equal(await h.close('latest-direct-product'),0);}
+});
+
+test('LATEST R01 R02 R04 R05 R06 M04 real biomind records to requested report and reproduction without rerun',async()=>{
+  let report='',reproduce='';
+  const h=await launch(async cwd=>{
+    const f=await latestFixture(cwd);const quote=(s:string)=>"'"+s.replaceAll("'","'\\''")+"'";
+    report=`# 合成报告\n实际执行：fake-science --task，退出码 0；产生异常 结果.bed，未进行科学验证。\nfake-science --fail 实际退出码 7；不计为成功。\ncwd：${cwd}\n登记环境：fixture，${f.prefix}；无版本证据，未探测版本。\n修订 脚本.py 仅保存，未执行。复现脚本是依据真实命令整理版，未独立重跑；失败尝试未串入主流程。\n`;
+    reproduce=`#!/bin/sh\n# 整理版：未独立重跑；输入为合成参数，输出为异常 结果.bed；不含安装或环境检查。\nset -eu\ncd -- ${quote(cwd)}\n${quote(f.program)} --task\n`;
+    return [tool('report-select','select_environment',{skill_id:'native-runtime-fixture'}),
+      ...recordedRun('report-good',['fake-science','--task'],cwd),...recordedRun('report-fail',['fake-science','--fail'],cwd),
+      tool('report-output','read',{path:'异常 结果.bed'}),
+      tool('revision','write',{path:'修订 脚本.py',content:'print("UNEXECUTED_REVISION")\n'}),
+      tool('report-write','write',{path:'用户 报告.md',content:report}),
+      tool('reproduce-write','write',{path:'用户 复现.sh',content:reproduce}),text('报告和复现整理已保存；部分步骤失败，修订未执行，未独立重跑。'),
+      tool('only-script','write',{path:'仅 复现.sh',content:reproduce}),text('只保存复现脚本，未运行。')];
+  },false,latestConfig,undefined,true);
+  try{
+    await h.wait(f=>f.type==='ready',60000);
+    h.send({type:'prompt',id:'latest-report',text:'执行两个合成步骤：--task 和 --fail。读取真实记录，保存用户 报告.md 与用户 复现.sh；修订脚本仅保存不执行。'});
+    const result=await finishSyntheticRequest(h,'latest-report');assert.equal(result.scientific_success,null);
+    const legacy=toolDetails(h,'report-good-default');assert(!Object.hasOwn(legacy,'cmd'));assert(!Object.hasOwn(legacy,'execution_record'));
+    const good=toolDetails(h,'report-good-record'),bad=toolDetails(h,'report-fail-record');
+    assert.equal(good.exit_code,0);assert.equal(bad.exit_code,7);
+    for(const [v,flag] of [[good,'--task'],[bad,'--fail']] as const){
+      assert.equal(v.execution_record.status,'available');const record=JSON.parse(v.execution_record.content);
+      assert.equal(record.cwd,h.cwd);assert(JSON.stringify(record).includes(flag));assert(!Object.hasOwn(record,'env'));
+    }
+    assert.equal(await readFile(path.join(h.cwd,'用户 报告.md'),'utf8'),report);
+    assert.equal(await readFile(path.join(h.cwd,'用户 复现.sh'),'utf8'),reproduce);
+    const requests=(await readFile(path.join(h.cwd,'provider-requests.jsonl'),'utf8')).trim().split('\n').map(x=>JSON.parse(x));
+    const beforeWrite=requests.find((r:any)=>JSON.stringify(r.context).includes('ACTUAL_FAILURE')&&JSON.stringify(r.context).includes('execution_record'));
+    assert(beforeWrite,'actual failed run and record must reach model before delivery');
+    h.send({type:'prompt',id:'only-reproduce',text:'只将已知合成命令整理为仅 复现.sh，不运行，也不另生成报告。'});
+    await finishSyntheticRequest(h,'only-reproduce');assert.equal(await readFile(path.join(h.cwd,'仅 复现.sh'),'utf8'),reproduce);
+    assert.equal(await readFile(path.join(h.cwd,'invocations.jsonl'),'utf8'),'["--task"]\n["--fail"]\n');
+    for(const name of ['report.md','stage_status.tsv','manifest.json'])await assert.rejects(readFile(path.join(h.cwd,name)),{code:'ENOENT'});
+    const evidence=process.env.BIOMIND_PI_TEST_EVIDENCE;if(evidence)await writeFile(path.join(evidence,'latest-deliverables.json'),JSON.stringify({report,reproduce,invocations:['--task','--fail'],note:'scripted content checked against real receipts; no remote model and no reproduction execution'},null,2));
+  }finally{assert.equal(await h.close('latest-report-product'),0);}
+});

@@ -28,7 +28,7 @@ export function scriptedProvider(filename: string) {
       queueMicrotask(async () => {
         const message: any = { role: 'assistant', api: model.api, provider: model.provider, model: model.id, timestamp: Date.now(),
           content: entry?.content ?? [], stopReason: entry?.content?.some((part: any) => part.type === 'toolCall') ? 'toolUse' : 'stop',
-          usage: { input: 1, output: 1, cacheRead: 0, cacheWrite: 0, totalTokens: 2, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } } };
+          usage: entry?.usage ?? { input: 1, output: 1, cacheRead: 0, cacheWrite: 0, totalTokens: 2, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } } };
         const partial: any = { ...message, content: [] };
         try {
           if (!entry || entry.error) throw new Error(entry?.error ?? 'SCRIPT_EXHAUSTED_UNEXPECTED_MODEL_CALL');

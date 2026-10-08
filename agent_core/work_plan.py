@@ -49,7 +49,7 @@ def update_plan(data_path, task_id, arguments, *, scope):
     raise ValueError('PLAN_STATE_CONFLICT')
 
 
-def action_targets(state, arguments, project):
+def action_targets(state, arguments, project, *, command_service=None, task_id=None):
     """Check actual named targets against existing host TaskSpec authority.
 
     Does not consume Plan notes, infer shell effects, or expand sample lists.
@@ -62,7 +62,22 @@ def action_targets(state, arguments, project):
     if not isinstance(paths, list) or any(not isinstance(p, str) or not p for p in paths):
         raise ValueError('ACTION_WRITE_PATHS_INVALID')
     targets = []
-    inputs = (canonical_task_spec_for_state(state) or {}).get('inputs') or []
+    spec=canonical_task_spec_for_state(state) or {}
+    inputs = spec.get('inputs') or []
+    cwd=(Path(project)/Path(arguments.get('workdir') or project)).resolve()
+    def path_authorizer(path):
+        from agent_core.command_execution import check_data_path
+        from agent_core.execution_permissions import path_grants
+        check_data_path(command_service,task_id,path,write=True)
+        return path.is_relative_to(Path(project)) or bool(path_grants(command_service,task_id,path,'read_write'))
+    authority=path_authorizer if command_service is not None else None
+    explicit_roots=[(Path(project)/(r.get('canonical_path') or r.get('path'))).resolve()
+        for r in spec.get('output_contracts') or [] if r.get('role')=='output_dir'
+        and r.get('source') in {'user','user_explicit','user_confirmed'} and r.get('source_ref')
+        and (r.get('canonical_path') or r.get('path'))]
+    auxiliary=[(Path(project)/(r.get('canonical_path') or r.get('path'))).resolve()
+        for r in spec.get('output_contracts') or [] if r.get('required') is False
+        and (r.get('canonical_path') or r.get('path'))]
     def protect_input(resolved, value):
         for row in inputs:
             raw = row.get('canonical_path') or row.get('path')
@@ -70,11 +85,18 @@ def action_targets(state, arguments, project):
                     (row.get('artifact_kind') == 'directory' and resolved.is_relative_to((Path(project) / raw).resolve()))):
                 raise WorkOutputError('ACTION_INPUT_WRITE_FORBIDDEN', value)
     for value in paths:
-        target = Path(project) / value
-        resolved = authorized_output(state, target, project)
+        target = cwd / value
+        resolved = authorized_output(state, target, project,path_authorizer=authority)
+        if explicit_roots and not any(resolved==r or resolved.is_relative_to(r) for r in explicit_roots+auxiliary):
+            raise WorkOutputError('OUTPUT_CONTRACT_CONFLICT',value,field='output_location',
+                requested_roots=list(map(str,explicit_roots)),path_permission='allowed',
+                instruction='路径许可不修改用户的输出要求；请沿原需求修订流程确认输出位置，或声明已有辅助输出类别。')
         protect_input(resolved, value)
-        targets.append({'canonical_path': str(target.absolute()),
-                        'artifact_kind': 'directory' if target.is_dir() else 'file'})
+        kind='directory' if target.is_dir() else 'file'
+        if command_service and not target.exists():
+            from agent_core.execution_permissions import path_grants
+            kind=next((g['target_kind'] for g in path_grants(command_service,task_id,resolved,'read_write') if g['root']==str(resolved)),kind)
+        targets.append({'canonical_path': str(target.absolute()),'artifact_kind':kind})
     destructive = arguments.get('delete_paths', [])
     if not isinstance(destructive, list) or any(not isinstance(p, str) for p in destructive):
         raise ValueError('ACTION_DELETE_PATHS_INVALID')
@@ -84,7 +106,7 @@ def action_targets(state, arguments, project):
                 or auth.get('request_scope') != request_scope(state)):
             raise ValueError('ACTION_DELETION_NOT_APPROVED')
         for value in destructive:
-            target = authorized_output(state, Path(project) / value, project)
+            target = authorized_output(state, cwd / value, project,path_authorizer=authority)
             protect_input(target, value)
             if str(target) not in auth.get('paths', []):
                 raise ValueError('ACTION_DELETION_OUTSIDE_APPROVAL')

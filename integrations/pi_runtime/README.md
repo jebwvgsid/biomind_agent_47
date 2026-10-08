@@ -52,6 +52,20 @@ npm run check:compat
 npm run build
 ```
 
+The build also emits `dist/biomind-extension.ts` for the native CLI. This bundles
+BioMind's local modules with esbuild; Pi and other package dependencies stay
+external. The `.ts` entry lets Pi's extension loader reuse its embedded public
+SDK instead of importing a second SDK tree through an ESM `.js` entry. Keep the
+bundle directly under `dist`, since runtime file paths resolve from there.
+Use the complete `npm run build` after source changes; running `tsc` alone does
+not refresh the native bundle. JSON mode keeps the ordinary compiled extension.
+
+After selecting a conversation, interactive startup displays an initialization
+message while Pi loads and binds the execution profile. Python's legacy
+LangChain message classes load only when their legacy guidance or Wiki LLM
+operations actually need them. Profile binding still completes before tools
+become available.
+
 From the BioMind repository:
 
 ```bash
@@ -88,7 +102,8 @@ History reads start disabled unless explicitly enabled. An existing preference
 file still refreshes at request boundaries. Existing memory stores are opened
 only through explicitly selected roots; old sessions are not imported into Pi.
 An explicit `archivePath` enables the original public-observation archive writer.
-History controls reads and memory use, not these audit writes. The extension
+History controls future retrieval and optional maintenance, not replay of
+already accepted conversation content or these audit writes. The extension
 projects public text and tool results from Pi's current request; it does not
 export private reasoning or maintain a second mutable conversation tree.
 `archive_receipt` acknowledges enqueueing (`durable:false`), not a committed
@@ -96,6 +111,63 @@ database write. Python drains the original writer on a normal disconnect after
 its independent jobs finish; an abrupt crash can lose queued observations.
 
 ## Interaction and transport
+
+The terminal shows `本轮运行 01:23` above the editor while Pi is active, then
+keeps `本轮用时 01:23` after settlement. The clock updates once per second and
+includes tools, retries, compaction and queued continuations in that activity.
+The next activity resets it; switching sessions or reloading clears it. It is
+elapsed time in this process, not the duration of independent background jobs.
+`/status` also shows this clock.
+
+The footer displays Pi's estimated current context as `上下文 38.1k/312k`
+(used/capacity, `k = 1000` tokens), instead of a percentage/capacity pair.
+After compaction, unavailable usage stays `?/312k` until Pi can estimate it
+again. Cumulative input/output, cache counters, `CH` (latest response cache-hit
+percentage), cost, model and extension status remain visible as space permits.
+History and context calculations are cached between session/leaf/model changes,
+so clock ticks do not repeatedly scan the conversation. The custom footer uses
+Pi's public `setFooter` and context APIs; it omits the native `(auto)` display
+marker because the current compaction setting has no public live getter.
+Pi still owns automatic compaction and its settings.
+
+Disabling memory retrieval or forgetting a Wiki source does not rewrite earlier
+tool arguments/results, assistant responses, plans, or summaries already in the
+selected Pi conversation. BioMind no longer propagates source tags to redact
+that history or reconstruct messages that Pi has compacted away. Pi's compactor
+keeps its previous summary and file references, using its existing templates for
+both manual and automatic compaction. The preparation hook decodes obsolete
+Consult/Generate handoff instructions as historical facts and adds the editable
+BioMind focus described below; it does not query memory policy. Same-request branch
+summaries also remain available when retrieval is off. Explicit new-task
+boundaries, branch selection, current project instructions, execution permissions
+and checks on future memory reads/writes retain their existing behavior.
+
+`prompts/compaction-bioinformatics-v1.txt` is the editable UTF-8 “BioMind 生信任务
+压缩增补 v1” resource. `compaction-addendum.ts` resolves it relative to the installed
+runtime and reuses `readEditableFile`, reading only this one file for each summary
+operation. Edits apply to the next operation without rebuilding; an empty file
+disables the default focus while preserving the caller's custom instructions.
+Missing/unreadable files are reported through Pi's existing extension-error path.
+This file is neither a main-agent system prompt nor a project/Skill instruction.
+
+The production `session_before_compact` hook returns the default focus followed
+by the current `/compact` instructions. Pi's default history, previous-summary
+update and split-turn prefix prompts receive this through `Additional focus`.
+Manual, automatic threshold and overflow recovery all use the same native
+summarizer. The `session_before_tree` hook uses Pi's already-supported result to
+append the same focus only when the user requests a branch summary. An explicit
+native `replaceInstructions:true` remains a user choice, never the default here.
+No composed instructions are saved back to the event or accumulated across
+operations; Pi retries the already-composed request unchanged.
+
+Pi 0.87.1 lacks a compaction-hook instruction return field and split-prefix
+forwarding. Observer compatibility revision `.4` adds only that parameter bridge
+in the SDK and the actual CLI bundle, plus its declaration. It does not replace
+Pi templates or change selection, token budgets, models, retries, cancellation
+or session persistence. See `compat/README.md` for the reproducible patch and
+`../../docs/changes/pi_compaction_addendum_v1_20261004/README.md` for acceptance
+evidence. Offline synthetic-provider wiring tests and real-model quality tests
+are reported separately.
 
 Ordinary requests start in Consult. It may answer and finish, ask and wait, or
 use `handoff_generate` once. Generate can use optional `update_plan` notes and

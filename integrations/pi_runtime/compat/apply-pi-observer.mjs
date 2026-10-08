@@ -15,29 +15,39 @@ const runtime = targetIndex < 0 ? path.resolve(directory, '..') : path.resolve(a
 const packageRoot = path.join(runtime, 'node_modules', patch.package);
 const installed = JSON.parse(fs.readFileSync(path.join(packageRoot, 'package.json'), 'utf8'));
 if (installed.version !== patch.originalVersion) throw new Error(`Expected Pi ${patch.originalVersion}; refusing incompatible patch`);
-// The explicitly selected public path neither installs nor validates private hooks.
-// --check/--revert remain explicit compatibility maintenance commands.
+// Observation mode does not disable the host-owned native input boundary.
 const observationMode = process.env.BIOMIND_PI_OBSERVABILITY ?? 'compat';
 if (!['compat', 'public'].includes(observationMode)) throw new Error('BIOMIND_INVALID_OBSERVABILITY_MODE');
-if (mode === 'apply' && observationMode === 'public') {
-  if (process.env.BIOMIND_PI_CANARY_LEDGER || process.env.BIOMIND_PI_CANARY_SCENARIO)
-    throw new Error('BIOMIND_CANARY_COMPAT_OBSERVATION_REQUIRED');
-  process.stdout.write(JSON.stringify({ mode: 'skipped-public', package: patch.package, version: installed.version,
-    runtimeLabel: `${installed.version}+public-observation`, installedFilesChanged: false,
-    capabilities: { providerAttempts: 'unavailable', physicalSends: 'unavailable', strictCanaryBudget: 'unavailable' } }) + '\n');
-  process.exit(0);
-}
+if (observationMode === 'public' && (process.env.BIOMIND_PI_CANARY_LEDGER || process.env.BIOMIND_PI_CANARY_SCENARIO))
+  throw new Error('BIOMIND_CANARY_COMPAT_OBSERVATION_REQUIRED');
 // Validate every target before mutating any file. Unknown bytes are never overwritten.
 const plan = patch.files.map(file => {
   const filename = path.join(packageRoot, file.path);
   const original = fs.readFileSync(filename, 'utf8');
   const currentHash = sha(original);
-  if (![file.originalSha256, file.patchedSha256].includes(currentHash)) throw new Error(`Unknown installed bytes: ${file.path}`);
+  // Keep the earlier single-predecessor manifest format readable while allowing
+  // exact upgrades from both known .2 and .3 installations to this revision.
+  const predecessors = [...(file.previousPatches ?? []), ...(file.previousSha256
+    ? [{ sha256: file.previousSha256, replacementCount: file.previousReplacementCount }] : [])];
+  for (const previous of predecessors) {
+    if (!/^[a-f0-9]{64}$/.test(previous.sha256) || !Number.isInteger(previous.replacementCount)
+      || previous.replacementCount < 0 || previous.replacementCount > file.replacements.length)
+      throw new Error(`Invalid previous patch metadata: ${file.path}`);
+  }
+  const predecessor = predecessors.find(previous => previous.sha256 === currentHash);
+  if (![file.originalSha256, file.patchedSha256].includes(currentHash) && !predecessor) throw new Error(`Unknown installed bytes: ${file.path}`);
   if (mode === 'check' && currentHash !== file.patchedSha256) throw new Error(`Patch missing: ${file.path}`);
   let next = original;
+  if (predecessor && mode !== 'check') {
+    for (const edit of file.replacements.slice(0, predecessor.replacementCount).reverse()) {
+      if (next.split(edit.after).length !== 2) throw new Error(`Previous patch anchor mismatch: ${file.path}`);
+      next = next.replace(edit.after, edit.before);
+    }
+    if (sha(next) !== file.originalSha256) throw new Error(`Previous patch checksum mismatch: ${file.path}`);
+  }
   const target = mode === 'revert' ? file.originalSha256 : file.patchedSha256;
-  if (mode !== 'check' && currentHash !== target) {
-    for (const edit of file.replacements) {
+  if (mode !== 'check' && sha(next) !== target) {
+    for (const edit of mode === 'revert' ? file.replacements.slice().reverse() : file.replacements) {
       const from = mode === 'revert' ? edit.after : edit.before;
       const to = mode === 'revert' ? edit.before : edit.after;
       if (next.split(from).length !== 2) throw new Error(`Anchor mismatch: ${file.path}`);

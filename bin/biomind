@@ -2,7 +2,7 @@
 # Resolve the installed symlink without changing the caller's project directory.
 biomind_launcher_path=$(readlink -f -- "$0") || exit 2
 biomind_repository=$(dirname -- "$(dirname -- "$biomind_launcher_path")")
-biomind_python=${BIOMIND_PI_PYTHON:-/public/home/liusiqi/anaconda3/envs/biomind/bin/python}
+biomind_python=${BIOMIND_PI_PYTHON:-$(command -v python3)}
 if [ ! -x "$biomind_python" ]; then
     printf '%s\n' 'BioMind: configured Python is unavailable; check BIOMIND_PI_PYTHON.' >&2
     exit 2

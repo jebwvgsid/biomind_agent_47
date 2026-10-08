@@ -34,8 +34,10 @@ class DisconnectTolerantDiagnostics:
 sys.stderr=DisconnectTolerantDiagnostics(sys.stderr)
 sys.stdout=sys.stderr
 MAX_FRAME=1024*1024
-SCOPED_MUTATIONS={'exec.start','exec.cancel','files.write','memory.write','install.propose','install.execute',
-                  'approval.decide','request.cancel','memory.maintenance.prepare','memory.maintenance.apply','archive.append'}
+SCOPED_MUTATIONS={'environments.select','environments.launch','environments.register','environments.register_observed','environments.locate','exec.start','exec.cancel','files.write','memory.write','install.propose','install.execute','permissions.propose',
+                  'exec.probe','permissions.mode','request.pause','request.resume','request.revise',
+                  'approval.decide','request.cancel','memory.maintenance.prepare','memory.maintenance.apply','archive.append',
+                  'files.stat','files.read','files.read_authorize','files.mutation_snapshot','permissions.revoke'}
 
 
 class NoLegacyRuntime(importlib.abc.MetaPathFinder):
@@ -58,8 +60,9 @@ async def serve(service):
     from agent_core.cli_display import safe_text
     write_lock=asyncio.Lock(); pending=set();seen=set();recent=deque();limit=asyncio.Semaphore(64)
     controls=asyncio.Semaphore(64)
-    control_methods={'hello','request.begin','request.cancel','approval.decide','exec.cancel',
-                     'exec.status','session.lifecycle','context.snapshot','settings.update','shutdown','archive.status'}
+    control_methods={'hello','request.begin','request.cancel','request.pause','request.resume','request.revise','request.status','permissions.mode','approval.decide','exec.cancel',
+                     'exec.status','session.lifecycle','context.snapshot','settings.update','shutdown','archive.status',
+                     'permissions.status','permissions.revoke'}
     loop=asyncio.get_running_loop()
     reader=asyncio.StreamReader(limit=MAX_FRAME)
     protocol=asyncio.StreamReaderProtocol(reader)
@@ -132,6 +135,10 @@ def main():
     for key in ('registry-path','environment-inventory','skills-root','preferences-path','memory-root','wiki-root','archive-path'):parser.add_argument('--'+key)
     parser.add_argument('--history-enabled',action='store_true')
     parser.add_argument('--memory-mode',default='ask',choices=('ask','auto','manual','disabled'))
+    parser.add_argument('--execution-profile',default='protected',choices=('native','protected'))
+    parser.add_argument('--profile-source',default='host')
+    parser.add_argument('--session-existing',action='store_true')
+    parser.add_argument('--migrate-profile',action='store_true')
     options=vars(parser.parse_args())
     sys.path.insert(0,str(Path(options['install_root']).resolve()))
     sys.meta_path.insert(0,NoLegacyRuntime());sys.addaudithook(protect_secret_files)

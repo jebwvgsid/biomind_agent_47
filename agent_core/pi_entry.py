@@ -119,7 +119,7 @@ def select_engine(argv: Sequence[str]) -> tuple[str, list[str]]:
 
 def pi_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="BioMind — Pi runtime",
-        epilog="Shell: biomind project list/create/open; biomind --resume to choose history.")
+        epilog="Shell: biomind project list/create/open; in BioMind: /project, /instructions, /login, /model. Offline: biomind doctor --integration orca")
     parser.add_argument("--version", action="store_true", help="Show declared product/source identity offline; no worktree or patch verification")
     parser.add_argument("command", nargs="?", choices=("interactive", "project"), default="interactive")
     parser.add_argument("project_action", nargs="?", choices=("list", "create", "open"))
@@ -127,6 +127,8 @@ def pi_parser() -> argparse.ArgumentParser:
     parser.add_argument("--project-dir", type=Path, help="Explicit project root; otherwise keep launch cwd or the selected session cwd")
     parser.add_argument("--pi-mode", choices=("interactive", "json"), default="interactive")
     parser.add_argument("--pi-config", type=Path, help="Explicit non-secret Pi runtime settings; no dotenv loading")
+    parser.add_argument("--execution-profile", choices=("native", "protected"), help="Frozen host execution backend; saved sessions retain their binding")
+    parser.add_argument("--migrate-execution-profile", action="store_true", help="Explicit idle-session migration in this new process; old actions are not replayed")
     parser.add_argument("--pi-model-record", type=Path, help="Confirmed non-secret model selection shared with offline acceptance")
     parser.add_argument("--pi-node", type=Path, help="Explicit Node >=22.19.0 executable")
     sessions = parser.add_mutually_exclusive_group()
@@ -140,17 +142,28 @@ def pi_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def node_executable(explicit: Path | None, environment: Mapping[str, str], runtime: Path) -> Path:
+def node_candidate(explicit: Path | None, environment: Mapping[str, str], runtime: Path) -> tuple[Path, str]:
+    """One selection policy for normal startup and offline diagnostics."""
     if explicit is not None:
-        candidate = explicit.expanduser().resolve()
+        return explicit.expanduser().absolute(), "explicit"
     elif environment.get("BIOMIND_PI_NODE"):
-        candidate = Path(environment["BIOMIND_PI_NODE"]).expanduser().resolve()
-    else:
-        bundled = runtime / ".runtime" / "node" / "bin" / "node"
-        candidate = bundled if bundled.is_file() else Path(shutil.which("node", path=environment.get("PATH")) or "/nonexistent/biomind-node")
+        return Path(environment["BIOMIND_PI_NODE"]).expanduser().absolute(), "BIOMIND_PI_NODE"
+    bundled = runtime / ".runtime" / "node" / "bin" / "node"
+    if bundled.is_file():
+        return bundled, "bundled"
+    return Path(shutil.which("node", path=environment.get("PATH")) or "/nonexistent/biomind-node"), "PATH"
+
+
+def node_executable(explicit: Path | None, environment: Mapping[str, str], runtime: Path) -> Path:
+    candidate, _ = node_candidate(explicit, environment, runtime)
     if not candidate.is_file() or not os.access(candidate, os.X_OK):
         raise PiEntryError("Pi runtime unavailable: Node executable missing; install the pinned private runtime first")
     return candidate.resolve()
+
+
+def node_version(value: str) -> tuple[int, int, int] | None:
+    match = re.fullmatch(r"v?(\d+)\.(\d+)\.(\d+)", value.strip())
+    return tuple(map(int, match.groups())) if match else None
 
 
 def build_pi_command(args: argparse.Namespace, *, environment: Mapping[str, str] | None = None,
@@ -185,8 +198,8 @@ def build_pi_command(args: argparse.Namespace, *, environment: Mapping[str, str]
                                  text=True, timeout=10).stdout.strip()
     except (OSError, subprocess.SubprocessError) as error:
         raise PiEntryError("Cannot determine the selected Node version") from error
-    match = re.fullmatch(r"v?(\d+)\.(\d+)\.(\d+)", version)
-    if not match or tuple(map(int, match.groups())) < MINIMUM_NODE:
+    parsed_version = node_version(version)
+    if parsed_version is None or parsed_version < MINIMUM_NODE:
         raise PiEntryError("Pi requires Node >=22.19.0; selected executable is unsupported")
     host = runtime / "dist" / "host.js"
     package = runtime / "node_modules" / "@earendil-works" / "pi-coding-agent" / "package.json"
@@ -223,6 +236,12 @@ def build_pi_command(args: argparse.Namespace, *, environment: Mapping[str, str]
             command.extend(["--model-record", str(Path(record).expanduser().absolute())])
     if getattr(args, "session_dir", None):
         command.extend(["--session-dir", str(args.session_dir.expanduser())])
+    if args.execution_profile:
+        command.extend(["--execution-profile", args.execution_profile])
+    if args.migrate_execution_profile:
+        if not args.session or not args.execution_profile:
+            raise PiEntryError("Migration requires --session and --execution-profile; it does not resume old actions")
+        command.append("--migrate-execution-profile")
     if getattr(args, "session", None):
         command.extend(["--session", args.session])
     if getattr(args, "resume", False):
@@ -291,6 +310,9 @@ def maybe_dispatch(argv: Sequence[str] | None = None) -> int:
         print("BioMind: legacy 旧运行时已物理退役，必须先恢复退役前代码，不能只切换运行参数。"
               "恢复说明：BioMind_Pi_migration_implementation_20260926/RECOVERY_USER_MANAGED.md", file=sys.stderr)
         return 2
+    if remaining and remaining[0] in {"doctor", "integrate"}:
+        from agent_core.runtime_integration import main as runtime_main
+        return runtime_main(remaining, runtime=RUNTIME)
     return launch_pi(remaining)
 
 

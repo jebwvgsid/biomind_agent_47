@@ -7,7 +7,7 @@
   "scripts": {
     "postinstall": "node compat/apply-pi-observer.mjs",
     "check:compat": "node compat/apply-pi-observer.mjs --check",
-    "build": "node --max-old-space-size=1024 ./node_modules/typescript/bin/tsc -p tsconfig.json",
+    "build": "node --max-old-space-size=1024 ./node_modules/typescript/bin/tsc -p tsconfig.json && node build-native-extension.mjs",
     "check": "node --max-old-space-size=1024 ./node_modules/typescript/bin/tsc -p tsconfig.json --noEmit",
     "test": "node --test --experimental-test-isolation=none --test-concurrency=1 dist/tests/*.test.js",
     "start": "node dist/host.js"
@@ -22,6 +22,7 @@
   },
   "devDependencies": {
     "@types/node": "22.19.19",
+    "esbuild": "0.28.2",
     "typescript": "5.9.3"
   }
 }

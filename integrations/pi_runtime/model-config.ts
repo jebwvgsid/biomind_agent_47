@@ -58,6 +58,28 @@ export function selectConfiguredModel(runtime: ModelRuntime, raw: unknown) {
   if (custom) runtime.registerProvider(selection.provider, custom);
   const model = runtime.getModel(selection.provider, selection.model);
   if (!model) throw new Error('CURRENT_SELECTED_MODEL_NOT_IN_PINNED_PRODUCT_CATALOG');
+  validateSelectedModel(model, selection);
+  return model;
+}
+
+/** Only complete local definitions can skip the otherwise discarded parent catalog. */
+export function validateConfiguredCustomModel(raw: unknown): boolean {
+  const selection = validateModelSelection(raw);
+  const custom = configuredProvider(selection);
+  if (!custom) return false;
+  const definition = custom.models?.find(model => model.id === selection.model);
+  if (!definition) throw new Error('CURRENT_SELECTED_MODEL_NOT_IN_PINNED_PRODUCT_CATALOG');
+  const api = definition.api ?? custom.api;
+  const baseUrl = definition.baseUrl ?? custom.baseUrl;
+  if (!api || !baseUrl) throw new Error('CURRENT_PROTOCOL_OR_ENDPOINT_DIFFERS_FROM_PRODUCT_MODEL_NO_SUBSTITUTION');
+  validateSelectedModel({ api, baseUrl, thinkingLevelMap: definition.thinkingLevelMap }, selection);
+  return true;
+}
+
+function validateSelectedModel(
+  model: Pick<NonNullable<ReturnType<ModelRuntime['getModel']>>, 'api' | 'baseUrl' | 'thinkingLevelMap'>,
+  selection: ModelSelection,
+): void {
   if (selection.thinking !== 'off' && model.thinkingLevelMap?.[selection.thinking] === null) throw new Error('CURRENT_THINKING_LEVEL_UNSUPPORTED_NO_NORMALIZATION');
   const endpoint = new URL(model.baseUrl);
   if (model.api !== selection.api || endpoint.hostname !== selection.endpoint_hostname ||
@@ -65,5 +87,4 @@ export function selectConfiguredModel(runtime: ModelRuntime, raw: unknown) {
       !['http:','https:'].includes(endpoint.protocol) || endpoint.username || endpoint.password || endpoint.search || endpoint.hash) {
     throw new Error('CURRENT_PROTOCOL_OR_ENDPOINT_DIFFERS_FROM_PRODUCT_MODEL_NO_SUBSTITUTION');
   }
-  return model;
 }
