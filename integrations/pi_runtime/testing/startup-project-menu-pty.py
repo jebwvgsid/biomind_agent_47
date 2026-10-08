@@ -24,12 +24,13 @@ import time
 
 
 ANSI = re.compile(r'\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)|\x1b\[[0-?]*[ -/]*[@-~]|\x1b[()][A-Za-z0-9]|\x1b[=>]')
-SCENARIOS = ('home-cancel', 'home-input-eio', 'home-create-rejected', 'cwd-first-direct', 'empty-project-back', 'history-back-navigation',
+SCENARIOS = ('home-cancel', 'home-input-eio', 'home-create-rejected', 'legal-cwd-project-first',
+    'legal-cwd-prompt-cancel', 'legal-cwd-temporary-cancel', 'empty-project-back', 'history-back-navigation',
     'open-directory-back', 'create-project-back', 'all-history-back', 'all-history-cross-project',
     'open-directory-new-conversation', 'explicit-empty-project-direct', 'explicit-session-direct',
     'explicit-resume-picker', 'resume-nontty', 'resume-json')
 NATIVE_SCENARIOS = {'all-history-cross-project', 'open-directory-new-conversation',
-    'explicit-empty-project-direct', 'explicit-session-direct', 'cwd-first-direct'}
+    'explicit-empty-project-direct', 'explicit-session-direct'}
 
 
 def rows(filename):
@@ -208,11 +209,11 @@ def main():
         print('END ' + label + ': ' + checks[-1]['status'], flush=True)
         return {'screen': screen(), 'ui': rows(ui_trace), 'requests': rows(provider_trace)}
 
-    def read_only(label, action, extra=None):
+    def read_only(label, action, extra=None, cwd=None):
         if label not in selected:
             return None
         before = snapshot(root)
-        result = run(label, extra or [], home if label != 'explicit-resume-picker' else launch, action)
+        result = run(label, extra or [], cwd or (home if label != 'explicit-resume-picker' else launch), action)
         check(label + '-no-files', snapshot(root) == before)
         check(label + '-no-runtime-or-model', not result['ui'] and not result['requests'])
         return result
@@ -224,6 +225,36 @@ def main():
         send(b'\x1b', 'cancel project menu from arbitrary cwd')
 
     read_only('home-cancel', cancel)
+
+    def legal_cwd_project_first(send, wait, choose, request, screen):
+        label = 'legal-cwd-project-first'
+        wait('选择项目'); wait('打开其他目录')
+        assert '项目对话：' not in screen(), 'A legal cwd bypassed project confirmation'
+        assert f'{project_a}（启动目录）' in screen(), 'Launch cwd was not offered as a project choice'
+        check(label + '-before-selection-no-runtime-or-model',
+              not rows(evidence / (label + '-ui.jsonl')) and not rows(evidence / (label + '-provider.jsonl')))
+        check(label + '-before-selection-no-domain-state',
+              all(not (directory / '.biomind').exists() for directory in (project_a, project_b, launch)))
+        choose(0, 'confirm current project A')
+        wait(f'项目对话：{project_a}'); wait('返回项目选择')
+        choose(3, 'return to projects using the explicit back action')
+        wait('选择项目'); choose(1, 'choose a different existing project B')
+        wait(f'项目对话：{project_b}'); wait('返回项目选择')
+        send(b'\x1b', 'return from B conversations to project selection')
+        wait('选择项目'); send(b'\x1b', 'cancel project selection without starting an agent')
+
+    read_only('legal-cwd-project-first', legal_cwd_project_first, cwd=project_a)
+
+    def legal_cwd_cancel(send, wait, choose, request, screen):
+        wait('选择项目'); wait('打开其他目录')
+        assert '项目对话：' not in screen(), 'An implicit project flag bypassed project confirmation'
+        assert f'{project_a}（启动目录）' in screen()
+        assert 'execution:' not in screen(), 'The native runtime started before project confirmation'
+        send(b'\x1b', 'cancel project selection before prompt or temporary session initialization')
+
+    read_only('legal-cwd-prompt-cancel', legal_cwd_cancel,
+              ['--prompt', 'SYNTHETIC_PROMPT_MUST_NOT_BE_SUBMITTED'], cwd=project_a)
+    read_only('legal-cwd-temporary-cancel', legal_cwd_cancel, ['--no-session'], cwd=project_a)
 
     def input_eio(send, wait, choose, request, screen):
         wait('BioMind 终端输入失败')
@@ -322,7 +353,6 @@ def main():
         send('/exit\r', 'exit directly selected empty project')
 
     run('explicit-empty-project-direct', ['--project-dir', str(empty)], launch, explicit_empty)
-    run('cwd-first-direct', [], launch, explicit_empty)
 
     def explicit_session(send, wait, choose, request, screen):
         wait('execution:'); wait('ENTRY_A_HISTORY_RESTORED')

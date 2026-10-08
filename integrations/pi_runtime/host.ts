@@ -481,7 +481,11 @@ export async function main(): Promise<number> {
   let projectFailure: ProjectDirectoryError | undefined;
   try { cwd = await validateProjectRoot(config, cwd); }
   catch (error) { if (!(error instanceof ProjectDirectoryError)) throw error; projectFailure = error; }
-  const chooseProject = values['project-command'] === 'menu' ||
+  // An implicit cwd is a candidate, not the user's project confirmation.
+  // Reuse the existing project menu before loading that project's resources.
+  const confirmProject = values.mode === 'interactive' && terminal && !explicitProject &&
+    !config.session && !config.continueSession && !values.resume;
+  const chooseProject = values['project-command'] === 'menu' || confirmProject ||
     (!!projectFailure && !explicitProject && !config.session && values.mode === 'interactive' && terminal);
   if (chooseProject) {
     if (values.mode !== 'interactive' || !terminal) throw new ProjectDirectoryError('选择项目需要交互终端；请使用 biomind --project-dir <项目目录>。');

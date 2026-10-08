@@ -101,8 +101,13 @@ when a request is rejected, so existing jobs keep their original owner.
 
 ### Project selection and startup failures
 
-`biomind` keeps a legal launch directory as its project. From HOME, interactive
-startup first offers the existing project/open/create selector. Cancellation,
+Interactive `biomind` first offers the existing project/open/create selector,
+including when launched from a valid project directory. The launch directory is
+a candidate and is confirmed by selecting it; conversation selection follows,
+with the existing option to return to project selection. Explicit
+`--project-dir` / `project open` and session/continuation selections retain their
+direct behavior. Interactive prompts or temporary sessions without a selected
+project also confirm the directory first; JSON never waits for this menu. Cancellation,
 `--help`, and `--version` do not start the scientific backend. Explicit
 `--project-dir` values use the same directory validation as the backend; HOME is
 still prohibited as an analysis root. Noninteractive invalid roots return an
