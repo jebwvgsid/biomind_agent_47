@@ -329,6 +329,33 @@ class RendererStageTests(unittest.TestCase):
             self.assertEqual(first["raw_action"]["code_summary"], "echo raw")
             self.assertEqual(second["raw_action"]["code_summary"], "echo raw")
 
+    def test_rebinding_explicitly_clears_prior_revocation_state(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            state = _state(Path(tmpdir))
+            action = {
+                "action_id": "action-rebound",
+                "step_id": "step-1",
+                "type": "execute",
+                "code": "echo candidate",
+            }
+            record_provenance_event(state, "action_bound", {"action": action})
+            revoked = record_provenance_event(state, "action_revoked", {
+                "action_id": "action-rebound",
+                "reason": "fixture rejection",
+                "execution_started": False,
+            })
+            self.assertEqual(revoked["status"], "revoked")
+
+            rebound = record_provenance_event(
+                state,
+                "action_bound",
+                {"action": action},
+            )
+            self.assertEqual(rebound["status"], "bound")
+            self.assertEqual(rebound["revoked_at"], "")
+            self.assertEqual(rebound["revocation_reason"], "")
+            self.assertFalse(rebound["execution_started"])
+
     def test_explicit_attempt_replay_is_idempotent(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             state = _state(Path(tmpdir))

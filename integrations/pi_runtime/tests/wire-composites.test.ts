@@ -191,15 +191,18 @@ test(`${COMPOSITE_LAYER}: P03b/P11a/P11c real facts, approval refs and changed p
     f.pass();
   });
 
-for (const policy of ['off', 'forget'] as const) test(`${COMPOSITE_LAYER}: P12a/P12b actual Wiki mixed summary then ${policy} reaches final wire with legal tool pairs`,
+for (const policy of ['off', 'forget'] as const) test(`${COMPOSITE_LAYER}: P12a/P12b ${policy} blocks new Wiki retrieval and retains the selected Pi summary and recent history`,
   { timeout: 90000, concurrency: false }, async t => {
     const files = await createFixtureFiles(`history-${policy}`);
-    const sentinel = 'COMPOSITE_HISTORY_PRIVATE_' + policy.toUpperCase();
-    const seed = await seedWiki(files, sentinel + '：此前合成来源正文。');
+    const sentinel = 'COMPOSITE_HISTORY_RETAINED_' + policy.toUpperCase();
+    const sourceBody = sentinel + '：此前合成来源正文。';
+    const derived = 'SOURCE_DERIVED_ASSISTANT_' + sentinel;
+    const seed = await seedWiki(files, sourceBody);
     const currentFile = path.join(files.cwd, 'current-public.txt'); await writeFile(currentFile, 'CURRENT_PUBLIC_FILE_FACT');
     const quotedUser = `CURRENT_USER_EXACT：我本句引用 ${sentinel}，这是当前用户原文，保留这整句。`;
-    const mixedSummary = `## Goal\n继续当前合成任务。\n## Progress\nMIXED_SUMMARY_${sentinel}\nCURRENT_PUBLIC_FILE_FACT`;
+    const mixedSummary = `## Goal\n继续当前合成任务。\n## Progress\nMIXED_SUMMARY_${sentinel}\n${sourceBody}\n${derived}\nCURRENT_PUBLIC_FILE_FACT`;
     let f: Awaited<ReturnType<typeof compositeFixture>>; let sourceHash = '';
+    let nativeAfterCompaction: Frame[] = [];
     const steps: Step[] = [
       { kind: 'tools', calls: [
         { id: 'history-current-file', name: 'read', arguments: { path: currentFile } },
@@ -207,7 +210,7 @@ for (const policy of ['off', 'forget'] as const) test(`${COMPOSITE_LAYER}: P12a/
       ] },
       body => {
         const read = receipt(body, 'history-source'); assert.equal(read.status, 'read'); assert(read.content.includes(sentinel)); sourceHash = read.content_hash;
-        return say('SOURCE_DERIVED_ASSISTANT_' + sentinel);
+        return say(derived);
       },
       say('公开当前事实甲。'), say('公开当前事实乙。'),
       body => { assert(bodyText(body).includes(sentinel)); return say(mixedSummary); },
@@ -218,20 +221,39 @@ for (const policy of ['off', 'forget'] as const) test(`${COMPOSITE_LAYER}: P12a/
     steps.push(body => {
       assertWirePairs(body.messages);
       assert(body.messages.some(message => message.role === 'user' && wireText(message.content).includes(quotedUser)), 'preserve exact current-user quote');
-      const nonUser = JSON.stringify(body.messages.filter(message => message.role !== 'user'));
-      assert(!nonUser.includes(sentinel), 'withdraw source text and assistant derivatives by actual provenance');
-      assert(!bodyText(body).includes('MIXED_SUMMARY_'), 'invalidate actual mixed summary');
-      assert(!bodyText(body).includes('SOURCE_DERIVED_ASSISTANT_'), 'withdrawn source derivatives are not resent');
-      const oldRead = receipt(body, 'history-source'); assert.equal(oldRead.history_content, 'withdrawn');
-      assert.equal(oldRead.status, 'read', 'historical tool status remains a fact');
-      assert(JSON.stringify(receipt(body, 'history-current-file')).includes('CURRENT_PUBLIC_FILE_FACT'));
+      assert(body.messages.some(message => wireText(message.content).includes(mixedSummary)),
+        'off/forget does not remove or rewrite the actual Pi summary, including already-read source facts and derivatives');
+      const retainedToolIds: string[] = [], compactedToolIds: string[] = [];
+      for (const id of ['history-source', 'history-current-file']) {
+        const nativeResult = nativeAfterCompaction.find(message => message.role === 'toolResult' && message.toolCallId === id);
+        const sentResult = body.messages.find(message => message.role === 'tool' && message.tool_call_id === id);
+        if (nativeResult) {
+          assert(sentResult, `Pi retained ${id} in its recent tail, so BioMind must retain it too`);
+          assert.equal(wireText(sentResult.content), wireText(nativeResult.content), 'native tool content is sent unchanged');
+          const nativeCall = nativeAfterCompaction.filter(message => message.role === 'assistant')
+            .flatMap(message => message.content).find((part: Frame) => part.type === 'toolCall' && part.id === id);
+          const sentCall = body.messages.filter(message => message.role === 'assistant')
+            .flatMap(message => message.tool_calls ?? []).find((part: Frame) => part.id === id);
+          assert(nativeCall); assert(sentCall);
+          assert.deepEqual(JSON.parse(sentCall.function.arguments), nativeCall.arguments, 'native tool arguments are sent unchanged');
+          retainedToolIds.push(id);
+        } else {
+          assert.equal(sentResult, undefined, `do not reconstruct ${id} after Pi has compacted it out of the recent tail`);
+          compactedToolIds.push(id);
+        }
+      }
+      const nativeDerived = nativeAfterCompaction.some(message => message.role === 'assistant' && wireText(message.content).includes(derived));
+      const sentDerived = body.messages.some(message => message.role === 'assistant' && wireText(message.content).includes(derived));
+      assert.equal(sentDerived, nativeDerived, 'the original assistant remains exactly when it belongs to Pi recent history; summary text is preserved independently');
+      assert(body.messages.some(message => wireText(message.content).includes('CURRENT_PUBLIC_FILE_FACT')));
       current(body);
       f.checkpoints.push({ case: 'P12.a/P12.b', policy, source_ref: seed.sourceRef, source_hash: sourceHash,
-        exact_current_user: quotedUser, mixed_summary_invalidated: true, old_tool_id_and_status_retained: true,
+        exact_current_user: quotedUser, mixed_summary_retained: true, native_recent_tool_ids_retained: retainedToolIds,
+        compacted_tool_ids_not_reconstructed: compactedToolIds, native_recent_derived_assistant_retained: nativeDerived,
         current_file_fact_retained: true, final_wire_request: f.requests.length, seed_calls: seed.calls });
-      return say('来源与混合摘要已按当前策略撤回，当前用户原文和合法工具配对保留。');
+      return say('后续记忆检索受当前策略限制；Pi 已保留的摘要、近期历史及当前用户原文继续保留。');
     });
-    f = await compositeFixture(t, `history-${policy}-mixed-summary`, steps, { files, historyEnabled: true });
+    f = await compositeFixture(t, `history-${policy}-selected-summary-retention`, steps, { files, historyEnabled: true });
     const off = f.bus.on('biomind:ui_request', raw => {
       const request = raw as BioMindUIRequest; assert.equal(request.kind, 'approval');
       f.bus.emit('biomind:ui_response', { id: request.id, requestId: request.requestId, sessionId: request.sessionId, choice: 'y' });
@@ -240,6 +262,7 @@ for (const policy of ['off', 'forget'] as const) test(`${COMPOSITE_LAYER}: P12a/
     await f.prompt('公开当前事实甲。'.repeat(100)); await f.prompt('公开当前事实乙。'.repeat(100));
     await deadline(f.session.compact('忠实保留合成来源和当前公开事实。'), 30000);
     assert(f.manager.getBranch().some(entry => entry.type === 'compaction' && entry.summary.includes('MIXED_SUMMARY_')));
+    nativeAfterCompaction = clone(f.manager.buildSessionProjection().messages) as Frame[];
     assert.equal(f.requests.length, 5);
     if (policy === 'off') {
       // Trusted product settings bus, never a model argument or fake snapshot.
@@ -252,12 +275,12 @@ for (const policy of ['off', 'forget'] as const) test(`${COMPOSITE_LAYER}: P12a/
     await f.prompt(quotedUser);
     const snapshot = await f.connections[0].call('context.snapshot', {}) as Frame;
     assert(snapshot.revoked_sources.includes(seed.sourceRef));
-    if (policy === 'off') assert.equal(snapshot.history_enabled, false);
-    else {
-      assert.equal(snapshot.history_enabled, true);
-      const source = await f.connections[0].call('memory.read', { source_ref: seed.sourceRef }) as Frame;
-      assert.equal(source.status, 'unavailable');
-    }
+    assert.equal(snapshot.history_enabled, policy !== 'off');
+    const source = await f.connections[0].call('memory.read', { source_ref: seed.sourceRef }) as Frame;
+    assert.equal(source.status, policy === 'off' ? 'disabled' : 'unavailable');
+    assert(!JSON.stringify(source).includes(sourceBody), 'a new read cannot retrieve the source after off/forget');
+    f.checkpoints.push({ case: 'P12.a/P12.b', policy, new_retrieval_blocked: true, new_read_status: source.status,
+      history_policy_changes_do_not_rewrite_selected_session: true });
     const audit = JSON.stringify(f.manager.getEntries()); assert(audit.includes(sentinel)); assert(audit.includes('MIXED_SUMMARY_'));
     assert(!f.connections[0].calls.some(row => ['exec.start', 'install.execute'].includes(row.method)));
     assert(f.busEvents.filter(row => row.channel === 'biomind:settled').every(row => row.value.outcome === 'completed'));

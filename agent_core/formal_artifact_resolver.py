@@ -18,7 +18,6 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from agent_core.task_spec import extract_path_tokens
-from memory.task_semantics import is_explicit_tad_boundary_artifact_intent
 
 
 ALWAYS_FORBIDDEN_PATH_TOKENS = (
@@ -100,6 +99,44 @@ ARTIFACT_SPECS: Tuple[ArtifactSpec, ...] = (
 )
 
 
+RESOLUTION_POLICY_VERSION = 2
+
+
+def formal_input_resolution_cache_key(
+    query: str,
+    work_dir: str | Path,
+    task_id: str = "",
+    project_root: str | Path | None = None,
+    candidate_search_roles: Sequence[str] = (),
+    required_input_roles: Sequence[str] = (),
+    known_inputs: Sequence[Dict[str, Any]] = (),
+    *,
+    known_outputs: Sequence[Dict[str, Any]] = (),
+    search_directories: Sequence[str | Path] = (),
+    associated_history_directories: Sequence[str | Path] = (),
+) -> str:
+    """Bind cached discovery to accepted facts, never a former candidate choice.
+
+    This is a request identity, not fresh filesystem verification. Callers must
+    not reuse a legacy result lacking this version and matching fingerprint.
+    """
+    payload = {
+        "policy_version": RESOLUTION_POLICY_VERSION,
+        "query": str(query or ""),
+        "work_dir": str(Path(work_dir or ".").expanduser().resolve()),
+        "project_root": str(Path(project_root).expanduser().resolve()) if project_root else "",
+        "task_id": str(task_id or ""),
+        "candidate_search_roles": list(candidate_search_roles),
+        "required_input_roles": list(required_input_roles),
+        "known_inputs": list(known_inputs),
+        "known_outputs": list(known_outputs),
+        "search_directories": [str(path) for path in search_directories],
+        "associated_history_directories": [str(path) for path in associated_history_directories],
+    }
+    return hashlib.sha256(json.dumps(payload, sort_keys=True, ensure_ascii=False,
+                                    default=str, separators=(",", ":")).encode()).hexdigest()
+
+
 def resolve_formal_upstream_artifacts(
     query: str,
     work_dir: str | Path,
@@ -109,145 +146,138 @@ def resolve_formal_upstream_artifacts(
     candidate_search_roles: Sequence[str] = (),
     required_input_roles: Sequence[str] = (),
     known_inputs: Sequence[Dict[str, Any]] = (),
+    *,
+    known_outputs: Sequence[Dict[str, Any]] = (),
+    search_directories: Sequence[str | Path] = (),
+    associated_history_directories: Sequence[str | Path] = (),
 ) -> Dict[str, Any]:
-    """Search formal project outputs for reusable upstream files.
+    """Verify accepted inputs and discover candidates for explicit input roles.
 
-    The resolver is intentionally artifact-spec driven instead of benchmark-case
-    driven. It only performs read-only path verification and candidate discovery.
-    Biological intent, target/control direction, thresholds, and project
-    background remain Consultant/skill responsibilities.
+    Literal paths with no accepted direction remain observations. A requested
+    output, a domain keyword or a benchmark identifier never establishes an
+    upstream need. Candidate rank and uniqueness never establish selection.
     """
-
     query_text = str(query or "")
     work_path = Path(work_dir or ".").expanduser().resolve()
     project_path = Path(project_root).expanduser().resolve() if project_root else None
-    extracted_benchmark_id = _extract_benchmark_id(query_text)
-    current_task_id = task_id or extracted_benchmark_id or ""
-    spec = _select_artifact_spec(query_text, current_task_id)
-    generic_discovery = _discover_local_inputs(
-        query_text,
-        work_path,
-        project_path,
-        max_candidates=max_candidates,
-        candidate_search_roles=candidate_search_roles,
-        required_input_roles=required_input_roles,
-        known_inputs=known_inputs,
+    requested_roles = _dedupe_strings([*candidate_search_roles, *required_input_roles])
+    accepted_roles = [str(row.get("role") or "") for row in known_inputs
+                      if isinstance(row, dict) and _is_accepted_input_record(row)]
+    specs = [spec for spec in ARTIFACT_SPECS if spec.role in {*requested_roles, *accepted_roles}]
+    spec = specs[0] if specs else None
+    generic = _discover_local_inputs(
+        query_text, work_path, project_path, max_candidates=max_candidates,
+        candidate_search_roles=candidate_search_roles, required_input_roles=required_input_roles,
+        known_inputs=known_inputs, known_outputs=known_outputs,
+        search_directories=search_directories,
+        associated_history_directories=associated_history_directories,
     )
-    relevant = spec is not None or bool(generic_discovery.get("relevant"))
     result: Dict[str, Any] = {
-        "relevant": relevant,
+        **generic,
+        "resolution_policy_version": RESOLUTION_POLICY_VERSION,
+        "request_fingerprint": formal_input_resolution_cache_key(
+            query, work_dir, task_id, project_root, candidate_search_roles,
+            required_input_roles, known_inputs, known_outputs=known_outputs,
+            search_directories=search_directories,
+            associated_history_directories=associated_history_directories,
+        ),
+        "relevant": bool(generic.get("relevant") or requested_roles),
         "artifact_kind": spec.kind if spec else "",
         "artifact_label": spec.label if spec else "",
         "artifact_role": spec.role if spec else "",
+        "artifact_roles": [item.role for item in specs],
         "status": "not_applicable",
-        "task_id": current_task_id,
-        "benchmark_id": extracted_benchmark_id or task_id or "",
-        "ambiguity_level": _extract_ambiguity_level(query_text) or _extract_ambiguity_level(task_id),
-        "samples": [],
-        "resolutions": [],
-        "search_roots": [],
-        "verified_explicit_paths": [],
-        "invalid_explicit_paths": [],
-        "excluded_candidates": [],
+        "task_id": task_id,
+        "benchmark_id": _extract_benchmark_id(query_text) or task_id or "",
+        "ambiguity_level": "",
+        "samples": _dedupe_strings(str(row.get("sample") or "") for row in known_inputs if isinstance(row, dict)),
+        "resolutions": _extract_resolution_labels(query_text),
         "formal_candidates": [],
         "selected_by_sample": {},
         "ambiguous_samples": [],
         "ambiguous_resolutions": [],
-        "resolved_inputs": generic_discovery.get("resolved_inputs", []),
-        "observed_artifacts": generic_discovery.get("observed_artifacts", []),
-        "candidate_groups": generic_discovery.get("candidate_groups", {}),
-        "missing_roles": generic_discovery.get("missing_roles", []),
-        "ambiguous_roles": generic_discovery.get("ambiguous_roles", []),
-        "discovery_log": generic_discovery.get("discovery_log", []),
         "unresolved": False,
         "unresolved_reasons": [],
         "consultant_action_hint": "",
     }
-    if not relevant:
+    if not result["relevant"]:
         return result
 
-    samples = _extract_samples(query_text)
-    resolutions = _extract_resolution_labels(query_text)
-    result["samples"] = samples
-    result["resolutions"] = resolutions
-
-    if spec is None:
-        if result["ambiguous_roles"]:
-            result["status"] = "ambiguous_inputs"
-            result["unresolved"] = True
-            result["unresolved_reasons"] = ["multiple plausible input candidates"]
-            result["consultant_action_hint"] = "ask_user_to_choose_input_candidate"
-        elif result["missing_roles"]:
-            result["status"] = "missing_candidates"
-            result["unresolved"] = True
-            result["unresolved_reasons"] = ["local input discovery found unresolved roles"]
-            result["consultant_action_hint"] = "ask_user_for_formal_paths_or_upstream_permission"
-        else:
-            result["status"] = "resolved"
-        return result
-
-    explicit_valid, explicit_invalid = _verify_explicit_artifact_paths(query_text, spec, work_path, project_path)
-    result["verified_explicit_paths"] = [str(path) for path in explicit_valid]
-    result["invalid_explicit_paths"] = [str(path) for path in explicit_invalid]
-
-    search_roots = _candidate_search_roots(work_path, project_path)
-    result["search_roots"] = [str(path) for path in search_roots]
-
-    formal_candidates: List[Dict[str, Any]] = []
-    excluded: List[Dict[str, str]] = []
-    for root in search_roots:
-        for glob in spec.search_globs:
-            for path in sorted(root.rglob(glob)):
-                candidate, reason = _candidate_record(
-                    path,
-                    spec,
-                    samples,
-                    resolutions,
-                    result["ambiguity_level"],
-                )
-                if reason:
-                    if len(excluded) < max_candidates:
-                        excluded.append({"path": str(path.resolve()), "reason": reason})
+    accepted_paths_by_role: Dict[str, List[Dict[str, Any]]] = {}
+    for row in result["resolved_inputs"]:
+        accepted_paths_by_role.setdefault(str(row.get("role") or ""), []).append(row)
+    blocked_roles = set(result.pop("invalid_declared_roles", []))
+    roots = [Path(value) for value in result["search_roots"]]
+    output_paths = _declared_output_paths(known_outputs, work_path, project_path)
+    for artifact_spec in specs:
+        accepted = accepted_paths_by_role.get(artifact_spec.role, [])
+        for row in accepted:
+            path = Path(str(row.get("path") or ""))
+            if not _explicit_path_matches_spec(path, artifact_spec):
+                continue
+            candidate, reason = _candidate_record(path, artifact_spec, (), (), "", explicit=True)
+            if candidate:
+                candidate.update(binding_status="accepted_input", source=row.get("source") or "known_input")
+                sample = str(row.get("sample") or candidate.get("sample") or "")
+                if sample:
+                    result["selected_by_sample"][sample] = candidate
+        # A named path, valid or invalid, is authoritative. Do not replace it
+        # with another task's similarly named artifact after validation fails.
+        if accepted or artifact_spec.role in blocked_roles or artifact_spec.role not in requested_roles:
+            continue
+        found: List[Dict[str, Any]] = []
+        for root in roots:
+            for glob in artifact_spec.search_globs:
+                try:
+                    paths = sorted(root.rglob(glob))
+                except OSError:
                     continue
-                if candidate:
-                    formal_candidates.append(candidate)
+                for path in paths:
+                    if not path.resolve().is_relative_to(root.resolve()) or _within_declared_outputs(path, output_paths):
+                        continue
+                    candidate, reason = _candidate_record(path, artifact_spec, (), (), "")
+                    if reason:
+                        if len(result["excluded_candidates"]) < max_candidates:
+                            result["excluded_candidates"].append({"path": str(path.resolve()), "reason": reason})
+                    elif candidate:
+                        candidate.update(binding_status="candidate_only", source="scoped_candidate_search")
+                        found.append(candidate)
+        found = _dedupe_candidates(found)
+        found.sort(key=lambda item: (-int(item.get("score") or 0), str(item.get("path") or "")))
+        if found:
+            result["candidate_groups"][artifact_spec.role] = found[:max_candidates]
+            result["formal_candidates"].extend(found[:max_candidates])
+            if artifact_spec.role in result["missing_roles"]:
+                result["missing_roles"].remove(artifact_spec.role)
+        elif artifact_spec.role in required_input_roles:
+            result["missing_roles"].append(artifact_spec.role)
 
-    formal_candidates = _dedupe_candidates(formal_candidates)
-    formal_candidates.sort(
-        key=lambda item: (
-            int(item.get("score", 0)),
-            str(item.get("task_id") or ""),
-            str(item.get("path") or ""),
-        ),
-        reverse=True,
-    )
-    result["formal_candidates"] = formal_candidates[:max_candidates]
-    result["excluded_candidates"] = excluded
-
-    selected_by_sample, ambiguous_samples = _select_candidates_by_sample(formal_candidates, samples)
-    ambiguous_resolutions = _ambiguous_resolution_values(formal_candidates, resolutions)
-    result["selected_by_sample"] = selected_by_sample
-    result["ambiguous_samples"] = ambiguous_samples
-    result["ambiguous_resolutions"] = ambiguous_resolutions
-
-    if ambiguous_samples:
-        result["status"] = "ambiguous_candidates"
-        result["unresolved"] = True
-        result["unresolved_reasons"] = ["multiple same-priority formal candidates"]
-        result["consultant_action_hint"] = "ask_user_to_choose_candidate"
-    elif ambiguous_resolutions:
-        result["status"] = "ambiguous_resolution"
-        result["unresolved"] = True
-        result["unresolved_reasons"] = ["multiple formal candidate resolutions"]
-        result["consultant_action_hint"] = "ask_user_to_confirm_resolution_or_candidate"
-    elif formal_candidates or explicit_valid:
+    result["formal_candidates"] = _dedupe_candidates(result["formal_candidates"])[:max_candidates]
+    result["missing_roles"] = _dedupe_strings(result["missing_roles"])
+    unresolved_roles = [role for role in requested_roles if not accepted_paths_by_role.get(role)]
+    selection_roles = [role for role in unresolved_roles if result["candidate_groups"].get(role)]
+    result["missing_roles"] = _dedupe_strings([
+        *result["missing_roles"],
+        *(role for role in required_input_roles if not accepted_paths_by_role.get(role)
+          and not result["candidate_groups"].get(role)),
+    ])
+    result["selection_required_roles"] = selection_roles
+    if result["invalid_explicit_paths"] or result["missing_roles"]:
+        result.update(status="missing_inputs", unresolved=True,
+                      unresolved_reasons=["explicit input verification or required input discovery remains unresolved"],
+                      consultant_action_hint="report_exact_missing_paths_or_unverified_inputs")
+    elif selection_roles or result["ambiguous_roles"]:
+        result.update(status="candidates_available", unresolved=True,
+                      unresolved_reasons=["candidate evidence does not establish input selection"],
+                      consultant_action_hint="confirm_input_selection_or_handoff_with_pending_verification")
+    elif result["resolved_inputs"]:
         result["status"] = "resolved"
-    else:
-        result["status"] = "missing_candidates"
-        result["unresolved"] = True
-        result["unresolved_reasons"] = ["no valid formal upstream candidates found"]
-        result["consultant_action_hint"] = "ask_user_for_formal_paths_or_upstream_permission"
-
+    elif result["observed_artifacts"]:
+        result["status"] = "observed_paths"
+    elif requested_roles:
+        result.update(status="missing_candidates", unresolved=True,
+                      unresolved_reasons=["no candidates in the permitted search scope"],
+                      consultant_action_hint="handoff_with_pending_input_or_request_required_decision")
     return result
 
 
@@ -259,7 +289,7 @@ def format_formal_upstream_context(result: Dict[str, Any]) -> str:
 
     lines = [
         "[INPUT_RESOLUTION_AUDIT]",
-        "policy:先找再问; verify formal project artifacts before ASK or BLOCK",
+        "policy:verify accepted paths first; search only explicit input roles within declared scope; candidates are not selected inputs",
         f"artifact_kind:{result.get('artifact_kind') or 'unknown'}",
         f"artifact_label:{result.get('artifact_label') or 'unknown'}",
         f"artifact_role:{result.get('artifact_role') or 'unknown'}",
@@ -292,6 +322,12 @@ def format_formal_upstream_context(result: Dict[str, Any]) -> str:
                 f"path={item.get('path') or item.get('paths') or 'unknown'}"
                 + (f"; detail={item.get('detail')}" if item.get("detail") else "")
             )
+    if result.get("observed_artifacts"):
+        lines.append("observed_paths (not selected inputs):")
+        for item in (result.get("observed_artifacts") or [])[:16]:
+            if item.get("binding_status") == "accepted_input":
+                continue
+            lines.append(f"- direction={item.get('direction') or 'unknown'}; exists={item.get('exists')}; path={item.get('path')}")
     if result.get("ambiguous_roles"):
         lines.append("ambiguous_roles:" + ", ".join(result.get("ambiguous_roles") or []))
     if result.get("missing_roles"):
@@ -336,6 +372,70 @@ def format_formal_upstream_context(result: Dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def _is_accepted_input_record(row: Dict[str, Any]) -> bool:
+    """Distinguish an accepted fact from an input-shaped discovery cache row."""
+    if str(row.get("direction") or "").lower() == "output":
+        return False
+    sources = {
+        str(row.get("source") or "").lower(),
+        str(row.get("source_type") or "").lower(),
+        *(str(item.get("source_type") or item.get("source") or "").lower()
+          for item in row.get("provenance") or [] if isinstance(item, dict)),
+    }
+    if sources.intersection({
+        "explicit", "user", "user_initial", "user_feedback", "user_explicit",
+        "consultant_confirmed", "consultant_selected",
+    }):
+        return True
+    if sources.intersection({
+        "candidate", "formal_candidate", "discovery", "local_discovery",
+        "local_candidate_search", "scoped_candidate_search", "directory_discovery",
+        "formal_artifact_resolver",
+    }):
+        return False
+    if str(row.get("binding_status") or "").lower() in {
+        "candidate", "candidate_only", "observed_only", "unselected",
+    }:
+        return False
+    # A previous result's status/score cannot serve as selection evidence.
+    if str(row.get("status") or "").lower() in {"resolved", "selected"} and row.get("direction") != "input":
+        return False
+    if "score" in row and "artifact_kind" in row:
+        return False
+    # Plain known_inputs and canonical direction=input rows are facts accepted
+    # by the caller; no new requirement for a second binding protocol is added.
+    return True
+
+
+def _record_paths(row: Dict[str, Any]) -> List[str]:
+    path = row.get("canonical_path") or row.get("resolved_path") or row.get("path") or ""
+    paths = row.get("paths") or []
+    return _dedupe_strings([str(path)] if path else [str(value) for value in paths if value])
+
+
+def _declared_output_paths(
+    rows: Sequence[Dict[str, Any]], work_dir: Path, project_root: Optional[Path],
+) -> List[Path]:
+    return _dedupe_paths(path.resolve() for row in rows if isinstance(row, dict)
+                         for raw in _record_paths(row)
+                         for path in _expand_path_token(raw, work_dir, project_root))
+
+
+def _within_declared_outputs(path: Path, outputs: Sequence[Path]) -> bool:
+    resolved = path.resolve()
+    return any(resolved == output or resolved.is_relative_to(output) for output in outputs)
+
+
+def _path_observation(path: Path, *, direction: str, source: str) -> Dict[str, Any]:
+    """Existence/shape observation; an unclassified path is not an input read."""
+    return {
+        "path": str(path.resolve()), "exists": path.exists(),
+        "is_file": _is_file_safe(path), "is_directory": _is_dir_safe(path),
+        "direction": direction, "source": source,
+        "binding_status": "output_conflict_check" if direction == "output" else "observed_only",
+    }
+
+
 def _discover_local_inputs(
     text: str,
     work_dir: Path,
@@ -344,88 +444,120 @@ def _discover_local_inputs(
     candidate_search_roles: Sequence[str] = (),
     required_input_roles: Sequence[str] = (),
     known_inputs: Sequence[Dict[str, Any]] = (),
+    *,
+    known_outputs: Sequence[Dict[str, Any]] = (),
+    search_directories: Sequence[str | Path] = (),
+    associated_history_directories: Sequence[str | Path] = (),
 ) -> Dict[str, Any]:
-    """Discover generic local input relationships without domain decisions."""
-
     result: Dict[str, Any] = {
-        "relevant": False,
-        "resolved_inputs": [],
-        "observed_artifacts": [],
-        "candidate_groups": {},
-        "missing_roles": [],
-        "ambiguous_roles": [],
-        "discovery_log": [],
+        "relevant": False, "resolved_inputs": [], "observed_artifacts": [],
+        "candidate_groups": {}, "missing_roles": [], "ambiguous_roles": [],
+        "discovery_log": [], "verified_explicit_paths": [], "invalid_explicit_paths": [],
+        "invalid_declared_roles": [], "excluded_candidates": [], "search_roots": [],
     }
-    declared = [str(row.get('canonical_path') or row.get('resolved_path') or row.get('path') or '')
-                for row in known_inputs if isinstance(row, dict)]
-    explicit_tokens = list(dict.fromkeys(p for p in declared if p)) or _raw_path_tokens(text)
-    if not explicit_tokens:
-        return result
-
+    requested = _dedupe_strings([*candidate_search_roles, *required_input_roles])
     explicit_dirs: List[Path] = []
-    explicit_files: List[Path] = []
-    invalid_paths: List[str] = []
-    excluded: List[str] = []
-    for raw in explicit_tokens:
-        candidates = _expand_path_token(raw, work_dir, project_root)
-        resolved_raw = False
-        candidate_failures: List[str] = []
-        for path in candidates:
-            if _forbidden_path_reason(path, explicit=True):
-                excluded.append(str(path))
+    accepted_files: List[Path] = []
+    classified_paths: set[str] = set()
+    for direction, records in (("output", known_outputs), ("input", known_inputs)):
+        for row in records:
+            if not isinstance(row, dict):
                 continue
+            for raw in _record_paths(row):
+                for path in _expand_path_token(raw, work_dir, project_root):
+                    resolved = str(path.resolve())
+                    # A contradictory input/output direction is not silently
+                    # converted into a confirmed input by file existence.
+                    if resolved in classified_paths:
+                        continue
+                    classified_paths.add(resolved)
+                    reason = _forbidden_path_reason(path, explicit=True)
+                    if reason:
+                        result["excluded_candidates"].append({"path": resolved, "reason": reason})
+                        result["discovery_log"].append("excluded explicit path: " + resolved + ": " + reason)
+                        if direction == "input":
+                            result["invalid_explicit_paths"].append(resolved)
+                            result["invalid_declared_roles"].append(str(row.get("role") or "input_file"))
+                        continue
+                    if direction == "output":
+                        result["observed_artifacts"].append(_path_observation(path, direction=direction, source="known_output"))
+                        continue
+                    role = str(row.get("role") or ("input_directory" if _is_dir_safe(path) else _role_for_path(path)))
+                    # Old discovery evidence is not accepted merely because a
+                    # caller retained it in a prior input-shaped collection.
+                    if not _is_accepted_input_record(row):
+                        result["observed_artifacts"].append(_path_observation(path, direction="unknown", source="prior_candidate"))
+                        continue
+                    record = _input_record(role, path, "explicit", binding_status="accepted_input")
+                    artifact_spec = _select_artifact_spec(input_roles=[role])
+                    if artifact_spec and not _explicit_path_matches_spec(path, artifact_spec):
+                        record["verified"] = False
+                        record["verification_error"] = "declared artifact role does not match file suffix"
+                    if row.get("sample"):
+                        record["sample"] = row["sample"]
+                    result["observed_artifacts"].append({**record, "direction": "input", "evidence_status": "checked"})
+                    if record["verified"]:
+                        result["resolved_inputs"].append(record)
+                        result["verified_explicit_paths"].append(resolved)
+                        if record["is_file"]:
+                            accepted_files.append(path.resolve())
+                        else:
+                            explicit_dirs.append(path.resolve())
+                    else:
+                        result["invalid_explicit_paths"].append(resolved)
+                        result["invalid_declared_roles"].append(role)
+                        result["missing_roles"].append(role)
+                        result["discovery_log"].append("accepted input path failed verification: " + resolved)
+
+    # Query paths retain their exact direction-unknown identity until Consultant
+    # accepts an input fact. Known output paths are observations even if they end
+    # in the same suffix as a requested upstream artifact.
+    for raw in _raw_path_tokens(text):
+        for path in _expand_path_token(raw, work_dir, project_root):
+            resolved = str(path.resolve())
+            if resolved in classified_paths:
+                continue
+            classified_paths.add(resolved)
+            reason = _forbidden_path_reason(path, explicit=True)
+            if reason:
+                result["excluded_candidates"].append({"path": resolved, "reason": reason})
+                continue
+            result["observed_artifacts"].append(_path_observation(path, direction="unknown", source="user_path_mention"))
             if _is_dir_safe(path):
                 explicit_dirs.append(path.resolve())
-                result["resolved_inputs"].append(_input_record("input_directory", path, "explicit"))
-                resolved_raw = True
-                continue
-            if _is_file_safe(path):
-                explicit_files.append(path.resolve())
-                explicit_record = _input_record(
-                    _role_for_path(path), path, "explicit"
-                )
-                result["resolved_inputs"].append(explicit_record)
-                result["observed_artifacts"].append({
-                    **explicit_record,
-                    "evidence_status": "checked",
-                    "binding_status": "explicit_user_path",
-                })
-                explicit_dirs.append(path.parent.resolve())
-                resolved_raw = True
-            else:
-                candidate_failures.append(str(path))
-        if not resolved_raw and _looks_like_relevant_input_path(raw):
-            invalid_paths.extend(candidate_failures or [raw])
 
-    explicit_dirs = _dedupe_paths(explicit_dirs)
-    explicit_files = _dedupe_paths(explicit_files)
-    result["relevant"] = bool(explicit_files or explicit_dirs or invalid_paths or excluded)
-    if invalid_paths:
-        result["missing_roles"].append("explicit_input_path")
-        result["discovery_log"].append("explicit input path(s) did not resolve: " + "; ".join(invalid_paths[:6]))
-    if excluded:
-        result["discovery_log"].append("excluded forbidden explicit path(s): " + "; ".join(excluded[:6]))
-
-    _discover_paired_fastqs(result, explicit_files, explicit_dirs, max_candidates=max_candidates)
-    _discover_sidecars(result, explicit_files)
-    requested_roles = _dedupe_strings([
-        *candidate_search_roles,
-        *required_input_roles,
-    ])
-    if _should_discover_reference_annotation(requested_roles):
+    roots = _candidate_search_roots(
+        work_dir, project_root, explicit_directories=explicit_dirs,
+        search_directories=search_directories,
+        associated_history_directories=associated_history_directories,
+    ) if requested else []
+    result["search_roots"] = [str(path) for path in roots]
+    # Companion identity derives from an accepted file relationship, never from
+    # a directory containing a single matching group.
+    _discover_paired_fastqs(result, accepted_files, (), max_candidates=max_candidates)
+    _discover_sidecars(result, accepted_files)
+    if "paired_fastq" in requested:
+        _discover_paired_fastqs(result, (), roots, max_candidates=max_candidates)
+    if _should_discover_reference_annotation(requested):
+        blocked = set(result["invalid_declared_roles"])
         _discover_reference_annotation_pairs(
-            result,
-            explicit_files,
-            explicit_dirs,
-            work_dir,
-            project_root,
-            max_candidates,
-            candidate_search_roles=requested_roles,
+            result, accepted_files, roots, work_dir, project_root, max_candidates,
+            candidate_search_roles=[role for role in requested if role not in blocked],
             required_input_roles=required_input_roles,
         )
-    result["resolved_inputs"] = _dedupe_resolved_inputs(result.get("resolved_inputs") or [])
-    result["missing_roles"] = _dedupe_strings(result.get("missing_roles") or [])
-    result["ambiguous_roles"] = _dedupe_strings(result.get("ambiguous_roles") or [])
+    output_paths = _declared_output_paths(known_outputs, work_dir, project_root)
+    result["resolved_inputs"] = _dedupe_resolved_inputs([
+        row for row in result["resolved_inputs"]
+        if not any(_within_declared_outputs(Path(raw), output_paths) for raw in _record_paths(row))
+    ])
+    for role, rows in list(result["candidate_groups"].items()):
+        result["candidate_groups"][role] = [
+            row for row in rows if not any(_within_declared_outputs(Path(raw), output_paths)
+                                           for raw in _record_paths(row) + [str(row.get(key) or "") for key in ("r1", "r2") if row.get(key)])
+        ]
+    result["missing_roles"] = _dedupe_strings(result["missing_roles"])
+    result["ambiguous_roles"] = _dedupe_strings(result["ambiguous_roles"])
+    result["relevant"] = bool(result["observed_artifacts"] or result["excluded_candidates"] or requested)
     return result
 
 
@@ -654,17 +786,7 @@ def _discover_paired_fastqs(
     paired_groups = _dedupe_group_records(paired_groups, key_fields=("r1", "r2"))
     if paired_groups:
         result["candidate_groups"]["paired_fastq"] = paired_groups[:max_candidates]
-        if not explicit_fastqs and len(paired_groups) == 1:
-            group = paired_groups[0]
-            result["resolved_inputs"].append(
-                {
-                    "role": "paired_fastq",
-                    "paths": [group["r1"], group["r2"]],
-                    "sample": group["sample"],
-                    "source": "directory_discovery",
-                }
-            )
-        elif not explicit_fastqs and len(paired_groups) > 1:
+        if not explicit_fastqs and len(paired_groups) > 1:
             result["ambiguous_roles"].append("paired_fastq")
             result["discovery_log"].append(
                 f"multiple paired FASTQ groups found: {', '.join(group['sample'] for group in paired_groups[:6])}"
@@ -834,32 +956,9 @@ def _local_input_search_roots(
     work_dir: Path,
     project_root: Optional[Path],
 ) -> List[Path]:
-    roots: List[Path] = []
-    seeds = list(explicit_dirs) or [work_dir]
-    if project_root:
-        seeds.append(project_root)
-    target_names = {"data", "ref", "refs", "reference", "annotation", "annotations", "genome", "metadata", "samples"}
-    for seed in seeds:
-        if _is_dir_safe(seed) and seed not in roots:
-            roots.append(seed)
-        for parent in list(seed.parents)[:4]:
-            if parent not in roots:
-                roots.append(parent)
-            try:
-                children = list(parent.iterdir())[:200]
-            except OSError:
-                children = []
-            for child in children:
-                if not _is_dir_safe(child):
-                    continue
-                child_name = child.name.lower()
-                if child_name in target_names or any(token in child_name for token in target_names):
-                    if child not in roots:
-                        roots.append(child)
-                data_child = child / "data"
-                if _is_dir_safe(data_child) and data_child not in roots:
-                    roots.append(data_child)
-    return roots[:80]
+    # The caller has already established scope. Do not widen it to parents,
+    # sibling projects, benchmark runs or project_root.
+    return _dedupe_paths(path for path in explicit_dirs if _is_dir_safe(path))
 
 
 def _find_files_by_suffixes(roots: Sequence[Path], suffixes: Sequence[str], max_candidates: int) -> List[Path]:
@@ -876,7 +975,7 @@ def _find_files_by_suffixes(roots: Sequence[Path], suffixes: Sequence[str], max_
                 return _dedupe_paths(found)
             if not _is_file_safe(path):
                 continue
-            if _forbidden_path_reason(path, explicit=False):
+            if not path.resolve().is_relative_to(root.resolve()) or _forbidden_path_reason(path, explicit=False):
                 continue
             if path.name.lower().endswith(tuple(suffixes)) and _is_valid_formal_file(path):
                 found.append(path.resolve())
@@ -948,30 +1047,16 @@ def _dedupe_group_records(records: Iterable[Dict[str, Any]], key_fields: Sequenc
     return unique
 
 
-def _select_artifact_spec(text: str, task_id: str = "") -> Optional[ArtifactSpec]:
-    task_upper = str(task_id or "").upper()
-    for spec in ARTIFACT_SPECS:
-        canonical_benchmark_task = task_upper.startswith("BM-")
-        if spec.kind == "tad_boundaries":
-            canonical_benchmark_task = canonical_benchmark_task and any(
-                token in task_upper for token in ("3DDNA", "3D-DNA", "TAD", "HIC")
-            )
-        if canonical_benchmark_task and any(token in task_upper for token in spec.task_id_tokens):
-            return spec
-
-    lower = str(text or "").lower()
-    for spec in ARTIFACT_SPECS:
-        if _query_matches_spec(lower, spec):
-            return spec
-    return None
+def _select_artifact_spec(
+    text: str = "", task_id: str = "", *, input_roles: Sequence[str] = (),
+) -> Optional[ArtifactSpec]:
+    """Compatibility helper: only accepted input roles select a domain spec."""
+    return next((spec for spec in ARTIFACT_SPECS if spec.role in input_roles), None)
 
 
 def _query_matches_spec(lower_text: str, spec: ArtifactSpec) -> bool:
-    has_tad_context = "tad" in lower_text or "拓扑" in lower_text
-    if spec.kind == "tad_domains":
-        return has_tad_context and any(token in lower_text for token in spec.query_tokens)
-    if spec.kind == "tad_boundaries":
-        return is_explicit_tad_boundary_artifact_intent(lower_text)
+    # A sentence describes inputs, outputs and history together. It has no
+    # authority to create an input role. Preserve the helper for old importers.
     return False
 
 
@@ -1138,19 +1223,23 @@ def _expand_path_token(raw: str, work_dir: Path, project_root: Optional[Path]) -
     return _dedupe_paths(paths)
 
 
-def _candidate_search_roots(work_dir: Path, project_root: Optional[Path]) -> List[Path]:
-    # Candidate discovery has the same authoritative root as explicit inputs.
-    # Walking parents can import another project's same-named formal outputs.
-    bases = [project_root or work_dir]
-    roots: List[Path] = []
-    for base in bases:
-        for rel in (
-            Path("benchmarks/biomind_agent_benchmark/runs"),
-        ):
-            candidate = (base / rel).resolve()
-            if _is_dir_safe(candidate) and candidate not in roots:
-                roots.append(candidate)
-    return roots
+def _candidate_search_roots(
+    work_dir: Path,
+    project_root: Optional[Path],
+    *,
+    explicit_directories: Sequence[Path] = (),
+    search_directories: Sequence[str | Path] = (),
+    associated_history_directories: Sequence[str | Path] = (),
+) -> List[Path]:
+    roots = list(explicit_directories)
+    for raw in [*search_directories, *associated_history_directories]:
+        roots.extend(_expand_path_token(str(raw), work_dir, project_root))
+    # work_dir is a usable fallback only when it is task-local, not the project
+    # itself. Explicit directories take precedence over the fallback.
+    if not roots and work_dir != project_root:
+        roots.append(work_dir)
+    return _dedupe_paths(path.resolve() for path in roots
+                         if _is_dir_safe(path) and not _forbidden_path_reason(path, explicit=True))
 
 
 def _candidate_record(
@@ -1159,14 +1248,17 @@ def _candidate_record(
     samples: Sequence[str],
     resolutions: Sequence[str],
     ambiguity_level: str,
+    *,
+    explicit: bool = False,
 ) -> Tuple[Optional[Dict[str, Any]], str]:
     resolved = path.resolve()
-    reason = _forbidden_path_reason(resolved)
+    reason = _forbidden_path_reason(resolved, explicit=explicit)
     if reason:
         return None, reason
     if not _is_valid_formal_file(resolved):
         return None, "missing or empty"
-    if not _path_has_spec_suffix(resolved, spec):
+    matches = _explicit_path_matches_spec(resolved, spec) if explicit else _path_has_spec_suffix(resolved, spec)
+    if not matches:
         return None, "filename does not match artifact kind"
 
     sample = _sample_from_artifact_path(resolved, spec)
@@ -1184,10 +1276,6 @@ def _candidate_record(
         score += 4
     if resolution and resolution in resolutions:
         score += 20
-    if task_id and spec.preferred_task_token in task_id:
-        score += 10
-    if ambiguity_level and f"-{ambiguity_level}-" in task_id:
-        score += 12
     if any(token in str(resolved) for token in spec.directory_tokens):
         score += 4
 
@@ -1214,6 +1302,14 @@ def _forbidden_path_reason(path: Path, explicit: bool = False) -> str:
         if token in lower:
             return f"forbidden path token: {token}"
     return ""
+
+
+def _explicit_path_matches_spec(path: Path, spec: ArtifactSpec) -> bool:
+    # A user's accepted file need not use the discovery filename convention.
+    # Validate only the declared format here; semantic BED contents belong to
+    # the normal downstream preflight, not a filename-based replacement rule.
+    return any(path.name.lower().endswith(Path(suffix).suffix.lower())
+               for suffix in spec.filename_suffixes)
 
 
 def _path_has_spec_suffix(path: Path, spec: ArtifactSpec) -> bool:
@@ -1295,14 +1391,11 @@ def _select_candidates_by_sample(
     ambiguous: List[str] = []
     target_samples = list(samples) or sorted({str(item.get("sample") or "") for item in candidates if item.get("sample")})
     for sample in target_samples:
-        sample_candidates = [item for item in candidates if item.get("sample") == sample]
-        if not sample_candidates:
-            continue
-        top_score = max(int(item.get("score", 0)) for item in sample_candidates)
-        top = [item for item in sample_candidates if int(item.get("score", 0)) == top_score]
-        if len(top) == 1:
-            selected[sample] = top[0]
-        else:
+        accepted = [item for item in candidates if item.get("sample") == sample
+                    and item.get("binding_status") == "accepted_input"]
+        if len(accepted) == 1:
+            selected[sample] = accepted[0]
+        elif len(accepted) > 1:
             ambiguous.append(sample)
     return selected, ambiguous
 
@@ -1318,12 +1411,10 @@ def _ambiguous_resolution_values(
 
 
 def _decision_text(result: Dict[str, Any]) -> str:
-    if result.get("ambiguous_samples"):
-        return "multiple formal upstream candidates found; Consultant must resolve before handoff"
-    if result.get("ambiguous_resolutions"):
-        return "multiple formal upstream resolutions found; Consultant must resolve before handoff"
+    if result.get("selection_required_roles") or result.get("formal_candidates"):
+        return "scoped candidates are observations only; no input was selected by rank or uniqueness"
     if result.get("unresolved"):
-        return "formal artifact search completed; unresolved input evidence remains"
-    if result.get("formal_candidates") or result.get("verified_explicit_paths"):
-        return "formal upstream candidates are available after read-only verification"
-    return "no valid formal upstream candidates found"
+        return "input evidence remains unresolved; preserve exact paths and pending verification at handoff"
+    if result.get("resolved_inputs"):
+        return "accepted input paths were verified; existing outputs and other observed paths remain separate"
+    return "path existence is observed; no input direction was inferred from the request text"

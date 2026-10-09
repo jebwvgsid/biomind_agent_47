@@ -29,15 +29,15 @@ function checkTools(h: any) { const names = tools(h); assert(names.includes('rea
 test('P1 native catalog metadata, explicit expansion, read reference and current toolsets', async () => {
   const f = await fixture(); const d = domain();
   const h = await createHarness({ name: 'P1-catalog-explicit', ...f, domain: d, skillPaths: [f.skills], nativePrompt: true,
-    script: [text('catalog only'), call('ref', 'read', { path: path.join(f.skills, 'fixture/references/ref.txt') }), text('loaded'), call('handoff', 'handoff_generate', { goal: 'toolset only' }), text('Generate'), text('new Consult')] });
+    script: [text('catalog only'), call('ref', 'read', { path: path.join(f.skills, 'fixture/references/ref.txt') }), text('loaded'), text('continued'), text('new request')] });
   try {
     checkTools(h); await h.prompt('catalog');
     const first = serialized(h.requests[0]); assert(first.includes('DESCRIPTION_A')); assert(!first.includes('BODY_PRIVATE_A')); assert(!first.includes('REFERENCE_PRIVATE_A'));
     await h.prompt('/skill:fixture explicit argument');
     const explicit = serialized(h.requests[1]); assert(explicit.includes('BODY_PRIVATE_A')); assert(explicit.includes('explicit argument'));
     assert(serialized(h.requests[2]).includes('REFERENCE_PRIVATE_A')); checkTools(h);
-    await h.prompt('handoff'); checkTools(h); assert(tools(h).includes('run_command')); assert(tools(h).includes('write')); assert(tools(h).includes('edit'));
-    await h.prompt('new'); checkTools(h); for (const name of ['run_command', 'write', 'edit']) assert(!tools(h).includes(name));
+    await h.prompt('continue'); checkTools(h); assert(tools(h).includes('run_command')); assert(tools(h).includes('write')); assert(tools(h).includes('edit'));
+    await h.prompt('[新任务] new'); checkTools(h); for (const name of ['run_command', 'write', 'edit']) assert(tools(h).includes(name));
     assert(d.calls.some(x => x.method === 'files.read_authorize' && x.privileged && (x.params.trusted_skill_dirs as string[]).includes(path.dirname(f.skill))));
   } finally { await h.close(); }
 });
@@ -100,4 +100,44 @@ test('P1 all current Skills load with official Pi diagnostics and unique names',
   assert(manifests.length > 0); assert.equal(result.skills.length, manifests.length);
   assert.equal(new Set(result.skills.map(x=>x.name)).size, manifests.length);
   assert.deepEqual(result.diagnostics,[]);
+});
+
+test('E01/E13 native identities reach the host-only environment query and refresh on Pi reload', async () => {
+  const f = await fixture();
+  await writeFile(f.skill, '---\nname: native-env-name\ndescription: Registered environment fixture\n---\nUse recorded environment.\n');
+  const d = domain();
+  d.receipts.set('environments.select', (p: any) => ({ availability: 'AVAILABLE', selected_candidate: { env: 'fixture' }, observed: p }));
+  const h = await createHarness({ name: 'latest-native-runtime-identity', ...f, domain: d, skillPaths: [f.skills], nativePrompt: true,
+    script: [call('select-first', 'select_environment', { skill_id: 'native-env-name' }), text('first'),
+      call('select-reloaded', 'select_environment', { skill_id: 'changed-native' }), text('second')] });
+  try {
+    await h.prompt('select registered environment');
+    const first = d.calls.find(row => row.method === 'environments.select')!;
+    assert(first.privileged);
+    assert.deepEqual(first.params.loaded_skills, [{ name: 'native-env-name', file_path: f.skill }]);
+    assert(!Object.hasOwn(first.params, 'requirements'));
+    await writeFile(f.skill, '---\nname: changed-native\ndescription: Updated registered identity\n---\n');
+    await h.session.reload(); await h.prompt('select reloaded environment');
+    const last = d.calls.filter(row => row.method === 'environments.select').at(-1)!;
+    assert.deepEqual(last.params.loaded_skills, [{ name: 'changed-native', file_path: f.skill }]);
+    const request = JSON.stringify(h.requests.at(-1));
+    // Detailed probe examples moved to offline fixtures, without changing the
+    // Skill identity, tool schema or registration behavior asserted above.
+    for (const policy of ['适用登记直接使用，不例行重复探测', '遵循最新修订、明确检查和停止条件', '复现脚本生成后不自动执行']) assert(request.includes(policy));
+    const definition = h.session.getActiveToolNames(); assert(definition.includes('select_environment'));
+    h.requests.forEach(row => assertPairs(row.messages));
+  } finally { await h.close(); }
+});
+
+test('E13 model cannot submit an arbitrary path as trusted Skill identity', async () => {
+  const f = await fixture(); const d = domain();
+  const h = await createHarness({ name: 'latest-forged-runtime-identity', ...f, domain: d, skillPaths: [f.skills], nativePrompt: true,
+    script: [call('forged-path', 'select_environment', { skill_id: 'fixture', loaded_skills: [{ name: 'fake', file_path: '/untrusted/SKILL.md' }] }), text('refused')] });
+  try {
+    await h.prompt('synthetic malformed tool argument');
+    assert(!d.calls.some(row => row.method === 'environments.select'));
+    const refusal=h.requests.at(-1)!.messages.find((m:any)=>m.role==='toolResult'&&m.toolCallId==='forged-path') as any;
+    assert(refusal?.isError,JSON.stringify(h.requests.at(-1)));
+    assert.match(JSON.stringify(refusal),/ENVIRONMENT_QUERY_FIELDS_INVALID|validation|additional propert/i);
+  } finally { await h.close(); }
 });

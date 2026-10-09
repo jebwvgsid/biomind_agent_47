@@ -62,20 +62,26 @@ def test_registered_evidence_retains_source_without_ttl_and_selects_exact_runner
     assert resolve_execution_runner('Python', actual) == str(prefix / 'bin' / 'python')
 
 
-def test_coverage_gap_does_not_infer_new_version_or_capability(tmp_path):
+def test_known_version_conflict_and_unknown_inventory_are_distinct(tmp_path):
     pm, requirements, _ = setup_registry(tmp_path)
     for key, value in [('packages', ['cooler>=9']), ('capabilities', ['new-science']), ('tools', ['absent-cli'])]:
         result = pm.registered_runtime_reuse({**requirements, key: value})
-        assert result['availability'] == 'UNKNOWN'
-        assert result['reason_code'] == 'REGISTERED_RUNTIME_COVERAGE_GAP'
+        if key == 'packages':
+            assert result['availability'] == 'UNKNOWN'
+            assert result['reason_code'] == 'REGISTERED_RUNTIME_REQUIREMENT_CONFLICT'
+        else:
+            assert result['availability'] == 'AVAILABLE'
+            assert result['selected_candidate']['requirements_status'] == 'unknown'
         assert not result['install_required']
 
 
-def test_invalidated_registry_does_not_reuse_success_elsewhere(tmp_path):
+def test_explicit_revocation_is_not_confused_with_historical_failure(tmp_path):
     pm, requirements, _ = setup_registry(tmp_path)
     skill = dict(pm.registry['environments']['science'])
     pm.registry['environments']['science']['status'] = 'broken'
-    assert pm.registered_runtime_reuse(requirements, skill_record=skill)['reason_code'] == 'REGISTERED_RUNTIME_INVALIDATED'
+    assert pm.registered_runtime_reuse(requirements, skill_record=skill)['availability'] == 'AVAILABLE'
+    pm.registry['environments']['science']['status'] = 'disabled'
+    assert pm.registered_runtime_reuse(requirements, skill_record=skill)['reason_code'] == 'REGISTERED_RUNTIME_REVOKED'
 
 
 def test_external_prefix_and_same_name_inventory_ambiguity_are_not_guessed(tmp_path):
@@ -100,35 +106,51 @@ def test_declaration_is_not_registration(tmp_path):
 
 
 def test_formal_command_consumes_persisted_registration_without_model_env(tmp_path):
+    # Real domain fixture keeps mutable project and protected state separate.
+    # The former legacy fixture used one directory for both and is now correctly
+    # rejected by existing execution protection before any command can start.
     import asyncio
-    from agent_core.action_runtime import execute_formal_command
-    from agent_core.plan_tracker import load_plan_state, save_plan_state
-    from tests.react_v3.support import task_fixture, actual_micro_runner
+    import json
+    from integrations.pi_runtime.domain_adapter.service import DomainService
 
     async def scenario():
-        async with task_fixture('registration-formal') as fixture:
-            pm, requirements, prefix = setup_registry(tmp_path)
-            row = pm.registered_runtime_reuse(requirements)['selected_candidate']
-            scope = {'skill_id': 'tad', 'skill_document_digest': digest('doc'), 'skill_contract_digest': digest('contract'),
-                'environment_id': 'science', 'environment_fingerprint': digest(str(prefix)), 'host_id': 'test-host',
-                'inspection_contract_digest': digest('requirements')}
-            evidence = make_runtime_evidence(row['audit'], task_id=fixture.task_id, skill_scope=scope,
-                observed_at='2000-01-01T00:00:00Z', producer='registered_runtime', source_ref=row['source_ref'],
-                coverage=row['coverage'], inspection_status='not_run')
-            state = load_plan_state(fixture.root, fixture.task_id)
-            state['task_state']['runtime_evidence'] = runtime_evidence_state(
-                merge_runtime_evidence([], [evidence], task_id=fixture.task_id))
-            save_plan_state(fixture.root, fixture.task_id, state)
-            launches = []
-            with actual_micro_runner(launches):
-                result = await execute_formal_command(fixture.agent.command_service,
-                    {'cmd': 'printf registered-runtime', 'workdir': str(fixture.root)},
-                    task_id=fixture.task_id, call_id='registered-execution')
-            assert result['exit_code'] == 0
+        pm, requirements, prefix = setup_registry(tmp_path)
+        project = tmp_path / 'project'; project.mkdir()
+        registry = tmp_path / 'registry.json'; registry.write_text(json.dumps(pm.registry))
+        service = DomainService(cwd=project, data_root=tmp_path/'state',
+            install_root=Path(__file__).resolve().parents[1], session_id='registered-reuse',
+            registry_path=registry, skills_root=tmp_path/'skills', preferences_path=tmp_path/'preferences.md',
+            memory_root=tmp_path/'memory', wiki_root=tmp_path/'wiki', archive_path=tmp_path/'archive.sqlite')
+        try:
+            await service.call('request.begin', {'request_id':'formal','role':'generate'},host_token=service.host_token)
+            selected = await service.call('environments.select', {'env_name':'science'})
+            assert selected['availability'] == 'AVAILABLE'
+            # A real command must see the inherited runtime outside the project,
+            # not merely receive a CONDA_PREFIX naming an unmounted directory.
+            python = prefix / 'bin' / 'python'
+            python.write_text('#!/bin/sh\nprintf selected-science-runtime\n')
+            args = {'call_id':'registered-execution','arguments':{
+                'cmd':'python && test -d "$CONDA_PREFIX"', 'workdir':str(project)}}
+            pending = await service.call('exec.start', args)
+            assert pending['status'] == 'waiting_approval'
+            approval = pending['approval']
+            stored = service._state()['task_state']['execution_permissions']['requests'][approval['request_id']]
+            assert str(prefix) in stored['payload']['access_projection']['runtime_roots']
+            await service.call('approval.decide', {**{k:approval[k] for k in ('request_id','action_hash','request_scope')},'choice':'y'},host_token=service.host_token)
+            run = await service.call('exec.start', args)
+            for _ in range(100):
+                if run.get('terminal'):break
+                run = await service.call('exec.wait', {'run_ref':run['run_ref'],'max_wait_ms':100})
+            assert run['exit_code'] == 0
+            assert run['stdout'] == 'selected-science-runtime'
+            result = service.formal._owners[run['run_ref']].result
             assert result['env']['CONDA_PREFIX'] == str(prefix)
             assert result['env']['PATH'].split(':')[0] == str(prefix / 'bin')
-            assert len(launches) == 1
+            assert str(prefix) in result['runtime_metadata']['filesystem_protection']['mount_anchors']
+            assert len(service.formal._owners) == 1
             pm.verify_environment.assert_not_called()
+        finally:
+            await service.formal.shutdown()
     asyncio.run(scenario())
 
 
@@ -167,7 +189,9 @@ def test_persisted_registration_does_not_gain_new_declared_requirements(tmp_path
     pm, requirements, _ = setup_registry(tmp_path)
     pm.registry['environments'] = {}
     requirements['packages'] = ['cooler>=9']
-    assert pm.registered_runtime_reuse(requirements, skill_record=record)['availability'] == 'UNKNOWN'
+    result = pm.registered_runtime_reuse(requirements, skill_record=record)
+    assert result['availability'] == 'AVAILABLE'
+    assert result['selected_candidate']['unknown_packages'] == ['cooler>=9']
 
 
 def test_named_launch_is_pinned_to_registered_external_prefix(tmp_path):
@@ -201,8 +225,8 @@ def test_only_actual_dependency_failure_invalidates_selected_registration(tmp_pa
     assert rows[0]['receipt_ref'] == receipt['receipt_ref']
     assert pm.registry['environments']['science']['status'] == 'success'
     for explicit in ({}, {'ENV_PREFIX': str(prefix)}):
-        with pytest.raises(ActionRuntimeContractError, match='TARGETED_DIAGNOSIS'):
-            registered_execution_environment(state, explicit)
+        assert registered_execution_environment(state, explicit)['ENV_PREFIX'] == str(prefix)
+    assert state['task_state']['runtime_invalidations']['tad']['receipt_ref'] == receipt['receipt_ref']
 
 
 def test_distinct_registered_operation_scopes_share_one_exact_launch_prefix(tmp_path):

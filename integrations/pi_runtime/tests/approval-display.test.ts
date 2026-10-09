@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
 import { formatApprovalProposal, selectApprovalProposal } from '../approval-display.js';
 
 const choices = ['拒绝', '明确同意执行此提案', '取消'];
@@ -46,7 +48,7 @@ test('detail navigation never approves and keeps refusal first through repeated 
   const answer = await selectApprovalProposal({ async select(title, options) {
     assert.equal(options[0], '拒绝');
     assert.deepEqual(options.slice(0, 3), choices);
-    assert.equal(title.includes('action-fixture'), calls === 1);
+    assert(title.split('\n').length <= 5); assert(title.split('\n').every(line => line.length <= 100));
     return answers[calls++];
   } }, input, choices);
   assert.equal(calls, 3); assert.equal(answer, choices[1]); assert.deepEqual(input, before);
@@ -62,4 +64,41 @@ test('aborting the details view yields no approval and control characters remain
   assert(text.includes('\\u000d\\u001b[2J\\u202e'));
   const env = formatApprovalProposal({ payload: { kind: 'command', arguments: { cmd: 'inspect', env: { MULTILINE: 'first\nsecond' } } } });
   assert(env.includes('MULTILINE="first\\nsecond"'));
+});
+
+test('native approval covers underlying welcome rows and keeps framed controls visible across resize and details', async () => {
+  const require = createRequire(import.meta.resolve('@earendil-works/pi-coding-agent'));
+  const index = pathToFileURL(require.resolve('@earendil-works/pi-tui'));
+  const { visibleWidth, stripTerminalSequences } = await import(index.href);
+  const { compositeTuiLine } = await import(new URL('./tui.js', index).href);
+  const input = { payload: { kind: 'file_read', path: '/shared/' + '中文路径/'.repeat(25) + 'leaf.mcool',
+    project: '/projects/当前项目', scope_candidate: { root: '/shared', recursive: true } } };
+  const before = structuredClone(input);
+  const offered = ['拒绝', '只读授权该明确目标（当前分析请求）', '只读授权提案列出的目录及子目录（当前分析请求）', '取消'];
+  let returned: string | undefined;
+  const ui: any = { custom: async (factory: any, options: any) => {
+    assert.equal(options.overlayOptions.width, '100%');
+    const tui = { terminal: { rows: 24 }, requestRender() {} };
+    const theme = { fg: (_: string, s: string) => s, bg: (_: string, s: string) => s, bold: (s: string) => s };
+    const component = factory(tui, theme, {}, (value: string) => { returned = value; });
+    for (const [width, rows] of [[80, 24], [196, 45], [120, 30], [42, 20], [80, 24]]) {
+      tui.terminal.rows = rows;
+      for (const key of ['', '\t', '\u001b[6~', '\u001b[5~']) {
+        if (key) component.handleInput(key);
+        const rendered: string[] = component.render(width);
+        assert(rendered.length <= rows - 2);
+        assert(rendered.every(line => visibleWidth(line) === width));
+        assert(rendered[0].startsWith('┌')); assert(rendered.at(-1)!.endsWith('┘'));
+        const screen = rendered.map(line => stripTerminalSequences(compositeTuiLine('WELCOME_LEAK'.repeat(width), line, 0, width, width))).join('\n');
+        assert(!screen.includes('WELCOME_LEAK'));
+        assert.match(screen, /拒绝/); assert.match(screen, /取消/); assert.match(screen, /Esc\/Ctrl\+C/);
+        assert.equal(returned, undefined);
+      }
+    }
+    component.handleInput('\r');
+    component.dispose();
+    return returned;
+  } };
+  assert.equal(await selectApprovalProposal(ui, input, offered), '拒绝');
+  assert.deepEqual(input, before);
 });

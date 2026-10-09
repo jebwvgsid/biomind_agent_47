@@ -46,7 +46,8 @@ class AuthorizationProjectionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.s.context_snapshot()['authorization_refs'],[])
         _,pending=await self.proposal('policy');await self.approve(pending)
         mutate(self.s.data_root,self.s.task_id,lambda state:state['task_state']['execution_permissions'].update(policy_revision='expired-policy'))
-        self.assertEqual(self.s.context_snapshot()['authorization_refs'],[])
+        with self.assertRaisesRegex(ValueError,'PERMISSION_BOOK_INVALID_OR_UNKNOWN_VERSION'):
+            self.s.context_snapshot()
 
     async def test_scope_derived_rule_and_denial_are_not_human_refs_and_request_cancel_expires(self):
         args,pending=await self.proposal('grant');await self.approve(pending,'scope')
@@ -60,6 +61,7 @@ class AuthorizationProjectionTests(unittest.IsolatedAsyncioTestCase):
         await self.begin(self.s,'third','generate')
         _,denied=await self.proposal('denied');await self.approve(denied,'n')
         self.assertEqual(self.s.context_snapshot()['authorization_refs'],[])
+        await self.s.call('request.resume',{},host_token=self.s.host_token)
         _,allowed=await self.proposal('cancel');await self.approve(allowed)
         self.assertEqual(len(self.s.context_snapshot()['authorization_refs']),1)
         await self.s.call('request.cancel',{},host_token=self.s.host_token)

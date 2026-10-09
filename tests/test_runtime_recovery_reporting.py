@@ -252,12 +252,12 @@ class RuntimeRecoveryReportingTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("report.md", final["report_paths"])
         self.assertNotIn("reproduce.sh", final["report_paths"])
 
-    async def test_explicit_output_needs_approval_and_cannot_escape_via_symlink(self):
+    async def test_explicit_output_does_not_need_plan_approval(self):
         output = self.root / "requested" / "report.md"
         self.initialize(outputs=[str(output)])
         final = finalize_runtime_recovery_result(self.root, self.task_id, await self.recovered())
-        self.assertEqual(final["report_paths"], {})
-        self.assertFalse(output.exists())
+        self.assertEqual(final["report_paths"], {"report.md": str(output)})
+        self.assertTrue(output.is_file())
 
     async def test_approved_exact_report_output_and_symlink_parent(self):
         outside = self.root / "approved-report-dir"

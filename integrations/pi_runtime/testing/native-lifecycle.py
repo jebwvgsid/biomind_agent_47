@@ -23,6 +23,8 @@ ANSI = re.compile(r"\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)|\x1b\[[0-?]*[ -/]*[@-~]|\x
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--evidence-dir', type=Path, required=True)
+    parser.add_argument('--project-instructions-ui', action='store_true',
+        help='Observe project menu and direct instruction save while the approved fixture worker runs')
     options = parser.parse_args()
     evidence = options.evidence_dir.resolve()
     evidence.mkdir(parents=True, exist_ok=False)
@@ -40,12 +42,13 @@ def main():
         'prefix': str(Path(sys.executable).parent.parent), 'language': 'python', 'packages': []}}, 'tools': {}}))
     preferences = isolated / 'preferences.md'
     preferences.write_text('合成UI生命周期测试；不用网络，不安装软件。')
+    (project / 'AGENTS.md').write_text('ACTIVE_PROJECT_A')
     trace = evidence / 'provider-requests.jsonl'
     worker = ('import json,os,time\nfrom pathlib import Path\n'
         'p=Path("start-count");p.write_text(p.read_text()+"x" if p.exists() else "x")\n'
         'Path("worker-start.json").write_text(json.dumps({"pid":os.getpid(),"ppid":os.getppid()}))\n'
         'print("NATIVE_WORKER_STARTED 中文",flush=True)\n'
-        'deadline=time.monotonic()+45\n'
+        'deadline=time.monotonic()+90\n'
         'while not Path("release-worker").exists() and time.monotonic()<deadline:time.sleep(.05)\n'
         'assert Path("release-worker").exists(),"fixture owner release deadline"\n'
         'Path("worker-finished.json").write_text(json.dumps({"pid":os.getpid(),"ppid":os.getppid()}))\n'
@@ -68,10 +71,14 @@ def main():
         '--pi-config', str(config), '--prompt', '只做合成生命周期准备咨询。']
     master, slave = pty.openpty()
     fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack('HHHH', 35, 120, 0, 0))
-    environment = {'PATH': str(runtime / '.runtime/node/bin') + ':/usr/bin:/bin', 'TERM': 'xterm-256color',
+    synthetic_home = isolated / 'home'
+    synthetic_home.mkdir()
+    environment = {'HOME': str(synthetic_home), 'PI_CODING_AGENT_DIR': str(agent),
+        'PATH': str(runtime / '.runtime/node/bin') + ':/usr/bin:/bin', 'TERM': 'xterm-256color',
         'LANG': 'C.UTF-8', 'LC_ALL': 'C.UTF-8', 'PYTHONDONTWRITEBYTECODE': '1',
         'NODE_OPTIONS': '--import=' + str(runtime / 'testing/offline-guard.mjs'),
         'BIOMIND_PI_TEST_ROOT': str(isolated), 'BIOMIND_PI_GUARD_TRACE': str(evidence / 'guard.jsonl')}
+    extension_hash_start = hashlib.sha256((runtime / 'dist/extensions/biomind.js').read_bytes()).hexdigest()
     child = subprocess.Popen(command, cwd=project, env=environment, stdin=slave, stdout=slave, stderr=slave,
         close_fds=True, start_new_session=True)
     os.close(slave)
@@ -141,7 +148,7 @@ def main():
             return None
 
     try:
-        wait(lambda: 'NATIVE_LIFECYCLE_READY' in screen(), 'native Consult', 60)
+        wait(lambda: 'NATIVE_LIFECYCLE_READY' in screen(), 'native Consult', 150 if options.project_instructions_ui else 60)
         send('启动一个合成短作业，等待我明确批准。\r', 'fixture user execution request')
         # Formal run_command strips presentation-only description before its
         # strict executor contract; observe the actual one-off approval selector.
@@ -159,6 +166,45 @@ def main():
         assert run['run_ref'] and run['terminal'] is False and run['owner_available'] is True
         before_owners, before_sessions = owners(), session_ids()
         assert len(before_owners) == len(before_sessions) == 1, (before_owners, before_sessions)
+        if options.project_instructions_ui:
+            baseline_cwd = Path(f'/proc/{worker_started["pid"]}/cwd').resolve()
+            assert baseline_cwd == project
+            marker = len(decoded)
+            send('/project\r', 'open actual project menu with the approved scientific-job fixture still active')
+            wait(lambda: '项目操作（取消保留当前会话）' in ANSI.sub('', decoded[marker:]), 'project menu during live worker')
+            assert process_running(worker_started['pid']) and not (project / 'worker-finished.json').exists()
+            assert owners() == before_owners and session_ids() == before_sessions and len(requests()) == 4
+            send(b'\x1b', 'cancel project menu without exiting or changing project')
+            pump(.3)
+            checks['project_menu_preserves_active_worker_owner_session_and_cwd'] = True
+            marker = len(decoded)
+            send('/instructions global\r', 'edit global preferences while approved fixture worker remains active')
+            wait(lambda: '编辑说明（Enter 完成' in ANSI.sub('', decoded[marker:]), 'native editor during live worker')
+            send(b'\x01\x0b', 'clear synthetic preference in native editor')
+            send('ACTIVE_JOB_PREF_B\r', 'submit synthetic updated preference')
+            wait(lambda: '确认保存说明' in ANSI.sub('', decoded[marker:]), 'confirm direct preference save')
+            send('\r', 'explicitly confirm save Yes')
+            wait(lambda: '现在刷新说明' in ANSI.sub('', decoded[marker:]), 'refresh remains explicit user choice')
+            send(b'\x1b', 'defer reload, preserving original active worker')
+            pump(.3)
+            assert preferences.read_text() == 'ACTIVE_JOB_PREF_B'
+            marker = len(decoded)
+            send('/instructions\r', 'inspect pending instruction state with worker still running')
+            wait(lambda: '已保存，当前会话待刷新' in ANSI.sub('', decoded[marker:]) or
+                '保存与请求生效分别确认' in ANSI.sub('', decoded[marker:]), 'instruction status during live worker')
+            marker = len(decoded)
+            send('/status\r', 'verify product status explicitly reports saved instructions pending reload')
+            wait(lambda: '已保存，待 /reload' in ANSI.sub('', decoded[marker:]), 'saved pending reload while worker runs')
+            assert process_running(worker_started['pid']) and not (project / 'worker-finished.json').exists()
+            assert Path(f'/proc/{worker_started["pid"]}/cwd').resolve() == baseline_cwd
+            assert owners() == before_owners and session_ids() == before_sessions and len(requests()) == 4
+            checks['instruction_save_during_active_worker_no_reload_cancel_or_provider_call'] = True
+            (evidence / 'active-ui-state.json').write_text(json.dumps({
+                'worker_pid': worker_started['pid'], 'worker_cwd_before_after': str(baseline_cwd),
+                'domain_owners_before_after': before_owners, 'session_ids_before_after': before_sessions,
+                'provider_calls_before_after': 4, 'worker_started_once': (project / 'start-count').read_text(),
+                'preference_saved': preferences.read_text(), 'refresh_choice': 'deferred by Escape',
+                'worker_still_active': True, 'evidence_type': 'PRODUCT_TUI'}, ensure_ascii=False, indent=2) + '\n')
         marker = len(decoded)
         send('/reload\r', 'native reload while original worker is active')
         wait(lambda: 'Reloaded keybindings, extensions' in ANSI.sub('', decoded[marker:]), 'native reload result')
@@ -219,8 +265,10 @@ def main():
             for p in agent.rglob('*.jsonl')]
         (evidence / 'fresh-sessions.json').write_text(json.dumps(sessions, ensure_ascii=False, indent=2) + '\n')
         report = {'status': status, 'failure': failure, 'checks': checks, 'actions': actions, 'command': command,
+            'project_instructions_ui': options.project_instructions_ui,
             'isolated_root': str(isolated), 'native_exit': child.returncode, 'provider_requests': len(requests()),
             'extension_sha256': hashlib.sha256((runtime / 'dist/extensions/biomind.js').read_bytes()).hexdigest(),
+            'extension_sha256_at_start': extension_hash_start,
             'scientific_success': None, 'inputs': 'automatic fixture through real native UI',
             'limits': ['No real science or existing session', 'No crash/remote worker reattachment',
                        'No global reload registration-count claim beyond unchanged owner PID and zero model calls']}

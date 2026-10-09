@@ -98,9 +98,58 @@ class TypedOutcomeContractTests(unittest.TestCase):
         ):
             VerificationOutcome.from_mapping(value)
 
+    def test_v1_review_outcomes_without_new_receipts_still_deserialize(self):
+        legacy_planner = PlannerOutcome(
+            schema_version=1,
+            type="plan_review_ready",
+            summary="legacy checkpoint planner outcome",
+            scope={"task_id": "legacy"},
+            payload={
+                "plan_id": "plan-1",
+                "plan_version": "v1",
+                "plan_revision": 1,
+            },
+        )
+        legacy_accepted = PlanReviewOutcome(
+            schema_version=1,
+            type="approved_for_execution",
+            summary="legacy checkpoint review outcome",
+            scope={"task_id": "legacy"},
+            payload={
+                "plan_id": "plan-1",
+                "plan_version": "v1",
+                "approval_status": "approved",
+                "execution_backend": "in_process",
+            },
+        )
+        legacy_revision = PlanReviewOutcome(
+            schema_version=1,
+            type="revision_required",
+            summary="legacy checkpoint rejection",
+            scope={"task_id": "legacy"},
+            payload={
+                "validation_issues": [{"code": "legacy"}],
+                "reason_code": "review_rejected",
+            },
+        )
+
+        self.assertEqual(
+            PlannerOutcome.from_mapping(legacy_planner.to_dict()).type,
+            "plan_review_ready",
+        )
+        self.assertEqual(
+            PlanReviewOutcome.from_mapping(legacy_accepted.to_dict()).type,
+            "approved_for_execution",
+        )
+        self.assertEqual(
+            PlanReviewOutcome.from_mapping(legacy_revision.to_dict()).type,
+            "revision_required",
+        )
+
     def test_structural_route_authority_is_rejected_recursively(self):
         route_poison = {
             "next_step": "execute",
+            "next_node": "execute",
             "next_route": "generate",
             "target_route": "planner",
             "goto": "supervisor",

@@ -42,7 +42,7 @@ class RendererPlanOwnershipTests(unittest.TestCase):
         self.assertEqual(contracts[0]["source_type"], "benchmark_contract")
         self.assertEqual(contracts[0]["source_ref"], "task.outputs[0]")
 
-    def test_renderer_binding_detects_conflicting_independent_producers(self):
+    def test_legacy_renderer_binding_does_not_invent_generate_owned_identity(self):
         state = build_plan_state(
             "task-renderer",
             "- [ ] Step 1: Run annotation | Action: EXECUTE | Skills: [genomics/snpeff-annotation] "
@@ -83,24 +83,29 @@ class RendererPlanOwnershipTests(unittest.TestCase):
             task_spec=task_spec,
         )
 
-        self.assertTrue(violations)
-        self.assertTrue(all(
-            item["violation_code"] == "OUTPUT_PRODUCER_AMBIGUOUS"
-            for item in violations
-        ))
+        violation_codes = [item["violation_code"] for item in violations]
+        self.assertEqual(
+            violation_codes.count("SEMANTIC_CONSTRAINT_UNCOVERED"),
+            2,
+        )
+        self.assertEqual(
+            violation_codes.count("RENDERER_MISSING_REQUIRED_BINDING"),
+            1,
+        )
         self.assertEqual([step["step_id"] for step in normalized["steps"]], ["step-1", "step-2", "step-3"])
         anchor = normalized["steps"][0]
         self.assertTrue(anchor["renderer_composite"])
         self.assertEqual(anchor["renderer_id"], "genomics.snpeff_annotation")
         self.assertEqual(anchor["selected_skill_id"], "genomics/snpeff-annotation")
-        self.assertIn("report.md", anchor["outputs"])
-        self.assertTrue(anchor["renderer_invocation_contract"]["invocation_id"])
-        invocation_claim_keys = {
-            item["semantic_key"]
-            for item in anchor["renderer_invocation_contract"]["semantic_claims"]
-        }
-        self.assertIn("required_output.annotated_vcf", invocation_claim_keys)
-        self.assertIn("required_output.report_md", invocation_claim_keys)
+        self.assertNotIn("renderer_invocation_contract", anchor)
+        self.assertEqual(
+            anchor["renderer_projection"]["missing_bindings"],
+            ["genome_version"],
+        )
+        self.assertNotIn(
+            "genome_version",
+            anchor["renderer_projection"]["arguments"],
+        )
         self.assertEqual(audit[0]["removed_step_ids"], [])
 
     def test_duplicate_output_producer_is_blocking(self):

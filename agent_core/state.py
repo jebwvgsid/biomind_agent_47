@@ -6,6 +6,10 @@ from langgraph.graph.message import add_messages
 class AgentState(TypedDict, total=False):
     # Sticky graph schema.  Historical checkpoints omit it and therefore stay
     # on legacy Controller routing (schema 1).
+    recovery_handoff: dict
+    request_finish: dict
+    work_verification: dict
+    work_plan_ready: bool
     managed_run_boundary: dict
     managed_terminal_projection: dict
     workflow_routing_schema_version: int
@@ -69,6 +73,8 @@ class AgentState(TypedDict, total=False):
     task_mode: Optional[str]
     retrieval_mode: Optional[str]
     request_intent: dict
+    # Result of the general tool loop; not a task mode or an execution approval.
+    workspace_turn: dict
     intent_admission: dict
     managed_intent_admitted: bool
     use_scientific_review: bool

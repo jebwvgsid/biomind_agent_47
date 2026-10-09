@@ -246,13 +246,13 @@ test('P15d actual maintenance continuation has one shared request and three dist
 
 test('canary R2/R3 tool catalogs preserve their approved operations without changing normal product exposure', () => {
   const savedScenario = process.env.BIOMIND_PI_CANARY_SCENARIO;
-  const names = ['ask_user', 'handoff_generate', 'select_environment', 'run_command', 'inspect_run',
+  const names = ['ask_user', 'select_environment', 'run_command', 'inspect_run',
     'wait_run', 'read_run_log', 'cancel_run', 'read', 'file_stat', 'write', 'edit', 'update_plan', 'install_tool', 'memory_read', 'maintenance_submit'];
   try {
     process.env.BIOMIND_PI_CANARY_SCENARIO = 'R2';
-    assert.deepEqual(canaryTools(names), ['ask_user', 'handoff_generate', 'read', 'file_stat', 'write', 'edit']);
+    assert.deepEqual(canaryTools(names), ['ask_user', 'read', 'file_stat', 'write', 'edit']);
     process.env.BIOMIND_PI_CANARY_SCENARIO = 'R3';
-    assert.deepEqual(canaryTools(names), names.slice(0, 10));
+    assert.deepEqual(canaryTools(names), names.slice(0, 9));
     delete process.env.BIOMIND_PI_CANARY_SCENARIO;
     assert.deepEqual(canaryTools(names), names);
   } finally {
@@ -261,17 +261,18 @@ test('canary R2/R3 tool catalogs preserve their approved operations without chan
   }
 });
 
-for (const scenario of ['R2', 'R3']) test(`canary ${scenario} production first prompt and actual handoff serialize only the narrowed catalog`, async () => {
+for (const scenario of ['R2', 'R3']) test(`canary ${scenario} consecutive unified requests serialize only the narrowed catalog`, async () => {
   assert(!process.env.BIOMIND_PI_CANARY_LEDGER && !process.env.BIOMIND_PI_CANARY_SCENARIO,
     'This catalog-only synthetic fixture must not initialize a real canary ledger');
   const h = await createHarness({ name: `canary-${scenario}-actual-catalog`, script: [
-    call('catalog-handoff', 'handoff_generate', { goal: '只检查合成工具目录，不执行命令' }), text('已核对有限工具目录。'),
+    text('已核对有限工具目录。'), text('下一请求仍使用相同能力约束。'),
   ] });
   try {
     // Budget integration has its own real SQLite test. Here the flag is set only
     // after the observer was installed so no canonical ledger can be touched.
     process.env.BIOMIND_PI_CANARY_SCENARIO = scenario;
-    await h.prompt('仅核对工具目录，然后进行一次合成交接。');
+    await h.prompt('仅核对本次工具目录。');
+    await h.prompt('[新任务] 再次核对工具目录。');
     const catalogs = h.requests.map(context => {
       const available = new Map<string, unknown>();
       for (const message of context.messages as any[]) if (message.role === 'system') {
@@ -281,10 +282,11 @@ for (const scenario of ['R2', 'R3']) test(`canary ${scenario} production first p
       return [...available.keys()];
     });
     assert.equal(catalogs.length, 2);
+    assert(catalogs.every(names => !names.includes('handoff_generate')));
     for (const names of catalogs) assert(names.every(name => !name.startsWith('memory_') && !['install_tool', 'update_plan', 'maintenance_submit'].includes(name)));
     if (scenario === 'R2') {
-      assert.deepEqual(catalogs[0], ['ask_user', 'handoff_generate', 'file_stat', 'read']);
-      assert.deepEqual(catalogs[1], ['ask_user', 'file_stat', 'read', 'write', 'edit']);
+      assert.deepEqual(catalogs[0], ['ask_user', 'edit', 'file_stat', 'read', 'write'].sort());
+      assert.deepEqual(catalogs[1], catalogs[0]);
     } else {
       assert(catalogs[0].includes('read')); assert(catalogs[0].includes('select_environment'));
       assert(catalogs[1].includes('run_command')); assert(catalogs[1].includes('cancel_run'));

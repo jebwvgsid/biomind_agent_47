@@ -139,7 +139,9 @@ def test_projection_white_list_retains_parameters_and_evidence_without_stat(tmp_
     assert root["entrypoint"]["shell_prefix"] == rows[0]["invocation"]["shell_prefix"]
     assert root["dependency_handles"] == [SID + "#scripts/left.py", SID + "#scripts/right.py"]
     assert root["evidence"]["resource_snapshot_id"] == rows[0]["resource_snapshot_id"]
-    assert set(root) == {"handle", "environment_variable", "availability", "canonical_path", "evidence", "entrypoint", "arguments", "carrier", "dependency_handles", "constraints"}
+    assert set(root) == {"handle", "environment_variable", "availability", "canonical_path", "evidence", "entrypoint", "arguments", "carrier", "dependency_handles", "constraints", "structured_call"}
+    assert root["structured_call"]["type"] == "skill_script"
+    assert root["structured_call"]["handle"] == ROOT
     assert not {"invocation", "interpreter_identity", "binding_digest", "registered_root", "argv_prefix"} & set(root)
     assert rows == before and "interpreter_identity" in rows[0]["invocation"]
 

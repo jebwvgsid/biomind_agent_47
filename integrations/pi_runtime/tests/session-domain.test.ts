@@ -478,16 +478,16 @@ test('P11.d real domain AGENTS boundaries enter actual Pi payload once, while pa
   }
 });
 
-test('P12.c real Wiki revocation projects only the selected Pi branch and preserves a current user quote containing the same sentinel', async () => {
-  const cwd = await mkdtemp(path.join(tmpdir(), 'biomind-revoked-branch-'));
+test('P12.c real Wiki forget blocks new retrieval while preserving original evidence and derivatives in the selected Pi branch', async () => {
+  const cwd = await mkdtemp(path.join(tmpdir(), 'biomind-history-retention-branch-'));
   for (const folder of [path.join(cwd, 'sessions'), path.join(cwd, 'skills'), path.join(cwd, 'pi-agent')]) await mkdir(folder);
-  await writeFile(path.join(cwd, 'preference.md'), 'Synthetic source withdrawal preference');
+  await writeFile(path.join(cwd, 'preference.md'), 'Synthetic selected-session history retention preference');
   await writeFile(path.join(cwd, 'registry.json'), '{"environments":{},"tools":{}}');
   const dataRoot = path.join(cwd, 'domain');
   const memoryOptions = { memoryRoot: path.join(cwd, 'memory'), wikiRoot: path.join(cwd, 'wiki'), historyEnabled: true, memoryMode: 'manual' as const };
-  const marker = 'P12C_SOURCE_COLLISION_SENTINEL'; const body = marker + ': original synthetic source body';
+  const marker = 'P12C_SESSION_SOURCE_SENTINEL'; const body = marker + ': original synthetic source body';
   const derived = 'P12C_DERIVED_ASSISTANT: ' + marker;
-  const currentUser = 'CURRENT_USER_EXACT：请撤回旧来源；但我本句引用的 ' + marker + ' 是当前用户原文，必须保留。';
+  const currentUser = 'CURRENT_USER_EXACT：请遗忘记忆库来源；已进入当前对话的历史及我本句引用的 ' + marker + ' 继续保留。';
   // Seed a brand-new historical page through the actual domain permission/store
   // API. This separate synthetic fixture session is never imported into Pi.
   const seed = new TracedConnection({ cwd, sessionId: randomUUID(), python, installRoot: root, dataRoot,
@@ -507,20 +507,29 @@ test('P12.c real Wiki revocation projects only the selected Pi branch and preser
   } finally { await seed.close({ disconnectOnly: true }); }
   let sourceHash = '';
   const manager = SessionManager.create(cwd, path.join(cwd, 'sessions'));
-  const h = await realSession(cwd, dataRoot, manager, 'P12c-real-revocation-branch', [
+  const h = await realSession(cwd, dataRoot, manager, 'P12c-real-selected-history-retention', [
     call('p12c-read', 'memory_read', { source_ref: sourceRef }), text(derived),
     text('P12C_ABANDONED_ASSISTANT：此分支不得进入所选分支。'),
     () => { assert(sourceHash); return call('p12c-forget', 'memory_write', { operation: 'forget', path: sourceRef.slice('wiki:'.length), expected_hash: sourceHash, content: '' }); },
     (context: Frame) => {
       const users = context.messages.filter((message: Frame) => message.role === 'user');
       assert(users.some((message: Frame) => JSON.stringify(message.content).includes(currentUser)), 'the complete current user wording is retained');
-      const nonUsers = context.messages.filter((message: Frame) => message.role !== 'user');
-      const nonUserText = JSON.stringify(nonUsers);
-      assert(!nonUserText.includes(marker), 'source text and its assistant derivatives are withdrawn by provenance');
+      assert(context.messages.some((message: Frame) => message.role === 'assistant' && JSON.stringify(message.content).includes(derived)),
+        'forget does not erase assistant text already in the selected conversation');
       assert(!JSON.stringify(context).includes('P12C_ABANDONED_'), 'the abandoned branch is not merged into the selected projection');
       const oldRead = context.messages.find((message: Frame) => message.role === 'toolResult' && message.toolCallId === 'p12c-read');
-      assert(oldRead); assert.match(JSON.stringify(oldRead.content), /withdrawn/);
-      assertPairs(context.messages); return text('已按来源撤回旧记忆，当前用户引用原文保留。');
+      assert(oldRead); assert(JSON.stringify(oldRead.content).includes(body), 'the original tool result remains usable conversation history');
+      assert(!JSON.stringify(oldRead.content).includes('history_content'), 'no provenance withdrawal placeholder replaces the historical result');
+      const oldCall = context.messages.filter((message: Frame) => message.role === 'assistant')
+        .flatMap((message: Frame) => message.content).find((part: Frame) => part.type === 'toolCall' && part.id === 'p12c-read');
+      assert.deepEqual(oldCall?.arguments, { source_ref: sourceRef }, 'original tool arguments are retained');
+      assertPairs(context.messages); return text('记忆库来源已遗忘；所选会话已有正文、工具结果及用户引用仍保留。');
+    },
+    (context: Frame) => {
+      assert(!JSON.stringify(context).includes(marker), 'a new task does not restore the previous task source history');
+      assert(!JSON.stringify(context).includes('P12C_ABANDONED_'), 'a new task does not import an abandoned branch');
+      assert(!context.messages.some((message: Frame) => message.role === 'toolResult' && message.toolCallId === 'p12c-read'));
+      assertPairs(context.messages); return text('新的独立任务按当前范围回答。');
     },
   ], undefined, memoryOptions);
   const approvals: BioMindUIRequest[] = [];
@@ -536,7 +545,7 @@ test('P12.c real Wiki revocation projects only the selected Pi branch and preser
     assert.equal(originalRead.status, 'read'); assert.match(originalRead.content, new RegExp(marker)); sourceHash = originalRead.content_hash;
     assert(sourceHash); assert.match(JSON.stringify((await h.requests())[1].context), new RegExp(marker));
     await h.prompt('P12C_ABANDONED_USER：之后不会选择此分支。'); const abandonedLeaf = manager.getLeafId()!;
-    assert.equal((await h.session.navigateTree(selectedLeaf, { summarize: false, label: 'selected-revocation-branch' })).cancelled, false);
+    assert.equal((await h.session.navigateTree(selectedLeaf, { summarize: false, label: 'selected-history-retention-branch' })).cancelled, false);
     await h.prompt(currentUser);
     const connection = h.connections[0]; const requestId = requestFromBranch(manager.getBranch())!.requestId;
     const revised = connection.calls.filter(row => row.method === 'request.revise').at(-1)!.result;
@@ -553,19 +562,34 @@ test('P12.c real Wiki revocation projects only the selected Pi branch and preser
     const requests = await h.requests(); assert.equal(requests.length, 5); assert.deepEqual(h.errors, []);
     const finalContext = requests.at(-1)!.context;
     assert(finalContext.messages.some((message: Frame) => message.role === 'user' && JSON.stringify(message.content).includes(currentUser)));
+    const originalContext = requests[1].context;
+    const findRead = (context: Frame) => context.messages.find((message: Frame) => message.role === 'toolResult' && message.toolCallId === 'p12c-read');
+    assert.deepEqual(findRead(finalContext), findRead(originalContext), 'forget leaves the original selected-branch tool message unchanged');
+    assert(finalContext.messages.some((message: Frame) => message.role === 'assistant' && JSON.stringify(message.content).includes(derived)));
     assert(!JSON.stringify(finalContext).includes('P12C_ABANDONED_'));
     const audit = JSON.stringify(manager.getEntries()); assert(audit.includes('P12C_ABANDONED_')); assert(audit.includes(derived));
     assert(audit.includes(body)); assert(audit.includes(currentUser));
+    await h.prompt('[新任务] P12C_NEW_TASK：这是独立的新任务，不导入之前的对话事实或权限。');
+    const newTaskRequest = requestFromBranch(manager.getBranch())!;
+    assert.notEqual(newTaskRequest.requestId, requestId);
+    await assert.rejects(connection.call('memory.read', { source_ref: sourceRef }, { requestId }), /STALE_ACTIVE_REQUEST/,
+      'history retention does not revive the old request authorization scope');
+    assert.equal(approvals.length, 1, 'only the explicitly approved forget operation was authorized');
+    assert.equal(connection.calls.filter(row => row.method === 'memory.write').length, 2, 'new-task navigation does not replay the old write');
+    assert.equal((await h.requests()).length, 6);
     report = { status: 'PASS', verified_layer: 'L2 L3', sourceRef, originalRead, selectedLeaf, abandonedLeaf,
       finalRequestId: requestId, revokedSources: snapshot.revoked_sources, finalSourceRead: unavailable,
-      currentUserExact: currentUser, providerRequests: requests.length, approvals: approvals.length,
+      currentUserExact: currentUser, selectedTaskProviderRequests: requests.length, providerRequests: (await h.requests()).length, approvals: approvals.length,
+      selectedHistoryRetained: { originalToolResult: true, originalToolArguments: true, derivedAssistant: true, abandonedBranchImported: false },
+      newRetrievalBlocked: true,
+      newTask: { requestId: newTaskRequest.requestId, priorTaskHistoryRestored: false, oldAuthorizationScopeRevived: false, oldWriteReplayed: false },
       physicalMemoryWriteCalls: writes.length, seedConnection: { calls: seed.calls, closeCount: seed.closeCount, diagnostics: seed.diagnostics },
-      boundary: 'Actual Wiki source was seeded in a separate new fixture task, then read by Pi; public selected-branch navigation precedes actual approved forget and next provider projection',
-      limits: 'Selected branch without a new summary; no old user sessions, real models or scientific execution. Audit original is preserved, and no keyword deletion is used.',
+      boundary: 'Actual Wiki source was seeded in a separate new fixture task, then read by Pi; approved forget prevents subsequent retrieval while the selected Pi branch retains its original history',
+      limits: 'Selected branch without a new summary; no old user sessions, real models or scientific execution. This does not import an abandoned branch or restore authorization state.',
     };
   } finally {
     off(); await h.close();
     const dir = process.env.BIOMIND_PI_TEST_EVIDENCE;
-    if (dir) { await mkdir(dir, { recursive: true }); await writeFile(path.join(dir, 'P12c-real-revocation-result.json'), JSON.stringify(report, null, 2)); }
+    if (dir) { await mkdir(dir, { recursive: true }); await writeFile(path.join(dir, 'P12c-real-selected-history-retention-result.json'), JSON.stringify(report, null, 2)); }
   }
 });

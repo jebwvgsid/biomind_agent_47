@@ -259,7 +259,13 @@ class GenerateOnlyOutputContractV2Tests(unittest.TestCase):
         snpeff = next(row for row in capabilities if row["skill_id"] == "genomics/snpeff-annotation")
         self.assertEqual(
             [row["output_id"] for row in snpeff["output_capabilities"]],
-            ["annotated_vcf", "ann_summary", "report", "reproduce_script"],
+            [
+                "annotated_vcf",
+                "ann_summary",
+                "report",
+                "reproduce_script",
+                "stage_status",
+            ],
         )
 
     def test_materialization_only_plan_patch_protocol_is_retired(self):

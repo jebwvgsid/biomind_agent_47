@@ -69,6 +69,11 @@ def _mutation(
         "available_after_success": available_after_success,
         "contract_source": "fixture.selected_capability",
         "contract_revision": "fixture-contract-v1",
+        "evidence_contract": {
+            "schema_version": 1,
+            "collector": "bounded_filesystem_snapshot_v1",
+            "postconditions": [{"kind": "directory_exists", "relative_path": ""}],
+        },
     }
     if requires_state:
         row["requires_state"] = requires_state

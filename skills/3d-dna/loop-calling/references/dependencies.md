@@ -7,9 +7,15 @@
 
 python
 
+包装脚本支持 Python 3.8 及以上；实际 Mustache 依赖以所选现有环境为准。
+
 ## 软件/库
 
 - mustache
+
+已有 ay-lab 源码可通过包装脚本的 `--mustache-script` 使用，差异脚本可通过
+`--diff-script` 指定；无需为获得 `python -m mustache` 入口而重新安装。
+本机路径从 runtime 登记或用户指定位置取得。登记命中不等于已通过运行检查。
 
 ## 方法能力（描述）
 
@@ -44,4 +50,3 @@ python
 - Loop anchor classification after loop calls already exist.
 - A/B compartment calling or compartment transition analysis.
 - TAD calling, TAD boundary comparison, or differential TAD testing.
-

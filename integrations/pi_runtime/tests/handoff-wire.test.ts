@@ -22,8 +22,8 @@ type ToolCall = { id: string; name: string; arguments: Record<string, unknown> }
 type Reply = { kind: 'tools'; calls: ToolCall[] } | { kind: 'text'; chunks: string[] };
 type Harness = Awaited<ReturnType<typeof createHarness>>;
 type Trace = Array<Record<string, any>>;
-const MODEL = 'biomind-handoff-wire-synthetic';
-const EVIDENCE_NAME = 'handoff-tool-group';
+const MODEL = 'biomind-main-wire-synthetic';
+const EVIDENCE_NAME = 'main-tool-group';
 const MOCK_FETCH = process.env.BIOMIND_PI_WIRE_TRANSPORT === 'fetch-fixture';
 const LAYER = MOCK_FETCH ? 'L2 transport mock' : 'L4 HTTP';
 const MOCK_PORT = 31987;
@@ -150,7 +150,7 @@ async function fixture(t: TestContext, replies: Reply[], domain: FakeDomain) {
         await writeFile(artifact, JSON.stringify({ status: passed ? 'PASS' : 'FAIL', layer: LAYER,
           transport: MOCK_FETCH ? 'fetch-fixture; every HTTP socket forbidden' : 'real loopback HTTP/SSE; no fetch fixture', provider: 'Pi built-in openai-completions',
           pi_version: '0.87.1', model: MODEL, domain: 'FakeDomain canned receipts', real_provider_credentials: false,
-          scientific_success: null, coverage: ['P10.b handoff and host-message tool-group pairing', `P03.b ${LAYER} answer/manifest/constraint projection only`],
+          scientific_success: null, coverage: ['P10.b continuous main tool-group pairing without handoff', `P03.b ${LAYER} answer/manifest/constraint projection only`],
           exclusions: ['P03.b L3 Python facts and effective authorization references', 'live provider acceptance', 'scientific validation',
             ...(MOCK_FETCH ? ['L4 HTTP transport acceptance'] : [])],
           paths, requests, trace, events: harness?.events ?? [], bus_events: harness?.busEvents ?? [],
@@ -207,34 +207,33 @@ function assertWirePairs(messages: WireMessage[]) {
   assert.equal(pending.size, 0, 'unmatched tool calls at the provider boundary');
 }
 
-test(`${LAYER}: actual handoff group stays paired; current answer, manifest and constraints reach Generate before settlement`,
+test(`${LAYER}: continuous main tool groups preserve the current answer, manifest and stop conditions until settlement`,
   { timeout: 20000, concurrency: false }, async t => {
-    const manifest = join(await mkdtemp(join(tmpdir(), 'handoff-read-')), '样本清单.tsv');
+    const manifest = join(await mkdtemp(join(tmpdir(), 'main-read-')), '样本清单.tsv');
     await writeFile(manifest, 'sample\tpath\n样本乙\t/synthetic/乙.fastq\n');
-    const constraint = '只读取清单；禁止安装；工作目录固定为 /synthetic/项目 A。';
-    const answer = '选择样本乙；同意进入 Generate，仍然禁止安装。';
-    const goal = `根据当前回答核对清单。${constraint}`;
-    const finalText = '交接与清单核对完成；本测试没有运行科学作业。';
+    const constraint = '只读取清单；禁止安装；若科学输入 QC 不通过必须停止。';
+    const answer = '选择样本乙；仍然禁止安装，保留明确停止条件。';
+    const finalText = '清单核对完成；本测试没有运行科学作业。';
     const group: ToolCall[] = [
-      { id: 'handoff-wire-accepted', name: 'handoff_generate', arguments: { goal, manifest } },
-      { id: 'handoff-wire-read', name: 'read', arguments: { path: manifest } },
-      { id: 'handoff-wire-duplicate', name: 'handoff_generate', arguments: { goal: '重复交接必须拒绝', manifest } },
+      { id: 'main-wire-read', name: 'read', arguments: { path: manifest } },
+      { id: 'main-wire-plan', name: 'update_plan', arguments: { steps: [{ step: '核对用户选择与输入条件', status: 'completed' }] } },
+      { id: 'main-wire-reread', name: 'read', arguments: { path: manifest } },
     ];
     const domain = new FakeDomain();
     domain.receipts.set('files.read_authorize', async (p: any) => { const s = await stat(p.path, {bigint:true}); return {status:'completed',path:p.path,device:String(s.dev),inode:String(s.ino),mtime_ns:String(s.mtimeNs)}; });
     const f = await fixture(t, [
-      { kind: 'tools', calls: [{ id: 'handoff-wire-question', name: 'ask_user', arguments: { question: '选择哪个样本？是否进入 Generate？' } }] },
-      { kind: 'tools', calls: group }, { kind: 'text', chunks: ['交接与清单核对完成；', '本测试没有运行科学作业。'] },
+      { kind: 'tools', calls: [{ id: 'main-wire-question', name: 'ask_user', arguments: { question: '选择哪个样本？' } }] },
+      { kind: 'tools', calls: group }, { kind: 'text', chunks: ['清单核对完成；', '本测试没有运行科学作业。'] },
     ], domain);
     await assert.rejects(fetch('https://example.invalid/never-sent'), /HANDOFF_WIRE_EXTERNAL_NETWORK_FORBIDDEN/);
     assert.throws(() => new Socket().connect({ host: '192.0.2.1', port: 443 }), /HANDOFF_WIRE_EXTERNAL_NETWORK_FORBIDDEN/);
     if (MOCK_FETCH) assert.throws(() => new Socket().connect({ host: '127.0.0.1', port: MOCK_PORT }), /HANDOFF_WIRE_EXTERNAL_NETWORK_FORBIDDEN/);
     const question = deferred<BioMindUIRequest>();
     const off = f.harness.bus.on('biomind:ui_request', raw => question.resolve(raw as BioMindUIRequest)); t.after(off);
-    const running = f.harness.prompt(`核对清单 ${manifest}。${constraint}先询问选择，再明确交接。`);
-    void running.catch(() => {}); // Keep a failed prompt observed while waiting for its UI event.
+    const running = f.harness.prompt(`核对清单 ${manifest}。${constraint}先询问选择，再继续当前任务。`);
+    void running.catch(() => {});
     const request = await deadline(question.promise);
-    assert.equal(request.kind, 'question'); assert.equal(request.toolCallId, 'handoff-wire-question');
+    assert.equal(request.kind, 'question'); assert.equal(request.toolCallId, 'main-wire-question');
     assert.equal(f.requests.length, 1); assert.equal(f.harness.events.filter(event => event.type === 'agent_settled').length, 0);
     f.harness.bus.emit('biomind:ui_response', { ...request, requestId: 'stale-request', answer: 'STALE_ANSWER_MUST_NOT_REACH_WIRE' });
     await setTimeout(25);
@@ -244,81 +243,55 @@ test(`${LAYER}: actual handoff group stays paired; current answer, manifest and 
     await running;
 
     assert.equal(f.requests.length, 3);
-    for (const body of f.requests) { assert.equal(body.stream, true); assertWirePairs(body.messages); }
+    for (const body of f.requests) {
+      assert.equal(body.stream, true); assertWirePairs(body.messages);
+      const names=body.tools!.map(tool=>tool.function.name);
+      assert(names.includes('run_command')&&names.includes('read')&&names.includes('install_tool'));
+      assert(!names.includes('handoff_generate'));
+    }
     assert(!JSON.stringify(f.requests).includes('STALE_ANSWER_MUST_NOT_REACH_WIRE'));
     for (const body of f.requests.slice(1)) {
       const result = body.messages.find(message => message.role === 'tool' && message.tool_call_id === request.toolCallId);
-      assert(result); assert.deepEqual(JSON.parse(contentText(result.content)), { question_id: request.id, request_id: request.requestId, answer });
+      assert(result);assert.deepEqual(JSON.parse(contentText(result.content)),{question_id:request.id,request_id:request.requestId,question:request.question,answer});
+      assert(body.messages.some(message=>message.role==='user'&&contentText(message.content).includes(constraint)));
     }
-    const generate = f.requests[2];
-    const system = generate.messages.filter(message => message.role === 'system').map(message => contentText(message.content)).join('\n');
-    assert(system.includes('"role":"Generate"') && system.includes(request.requestId));
-    assert(!system.includes('"role":"Consult"'));
-    assert.match(system, /当前阶段：Generate/);
-    assert.match(system, /你现在负责执行原用户任务/);
-    assert.match(system, /不能以计划摘要、已交接说明或将来会执行的承诺代替实际推进/);
+    const finalRequest=f.requests[2];
+    const system=finalRequest.messages.filter(message=>message.role==='system').map(message=>contentText(message.content)).join('\n');
+    assert(system.includes(request.requestId)); assert(!/"role":"(?:Consult|Generate)"/.test(system));
+    assert(!system.includes('当前阶段：Generate')&&!system.includes('当前阶段：Consult'));
     assert(!system.includes('需要执行时调用 handoff_generate'));
-    const consultSystem = f.requests[1].messages.filter(message => message.role === 'system').map(message => contentText(message.content)).join('\n');
-    assert.match(consultSystem, /当前阶段：Consult/);
-    assert(!consultSystem.includes('你现在负责执行原用户任务'));
-    assert(generate.messages.some(message => message.role === 'user' && contentText(message.content).includes(constraint)));
-    const names = generate.tools!.map(tool => tool.function.name);
-    assert(names.includes('run_command') && names.includes('read') && !names.includes('handoff_generate'));
-    assert(f.requests[1].tools!.some(tool => tool.function.name === 'handoff_generate'));
-    assert(!f.requests[1].tools!.some(tool => tool.function.name === 'run_command'));
+    const groupIndex=finalRequest.messages.findIndex(message=>message.role==='assistant'&&message.tool_calls?.some((call:any)=>call.id===group[0].id));
+    assert(groupIndex>=0,'the continuous task retains its completed tool group at the actual provider boundary');
+    for(const call of group)assert.equal(finalRequest.messages.filter(message=>message.role==='tool'&&message.tool_call_id===call.id).length,1);
+    assert(!finalRequest.messages.some(message=>message.role==='user'&&contentText(message.content).includes('biomind-handoff-v2')));
 
-    const groupIndex = generate.messages.findIndex(message => message.role === 'assistant'
-      && message.tool_calls?.some((call: any) => call.id === group[0].id));
-    assert(groupIndex >= 0);
-    assert.deepEqual(generate.messages[groupIndex].tool_calls.map((call: any) => ({ id: call.id, name: call.function.name,
-      arguments: JSON.parse(call.function.arguments) })), group, 'one SSE assistant group must survive final serialization unchanged');
-    const results = generate.messages.slice(groupIndex + 1, groupIndex + group.length + 1);
-    assert.deepEqual(results.map(message => [message.role, message.tool_call_id]), group.map(call => ['tool', call.id]));
-    assert.deepEqual(JSON.parse(contentText(results[0].content)), { accepted: true, request_id: request.requestId, transition: 'after_tool_results' });
-    assert(contentText(results[1].content).includes('样本乙'));
-    assert(contentText(results[2].content).includes('This request already has an execution handoff'));
-    const hostMessages = generate.messages.map((message, index) => ({ message, index })).filter(({ message }) =>
-      message.role === 'user' && contentText(message.content).includes('"phase":"Generate"'));
-    assert.equal(hostMessages.length, 1);
-    const handoff = JSON.parse(contentText(hostMessages[0].message.content));
-    assert.deepEqual({ ...handoff, instruction: undefined }, { request_id: request.requestId, phase: 'Generate', instruction: undefined, goal, manifest });
-    assert.match(handoff.instruction, /request_id 与当前有效请求一致/);
-    assert.match(handoff.instruction, /现在由你继续执行原用户任务/);
-    assert.match(handoff.instruction, /用户最新决定与授权范围/);
-    assert(hostMessages[0].index > groupIndex + group.length, 'host handoff must follow every tool result, including duplicate rejection');
-
-    const context = f.harness.manager.buildSessionContext().messages;
+    const context=f.harness.manager.getEntries().flatMap(e=>e.type==='message'?[e.message]:[]);
     assertPairs(context);
-    for (const call of group) {
-      const receipts = context.filter((message: any) => message.role === 'toolResult' && message.toolCallId === call.id) as any[];
-      assert.equal(receipts.length, 1); assert.equal(receipts[0].isError, call.id === 'handoff-wire-duplicate');
+    for(const call of group){
+      const receipts=context.filter((message:any)=>message.role==='toolResult'&&message.toolCallId===call.id) as any[];
+      assert.equal(receipts.length,1);assert.equal(receipts[0].isError,false);
     }
-    const transitions = domain.calls.filter(row => row.method === 'request.begin');
-    assert.deepEqual(transitions.map(row => [row.privileged, row.params.request_id, row.params.role]),
-      [[true, request.requestId, 'consult'], [true, request.requestId, 'generate']]);
-    assert.equal(domain.calls.filter(row => row.method === 'files.read_authorize').length, 1);
-    assert(!domain.calls.some(row => ['exec.start', 'install.propose', 'install.execute', 'approval.decide'].includes(row.method)));
-    assert.equal(f.harness.manager.getBranch().filter(entry => entry.type === 'custom_message' && entry.customType === 'biomind.handoff').length, 1);
-    const state = requestFromBranch(f.harness.manager.getBranch())!;
-    assert.equal(state.requestId, request.requestId); assert.equal(state.role, 'Generate');
-    assert.equal(state.handoffConsumed, true); assert.equal(state.status, 'settled');
+    const beginnings=domain.calls.filter(row=>row.method==='request.begin');
+    assert(beginnings.length>0&&beginnings.every(row=>row.privileged&&row.params.role==='main'&&row.params.request_id===request.requestId));
+    assert.equal(domain.calls.filter(row=>row.method==='files.read_authorize').length,2);
+    assert(!domain.calls.some(row=>['exec.start','install.propose','install.execute','approval.decide'].includes(row.method)));
+    assert.equal(f.harness.manager.getBranch().filter(entry=>entry.type==='custom_message'&&entry.customType==='biomind.handoff').length,0);
+    const state=requestFromBranch(f.harness.manager.getBranch())!;
+    assert.equal(state.requestId,request.requestId);assert.equal(state.role,'Main');assert.equal(state.handoffConsumed,undefined);assert.equal(state.status,'settled');
+    assert(JSON.stringify(state.userBasis).includes(constraint));
 
-    const transitionIndex = f.trace.findIndex(row => row.type === 'biomind:state' && row.role === 'Generate' && row.status === 'active');
-    for (const call of group) {
-      const endIndex = f.trace.findIndex(row => row.type === 'message_end' && row.role === 'toolResult' && row.toolCallId === call.id);
-      assert(endIndex >= 0 && endIndex < transitionIndex, 'role switch must await all persisted tool results');
+    const finalRequestIndex=f.trace.findIndex(row=>row.type==='provider_request'&&row.request===3);
+    for(const call of group){
+      const endIndex=f.trace.findIndex(row=>row.type==='message_end'&&row.role==='toolResult'&&row.toolCallId===call.id);
+      assert(endIndex>=0&&endIndex<finalRequestIndex,'the next provider request follows all persisted tool results');
     }
-    const generateIndex = f.trace.findIndex(row => row.type === 'provider_request' && row.request === 3);
-    const finalIndex = f.trace.findIndex(row => row.type === 'message_end' && row.role === 'assistant' && row.text === finalText);
-    const agentEndIndex = f.trace.findLastIndex(row => row.type === 'agent_end');
-    const settledIndex = f.trace.findIndex(row => row.type === 'agent_settled');
-    assert(transitionIndex >= 0 && generateIndex > transitionIndex && finalIndex > generateIndex
-      && agentEndIndex > finalIndex && settledIndex > agentEndIndex, 'settled must follow Generate request, final message and agent_end');
-    assert.equal(f.harness.events.filter(event => event.type === 'agent_settled').length, 1);
-    assert.equal(f.harness.events.at(-1)?.type, 'agent_settled');
-    const settlements = f.harness.busEvents.filter(row => row.channel === 'biomind:settled');
-    assert.equal(settlements.length, 1); assert.equal(settlements[0].value.outcome, 'completed');
-    assert.equal(settlements[0].value.scientificSuccess, null);
-    assert.equal(f.guard.attempts.filter(attempt => !attempt.allowed).length, MOCK_FETCH ? 3 : 2);
+    const finalIndex=f.trace.findIndex(row=>row.type==='message_end'&&row.role==='assistant'&&row.text===finalText);
+    const agentEndIndex=f.trace.findLastIndex(row=>row.type==='agent_end');
+    const settledIndex=f.trace.findIndex(row=>row.type==='agent_settled');
+    assert(finalIndex>finalRequestIndex&&agentEndIndex>finalIndex&&settledIndex>agentEndIndex);
+    assert.equal(f.harness.events.filter(event=>event.type==='agent_settled').length,1);
+    const settlements=f.harness.busEvents.filter(row=>row.channel==='biomind:settled');
+    assert.equal(settlements.length,1);assert.equal(settlements[0].value.outcome,'completed');assert.equal(settlements[0].value.scientificSuccess,null);
+    assert.equal(f.guard.attempts.filter(attempt=>!attempt.allowed).length,MOCK_FETCH?3:2);
     f.pass();
   });

@@ -1981,6 +1981,9 @@ def record_consultant_tool_observation(
         "last_fingerprint": fingerprint,
         "last_action_type": semantic["action_type"],
     })
+    if semantic["action_type"] != "validation_error":
+        progress["validation_error_count"] = 0
+        updated.pop("repair_guidance", None)
     receipt = {
         "observation_id": "obs-" + fingerprint[:16],
         "action_type": semantic["action_type"],
@@ -2009,7 +2012,7 @@ def record_consultant_tool_observation(
         "updated_at": _now(),
     })
     threshold = max(1, int(updated.get("max_no_progress") or 2))
-    if identical >= threshold:
+    if identical >= threshold and semantic["action_type"] != "validation_error":
         updated.update({
             "phase": "invalid",
             "consultation_status": "invalid",
@@ -2030,6 +2033,35 @@ def record_consultant_tool_observation(
                 },
             },
         })
+    return updated
+
+
+def record_consultant_validation_error(
+    state: Mapping[str, Any], *, action: Mapping[str, Any],
+    code: str, detail: str,
+) -> Dict[str, Any]:
+    """Return actionable rejections without a separate three-error stop.
+
+    The durable tool loop owns the overall request budget. A validation rejection
+    is never acceptance, but its count alone must not end a repairable request.
+    """
+    count = int((state.get("agent_progress") or {}).get("validation_error_count") or 0) + 1
+    guidance = (
+        f"{count} consecutive Consult validation rejection(s). "
+        "Correct the stated field using the tool schema; do not repeat the same rejected payload. "
+        "Reuse established facts and loaded Skill evidence; avoid new searches or checks unless "
+        "they resolve a named blocker. If routing and user facts are sufficient, submit one "
+        "corrected submit_planning_handoff with explicit facts; leave runtime unknowns for "
+        "Planner's mandatory preflight. Do not claim execution or acceptance. "
+        "The overall request budget still applies."
+    )
+    updated = record_consultant_tool_observation(
+        state, action_type="validation_error", action=action,
+        observation={"accepted": False, "committed": False,
+                     "code": str(code), "detail": str(detail), "repair_guidance": guidance},
+    )
+    updated["agent_progress"]["validation_error_count"] = count
+    updated["repair_guidance"] = guidance
     return updated
 
 

@@ -133,6 +133,8 @@ class RendererManifestTests(unittest.TestCase):
             argv = [
                 "render_gatk_wgs_scripts.py",
                 "--sample-bam-list", str(samples),
+                "--sample-ploidy", "2",
+                "--task-label", "task-g", "--producer-label", "render-g",
                 "--intervals-tsv", str(intervals),
                 "--ref", str(ref),
                 "--outdir", str(outdir),

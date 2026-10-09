@@ -45,7 +45,7 @@ def test_v2_endpoint_is_bound_to_hostname_and_rejects_credentials():
             validate_config({**config, 'endpoint_base_url': endpoint})
 
 
-def test_original_product_command_passes_same_active_selection(tmp_path):
+def test_original_product_command_defers_active_selection_until_final_project(tmp_path):
     runtime = tmp_path/'runtime'; (runtime/'dist').mkdir(parents=True)
     (runtime/'dist/host.js').write_text('// fixture')
     package = runtime/'node_modules/@earendil-works/pi-coding-agent/package.json'
@@ -55,8 +55,9 @@ def test_original_product_command_passes_same_active_selection(tmp_path):
     env = {'LLM_DEFAULT_MODEL': 'deepseek-v4-flash', 'LLM_BASE_URL': 'https://api.deepseek.com/v1'}
     command, _ = pi_entry.build_pi_command(args, environment=env, runtime=runtime,
         version_runner=lambda *args, **kwargs: SimpleNamespace(stdout='v22.22.0'))
-    selection = json.loads(command[command.index('--model-selection') + 1])
-    assert selection == launch_environment_config(env)
+    assert '--model-selection' not in command
+    assert '--resolve-entry-model' in command
+    assert command[command.index('--entry-python') + 1] == str(__import__('pathlib').Path(sys.executable).resolve())
 
 
 def test_runtime_only_credential_mapping_preserves_legacy_precedence_without_output(capsys):

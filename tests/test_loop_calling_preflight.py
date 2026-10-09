@@ -1,9 +1,13 @@
 import importlib.util
 import math
+import shlex
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -44,6 +48,70 @@ class _FakeCoolerObject:
 
 
 class LoopCallingPreflightTests(unittest.TestCase):
+    def test_balance_flags_work_without_python39_argparse(self):
+        with patch.object(loop_calling.argparse, "BooleanOptionalAction", None, create=True):
+            for flags, expected in [([], True), (["--no-auto-balance"], False),
+                                    (["--no-auto-balance", "--auto-balance"], True)]:
+                with patch.object(sys, "argv", [str(SCRIPT_PATH), *flags]):
+                    self.assertEqual(loop_calling.parse_args().auto_balance, expected)
+
+    def test_native_mcool_argument_keeps_resolution_in_r_flag(self):
+        self.assertEqual(loop_calling.mustache_matrix_path(
+            "中文 path/leaf.mcool::/resolutions/10000", 10000), "中文 path/leaf.mcool")
+        with self.assertRaisesRegex(SystemExit, "does not match resolution"):
+            loop_calling.mustache_matrix_path("leaf.mcool::/resolutions/5000", 10000)
+
+    def test_source_entrypoints_use_same_python_and_preserve_arguments(self):
+        with tempfile.TemporaryDirectory(prefix="mustache source 空格 ") as tmpdir:
+            root = Path(tmpdir)
+            script = root / "mustache.py"
+            script.write_text("import sys\nassert '--help' in sys.argv\n")
+            diff = root / "diff_mustache.py"
+            diff.write_text(script.read_text())
+            result = subprocess.run([sys.executable, str(SCRIPT_PATH),
+                "--mustache-script", str(script), "--diff", "leaf", "bud",
+                "--runtime-check-only"], cwd=root, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            commands = [shlex.split(line[len("[RUNTIME OK] "):])
+                        for line in result.stdout.splitlines()]
+            self.assertEqual(commands, [[sys.executable, str(script), "--help"],
+                                        [sys.executable, str(diff), "--help"]])
+            self.assertFalse((root / "Loops").exists())
+
+    def test_runtime_failure_stops_before_matrices_or_output_creation(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            script = root / "mustache.py"
+            script.write_text("import sys\nprint('missing scientific dependency')\nsys.exit(7)\n")
+            result = subprocess.run([sys.executable, str(SCRIPT_PATH),
+                "--mustache-script", str(script), "--sample", "leaf", "absent.mcool",
+                "--resolution-bp", "10000"], cwd=root, capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("runtime check failed (exit 7)", result.stderr)
+            self.assertIn("missing scientific dependency", result.stderr)
+            self.assertFalse((root / "Loops").exists())
+
+    def test_source_call_and_diff_commands_use_native_paths(self):
+        with tempfile.TemporaryDirectory(prefix="loop commands ") as tmpdir:
+            root = Path(tmpdir)
+            script = root / "mustache.py"; script.touch()
+            (root / "diff_mustache.py").touch()
+            with patch.object(sys, "argv", [str(SCRIPT_PATH), "--mustache-script", str(script),
+                "--sample", "leaf", "leaf space.mcool", "--sample", "bud", "bud.mcool",
+                "--resolution-bp", "10000", "--diff", "leaf", "bud", "--dry-run"]):
+                args = loop_calling.parse_args()
+            samples = loop_calling.load_samples(args)
+            with patch.object(loop_calling, "check_cooler_balance", return_value=(True, "finite weights")):
+                rows = loop_calling.call_loops(args, samples, root)
+                diff_rows = loop_calling.call_differential(args, samples, loop_calling.load_pairs(args), root)
+            call = shlex.split(rows[0]["command"])
+            pair = shlex.split(diff_rows[0]["command"])
+            self.assertEqual(call[:2], [sys.executable, str(script)])
+            self.assertEqual(call[call.index("-f") + 1], "leaf space.mcool")
+            self.assertEqual(rows[0]["matrix_uri"], "leaf space.mcool::/resolutions/10000")
+            self.assertEqual(pair[pair.index("-f1") + 1], "leaf space.mcool")
+            self.assertEqual(pair[pair.index("-f2") + 1], "bud.mcool")
+
     def test_mcool_path_expands_to_resolution_uri(self):
         self.assertEqual(
             loop_calling.effective_matrix_uri("leaf.mcool", 10000),

@@ -147,10 +147,10 @@ class ScrnaSmokeTests(unittest.TestCase):
 
             self._run_r_script(REPO_ROOT / "skills/scrna/ingest/data-download/scripts/ingest_scrna_seurat.R", "--manifest", str(manifest))
             self._run_r_script(REPO_ROOT / "skills/scrna/qc/filter/scripts/qc_filter_seurat.R", "--manifest", str(manifest))
-            self._run_r_script(REPO_ROOT / "skills/scrna/preprocess/basic/scripts/preprocess_scrna_seurat.R", "--manifest", str(manifest))
-            self._run_r_script(REPO_ROOT / "skills/scrna/cluster/basic/scripts/cluster_scrna_seurat.R", "--manifest", str(manifest))
+            self._run_r_script(REPO_ROOT / "skills/scrna/preprocess/scrna-preprocess-basic/scripts/preprocess_scrna_seurat.R", "--manifest", str(manifest))
+            self._run_r_script(REPO_ROOT / "skills/scrna/cluster/scrna-cluster-basic/scripts/cluster_scrna_seurat.R", "--manifest", str(manifest))
             self._run_r_script(REPO_ROOT / "skills/scrna/markers/find/scripts/find_markers_seurat.R", "--manifest", str(manifest))
-            self._run_r_script(REPO_ROOT / "skills/scrna/annotate/basic/scripts/annotate_scrna_seurat.R", "--manifest", str(manifest))
+            self._run_r_script(REPO_ROOT / "skills/scrna/annotate/scrna-annotate-basic/scripts/annotate_scrna_seurat.R", "--manifest", str(manifest))
 
             self.assertTrue((output_dir / "objects/seurat_raw.rds").exists())
             self.assertTrue((output_dir / "objects/seurat_qc.rds").exists())
@@ -234,10 +234,10 @@ class ScrnaSmokeTests(unittest.TestCase):
 
             self._run_r_script(REPO_ROOT / "skills/scrna/ingest/data-download/scripts/ingest_scrna_seurat.R", "--manifest", str(manifest))
             self._run_r_script(REPO_ROOT / "skills/scrna/qc/filter/scripts/qc_filter_seurat.R", "--manifest", str(manifest))
-            self._run_r_script(REPO_ROOT / "skills/scrna/preprocess/basic/scripts/preprocess_scrna_seurat.R", "--manifest", str(manifest))
-            self._run_r_script(REPO_ROOT / "skills/scrna/cluster/basic/scripts/cluster_scrna_seurat.R", "--manifest", str(manifest))
+            self._run_r_script(REPO_ROOT / "skills/scrna/preprocess/scrna-preprocess-basic/scripts/preprocess_scrna_seurat.R", "--manifest", str(manifest))
+            self._run_r_script(REPO_ROOT / "skills/scrna/cluster/scrna-cluster-basic/scripts/cluster_scrna_seurat.R", "--manifest", str(manifest))
             self._run_r_script(REPO_ROOT / "skills/scrna/markers/find/scripts/find_markers_seurat.R", "--manifest", str(manifest))
-            self._run_r_script(REPO_ROOT / "skills/scrna/annotate/basic/scripts/annotate_scrna_seurat.R", "--manifest", str(manifest))
+            self._run_r_script(REPO_ROOT / "skills/scrna/annotate/scrna-annotate-basic/scripts/annotate_scrna_seurat.R", "--manifest", str(manifest))
             self._run_r_script(REPO_ROOT / "skills/scrna/de/contrast/scripts/de_contrast_seurat.R", "--manifest", str(manifest))
 
             self.assertTrue((output_dir / "tables/de_results.tsv").exists())

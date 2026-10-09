@@ -25,15 +25,11 @@ from agent_core.step_effects import canonical_step_effect, extract_structured_ef
 from agent_core.task_spec import create_task_spec, task_spec_revision
 from agent_core.skill_script_invocation import (build_skill_script_argv, resolve_script_invocation,
                                                validate_skill_script_invocations)
-from agent_core.workflow.commit_step import CommitStep
-from agent_core.workflow.verifier import TypedSupervisor
 from execution.executor import run_script_path
-from supervisor import SupervisorNode
-from tests.test_unified_binding_rollback import _Reviewer
 from tests.test_unified_reference_bundle import REAL_BWA_FIXTURE
 
 SKILL = Path(__file__).resolve().parents[1] / 'skills/genomics/wgs-short-read-mapping'
-_spec = importlib.util.spec_from_file_location('reference_helper_under_test', SKILL / 'scripts/prepare_reference.py')
+_spec = importlib.util.spec_from_file_location('reference_helper_under_test', Path(__file__).resolve().parents[1] / 'integrations/pi_runtime/domain_adapter/skill_actions/wgs_prepare_reference.py')
 helper = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(helper)
 
@@ -226,70 +222,6 @@ def _formal_setup(root, req):
     return task_id, capability
 
 
-@pytest.mark.skipif(os.environ.get('BIOMIND_REFERENCE_REAL_TOOLS') != '1', reason='Real installed tools require explicit isolated acceptance run')
-def test_real_tools_production_runner_actual_skill_gate_and_commit(tmp_path):
-    req = _request(tmp_path)
-    prefix = Path('/public/home/liusiqi/anaconda3/envs/bio_wgs/bin')
-    req['tools'] = {name: str(prefix / name) for name in ('bwa', 'samtools', 'picard', 'java')}
-    root = req['source'].parent
-    task_id, capability = _formal_setup(root, req)
-    plan = load_plan_state(root, task_id); step = plan['steps'][0]
-    resource = {'handle': 'genomics/wgs-short-read-mapping#scripts/prepare_reference.py',
-                'canonical_path': str(SKILL / 'scripts/prepare_reference.py'),
-                'invocation': resolve_script_invocation((SKILL / 'SKILL.md').read_text(),
-                    'scripts/prepare_reference.py', SKILL / 'scripts/prepare_reference.py')}
-    arguments = []
-    for flag, value in [('source', req['source']), ('output', req['output']), ('work-dir', req['work_dir']),
-            ('reference-ref', req['reference_ref']), ('artifact-ref', req['artifact_ref']),
-            ('evidence-artifact-ref', req['evidence_artifact_ref']), *req['tools'].items()]:
-        arguments += ['--' + flag, str(value)]
-    argv = build_skill_script_argv(resource, arguments)
-    code = 'set -euo pipefail\n' + shlex.join(argv) + '\n'
-    action = {'action_id': 'action-1', 'step_id': 'prepare', 'type': 'execute', 'language': 'bash', 'plan_id': plan['plan_id'],
-        'plan_version': plan['plan_version'], 'purpose': 'analysis', 'command_role': 'analysis_execution',
-        'code': code, 'outputs': [str(req['output']), str(req['work_dir'])], 'expected_step_effect': canonical_step_effect(step)}
-    validate_skill_script_invocations(action, [resource])
-    record_provenance_event(plan, 'action_bound', {'action': action})
-    attempt = record_provenance_event(plan, 'attempt_started', {'action_id': action['action_id'], 'step_id': 'prepare'})
-    req['environment']['BIOMIND_ATTEMPT_ID'] = attempt['attempt_id']
-    save_plan_state(root, task_id, plan)
-    script = root / 'approved-infrastructure.sh'; script.write_text(code)
-    env = req['environment']
-    main = sys.modules.get('__main__')
-    if hasattr(main, 'OFFLINE_ALLOWED_SCRIPT_PATHS'):
-        main.OFFLINE_ALLOWED_SCRIPT_PATHS.add(str(script))
-        main.OFFLINE_ALLOWED_SCRIPT_ENVIRONMENTS[str(script)] = env
-    stdout, stderr, rc = asyncio.run(run_script_path(script, expected_sha256=hashlib.sha256(script.read_bytes()).hexdigest(),
-        interpreter='bash', timeout=60, profile=False, env=env, exit_status_path=root / 'runner-exit.json',
-        managed_log_paths={'stdout': str(root / 'runner.stdout'), 'stderr': str(root / 'runner.stderr')}))
-    assert rc == 0, (stdout, stderr, rc)
-    effects = extract_structured_effect_evidence(stdout)
-    execution = {'task_id': task_id, 'execution_id': 'execution-real-small-reference', 'step_id': 'prepare',
-        'action_id': action['action_id'], 'attempt_id': attempt['attempt_id'], 'plan_id': plan['plan_id'],
-        'plan_version': plan['plan_version'], 'command_role': 'analysis_execution', 'purpose': 'analysis',
-        'returncode': rc, 'exit_code': rc, 'execution_status': 'succeeded', 'raw_stdout': stdout, 'raw_stderr': stderr,
-        'declared_outputs': [str(req['output']), str(req['work_dir'])],
-        'produced_artifacts': [str(req['output']), str(req['work_dir'])],
-        'step_effect': canonical_step_effect(step), 'effect_evidence': effects}
-    record_provenance_event(plan, 'execution_finished', {'attempt_id': attempt['attempt_id'], 'execution_record': execution})
-    mark_step_verification_pending(plan, step_id='prepare', attempt_id=attempt['attempt_id'])
-    save_plan_state(root, task_id, plan)
-    result = helper.prepare_reference(**req)
-    assert result['reused_published'] and not result['commands']
-    state = {'task_id': task_id, 'workflow_routing_schema_version': 2, 'validation_level': 'scientific',
-             'pending_action': action, 'execution_evidence': execution}
-    verifier = TypedSupervisor(data_path=str(root), verifier=SupervisorNode(_Reviewer(), output_dir=str(root / 'task_outputs')).run)
-    state.update(asyncio.run(verifier.run(state)))
-    (root / 'real-verification.json').write_text(json.dumps(state, indent=2, default=str))
-    assert state['verification_outcome']['type'] in {'verified', 'verified_with_warnings'}, state
-    committed = asyncio.run(CommitStep(data_path=str(root)).run(state))
-    assert committed['commit_step_outcome']['type'] == 'plan_complete', committed
-    assert load_plan_state(root, task_id)['steps'][0]['status'] == 'passed'
-    assert '%20' in result['expected_final_uri'] and '%25' in result['expected_final_uri'] and '%23' in result['expected_final_uri']
-    receipt = {'scope': 'independent synthetic infrastructure validation, not WGS benchmark',
-        'tools': req['tools'], 'capability': capability, 'execution': execution,
-        'verification': state['verification_outcome'], 'commit': committed['commit_step_outcome'], 'reentry': result}
-    (root / 'real-tool-acceptance.json').write_text(json.dumps(receipt, indent=2, ensure_ascii=False))
 
 
 def test_scoped_live_lock_prevents_second_build(tmp_path, monkeypatch):

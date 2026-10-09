@@ -128,6 +128,8 @@ class RunProfilerTests(unittest.TestCase):
             "total_tokens": 10_100,
             "reasoning_tokens": 40,
             "contains_estimates": False,
+            "usage_by_origin": {"actual": {"prompt_tokens": 10000, "completion_tokens": 100, "total_tokens": 10100}, "estimated": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}},
+            "missing_usage_calls": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
             "prompt_cache_hit_tokens": 8_000,
             "prompt_cache_miss_tokens": 2_000,
             "prompt_cache_usage_reported_calls": 1,
@@ -334,6 +336,65 @@ class RunProfilerTests(unittest.TestCase):
             ["genomics/snpeff-annotation"],
         )
 
+    def test_explicit_typed_terminal_projection_precedes_durable_generic_failure(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            task_id = "session_typed_generate_terminal"
+            task_dir = root / task_id
+            task_dir.mkdir(parents=True)
+            (task_dir / "plan_state.json").write_text(
+                json.dumps({
+                    "task_state": {
+                        "status": "blocked",
+                        "selected_skill_ids": ["genomics/snpeff-annotation"],
+                        "failure": {
+                            "error_code": "TASK_BLOCKED",
+                            "message": "Incomplete Plan fallback.",
+                        },
+                    },
+                }),
+                encoding="utf-8",
+            )
+            profiler = RunProfiler(root)
+            profiler.start_task(task_id)
+
+            profiler.finish_task(
+                task_id,
+                "failed",
+                terminal_projection={
+                    "status": "failed",
+                    "terminal_diagnostic": {
+                        "error_code": "SKILL_OPERATION_UNDECLARED",
+                        "typed_error_code": "GENERATE_REPAIR_RECEIPT_MISSING",
+                        "primary_cause": {
+                            "error_code": "SKILL_OPERATION_UNDECLARED",
+                        },
+                        "secondary_causes": [{
+                            "error_code": "GENERATE_REPAIR_RECEIPT_MISSING",
+                        }],
+                        "actual_outcome": "internal_protocol_error",
+                        "actual_route": "END",
+                        "execution_status": "not_started",
+                        "execution_started": False,
+                        "recovery_entered": False,
+                        "outputs_produced": [],
+                    },
+                    "evidence_refs": ["objects/repair.json"],
+                },
+            )
+            snapshot = profiler.snapshot(task_id)
+
+        diagnostic = snapshot["final_result"]["terminal_diagnostic"]
+        self.assertEqual(diagnostic["error_code"], "SKILL_OPERATION_UNDECLARED")
+        self.assertEqual(diagnostic["typed_error_code"], "GENERATE_REPAIR_RECEIPT_MISSING")
+        self.assertEqual(diagnostic["actual_outcome"], "internal_protocol_error")
+        self.assertEqual(diagnostic["execution_status"], "not_started")
+        self.assertEqual(
+            snapshot["skills"]["selected"],
+            ["genomics/snpeff-annotation"],
+        )
+        self.assertEqual(snapshot["final_result"]["evidence_refs"], ["objects/repair.json"])
+
     def test_schema_v4_block_derives_truncation_diagnostic_from_attempt(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
@@ -504,7 +565,20 @@ class RunProfilerTests(unittest.TestCase):
             self.assertEqual(rows[0]["输出结果"], "Updated answer")
 
     def test_benchmark_metadata_for_task_reads_prompt_data_and_size(self):
-        metadata = benchmark_metadata_for_task("BM-SCRNA-PBMC-QC-001", repo_root=REPO_ROOT)
+        # Small explicit fixture: this metadata test does not need the external
+        # scientific benchmark dataset in a source-only checkout.
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            relative = "benchmarks/biomind_agent_benchmark/fixtures_public/pbmc3k_10x_subset/matrix.mtx"
+            matrix = root / relative
+            matrix.parent.mkdir(parents=True)
+            matrix.write_text("%%MatrixMarket matrix coordinate integer general\n1 1 1\n1 1 1\n")
+            questions = root / "benchmarks/biomind_agent_benchmark/questions/tasks.yaml"
+            questions.parent.mkdir(parents=True)
+            questions.write_text(json.dumps({"tasks": [{"id": "BM-SCRNA-PBMC-QC-001",
+                "title": "PBMC3k fixture", "prompt": "Inspect " + relative,
+                "data_files": [relative], "expected_skills": ["scrna/qc/filter"]}]}))
+            metadata = benchmark_metadata_for_task("BM-SCRNA-PBMC-QC-001", repo_root=root)
 
         self.assertEqual(metadata["test_task_id"], "BM-SCRNA-PBMC-QC-001")
         self.assertIn("PBMC3k", metadata["test_content"])

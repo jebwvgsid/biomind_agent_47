@@ -8,6 +8,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import export_cli_model_progress_fixture as previous
 
 V2_FILES = (
+    'tests/test_cli_visual.py', 'tests/cli_visual_pty.py',
+    'tests/cli_repair_support.py', 'tests/cli_repair_pty.py',
+    'tests/cli_repair_entry.py',
+    'tests/test_cli_repair.py', 'tests/test_cli_repair_stream.py', 'tests/test_cli_repair_business.py',
+    'tests/test_provider_attempt_reliability.py', 'tests/test_generate_production_context_wiring.py',
+    'tests/react_v3/support.py', 'tests/react_v3/test_runtime.py', 'tests/react_v3/test_graph_and_prompts.py',
     'tests/test_cli_v2_plain_stage.py',
     'tests/export_cli_v2_fixture.py', 'tests/cli_v2_support.py',
     'tests/test_cli_v2_integration.py', 'tests/replay_cli_v2_pty.py',

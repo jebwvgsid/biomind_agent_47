@@ -145,7 +145,10 @@ class DomainTests(unittest.IsolatedAsyncioTestCase):
         pending=await self.s.call('exec.start',args)
         with self.assertRaises(DomainError):await self.s.call('approval.decide',{'request_id':pending['approval']['request_id'],'choice':'y'})
         blank=await self.approve(pending,choice='');self.assertEqual(blank['status'],'pending')
-        await self.approve(pending,choice='n');denied=await self.s.call('exec.start',args)
+        await self.approve(pending,choice='n')
+        with self.assertRaisesRegex(DomainError,'REQUEST_PAUSED'):await self.s.call('exec.start',args)
+        await self.s.call('request.resume',{},host_token=self.s.host_token)
+        denied=await self.s.call('exec.start',args)
         self.assertFalse(denied['execution_started']);self.assertFalse(self.s.active_jobs())
         with self.assertRaises(DomainError):await self.s.call('exec.start',{'call_id':'forged','arguments':{'argv':['true'],'approved':True}})
         changed={**pending['approval'],'action_hash':'wrong'}
@@ -262,7 +265,8 @@ class DomainTests(unittest.IsolatedAsyncioTestCase):
         skill_dir=self.skills/'different-directory'
         (self.skills/'.skill_runtime_registry.json').write_text(json.dumps({'skills':{
             'different-directory':{'env':'fixture','status':'success'}}}))
-        self.assertEqual(self.s.skills().get_runtime_registration('fixture-canonical')['env'],'fixture')
+        loaded=[{'name':'fixture-canonical','file_path':str(skill_dir/'SKILL.md')}]
+        self.assertEqual(self.s.skills().get_runtime_registration('fixture-canonical',loaded_skills=loaded)['env'],'fixture')
         result=await self.s.call('files.read_authorize',{'path':str(skill_dir/'scripts/f.py'),
             'trusted_skill_dirs':[str(skill_dir)]},host_token=self.s.host_token)
         self.assertEqual(result['path'],str(skill_dir/'scripts/f.py'))
@@ -274,9 +278,15 @@ class DomainTests(unittest.IsolatedAsyncioTestCase):
         skill_dir=self.skills/'different-directory'
         (skill_dir/'references-link').symlink_to(outside)
         try:
-            for value in [str(outside),str(skill_dir/'references-link')]:
-                with self.assertRaises((ValueError,OSError)):
-                    await self.s.call('files.read_authorize',{'path':value,'trusted_skill_dirs':[str(skill_dir)]},host_token=self.s.host_token)
+            pending=await self.s.call('files.read_authorize',{'path':str(outside),
+                'trusted_skill_dirs':[str(skill_dir)]},host_token=self.s.host_token)
+            self.assertEqual(pending['status'],'waiting_approval')
+            self.assertFalse(pending['execution_started'])
+            self.assertNotIn('content',pending)
+            linked=await self.s.call('files.read_authorize',{'path':str(skill_dir/'references-link'),
+                'trusted_skill_dirs':[str(skill_dir)]},host_token=self.s.host_token)
+            self.assertEqual(linked['status'],'waiting_approval');self.assertNotIn('content',linked)
+            self.assertEqual(linked['approval']['payload']['path'],str(outside))
             with self.assertRaises(FileNotFoundError):
                 await self.s.call('files.read_authorize',{'path':str(skill_dir/'missing.md'),'trusted_skill_dirs':[str(skill_dir)]},host_token=self.s.host_token)
         finally:
@@ -301,6 +311,62 @@ class DomainTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn(ref,disabled['revoked_sources'])
         self.assertEqual((await self.s.call('memory.read',{'source_ref':ref}))['status'],'disabled')
         self.assertTrue(disabled['preferences']['body'])
+
+    async def test_memory_read_record_status_sources_and_no_record_mutation(self):
+        w=self.s.wiki()
+        sources=['task:synthetic-A','artifact:synthetic-B']
+        for index,status in enumerate(['unverified','verified','legacy-review',None]):
+            with self.subTest(status=status):
+                created=w.apply_patch_result({'operations':[{'op':'create_page','path':f'methods/status-{index}.md',
+                    'content':'MEMORY_A_UNVERIFIED','status':status or 'unverified','sources':sources}]},self.s.project_id)
+                path=Path(created['written'][0]['absolute_path']);ref=created['written'][0]['source_ref']
+                if status is None:path.write_text(''.join(line for line in path.read_text().splitlines(keepends=True) if not line.startswith('status:')))
+                before={str(p):p.read_bytes() for p in self.root.joinpath('wiki').rglob('*') if p.is_file()}
+                for _ in range(2):
+                    read=await self.s.call('memory.read',{'source_ref':ref})
+                    self.assertEqual(read['status'],'read')
+                    self.assertEqual(read['record_status'],status or 'unknown')
+                    self.assertEqual(read['record_sources'],sources)
+                    self.assertEqual(read['sources'],[ref])
+                    self.assertIn('MEMORY_A_UNVERIFIED',read['content'])
+                self.assertEqual(before,{str(p):p.read_bytes() for p in self.root.joinpath('wiki').rglob('*') if p.is_file()})
+
+    async def test_memory_read_missing_and_excluded_record_sources(self):
+        w=self.s.wiki()
+        created=w.apply_patch_result({'operations':[{'op':'create_page','path':'methods/no-sources.md',
+            'content':'synthetic missing provenance'}]},self.s.project_id)
+        ref=created['written'][0]['source_ref']
+        self.assertEqual((await self.s.call('memory.read',{'source_ref':ref}))['record_sources'],[])
+        created=w.apply_patch_result({'operations':[{'op':'create_page','path':'methods/excluded.md',
+            'content':'synthetic historical record','status':'unverified',
+            'sources':['task:allowed','task:excluded']} ]},self.s.project_id)
+        ref=created['written'][0]['source_ref']
+        with w._connect() as conn:
+            conn.execute('INSERT INTO memory_exclusions VALUES (?,?,?)',(self.s.project_id,'task:excluded','synthetic'))
+            conn.commit()
+        self.assertEqual((await self.s.call('memory.read',{'source_ref':ref}))['status'],'unavailable')
+        read=await self.s.call('memory.read',{'source_ref':ref,'historical':True})
+        self.assertEqual(read['record_status'],'unverified')
+        self.assertEqual(read['record_sources'],['task:allowed'])
+        self.assertNotIn('task:excluded',json.dumps(read))
+
+    async def test_preference_source_empty_fallback_and_live_refresh(self):
+        (self.root/'memory').mkdir(exist_ok=True)
+        (self.root/'memory'/'USER_PROFILE.md').write_text('OLD_CORE_PREFERENCE')
+        self.preferences.write_text('')
+        snapshot=self.s.preference()
+        self.assertEqual(snapshot['source_path'],str(self.preferences))
+        self.assertEqual(snapshot['preferred_path'],str(self.preferences))
+        self.assertEqual(snapshot['source'],'config')
+        self.assertTrue(snapshot['exists']);self.assertTrue(snapshot['empty'])
+        self.assertEqual(snapshot['body'],'')
+        self.preferences.write_text('GLOBAL_PREF_B')
+        self.assertEqual(self.s.preference()['body'],'GLOBAL_PREF_B')
+        self.preferences.unlink()
+        snapshot=self.s.preference()
+        self.assertEqual(snapshot['source'],'core_fallback')
+        self.assertEqual(snapshot['body'],'OLD_CORE_PREFERENCE')
+        self.assertEqual(snapshot['selection_reason'],'preferred_missing')
 
     async def test_core_preference_write_uses_single_source_and_version(self):
         snapshot=self.s.preference()
@@ -331,6 +397,8 @@ class DomainTests(unittest.IsolatedAsyncioTestCase):
     async def test_install_denial_unknown_claim_and_cancel(self):
         args={'call_id':'installDenied','arguments':{'cmd':'touch NEVER','env_name':'fixture'}}
         pending=await self.s.call('install.propose',args);await self.approve(pending,'n')
+        with self.assertRaisesRegex(DomainError,'REQUEST_PAUSED'):await self.s.call('install.execute',args)
+        await self.s.call('request.resume',{},host_token=self.s.host_token)
         result=await self.s.call('install.execute',args);self.assertFalse(result['execution_started']);self.assertFalse((self.root/'NEVER').exists())
         args={'call_id':'installUnknown','arguments':{'cmd':'touch NEVER2','env_name':'fixture'}}
         pending=await self.s.call('install.propose',args);await self.approve(pending)
@@ -340,6 +408,8 @@ class DomainTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse((self.root/'NEVER').exists())
         args={'call_id':'installCancelled','arguments':{'cmd':'touch NEVER3','env_name':'fixture'}}
         pending=await self.s.call('install.propose',args);await self.approve(pending,'cancel')
+        with self.assertRaisesRegex(DomainError,'REQUEST_PAUSED'):await self.s.call('install.execute',args)
+        await self.s.call('request.resume',{},host_token=self.s.host_token)
         self.assertFalse((await self.s.call('install.execute',args))['execution_started'])
         self.assertFalse((self.root/'NEVER3').exists())
 
@@ -418,7 +488,7 @@ class DomainTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.s.requested_scope('unassigned'),'default')
         self.assertEqual((await self.s.call('context.snapshot',{}))['project_id'],self.s.project_id)
 
-    async def test_real_dependency_receipt_invalidates_registration_not_silence(self):
+    async def test_real_dependency_receipt_is_preserved_without_mandatory_diagnosis(self):
         prefix=self.root/'env';prefix.mkdir()
         self.registry.write_text(json.dumps({'environments':{'fixture':{'status':'verified','prefix':str(prefix),'language':'python'}},'tools':{}}))
         args={'call_id':'dependency','arguments':{'argv':[sys.executable,'-I','-c','import missing_pi_synthetic_module_1029'], 'env_name':'fixture'}}
@@ -426,8 +496,9 @@ class DomainTests(unittest.IsolatedAsyncioTestCase):
         result=await self.terminal(await self.s.call('exec.start',args))
         self.assertNotEqual(result['exit_code'],0)
         selected=await self.s.call('environments.select',{'env_name':'fixture'})
-        self.assertEqual(selected['decision'],'execution_dependency_failed')
-        self.assertEqual(selected['invalidation']['missing_dependency'],'missing_pi_synthetic_module_1029')
+        self.assertEqual(selected['decision'],'registry_reused')
+        self.assertEqual(selected['availability'],'AVAILABLE')
+        self.assertEqual(selected['historical_execution_error']['missing_dependency'],'missing_pi_synthetic_module_1029')
 
     async def test_product_formal_permission_required_before_dispatch(self):
         production=self.service('actual-product');await self.begin(production,'permission','generate')

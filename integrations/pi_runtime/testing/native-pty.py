@@ -22,6 +22,7 @@ import sys
 import tempfile
 import termios
 import time
+import uuid
 
 
 ANSI = re.compile(r"\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)|\x1b\[[0-?]*[ -/]*[@-~]|\x1b[()][A-Za-z0-9]|\x1b[=>]")
@@ -34,8 +35,13 @@ def main():
     parser.add_argument('--negative-inputs', action='store_true')
     parser.add_argument('--draft-overlays', action='store_true')
     parser.add_argument('--session-switch', action='store_true')
+    parser.add_argument('--instructions-ui', action='store_true')
+    parser.add_argument('--unconfigured-ui', action='store_true')
+    parser.add_argument('--plain-unconfigured', action='store_true', help='With --unconfigured-ui, omit even --pi-config')
+    parser.add_argument('--project-draft-ui', action='store_true', help='Use native kill/yank to retain an unsubmitted draft across /project')
+    parser.add_argument('--protection-ui', action='store_true', help='Approve one new synthetic hardlink-blocked command and inspect actual collapsed diagnostics')
     args = parser.parse_args()
-    if sum((args.positive_install, args.negative_inputs, args.draft_overlays, args.session_switch)) > 1:
+    if sum((args.positive_install, args.negative_inputs, args.draft_overlays, args.session_switch, args.instructions_ui, args.unconfigured_ui, args.project_draft_ui, args.protection_ui)) > 1:
         parser.error('Choose only one dedicated UI scenario')
     repository = Path(__file__).resolve().parents[3]
     runtime = repository / 'integrations' / 'pi_runtime'
@@ -90,6 +96,14 @@ def main():
     ]
     accepted_marker = project / 'INSTALL_ACCEPTED_ONCE'
     accepted_prefix = project / '.synthetic-env'
+    if args.protection_ui:
+        source = project / 'protected-fixture'; source.write_text('synthetic-original')
+        os.link(source, project / 'hardlink-fixture')
+        steps = [steps[0],
+            call('protection-handoff', 'handoff_generate', {'goal': '只验证合成硬链接保护诊断，不做科学分析'}),
+            call('protection-command', 'run_command', {'cmd': 'touch PROTECTION_MUST_NOT_EXIST', 'workdir': str(project),
+                'description': 'NATIVE_PROTECTION_APPROVAL 只测试保护拒绝'}),
+            text('NATIVE_PROTECTION_DONE 这是合成回执观察，不表示科学成功。')]
     if args.positive_install:
         accepted_prefix.mkdir()
         steps = [steps[0],
@@ -137,6 +151,13 @@ def main():
             call('idle-old-handoff', 'handoff_generate', {'goal': 'OLD_SESSION_CONTEXT_ONLY 仅切换角色，不执行作业'}),
             text('OLD_SESSION_GENERATE_DONE', expect_system_contains='Generate'),
         ]
+    if args.instructions_ui:
+        preferences.write_text('GLOBAL_PREF_A')
+        (project / 'AGENTS.md').write_text('PROJECT_BASE_A')
+        (project / 'AGENTS.override.md').write_text('PROJECT_OVERRIDE_A')
+        steps = [text('NATIVE_CONSULT_DONE INSTRUCTIONS_REQUEST_OK', trace_path=str(trace))]
+    if args.project_draft_ui:
+        steps = [text('NATIVE_CONSULT_DONE PROJECT_DRAFT_READY', trace_path=str(trace))]
     (evidence / 'registry-before.json').write_text(registry.read_text())
     fixture = isolated / 'provider-fixture.json' 
     fixture.write_text(json.dumps(steps, ensure_ascii=False))
@@ -144,15 +165,36 @@ def main():
     config.write_text(json.dumps({'python': sys.executable, 'agentDir': str(agent), 'dataRoot': str(isolated / 'domain'),
         'providerFixture': str(fixture), 'registryPath': str(registry), 'preferencesPath': str(preferences),
         'memoryRoot': str(isolated / 'memory'), 'wikiRoot': str(isolated / 'wiki'), 'historyEnabled': False}, ensure_ascii=False))
+    session_directory = isolated / '自定义 会话'
+    if args.instructions_ui:
+        configuration = json.loads(config.read_text())
+        configuration['sessionDir'] = str(session_directory)
+        config.write_text(json.dumps(configuration, ensure_ascii=False))
+    if args.unconfigured_ui:
+        config.write_text(json.dumps({'python': str(isolated / 'NO_DOMAIN_PYTHON'), 'agentDir': str(agent)}))
+        settings = json.loads((agent / 'settings.json').read_text())
+        settings['quietStartup'] = True
+        (agent / 'settings.json').write_text(json.dumps(settings))
     command = [sys.executable, str(repository / 'bio_agents.py'), '--engine', 'pi', '--project-dir', str(project),
         '--pi-config', str(config), '--prompt', '仅做合成中文咨询，不执行分析。']
+    if args.unconfigured_ui:
+        command = command[:-2]
+        if args.plain_unconfigured:
+            command = command[:-2]
     master, slave = pty.openpty()
     extension_hash = hashlib.sha256((runtime / 'dist/extensions/biomind.js').read_bytes()).hexdigest()
     fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack('HHHH', 35, 120, 0, 0))
-    environment = {'PATH': str(runtime / '.runtime' / 'node' / 'bin') + ':/usr/bin:/bin', 'TERM': 'xterm-256color',
+    synthetic_home = isolated / 'home'
+    synthetic_home.mkdir()
+    environment = {'HOME': str(synthetic_home), 'PI_CODING_AGENT_DIR': str(agent),
+        'PATH': str(runtime / '.runtime' / 'node' / 'bin') + ':/usr/bin:/bin', 'TERM': 'xterm-256color',
         'LANG': 'C.UTF-8', 'LC_ALL': 'C.UTF-8', 'PYTHONDONTWRITEBYTECODE': '1', 'NO_COLOR': '0',
         'NODE_OPTIONS': '--import=' + str(runtime / 'testing' / 'offline-guard.mjs'),
+        'BIOMIND_PI_TRACE_SYNTHETIC_READS': '1' if args.instructions_ui else '0',
         'BIOMIND_PI_TEST_ROOT': str(isolated), 'BIOMIND_PI_GUARD_TRACE': str(evidence / 'native-guard.jsonl')}
+    if args.plain_unconfigured:
+        environment.update(BIOMIND_DISABLE_DOTENV='1', BIOMIND_PI_PYTHON=str(isolated / 'NO_DOMAIN_PYTHON'),
+            BIOMIND_PI_PREFERENCES_PATH=str(preferences))
     process = subprocess.Popen(command, cwd=project, env=environment, stdin=slave, stdout=slave,
         stderr=slave, close_fds=True, start_new_session=True)
     os.close(slave)
@@ -211,12 +253,238 @@ def main():
         raise AssertionError('missing actual Pi tool result: ' + identity)
 
     try:
-        wait_for('NATIVE_CONSULT_DONE', timeout=60 if args.draft_overlays or args.session_switch else 30)
-        checks['native_cli_chinese_render'] = True
-        assert 'DOMAIN_' not in screen(), 'domain initialization failed before the native Consult'
-        assert 'biomind-current' in json.dumps(requests()[0]['context']), 'BioMind business context was not attached'
-        checks['native_consult_with_domain_context'] = True
-        if args.session_switch:
+        if args.unconfigured_ui:
+            wait_for('尚未选择模型', timeout=90)
+            assert 'BioMind · /help 帮助' not in screen(), 'quietStartup did not suppress product welcome'
+            checks['unconfigured_ordinary_entry_quiet_startup_no_domain_python'] = True
+            auth_file = agent / 'auth.json'
+            auth_before = auth_file.read_bytes() if auth_file.exists() else None
+            start = len(decoded)
+            send('/login\r', 'invoke actual native login without provider argument')
+            wait_for('Select authentication method:', since=start)
+            send(b'\x1b[B\r', 'choose native API-key provider list without entering a key')
+            wait_for('Select provider to configure:', since=start)
+            send(b'\x1b', 'cancel native authentication provider picker')
+            pump(.3)
+            send(b'\x1b', 'cancel parent native authentication method picker')
+            pump(.3)
+            start = len(decoded)
+            send('/model\r', 'invoke actual native model selector')
+            wait_for('Use /login', since=start)
+            send(b'\x1b', 'cancel model selector without request')
+            pump(.3)
+            start = len(decoded)
+            send('/help\r', 'native configured product help after selector cancellation')
+            wait_for('BioMind 帮助', since=start)
+            assert not trace.exists() and not (isolated / 'domain').exists()
+            assert (auth_file.read_bytes() if auth_file.exists() else None) == auth_before, 'cancel changed native credential store'
+            assert auth_before is None or not json.loads(auth_before), 'synthetic startup unexpectedly has credentials'
+            checks['native_login_model_cancellation_no_auth_write_model_call'] = True
+        else:
+            wait_for('NATIVE_CONSULT_DONE', timeout=150 if args.project_draft_ui else 90 if args.instructions_ui else 60 if args.draft_overlays or args.session_switch else 30)
+            checks['native_cli_chinese_render'] = True
+            assert 'DOMAIN_' not in screen(), 'domain initialization failed before the native Consult'
+            assert 'biomind-current' in json.dumps(requests()[0]['context']), 'BioMind business context was not attached'
+            checks['native_consult_with_domain_context'] = True
+        if args.unconfigured_ui:
+            pass
+        elif args.protection_ui:
+            pump(.3)
+            send('请求执行一次合成保护诊断，并等待明确接受。\r', 'request synthetic protected command')
+            wait_for('NATIVE_PROTECTION_APPROVAL')
+            send(b'\x1b[B\r', 'fixture selects explicit accept in real native UI')
+            wait_for('NATIVE_PROTECTION_DONE', timeout=45)
+            observed = receipt('protection-command')
+            assert observed['status'] == 'stage_blocked', observed
+            assert observed['reason'] == 'hardlink_in_writable_scope'
+            assert observed['execution_started'] is False and observed['exit_code'] is None
+            assert observed['count'] == 2 and observed['phase'] == 'protected_spawn_preflight'
+            assert observed['receipt_ref'] and not (project / 'PROTECTION_MUST_NOT_EXIST').exists()
+            assert source.read_text() == 'synthetic-original'
+            for marker in ('执行被阻塞', 'hardlink_in_writable_scope', '本次目标命令未启动', '原始回执', '2 个路径条目'):
+                assert marker in screen(), marker
+            assert len(requests()) == len(steps)
+            (evidence / 'protection-observation.json').write_text(json.dumps(observed, ensure_ascii=False, indent=2))
+            checks['real_domain_bwrap_preflight_model_and_collapsed_ui'] = True
+        elif args.project_draft_ui:
+            original_draft = "UNSUBMITTED_DRAFT_科研 路径/'quoted'_KEPT"
+            before_sessions = {str(p): p.read_bytes() for p in agent.rglob('*.jsonl')}
+            start = len(decoded)
+            send(original_draft, 'type actual ordinary unsubmitted draft')
+            wait_for(original_draft, since=start)
+            send(b'\x01', 'native Ctrl+A moves to draft start')
+            pump(.1)
+            send(b'\x0b', 'native Ctrl+K keeps draft in editor kill ring while clearing input for command')
+            pump(.3)
+            start = len(decoded)
+            send('/project\r', 'invoke real slash command using the ordinary native input owner')
+            wait_for('项目操作（取消保留当前会话）', since=start)
+            assert len(requests()) == 1
+            send(b'\x1b', 'cancel native project picker')
+            pump(.3)
+            start = len(decoded)
+            send(b'\x19', 'native Ctrl+Y restores original unsubmitted draft without provider submission')
+            wait_for(original_draft, since=start)
+            assert len(requests()) == 1
+            after_sessions = {str(p): p.read_bytes() for p in agent.rglob('*.jsonl')}
+            assert after_sessions == before_sessions
+            assert all(json.loads(value.splitlines()[0])['cwd'] == str(project) for value in after_sessions.values())
+            checks['project_cancel_preserves_native_kill_ring_draft_and_session_no_provider_call'] = True
+            (evidence / 'project-draft-preservation.json').write_text(json.dumps({
+                'draft': original_draft, 'restored_via': 'native Ctrl+A/Ctrl+K then /project Enter Escape then Ctrl+Y',
+                'provider_calls_before_after': 1, 'session_files_identical': True, 'cwd': str(project),
+                'evidence_type': 'PRODUCT_TUI', 'boundary': 'Slash commands share the native editor. This proves explicit native kill/yank recovery, not automatic parallel preservation of an unsaved editor buffer.'},
+                ensure_ascii=False, indent=2) + '\n')
+        elif args.instructions_ui:
+            def issue_command(value, marker):
+                start = len(decoded)
+                started = time.monotonic()
+                send(value + '\r', value)
+                wait_for(marker, since=start)
+                actions.append({'elapsed_ms': round((time.monotonic() - started) * 1000, 3),
+                    'operation': value, 'observed_marker': marker})
+                pump(.2)
+
+            def enter_editor(kind):
+                issue_command('/instructions ' + kind, '编辑说明（Enter 完成')
+
+            def replace_and_save(value, refresh=False):
+                start = len(decoded)
+                send(b'\x01\x0b', 'clear single-line synthetic preference in native editor')
+                send(value + '\r', 'submit actual native editor content (empty allowed)')
+                wait_for('确认保存说明', since=start)
+                send('\r', 'confirm actual save Yes')
+                wait_for('现在刷新说明', since=start)
+                send('\r' if refresh else b'\x1b', 'choose native reload' if refresh else 'defer reload without changing saved bytes')
+                pump(1)
+
+            issue_command('/instructions', '同目录 AGENTS.override.md 遮蔽 AGENTS.md')
+            assert 'preferred_file' not in screen() or 'preferences.md' in screen()
+            checks['actual_instructions_sources_and_override_status'] = True
+            initial = preferences.read_bytes()
+            enter_editor('global')
+            send('CANCELLED_DRAFT', 'type into native preferences editor')
+            send(b'\x1b', 'cancel native editor')
+            pump(.3)
+            assert preferences.read_bytes() == initial
+            checks['native_editor_cancel_leaves_file_unchanged'] = True
+            enter_editor('global')
+            send(b'\x01\x0b', 'clear synthetic editor before conflict')
+            send('UNSAVED_CONFLICT', 'keep a local editor draft')
+            preferences.write_text('EXTERNAL_WRITER')
+            start = len(decoded)
+            send('\r', 'submit edited draft after external modification')
+            wait_for('确认保存说明', since=start)
+            send('\r', 'confirm save that must detect external conflict')
+            wait_for('来源已被外部修改', since=start)
+            assert preferences.read_text() == 'EXTERNAL_WRITER'
+            start = len(decoded)
+            enter_editor('global')
+            wait_for('UNSAVED_CONFLICT', since=start)
+            send(b'\x1b', 'cancel reopened preserved draft')
+            pump(.3)
+            checks['native_conflict_preserves_external_file_and_local_draft'] = True
+            enter_editor('global')
+            replace_and_save('')
+            assert preferences.read_text() == ''
+            checks['native_editor_empty_save_distinct_from_cancel'] = True
+            enter_editor('global')
+            replace_and_save('GLOBAL_PREF_B')
+            assert preferences.read_text() == 'GLOBAL_PREF_B'
+            enter_editor('project')
+            replace_and_save('PROJECT_OVERRIDE_B')
+            assert (project / 'AGENTS.override.md').read_text() == 'PROJECT_OVERRIDE_B'
+            assert (project / 'AGENTS.md').read_text() == 'PROJECT_BASE_A'
+            issue_command('/instructions', '修改后待刷新')
+            issue_command('/reload', 'Reloaded')
+            issue_command('说明刷新后的真实请求', 'NATIVE_CONSULT_DONE')
+            latest = requests()[-1]['context']
+            system = [m for m in latest['messages'] if m.get('role') == 'system']
+            current = [m.get('sections', {}).get('biomind-current') for m in system]
+            current = [value for value in current if value]
+            native = [m.get('sections', {}).get('project_context') for m in system]
+            native = [value for value in native if value]
+            assert len(current) == 1 and 'GLOBAL_PREF_B' in current[0] and 'GLOBAL_PREF_A' not in current[0]
+            assert native and 'PROJECT_OVERRIDE_B' in native[-1] and 'PROJECT_OVERRIDE_A' not in native[-1]
+            assert 'PROJECT_BASE_A' not in native[-1]
+            checks['native_save_reload_actual_provider_global_project_B_once'] = True
+            old_sessions = set(session_directory.glob('*.jsonl'))
+            assert old_sessions and not list(agent.rglob('*.jsonl'))
+            issue_command('/new', 'New session started')
+            issue_command('新会话使用自定义目录', 'NATIVE_CONSULT_DONE')
+            new_sessions = set(session_directory.glob('*.jsonl'))
+            assert len(new_sessions - old_sessions) == 1 and not list(agent.rglob('*.jsonl'))
+            checks['native_new_retains_custom_session_directory'] = True
+            issue_command('/resume', 'Resume Session (Current Folder)')
+            send('仅做合成中文咨询', 'filter native current-project resume picker for original session')
+            pump(.4)
+            start = len(decoded)
+            send('\r', 'select original session in the same project')
+            wait_for('Resumed session', since=start)
+            assert len(requests()) == 3, 'same-project resume itself called provider'
+            checks['native_same_project_resume_uses_original_lifecycle'] = True
+            project_b = isolated / "项目 B 'quoted'"
+            project_b.mkdir()
+            # Synthetic-only native JSONL fixture; never copy user history.
+            records = [json.loads(line) for line in next(iter(old_sessions)).read_text().splitlines()]
+            records[0]['cwd'] = str(project_b)
+            records[0]['id'] = str(uuid.uuid4())
+            records.append({'type': 'session_info', 'id': 'b-info', 'parentId': records[-1]['id'],
+                'timestamp': records[-1]['timestamp'], 'name': 'CROSS_PROJECT_B_SENTINEL'})
+            foreign = session_directory / 'synthetic-other-project.jsonl'
+            foreign.write_text('\n'.join(json.dumps(row, ensure_ascii=False) for row in records) + '\n')
+            foreign_before = foreign.read_bytes()
+            issue_command('/resume', 'Resume Session (Current Folder)')
+            send(b'\t', 'native resume toggles all project folders')
+            wait_for('Resume Session (All)')
+            send('CROSS_PROJECT_B_SENTINEL', 'filter native all-project resume picker')
+            pump(.4)
+            start = len(decoded)
+            send('\r', 'select foreign project through native resume')
+            wait_for('目标会话属于其它项目', since=start)
+            assert foreign.read_bytes() == foreign_before
+            checks['native_cross_project_resume_requires_safe_restart'] = True
+            issue_command('/biomind-memory status', '关闭只阻止新的检索')
+            issue_command('/biomind-memory history on', '项目知识检索：开启（本次运行）')
+            issue_command('/biomind-memory history off', '项目知识检索：关闭（本次运行）')
+            before_config = json.loads(config.read_text())
+            issue_command('/biomind-memory default on', '保存记忆启动默认值')
+            send('\r', 'confirm memory default save')
+            wait_for('启动默认值已保存')
+            after_config = json.loads(config.read_text())
+            assert after_config == {**before_config, 'historyEnabled': True}
+            checks['native_memory_runtime_vs_disk_default_separate'] = True
+            issue_command('/project', '项目操作（取消保留当前会话）')
+            send(b'\x1b', 'cancel native project selector')
+            pump(.2)
+            start = len(decoded)
+            send('/instructions g', 'type native command argument prefix')
+            pump(.3)
+            send(b'\t', 'complete native command argument with Tab')
+            pump(.5)
+            assert 'global' in ANSI.sub('', decoded[start:])
+            send(b'\x1b', 'Esc closes native completion')
+            pump(.3)  # Let Pi distinguish standalone Esc from the next control chord.
+            send(b'\x01', 'move to start of completed command draft')
+            pump(.1)
+            send(b'\x0b', 'clear command draft without submitting a provider request')
+            pump(.3)
+            checks['native_tab_argument_completion_esc'] = True
+            fcntl.ioctl(master, termios.TIOCSWINSZ, struct.pack('HHHH', 20, 42, 0, 0))
+            os.killpg(process.pid, signal.SIGWINCH)
+            pump(.4)
+            issue_command('/status', '未验证连通性')
+            checks['native_narrow_status_after_work'] = True
+            settings = json.loads((agent / 'settings.json').read_text())
+            settings['quietStartup'] = True
+            (agent / 'settings.json').write_text(json.dumps(settings))
+            # Host observes quietStartup at process start; restarting is covered
+            # by the dedicated unconfigured/quiet probe, not this reload.
+            (evidence / 'instructions-file-after.json').write_text(json.dumps({
+                'preferences': preferences.read_text(), 'agents': (project / 'AGENTS.md').read_text(),
+                'override': (project / 'AGENTS.override.md').read_text(), 'config_changed_keys': ['historyEnabled'],
+                'effective_system_sections': {'biomind-current': current, 'project_context': native}}, ensure_ascii=False, indent=2))
+        elif args.session_switch:
             def current_projection(request):
                 sections = [m.get('sections', {}).get('biomind-current') for m in request['context']['messages']]
                 section = next(value for value in reversed(sections) if value)
@@ -507,6 +775,57 @@ def main():
         except subprocess.TimeoutExpired:
             process.kill()
             process.wait(timeout=5)
+        if status == 'PASS' and args.protection_ui:
+            if 'biomind --session' not in screen():
+                status = 'FAIL'; failure = 'PRODUCT_RESUME_HINT_NOT_RENDERED'
+            else:
+                checks['product_exit_resume_hint'] = True
+        if status == 'PASS' and args.instructions_ui:
+            restart_command = command[:-2] + ['--pi-mode', 'json']
+            restarted = subprocess.Popen(restart_command, cwd=project, env=environment,
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            restart_frames = []
+            pending_bytes = b''
+            try:
+                def frame_until(kind, timeout=60):
+                    nonlocal pending_bytes
+                    deadline = time.monotonic() + timeout
+                    while time.monotonic() < deadline:
+                        while b'\n' in pending_bytes:
+                            line, pending_bytes = pending_bytes.split(b'\n', 1)
+                            frame = json.loads(line)
+                            restart_frames.append(frame)
+                            if frame.get('type') == kind:
+                                return frame
+                        ready, _, _ = select.select([restarted.stdout], [], [], .1)
+                        if ready:
+                            chunk = os.read(restarted.stdout.fileno(), 65536)
+                            if not chunk:
+                                raise AssertionError('fresh JSON process ended before ' + kind)
+                            pending_bytes += chunk
+                    raise AssertionError('fresh JSON frame timeout ' + kind)
+                fresh_ready = frame_until('ready')
+                restarted.stdin.write(b'{"type":"settings","id":"fresh-default"}\n')
+                restarted.stdin.flush()
+                default_result = frame_until('settings_result')
+                assert default_result['status'] == 'ok' and default_result['history_enabled'] is True
+                assert Path(fresh_ready['sessionDir']) == session_directory
+                restarted.stdin.write(b'{"type":"shutdown"}\n')
+                restarted.stdin.flush()
+                restarted.wait(timeout=15)
+                assert restarted.returncode == 0
+                checks['fresh_product_json_consumes_saved_default_runtime_off_not_persisted'] = True
+            except BaseException as error:
+                status = 'FAIL'
+                failure = 'SECOND_PROCESS:' + str(error)
+            finally:
+                if restarted.poll() is None:
+                    restarted.terminate()
+                    restarted.wait(timeout=10)
+                (evidence / 'memory-default-restart.json').write_text(json.dumps({
+                    'command': restart_command, 'exit_code': restarted.returncode, 'frames': restart_frames,
+                    'stderr': restarted.stderr.read().decode('utf8', 'replace'), 'evidence_type': 'PRODUCT_JSON'},
+                    ensure_ascii=False, indent=2) + '\n')
         if master >= 0:
             os.close(master)
         (evidence / 'registry-after.json').write_text(registry.read_text())
@@ -516,7 +835,7 @@ def main():
         (evidence / 'native-terminal.txt').write_text(screen())
         sessions = []
         # These paths were created by this probe; no prior session is restored.
-        for filename in agent.rglob('*.jsonl'):
+        for filename in list(agent.rglob('*.jsonl')) + (list(session_directory.rglob('*.jsonl')) if session_directory.exists() else []):
             sessions.append({'path': str(filename), 'entries': [json.loads(line) for line in filename.read_text().splitlines() if line.strip()]})
         (evidence / 'native-fresh-sessions.json').write_text(json.dumps(sessions, ensure_ascii=False, indent=2))
         result = {'status': status, 'failure': failure, 'checks': checks, 'command': command, 'cwd': str(project),
@@ -524,7 +843,12 @@ def main():
             'extension_sha256': extension_hash, 'positive_install_fixture': args.positive_install, 'negative_input_fixture': args.negative_inputs,
             'draft_overlay_fixture': args.draft_overlays,
             'session_switch_fixture': args.session_switch,
-            'provider_request_count': len(requests()), 'expected_provider_request_count': 4 if args.session_switch else len(steps),
+            'instructions_ui_fixture': args.instructions_ui,
+            'unconfigured_ui_fixture': args.unconfigured_ui,
+            'plain_unconfigured_fixture': args.plain_unconfigured,
+            'project_draft_ui_fixture': args.project_draft_ui,
+            'protection_ui_fixture': args.protection_ui,
+            'provider_request_count': len(requests()), 'expected_provider_request_count': 0 if args.unconfigured_ui else 3 if args.instructions_ui else 4 if args.session_switch else len(steps),
             'scientific_success': None, 'real_ime_composition': 'NOT_RUN',
             'visual_scroll_position_assertion': 'NOT_RUN', 'fullscreen_screen_pixels': 'NOT_RUN'}
         (evidence / 'native-result.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n')

@@ -2,6 +2,39 @@
 
 This folder is the single home for BioMind benchmark questions, expected answers, data-source notes, known issues, and test-data scripts. Skill folders should contain reusable domain workflows and analysis runners only; they should not own benchmark data generation.
 
+## Production Pi runner
+
+`v3/scripts/run_benchmark_v3.py` now uses
+`agent_core.pi_benchmark.run_with_pi` and the same `build_pi_command` host entry as
+the product. Pi is the only engine; the old `BioAnalystAgent`/LangGraph runner is
+removed. Existing questions, frozen oracle inputs, execution manifests, output
+paths and the sibling benchmark prompt-pack default are preserved.
+
+Preview a declared case without launching a model or scientific tool:
+
+```bash
+python benchmarks/biomind_agent_benchmark/v3/scripts/run_benchmark_v3.py \
+  --case-id CASE_ID --task-id UNIQUE_TASK_ID --run-id UNIQUE_RUN_ID \
+  --phase0-manifest /absolute/existing-phase0.yaml \
+  --dependency-snapshot /absolute/existing-dependency-snapshot.json \
+  --run-output-dir /absolute/new-run-output --dry-run
+```
+
+For a declared ASK case also supply `--canonical-responses` with the existing
+canonical answer file. An explicitly requested real run replaces `--dry-run` with
+`--execute`, requires the manifest's actual execution permission, and uses the
+existing product model/configuration (`--pi-config` when required). This document
+and the migration do not launch that run automatically.
+
+The transport records original JSONL frames, stderr, same-session question answers,
+runtime status and execution facts. It refuses approval requests under the
+benchmark's existing `install_policy=DISABLED`; it does not silently approve
+scientific execution or installation. Legacy oracle requested-slot expectations
+remain evaluator evidence, not a new production question gate. Runtime completion
+is separate from evaluator/scientific success, and a missing result remains an
+error. Historical benchmark results are retained without relabeling them as Pi
+results. Dynamic regression after this migration is still a separate run.
+
 ## Layout
 
 - `questions/`: benchmark prompts and MCQ routing questions.

@@ -167,9 +167,14 @@ class RecoveryToolsTests(unittest.TestCase):
                 {
                     "ref_id", "kind", "task_id", "plan_id", "step_id",
                     "backend", "digest", "size_hint", "scope",
+                    "source_object_id", "readable", "unavailable_reason", "allowed_tools",
                 },
                 set(row),
             )
+            self.assertIsInstance(row["readable"], bool)
+            self.assertTrue(row["allowed_tools"])
+            if not row["readable"]:
+                self.assertTrue(row["unavailable_reason"])
             self.assertNotIn("locator", row)
             self.assertNotIn(str(self.artifact_path), str(row))
 
@@ -309,6 +314,44 @@ class RecoveryToolsTests(unittest.TestCase):
                 "skill_id": "genomics/selected", "resource_path": "references/guide.txt"})
         # Restore the original fixture bytes before checking its pinned excerpt.
         self.resource_path.write_text(original_resource, encoding="utf-8")
+        excerpt = first["results"][0]
+        retrieval_ref = "skill-excerpt:" + excerpt["excerpt_id"]
+        recovered = self.dispatcher.dispatch("skill.resource", {
+            "skill_id": "genomics/selected",
+            "retrieval_ref": retrieval_ref,
+            "content_hash": excerpt["content_hash"],
+            "coverage": {
+                "kind": "range",
+                "start_line": excerpt["start_line"],
+                "end_line": excerpt["end_line"],
+            },
+        })
+        self.assertIn(
+            "pinned resource v1", recovered["results"][0]["exact_text"]
+        )
+        self.assertEqual(
+            recovered["retrieval_verification"]["retrieval_ref"],
+            retrieval_ref,
+        )
+        self.assertTrue(
+            recovered["retrieval_verification"]["body_hash_verified"]
+        )
+        with self.assertRaisesRegex(
+            RecoveryToolError, "RECOVERY_SKILL_RETRIEVAL_HASH_MISMATCH"
+        ):
+            self.dispatcher.dispatch("skill.resource", {
+                "skill_id": "genomics/selected",
+                "retrieval_ref": retrieval_ref,
+                "content_hash": "0" * 64,
+            })
+        with self.assertRaisesRegex(
+            RecoveryToolError, "RECOVERY_SKILL_RETRIEVAL_PATH_MISMATCH"
+        ):
+            self.dispatcher.dispatch("skill.resource", {
+                "skill_id": "genomics/selected",
+                "retrieval_ref": retrieval_ref,
+                "resource_path": "references/other.txt",
+            })
         with self.assertRaisesRegex(
             RecoveryToolError, "RECOVERY_SKILL_NOT_SELECTED"
         ):

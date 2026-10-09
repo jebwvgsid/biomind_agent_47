@@ -112,13 +112,19 @@ def validate_candidate(raw):
 
 
 def adapt_native_version(raw, *, complete, raw_arguments_verified):
-    """A missing unique transport constant only; the validator still owns admission."""
+    """Supply the framework's unique version for a complete native submission.
+
+    SDK-decoded calls may lack raw argument strings. This constant is not a
+    scientific decision and does not require the model to resubmit. Preserve
+    the provenance distinction; all supplied business fields are still validated.
+    """
     candidate = deepcopy(raw)
     versions = directive_schema()["properties"]["schema_version"]["enum"]
-    if (complete and raw_arguments_verified and isinstance(candidate, dict)
+    if (complete and isinstance(candidate, dict)
             and "schema_version" not in candidate and len(versions) == 1):
         candidate["schema_version"] = versions[0]
         return candidate, {"kind": "missing_protocol_constant", "field": "schema_version",
+                           "raw_arguments_verified": bool(raw_arguments_verified), "source": "framework_schema",
                            "value": versions[0], "original_arguments": deepcopy(raw),
                            "adapted_arguments": deepcopy(candidate)}
     return candidate, None

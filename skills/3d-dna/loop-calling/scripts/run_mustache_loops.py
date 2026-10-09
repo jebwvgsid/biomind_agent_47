@@ -11,6 +11,7 @@ import argparse
 import csv
 import importlib.util
 import math
+import shlex
 import shutil
 import statistics
 import subprocess
@@ -69,9 +70,13 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--auto-balance",
-        action=argparse.BooleanOptionalAction,
+        action="store_true",
         default=True,
         help="Automatically run cooler balance on samples whose weight column is missing or has no finite values before loop calling.",
+    )
+    parser.add_argument(
+        "--no-auto-balance", dest="auto_balance", action="store_false",
+        help="Stop when balance weights are missing instead of modifying the matrix.",
     )
     parser.add_argument(
         "--processes",
@@ -87,10 +92,15 @@ def parse_args() -> argparse.Namespace:
         help="Mustache diff -pt2 value. Defaults to --pt.",
     )
     parser.add_argument("--st", type=float, default=0.88, help="Mustache -st value.")
-    parser.add_argument(
+    runtime = parser.add_mutually_exclusive_group()
+    runtime.add_argument(
         "--mustache-bin",
         default="",
         help="Optional Mustache executable. Defaults to the current Python with '-m mustache'.",
+    )
+    runtime.add_argument(
+        "--mustache-script",
+        help="Existing ay-lab mustache.py source file, run with the current Python.",
     )
     parser.add_argument(
         "--mustache-module",
@@ -132,6 +142,10 @@ def parse_args() -> argparse.Namespace:
         "--dry-run",
         action="store_true",
         help="Print commands and write run summary without executing Mustache.",
+    )
+    parser.add_argument(
+        "--runtime-check-only", action="store_true",
+        help="Check the selected Mustache entrypoint (and diff entrypoint when requested), without reading matrices or writing outputs.",
     )
     return parser.parse_args()
 
@@ -184,6 +198,16 @@ def effective_matrix_uri(matrix: str, resolution: int) -> str:
     if matrix.endswith(".mcool"):
         return f"{matrix}::/resolutions/{resolution}"
     return matrix
+
+
+def mustache_matrix_path(matrix_uri: str, resolution: int) -> str:
+    """ay-lab CLI selects the mcool group via -r, unlike cooler's URI API."""
+    if "::" not in matrix_uri:
+        return matrix_uri
+    path, group = matrix_uri.split("::", 1)
+    if path.endswith(".mcool") and group == f"/resolutions/{resolution}":
+        return path
+    raise SystemExit(f"[ERROR] Mustache input URI does not match resolution {resolution}: {matrix_uri}")
 
 
 def try_import_cooler():
@@ -285,10 +309,29 @@ def preflight_samples(
     return rows
 
 
-def find_diff_script(explicit: str | None) -> Path | None:
+def mustache_command(args: argparse.Namespace) -> list[str]:
+    script = getattr(args, "mustache_script", None)
+    if script:
+        path = Path(script).resolve()
+        if not path.is_file():
+            raise SystemExit(f"[ERROR] Mustache source script not found: {path}")
+        return [sys.executable, str(path)]
+    if args.mustache_bin:
+        binary = shutil.which(args.mustache_bin)
+        if not binary:
+            raise SystemExit(f"[ERROR] {args.mustache_bin!r} not found on PATH")
+        return [binary]
+    return [sys.executable, "-m", args.mustache_module]
+
+
+def find_diff_script(explicit: str | None, mustache_script: str | None = None) -> Path | None:
     if explicit:
         p = Path(explicit)
-        return p if p.exists() else None
+        return p.resolve() if p.is_file() else None
+    if mustache_script:
+        candidate = Path(mustache_script).resolve().with_name("diff_mustache.py")
+        # Stay with the explicitly selected source distribution.
+        return candidate if candidate.is_file() else None
     found = shutil.which("diff_mustache.py")
     if found:
         return Path(found)
@@ -300,8 +343,24 @@ def find_diff_script(explicit: str | None) -> Path | None:
     return None
 
 
+def check_runtime(args: argparse.Namespace, need_diff: bool) -> None:
+    commands = [mustache_command(args) + ["--help"]]
+    if need_diff:
+        script = find_diff_script(args.diff_script, getattr(args, "mustache_script", None))
+        if not script:
+            raise SystemExit("[ERROR] diff_mustache.py not found; pass --diff-script")
+        commands.append([sys.executable, str(script), "--help"])
+    for command in commands:
+        # No shell pipeline: retain the actual entrypoint's exit status.
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        if result.returncode:
+            print(result.stdout, file=sys.stderr, end="")
+            raise SystemExit(f"[ERROR] Mustache runtime check failed (exit {result.returncode}): {shlex.join(command)}")
+        print(f"[RUNTIME OK] {shlex.join(command)}")
+
+
 def run_command(cmd: list[str], dry_run: bool, log_path: Path) -> tuple[str, int, str]:
-    rendered = " ".join(cmd)
+    rendered = shlex.join(cmd)
     if dry_run:
         log_path.write_text(rendered + "\n", encoding="utf-8")
         print(rendered)
@@ -319,8 +378,7 @@ def call_loops(
 ) -> list[dict[str, str]]:
     if args.stats_only:
         return []
-    if args.mustache_bin and not shutil.which(args.mustache_bin):
-        raise SystemExit(f"[ERROR] {args.mustache_bin!r} not found on PATH")
+    entrypoint = mustache_command(args)
 
     rows: list[dict[str, str]] = []
     for label, row in samples.items():
@@ -377,11 +435,11 @@ def call_loops(
                 }
             )
             continue
-        cmd = [args.mustache_bin] if args.mustache_bin else [sys.executable, "-m", args.mustache_module]
+        cmd = list(entrypoint)
         cmd.extend(
             [
                 "-f",
-                matrix_uri,
+                mustache_matrix_path(matrix_uri, resolution),
                 "-r",
                 str(resolution),
                 "-o",
@@ -422,7 +480,7 @@ def call_differential(
 ) -> list[dict[str, str]]:
     if args.stats_only or not pairs:
         return []
-    script = find_diff_script(args.diff_script)
+    script = find_diff_script(args.diff_script, getattr(args, "mustache_script", None))
     if not script:
         raise SystemExit("[ERROR] diff_mustache.py not found; pass --diff-script")
     rows: list[dict[str, str]] = []
@@ -448,9 +506,9 @@ def call_differential(
                 sys.executable,
                 str(script),
                 "-f1",
-                matrix_uri1,
+                mustache_matrix_path(matrix_uri1, resolution1),
                 "-f2",
-                matrix_uri2,
+                mustache_matrix_path(matrix_uri2, resolution2),
                 "--resolution",
                 str(resolution1),
                 "--outfile",
@@ -569,6 +627,9 @@ def main() -> None:
     args = parse_args()
     samples = load_samples(args)
     pairs = load_pairs(args)
+    if args.runtime_check_only:
+        check_runtime(args, bool(pairs or args.diff_script))
+        return
     if not samples and not args.stats_only:
         raise SystemExit("[ERROR] provide --sample, --sample-sheet, or --stats-only")
     if args.resolution_bp is None and samples:
@@ -576,6 +637,8 @@ def main() -> None:
         if len(resolutions) != 1:
             raise SystemExit("[ERROR] provide --resolution-bp or one shared resolution_bp in the sample sheet")
         args.resolution_bp = int(next(iter(resolutions)))
+    if not (args.preflight_only or args.stats_only or args.dry_run):
+        check_runtime(args, bool(pairs))
     resolution_label = str(args.resolution_bp or "existing")
     out_dir = Path(args.out_root) / resolution_label
     out_dir.mkdir(parents=True, exist_ok=True)

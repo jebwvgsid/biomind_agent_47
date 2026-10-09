@@ -1,3 +1,4 @@
+from agent_core.cli_display import display_print
 import hashlib
 import json
 import os
@@ -16,6 +17,8 @@ from agent_core.action_runtime import (
     default_execution_capability_id,
     normalize_capability_contract,
 )
+
+from agent_core.skill_runtime_metadata import domain_metadata
 
 class SkillManager:
     """遵循 Agent Skills 标准的技能加载器"""
@@ -130,6 +133,8 @@ class SkillManager:
                 meta = yaml.safe_load(yaml_content) or {}
                 if not isinstance(meta, dict):
                     raise ValueError("Skill frontmatter must be a mapping")
+                for key, value in domain_metadata(resolved_md, meta).items():
+                    meta.setdefault(key, value)
                 if isinstance(meta.get("metadata"), dict):
                     for key in (
                         "version", "tags", "legacy_ids", "runtime",
@@ -174,7 +179,7 @@ class SkillManager:
                     "path": str(skill_md),
                     "error": type(e).__name__,
                 })
-                print(f"Failed to discover skill in {skill_dir}: {e}")
+                display_print(f"Failed to discover skill in {skill_dir}: {e}")
         self._rebuild_skill_lookup()
 
     def catalog_status(self) -> Dict[str, Any]:
@@ -394,6 +399,16 @@ class SkillManager:
             json.dumps(self.runtime_registry, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
+
+    def get_runtime_registration(self, skill_id: str) -> Dict:
+        """Return persisted evidence only, without merging current declarations."""
+        meta = self.get_skill_meta(skill_id)
+        candidates = self._skill_identifier_candidates(meta) if meta else [skill_id]
+        for candidate in candidates:
+            record = self.runtime_registry.get("skills", {}).get(candidate)
+            if record:
+                return dict(record)
+        return {}
 
     def get_runtime_record(self, skill_id: str) -> Dict:
         """Return declared runtime metadata plus any persisted registration evidence.
@@ -822,7 +837,7 @@ class SkillManager:
             tools = sorted({Path(value).name for value in declared_paths if value.startswith("{prefix}/bin/")})
             requirements.update(execution_capability_id=capability_id,
                 operation=str(contract.get("operation") or ""), required_binding_ids=required,
-                inspection_probes=probes, tools=tools, packages=tools, capabilities=[],
+                inspection_probes=probes, tools=tools, packages=[], capabilities=[],
                 healthcheck="", runtime_requirement_scope="execution_capability",
                 inspection_contract_complete=set(required) <= covered)
         return requirements
@@ -1077,29 +1092,36 @@ class SkillManager:
             for skill in self.discovered_skills
         })
 
-    def list_skill_cards(
-        self,
-        category: str = "",
-        *,
-        max_results: int = 24,
-    ) -> List[Dict[str, Any]]:
-        """Return bounded lightweight cards for one catalog namespace."""
+    def list_skill_cards(self, category: str = "", *, max_results: int = 24, offset: int = 0) -> List[Dict[str, Any]]:
+        """Read a stable page from the registered catalog (never a repo search)."""
         prefix = self._normalize_skill_key(category).lower()
-        selected: List[Dict[str, Any]] = []
+        selected = []
         for skill in self.discovered_skills:
             skill_id = str(skill.get("_skill_id") or "")
-            skill_category = str(skill.get("_skill_category") or "root")
-            if prefix and prefix not in {"all", "root"}:
-                if not (
-                    skill_category.lower() == prefix
-                    or skill_category.lower().startswith(prefix + "/")
-                    or skill_id.lower().startswith(prefix + "/")
-                ):
-                    continue
-            selected.append(self.skill_discovery_card(skill_id))
-            if len(selected) >= max(1, int(max_results)):
-                break
-        return [card for card in selected if card.get("skill_id")]
+            namespace = str(skill.get("_skill_category") or "root")
+            if prefix and prefix not in {"all", "root"} and not (
+                namespace.lower() == prefix or namespace.lower().startswith(prefix+"/") or skill_id.lower().startswith(prefix+"/")):
+                continue
+            selected.append(skill_id)
+        selected.sort()
+        start = max(0, int(offset)); count = max(1, int(max_results))
+        return [self.skill_discovery_card(skill_id) for skill_id in selected[start:start+count]]
+
+    def catalog_page(self, category: str = "", *, offset: int = 0, limit: int = 24) -> Dict[str, Any]:
+        """Lightweight names/purposes and an actionable next-page request."""
+        offset = max(0,int(offset)); limit = max(1,min(24,int(limit)))
+        cards = self.list_skill_cards(category,max_results=limit+1,offset=offset)
+        more = len(cards)>limit
+        rows=[]
+        for card in cards[:limit]:
+            description = str(card.get("summary") or card.get("description") or "")
+            rows.append({"skill_id":card["skill_id"],"name":card.get("name") or card["skill_id"],
+                "description":description[:240],"description_truncated":len(description)>240,
+                "read_with":{"tool":"load_skill_doc","skill_ids":[card["skill_id"]]}})
+        return {**self.catalog_status(),"skill_root":str(self.skills_root),"category":category or "all",
+            "offset":offset,"shown":len(rows),"cards":rows,"has_more":more,
+            "next_request":{"category":category or "all","offset":offset+len(rows),"limit":limit} if more else None,
+            "categories":self.list_skill_categories()}
 
     def skill_discovery_card(
         self,
@@ -1903,7 +1925,7 @@ class SkillManager:
                 remembered_healthcheck = str(record.get("healthcheck", "") or "")
                 effective_healthcheck = str(requirements.get("healthcheck", "") or "")
                 if remembered_healthcheck and remembered_healthcheck == effective_healthcheck:
-                    cards.append(f"- remembered_healthcheck: {record.get('healthcheck')}")
+                    cards.append("- remembered_healthcheck: historical registration metadata; not a request to repeat it")
                 elif remembered_healthcheck:
                     cards.append("- remembered_healthcheck_status: ignored because skill runtime metadata defines a different healthcheck")
                 if record.get("last_success_command"):
@@ -1911,7 +1933,7 @@ class SkillManager:
                         "- historical_success_command: omitted from execution context; "
                         "re-resolve current paths from the runtime audit and active skill docs"
                     )
-                cards.append("- install_policy: verify registered env first; install only if healthcheck fails")
+                cards.append("- runtime_reuse_policy: reuse successful registration covering the requested capabilities; no routine health check. Input preflight remains required. New installation requires concrete authorization and validation of the change.")
             if requirements.get("default_env"):
                 cards.append(f"- default_env: {requirements.get('default_env')}")
             if requirements.get("env_runner"):
@@ -1929,7 +1951,7 @@ class SkillManager:
             if task_types:
                 cards.append(f"- task_types: {', '.join(task_types)}")
             if requirements.get("healthcheck"):
-                cards.append(f"- healthcheck: {requirements.get('healthcheck')}")
+                cards.append(f"- validation_after_authorized_environment_change: {requirements.get('healthcheck')}")
             if requirements.get("install_tool"):
                 cards.append(f"- install_tool: {requirements.get('install_tool')}")
             if requirements.get("install_policy"):
@@ -2259,6 +2281,9 @@ class SkillManager:
         selected_skill_ids: Sequence[str],
     ) -> Dict[str, Any]:
         """Bind Controller-computed contract hashes into Plan semantic identity."""
+        from agent_core.plan_contract import is_simple_plan
+        if is_simple_plan(plan_state):
+            return deepcopy(dict(plan_state))
         candidate = deepcopy(dict(plan_state or {}))
         from agent_core.action_runtime import GENERIC_EXECUTION_CAPABILITY_ID
         registry = self.get_execution_capability_registry(selected_skill_ids)

@@ -29,10 +29,36 @@ metadata:
 
 Use this skill to call chromatin loops and differential loops with ay-lab MUSTACHE from high-resolution Hi-C or Micro-C contact matrices.
 
-Dependency guard: the executable must pass `python -m mustache --help`.
+Dependency guard: verify the selected ay-lab entrypoint with its real `--help`
+exit status. Installed modules use `python -m mustache --help`; an existing
+source checkout can use `python /absolute/path/to/mustache.py --help` in the
+same environment. A missing module does not prove the environment or source
+checkout is absent. For source checkouts pass `--mustache-script` to the wrapper;
+it also finds the adjacent `diff_mustache.py`, or accepts `--diff-script`.
 Do not install the unrelated PyPI package named `mustache`. The supported
 installation path is cloning `https://github.com/ay-lab/mustache` and creating
 the conda environment from `./mustache/environment.yml`.
+
+Use registered source paths when available; machine-specific paths belong in
+the runtime registry, not this skill. In a protected command, select the same
+environment for each diagnostic and declare external source files through
+`read_paths` (both `mustache.py` and `diff_mustache.py` for a source-based pair).
+An unmounted path is not evidence that software is absent on the host.
+If no usable entrypoint is available, follow the task's blocked/installation
+policy and write any requested report and reproduction files. Do not replace
+the selected environment with the BioMind host environment.
+
+To check both entrypoints without reading matrices or writing outputs:
+
+```bash
+python "${SKILL_DIR}/scripts/run_mustache_loops.py" \
+  --mustache-script /absolute/path/to/mustache.py \
+  --diff-script /absolute/path/to/diff_mustache.py --runtime-check-only
+```
+
+Keep the diagnostic's exit status: do not pipe it to `head`/`tail` and report
+that filter's `$?` as Mustache's result. The wrapper preserves the subprocess
+status and performs this check before normal analysis, including auto-balancing.
 
 Mustache is most appropriate for high-resolution contact maps, commonly 10 kb down to 1 kb or finer when sequencing depth supports it. Report the matrix resolution and normalization/balancing status whenever presenting results.
 
@@ -153,13 +179,16 @@ The wrapper adds summary tables without changing Mustache native files.
 
 ## Mandatory Preflight
 
-For `.mcool` inputs, always use the full cooler URI:
+For `.mcool` preflight and balancing with cooler, use the full cooler URI:
 
 ```text
 sample.mcool::/resolutions/10000
 ```
 
 Do not use `sample.mcool::10000`; that is not the canonical mcool group path.
+The ay-lab command line takes the `.mcool` file path plus `-r 10000` and builds
+the group URI internally. The wrapper converts the matching URI for native
+Mustache/diff commands while retaining the full URI for cooler and reports.
 
 Balance must be verified by opening the effective cooler URI and checking that
 `clr.bins()` contains a finite `weight` column. Do not use `cooler balance
@@ -209,7 +238,7 @@ the execution step can auto-balance before loop calling.
 1. Confirm `.mcool` resolution explicitly and build `::/resolutions/{resolution}` URIs.
 2. Run `--preflight-only` to check the cooler `weight` bin column for finite values when a read-only inspection step is needed.
 3. If requested samples fail preflight, plan to use the normal wrapper auto-balance behavior unless the user disabled balancing.
-4. Verify `python -m mustache --help` only after inputs are valid. This is the required runtime healthcheck.
+4. Verify the selected module, executable, or source entrypoint with `--help`; check the differential entrypoint too when requested. `--runtime-check-only` uses the same entrypoints as analysis.
 5. Run loop calling with the wrapper default auto-balance enabled, unless the user explicitly requests `--no-auto-balance` or `--skip-balance-check`.
 6. If requested, run pairwise differential analysis with `diff_mustache.py`.
 7. Summarize loop count, distance, FDR, and detection scale across native Mustache outputs.

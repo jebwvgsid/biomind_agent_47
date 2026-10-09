@@ -2,20 +2,19 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createHash } from 'node:crypto';
-import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile, copyFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { SessionManager } from '@earendil-works/pi-coding-agent';
 import { requestFromBranch, type BioMindUIRequest } from '../extensions/biomind.js';
-import { assertPairs, call, createHarness, text } from './extension-harness.js';
+import { assertPairs, call, createHarness, text, FakeDomain } from './extension-harness.js';
 
-test('P16.a real Pi JSONL reopens the persisted selected branch and resets an independent request to Consult', async () => {
+test('P16.a real Pi JSONL reopens the persisted selected branch and continues its main request', async () => {
   const cwd = await mkdtemp(join(tmpdir(), 'biomind-pi-jsonl-'));
   const sessionDir = join(cwd, 'sessions'); await mkdir(sessionDir);
   const manager = SessionManager.create(cwd, sessionDir);
   const h = await createHarness({ name: 'P16a-jsonl-create', cwd, sessionManager: manager, script: [
     call('persist-question', 'ask_user', { question: '选择当前分支的分析约束？' }),
-    call('persist-handoff', 'handoff_generate', { goal: '保存所选分支的执行上下文', manifest: '/fixture/所选清单.tsv' }),
     call('persist-plan', 'update_plan', { steps: [{ step: 'SELECTED_PLAN_甲', status: 'pending' }] }),
     text('SELECTED_ASSISTANT：保持用户回答与可选计划。'),
     text('ABANDONED_ASSISTANT：废弃分支不应进入重开后的请求。'),
@@ -31,9 +30,9 @@ test('P16.a real Pi JSONL reopens the persisted selected branch and resets an in
     await h.prompt('SELECTED_USER：先询问约束，再记录可选计划。');
     const branchPoint = manager.getLeafId()!;
     selectedRequest = requestFromBranch(manager.getBranch())!.requestId;
-    assert.equal(requestFromBranch(manager.getBranch())!.role, 'Generate');
-    await h.prompt('ABANDONED_USER：这是后来废弃的独立分支。');
-    assert.equal(requestFromBranch(manager.getBranch())!.role, 'Consult');
+    assert.equal(requestFromBranch(manager.getBranch())!.role, 'Main');
+    await h.prompt('[新任务] ABANDONED_USER：这是后来废弃的独立分支。');
+    assert.equal(requestFromBranch(manager.getBranch())!.role, 'Main');
     // Plain tree navigation only moves Pi's in-memory leaf. A real user label
     // persists the selected path with a native label entry. No test appends or
     // rewrites a BioMind role, request, plan, message or session record.
@@ -41,10 +40,10 @@ test('P16.a real Pi JSONL reopens the persisted selected branch and resets an in
     assert.equal(navigation.cancelled, false); selectedLeaf = manager.getLeafId()!;
     assert.equal(manager.getEntry(selectedLeaf)?.type, 'label');
     const selected = requestFromBranch(manager.getBranch())!;
-    assert.equal(selected.requestId, selectedRequest); assert.equal(selected.role, 'Generate');
+    assert.equal(selected.requestId, selectedRequest); assert.equal(selected.role, 'Main');
     assert.equal(selected.plan?.[0].step, 'SELECTED_PLAN_甲');
     assert(!JSON.stringify(manager.buildSessionContext().messages).includes('ABANDONED_'));
-    assert.equal(h.requests.length, 5); assert.deepEqual(h.errors, []);
+    assert.equal(h.requests.length, 4); assert.deepEqual(h.errors, []);
     file = manager.getSessionFile()!; assert(file.startsWith(sessionDir + '/'));
     snapshot = await readFile(file, 'utf8');
     assert.match(snapshot, /SELECTED_ANSWER_α/); assert.match(snapshot, /ABANDONED_USER/);
@@ -55,19 +54,20 @@ test('P16.a real Pi JSONL reopens the persisted selected branch and resets an in
   const reopened = SessionManager.open(file, sessionDir);
   assert.equal(reopened.getSessionId(), originalSessionId); assert.equal(reopened.getLeafId(), selectedLeaf);
   assert.equal(reopened.getEntries().length, manager.getEntries().length);
-  assert.equal(requestFromBranch(reopened.getBranch())!.role, 'Generate');
+  assert.equal(requestFromBranch(reopened.getBranch())!.role, 'Main');
   assert.equal(requestFromBranch(reopened.getBranch())!.plan?.[0].step, 'SELECTED_PLAN_甲');
   assert.equal(requestFromBranch(reopened.getBranch())!.requestId, selectedRequest);
-  const h2 = await createHarness({ name: 'P16a-jsonl-reopen', cwd, sessionManager: reopened, script: [context => {
+  const restoredDomain=new FakeDomain();restoredDomain.requestId=selectedRequest;
+  const h2 = await createHarness({ name: 'P16a-jsonl-reopen', cwd, sessionManager: reopened, domain:restoredDomain, script: [context => {
     const payload = JSON.stringify(context); assert.match(payload, /SELECTED_ANSWER_α/); assert.match(payload, /SELECTED_USER/);
     assert(!payload.includes('ABANDONED_'), 'abandoned branch must not leak into the next actual provider request');
     const current = [...context.messages].reverse().find(message => message.role === 'system' && message.sections?.['biomind-current']);
     assert(current?.role === 'system'); const section = current.sections?.['biomind-current'];
-    assert(typeof section === 'string'); assert.match(section, /"role":"Consult"/);
+    assert(typeof section === 'string'); assert(section.includes(selectedRequest)); assert(!/"role":"(?:Consult|Generate)"/.test(section));
     const state = requestFromBranch(reopened.getBranch())!;
-    assert.equal(state.role, 'Consult'); assert.equal(state.plan, undefined); assert.equal(state.handoffConsumed, false);
-    assert.notEqual(state.requestId, selectedRequest); assertPairs(context.messages);
-    return text('重开后只沿已选分支回答，当前请求为 Consult。');
+    assert.equal(state.role, 'Main'); assert.equal(state.plan?.[0].step, 'SELECTED_PLAN_甲'); assert.equal(state.handoffConsumed, undefined);
+    assert.equal(state.requestId, selectedRequest); assertPairs(context.messages);
+    return text('重开后只沿已选分支回答，当前请求为 Main。');
   }] });
   try {
     assert(h2.session.getActiveToolNames().includes('read'));
@@ -75,8 +75,8 @@ test('P16.a real Pi JSONL reopens the persisted selected branch and resets an in
     assert(h2.session.getActiveToolNames().includes('write'));
     assert(h2.session.getActiveToolNames().includes('edit'));
     assert.equal(h2.requests.length, 0, 'opening a session must not replay model or domain actions');
-    assert.equal(h2.domain.calls.length, 0); assert.equal(requestFromBranch(reopened.getBranch())!.role, 'Generate');
-    await h2.prompt('REOPENED_USER：这是重开后的独立咨询。');
+    assert.equal(h2.domain.calls.length, 0); assert.equal(requestFromBranch(reopened.getBranch())!.role, 'Main');
+    await h2.prompt('继续当前任务。REOPENED_USER：沿用当前请求。');
     assert.equal(h2.requests.length, 1); assert.deepEqual(h2.errors, []);
     assert.equal(h2.events.at(-1)?.type, 'agent_settled');
     assert.equal(h2.domain.calls.filter(row => row.method === 'request.begin').length, 1);
@@ -99,3 +99,60 @@ test('P16.a real Pi JSONL reopens the persisted selected branch and resets an in
     }
   }
 });
+
+for (const kind of ['Consult','Generate','handoff','compaction','cancelled','completed','active-job'] as const) {
+  test(`C copied historical ${kind} JSONL is read-only input; main decoding never replays a transition`, async () => {
+    const cwd=await mkdtemp(join(tmpdir(),'biomind-legacy-copy-'));
+    const originalDir=join(cwd,'original');const copyDir=join(cwd,'copy');
+    await mkdir(originalDir);await mkdir(copyDir);
+    const original=SessionManager.create(cwd,originalDir);
+    const basis='ORIGINAL_USER_BASIS: QC failure must stop; no installation';
+    const historical:any={requestId:'legacy-request',ownerSessionId:original.getSessionId(),
+      role:kind==='Consult'||kind==='cancelled'?'Consult':'Generate',
+      status:kind==='cancelled'?'aborted':kind==='completed'||kind==='compaction'?'settled':'active',revision:3,
+      plan:[{step:'KEEP_PRIOR_PLAN',status:'pending'}],
+      handoff:{toolCallId:'old-only',goal:'old task',bound:{user_basis:[{text:basis,revision:3}],source_ref:'pi:historic:evidence'}},
+      handoffConsumed:kind!=='handoff',
+      boundary:{id:'historical-role-boundary',kind:'handoff',targets:[],checkpoint:true,committed:false,
+        handoff:{content:'LEGACY_AUTO_CONTINUE_MUST_NOT_EXECUTE',details:{}}}};
+    original.appendCustomEntry('biomind.request',historical);
+    original.appendMessage({role:'user',content:basis,timestamp:1});
+    original.appendCustomMessageEntry('biomind.handoff',JSON.stringify({phase:'Generate',instruction:'LEGACY_AUTO_CONTINUE_MUST_NOT_EXECUTE',
+      request_id:historical.requestId,user_basis:[{text:basis,revision:3}],source_ref:'pi:historic:evidence'}),true);
+    original.appendMessage({role:'assistant',content:text('HISTORICAL_RESULT_ONLY'),api:'openai-completions',provider:'fixture',model:'fixture',
+      stopReason:'stop',timestamp:2,usage:{input:1,output:1,cacheRead:0,cacheWrite:0,totalTokens:2,cost:{input:0,output:0,cacheRead:0,cacheWrite:0,total:0}}});
+    if(kind==='compaction')original.appendCompaction('OLD_COMPACTION_FACT: '+basis,null,100,{},true);
+    const source=original.getSessionFile()!;const originalBytes=await readFile(source,'utf8');
+    const copied=join(copyDir,'historical-copy.jsonl');await copyFile(source,copied);
+    const reopened=SessionManager.open(copied,copyDir);const domain=new FakeDomain();domain.requestId=historical.requestId;
+    if(kind==='active-job')domain.receipts.set('request.begin',(params:any)=>{
+      // Real Domain admission rejects a different owner while its job is live;
+      // session.lifecycle is an explicit observer API, not a hidden preflight.
+      if(params.request_id!==historical.requestId)throw Error('ACTIVE_JOB_PREVENTS_NEW_REQUEST');
+      return {status:'ready',request_id:historical.requestId};
+    });
+    const h=await createHarness({cwd,sessionManager:reopened,domain,script:[text('MAIN_CONTINUED_ON_EXPLICIT_INPUT')]});
+    try {
+      const decoded=requestFromBranch(reopened.getBranch())!;
+      assert.equal(decoded.role,'Main');assert.equal(decoded.boundary,undefined);assert.equal(decoded.handoff,undefined);
+      assert.equal(decoded.requestId,historical.requestId);assert.equal(decoded.ownerSessionId,original.getSessionId());
+      assert.equal(decoded.revision,3);assert.equal(decoded.plan?.[0].step,'KEEP_PRIOR_PLAN');
+      assert(JSON.stringify(decoded.userBasis).includes(basis));
+      assert.equal(h.requests.length,0);assert.equal(domain.calls.filter(row=>/^(exec|install)\./.test(row.method)).length,0);
+      assert(!h.session.getActiveToolNames().includes('handoff_generate'));
+      if(kind==='active-job') {
+        await h.prompt('[新任务] must not replace old active job owner');
+        assert.equal(h.requests.length,0);assert.equal(requestFromBranch(reopened.getBranch())!.requestId,historical.requestId);
+        assert.equal(domain.requestId,historical.requestId);
+        assert.equal(domain.calls.filter(row=>row.method==='request.begin'&&row.params.request_id!==historical.requestId).length,1);
+        assert.equal(domain.calls.filter(row=>row.method==='exec.cancel').length,0);
+      } else {
+        await h.prompt('继续当前任务');
+        assert.equal(h.requests.length,1);assert(!JSON.stringify(h.requests[0]).includes('LEGACY_AUTO_CONTINUE_MUST_NOT_EXECUTE'));
+        assert(JSON.stringify(h.requests[0]).includes(basis));
+        assert.equal(domain.calls.filter(row=>row.method==='request.begin'&&row.params.role!=='main').length,0);
+        assert.equal(h.events.filter(event=>event.type==='agent_settled').length,1);
+      }
+    } finally {await h.close();assert.equal(await readFile(source,'utf8'),originalBytes,'the historical source JSONL must remain unchanged');}
+  });
+}

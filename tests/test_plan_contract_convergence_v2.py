@@ -192,21 +192,30 @@ class TaskSpecRoleAndProjectionTests(unittest.TestCase):
         self.assertEqual(twice["parameters"], once["parameters"])
         self.assertFalse(twice["requirements"])
 
-    def test_17_custom_projection_is_complete(self):
+    def test_17_custom_projection_waits_for_generate_owned_identifier(self):
         result = project_task_spec_to_renderer(self.custom_spec(), self.renderer["invocation"], task_id="task-custom")
-        self.assertEqual(result["status"], "COMPLETE")
+        self.assertEqual(result["status"], "INCOMPLETE")
+        self.assertEqual(result["missing_bindings"], ["genome_version"])
+        self.assertNotIn("genome_version", result["arguments"])
 
-    def test_18_custom_identifier_is_stable(self):
+    def test_18_controller_does_not_synthesize_custom_identifier(self):
         first = project_task_spec_to_renderer(self.custom_spec(), self.renderer["invocation"], task_id="task-custom")
         second = project_task_spec_to_renderer(self.custom_spec(), self.renderer["invocation"], task_id="task-custom")
-        self.assertEqual(first["arguments"]["genome_version"], second["arguments"]["genome_version"])
+        self.assertNotIn("genome_version", first["arguments"])
+        self.assertNotIn("genome_version", second["arguments"])
+        self.assertEqual(first["missing_binding_details"], second["missing_binding_details"])
 
-    def test_19_derived_identifier_has_controller_provenance(self):
+    def test_19_missing_identifier_points_to_explicit_produced_binding(self):
         result = project_task_spec_to_renderer(self.custom_spec(), self.renderer["invocation"], task_id="task-custom")
-        self.assertEqual(
-            result["binding_sources"]["genome_version"]["source"],
-            "controller_derived_from_skill_contract",
+        detail = next(
+            item for item in result["missing_binding_details"]
+            if item["argument"] == "genome_version"
         )
+        self.assertEqual(
+            detail["repair_target"],
+            "generated_action.produced_bindings.genome_version",
+        )
+        self.assertNotIn("genome_version", result["binding_sources"])
 
     def test_20_missing_required_input_is_incomplete(self):
         result = project_task_spec_to_renderer(create_task_spec("output directory /tmp/out"), self.renderer["invocation"], task_id="t")
@@ -653,7 +662,7 @@ class RepairAndConvergenceTests(unittest.TestCase):
 
 
 class IncidentReplayTests(unittest.TestCase):
-    def test_50_session_1786283343_custom_database_projection_converges(self):
+    def test_50_session_1786283343_legacy_projection_does_not_invent_generate_binding(self):
         manager = SkillManager("skills")
         renderer = manager.get_renderer_record("genomics/snpeff-annotation")
         spec = create_task_spec(
@@ -675,10 +684,14 @@ class IncidentReplayTests(unittest.TestCase):
             output_contracts=[],
             task_spec=spec,
         )
-        invocation = normalized["steps"][0]["renderer_invocation_contract"]
-        self.assertFalse(issues)
-        self.assertEqual(normalized["renderer_projections"][0]["status"], "COMPLETE")
-        self.assertEqual(invocation["arguments"]["genome_version"], "biomind_session_1786283343")
+        projection = normalized["renderer_projections"][0]
+        self.assertNotIn("renderer_invocation_contract", normalized["steps"][0])
+        self.assertEqual(projection["status"], "INCOMPLETE")
+        self.assertEqual(projection["missing_bindings"], ["genome_version"])
+        self.assertIn(
+            "RENDERER_MISSING_REQUIRED_BINDING",
+            {item["code"] for item in issues},
+        )
         self.assertNotIn("annotated.vcf", normalized["steps"][0]["inputs"])
 
 

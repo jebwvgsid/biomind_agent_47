@@ -66,6 +66,16 @@ def launch(export_root: Path, results: Path, tests: list[str], *,
         "BIOMIND_CLI_PROGRESS_ARTIFACTS": str(results),
         "BIOMIND_EXEC_LOG_DIR": str(scratch / "executor-logs"),
     }
+    if '--pipe-wakeup' in tests:
+        tests = [value for value in tests if value != '--pipe-wakeup']
+        environment['BIOMIND_CLI_PIPE_WAKEUP'] = '1'
+    if '--thread-dump' in tests:
+        tests = [value for value in tests if value != '--thread-dump']
+        environment['BIOMIND_OFFLINE_TRACEBACK_SECONDS'] = '30'
+    entry = next((value for value in tests if value.startswith('--entry-case=')), None)
+    if entry:
+        tests = [value for value in tests if value != entry]
+        environment['BIOMIND_CLI_ENTRY_CASE'] = entry.split('=', 1)[1]
     if fatal_diagnostics:
         environment["BIOMIND_OFFLINE_FATAL_FILE"] = str(results / "fatal.txt")
     if fatal_selftest:
@@ -116,6 +126,10 @@ def guarded_child():
                 raise RuntimeError("CLI_OFFLINE_ORIGINAL_DATABASE_DENIED")
 
     sys.addaudithook(guard)
+    if os.environ.get('BIOMIND_CLI_PIPE_WAKEUP') == '1':
+        sys.path.insert(0, str(root))
+        from tests.cli_repair_support import install_pipe_wakeup
+        install_pipe_wakeup()
     token_stub = types.ModuleType("tiktoken")
     def unavailable(*_args, **_kwargs):
         raise RuntimeError("Offline fixture uses the existing character estimator")

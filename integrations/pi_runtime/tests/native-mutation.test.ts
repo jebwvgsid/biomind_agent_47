@@ -43,6 +43,7 @@ async function fixture(label: string) {
     },
   };
   return { cwd, domain, bridge, events, versions,
+    resume() { return domain.hostCall('request.resume', {}, options); },
     approve(fn: (p: any) => Promise<string> = async () => 'y') { decide = fn; },
     run(kind: 'write' | 'edit', id: string, args: any, signal?: AbortSignal) {
       return nativeMutation(kind, cwd, bridge).execute(id, args, signal, undefined, { cwd });
@@ -59,6 +60,7 @@ test('P2 official schemas and preparation retained; denied or blank approval cre
   const f = await fixture('P2-deny');
   try {
     for (const choice of ['n', '', 'cancel']) {
+      if (choice !== 'n') await f.resume();
       f.approve(async () => choice);
       const target = path.join(f.cwd, 'new-' + (choice || 'blank'), 'child.txt');
       await assert.rejects(f.run('write', `deny-${choice}`, { path: target, content: '无副作用' }), /PERMISSION_DENIED/);
