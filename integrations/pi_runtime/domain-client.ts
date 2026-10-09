@@ -3,6 +3,8 @@ import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import { StringDecoder } from 'node:string_decoder';
 import path from 'node:path';
+import fs from 'node:fs';
+import { pluginChildOptions } from './plugin-lease.js';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 
@@ -102,7 +104,15 @@ export class DomainClient extends EventEmitter {
     const dataRoot = path.resolve(options.dataRoot ?? path.join(options.cwd, '.biomind', 'pi-domain'));
     const python = options.python ?? process.env.BIOMIND_PI_PYTHON;
     if (!python || !path.isAbsolute(python)) throw new Error('An explicit absolute BioMind Python interpreter is required');
-    const args = ['-B', '-u', options.servicePath ?? process.env.BIOMIND_PI_DOMAIN_SERVICE ?? path.join(runtime, 'python_service.py'),
+    const servicePath = options.servicePath ?? process.env.BIOMIND_PI_DOMAIN_SERVICE ?? path.join(runtime, 'python_service.py');
+    if(process.env.BIOMIND_PI_RELEASE_ROOT){
+      const releaseRoot=fs.realpathSync(path.join(runtime,'../..'));
+      if(fs.realpathSync(process.env.BIOMIND_PI_RELEASE_ROOT)!==releaseRoot||fs.realpathSync(installRoot)!==releaseRoot)
+        throw new Error('BIOMIND_BUILD_INSTALL_ROOT_MISMATCH');
+      if(fs.realpathSync(servicePath)!==fs.realpathSync(path.join(runtime,'python_service.py')))
+        throw new Error('BIOMIND_BUILD_DOMAIN_SOURCE_MISMATCH');
+    }
+    const args = ['-B', '-u', servicePath,
       '--cwd', path.resolve(options.cwd), '--data-root', dataRoot, '--install-root', installRoot,
       '--session-id', options.sessionId];
     args.push('--execution-profile', options.executionProfile ?? 'protected', '--profile-source', options.profileSource ?? 'host');
@@ -121,14 +131,15 @@ export class DomainClient extends EventEmitter {
     const memoryMode = options.memoryMode ?? process.env.BIOMIND_PI_MEMORY_MODE;
     if (memoryMode) args.push('--memory-mode', memoryMode);
     // No inherited provider credentials, shell startup, dotenv or Python path.
-    this.#child = spawn(python, args, { cwd: options.cwd, stdio: ['pipe', 'pipe', 'pipe'],
-      env: { PATH: `${path.dirname(python)}:/usr/bin:/bin`, LC_ALL: 'C.UTF-8',
+    const resourceChild=pluginChildOptions(['pipe','pipe','pipe']);
+    this.#child = spawn(python, args, { cwd: options.cwd, stdio: resourceChild.stdio,
+      env: { ...resourceChild.env, PATH: `${path.dirname(python)}:/usr/bin:/bin`, LC_ALL: 'C.UTF-8',
         ...(process.env.HOME ? { HOME: process.env.HOME } : {}),
         ...(process.env.XDG_CONFIG_HOME ? { XDG_CONFIG_HOME: process.env.XDG_CONFIG_HOME } : {}),
         ...Object.fromEntries(['XDG_CACHE_HOME','XDG_DATA_HOME','XDG_STATE_HOME','TMPDIR','TMP','TEMP']
           .flatMap(key => process.env[key] ? [[key,process.env[key]!]] : [])),
         ...(process.env.BIOMIND_PI_PREFERENCES_SOURCE ? { BIOMIND_PI_PREFERENCES_SOURCE: process.env.BIOMIND_PI_PREFERENCES_SOURCE } : {}),
-        PYTHONDONTWRITEBYTECODE: '1', PYTHONUNBUFFERED: '1' } });
+        PYTHONDONTWRITEBYTECODE: '1', PYTHONUNBUFFERED: '1' } }) as ChildProcessWithoutNullStreams;
     this.#child.on('error', error => {
       this.#diagnostics.spawnCode = (error as NodeJS.ErrnoException).code;
       this.#unavailable('DOMAIN_PROCESS_START_FAILED', error.message, 2);

@@ -80,6 +80,7 @@ export interface HarnessOptions {
   nativePrompt?: boolean;
   trustedProject?: boolean;
   settings?: Parameters<typeof SettingsManager.inMemory>[0];
+  pluginFactories?: Array<{name:string;factory:(pi:import('@earendil-works/pi-coding-agent').ExtensionAPI)=>void|Promise<void>}>;
 }
 export async function createHarness(options: HarnessOptions = {}) {
   const cwd = options.cwd ?? await mkdtemp(join(tmpdir(), 'biomind-pi-extension-'));
@@ -103,11 +104,11 @@ export async function createHarness(options: HarnessOptions = {}) {
     systemPrompt: options.nativePrompt ? undefined : 'Isolated BioMind integration test.', appendSystemPrompt: [],
     extensionFactories: [{ name: 'production-biomind', factory: createBioMindExtension({ executionProfile: options.executionProfile, domainFactory: domainOptions => {
       domainCreations++; return options.domainFactory ? options.domainFactory(domainOptions) : domain;
-    } }) }],
+    } }) },...(options.pluginFactories??[])],
   });
   await resourceLoader.reload();
   assert.deepEqual(resourceLoader.getExtensions().errors, []);
-  assert.equal(resourceLoader.getExtensions().extensions.length, 1, 'must load the production extension');
+  assert.equal(resourceLoader.getExtensions().extensions.length, 1+(options.pluginFactories?.length??0), 'must load the production extension');
   assert(!resourceLoader.getExtensions().extensions[0].tools.has('handoff_generate'));
   assert(resourceLoader.getExtensions().extensions[0].tools.has('install_tool'));
   assert(resourceLoader.getExtensions().extensions[0].tools.has('register_environment'));
@@ -147,7 +148,7 @@ export async function createHarness(options: HarnessOptions = {}) {
   const { session } = await createAgentSession({ cwd, agentDir: cwd, modelRuntime, model, thinkingLevel: 'off',
     sessionStartEvent: options.sessionStartEvent,
     resourceLoader, sessionManager: manager, settingsManager,
-    tools: [...(options.executionProfile === 'native' ? ['read','write','edit','bash','ls','find','grep'] : []), ...resourceLoader.getExtensions().extensions[0].tools.keys()] });
+    tools: [...(options.executionProfile === 'native' ? ['read','write','edit','bash','ls','find','grep'] : []), ...resourceLoader.getExtensions().extensions.flatMap(extension=>[...extension.tools.keys()])] });
   session.agent.toolExecution = 'sequential';
   session.subscribe(event => { events.push(clone(event)); });
   await session.bindExtensions({ mode: 'json', onError: error => { errors.push(clone(error)); } });

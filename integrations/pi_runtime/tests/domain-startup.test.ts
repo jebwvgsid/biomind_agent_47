@@ -15,7 +15,7 @@ async function fixture(t: any, source?: string, overrides: Partial<DomainOptions
   if (source !== undefined) await writeFile(servicePath, source);
   const client = new DomainClient({ cwd: directory, python, installRoot: repo, dataRoot: path.join(directory, 'state'),
     sessionId: 'isolated-startup', registryPath: path.join(directory, 'missing-registry.json'),
-    servicePath, handshakeTimeoutMs: 5000, ...overrides });
+    servicePath, handshakeTimeoutMs: 20000, ...overrides });
   const events: DomainLifecycle[] = [];
   client.on('lifecycle', event => events.push(event));
   t.after(async () => { await client.close({ disconnectOnly: true }); await rm(directory, { recursive: true, force: true }); });

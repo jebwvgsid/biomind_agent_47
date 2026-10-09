@@ -28,6 +28,9 @@ import { readEditableFile, saveEditableFile, memoryDefault, saveMemoryDefault, a
 import { listProjects, createProject, restartProjectCommand } from '../project-launcher.js';
 import { readTargetSessionRoot } from '../native-session.js';
 import { loadCompactionInstructions } from '../compaction-addendum.js';
+import { controlInstructions, InstructionControlError } from '../studio-instructions.js';
+import {acquireSessionWriter,SessionWriterError} from '../session-writer.js';
+import {borrowNativeWriter,writerHeader} from '../session-writer-host.js';
 
 export interface DomainConnection {
   readonly startupFailed?: boolean;
@@ -50,6 +53,8 @@ export interface BioMindUIRequest {
   question: string;
   toolCallId: string;
   choices?: string[];
+  method?: 'editor';
+  prefill?: string;
   proposal?: Record<string, unknown>;
 }
 export interface BioMindUIResponse {
@@ -97,6 +102,7 @@ const EMPTY = Type.Object({}, { additionalProperties: false });
 const OBJECT = (properties: Record<string, TSchema>): TSchema => Type.Object(properties, { additionalProperties: false });
 const nonempty = () => Type.String({ minLength: 1 });
 const optionalString = () => Type.Optional(Type.String());
+const MAX_QUESTION_PREFILL_BYTES = 64 * 1024;
 const asObject = (value: unknown): Record<string, any> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, any> : {};
 const customEntries = (branch: readonly SessionEntry[], name: string) => branch.filter(
   (entry): entry is Extract<SessionEntry, { type: 'custom' }> => entry.type === 'custom' && entry.customType === name);
@@ -179,7 +185,41 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
       if (provider) pi.registerProvider(selection.provider, provider);
     }
     const toolNames = (names: readonly string[]) => canaryTools((native ? nativeTools(names) : [...names]).sort());
-    const setActiveTools = (names: readonly string[]) => pi.setActiveTools(toolNames(names));
+    let userToolSelection: string[] | null = null;
+    const coreToolNames = new Set([...MAIN_TOOLS,...NATIVE_TOOLS,'maintenance_submit']);
+    const pluginTools = () => (typeof pi.getAllTools === 'function' ? pi.getAllTools() : [])
+      .map(tool=>tool.name).filter(name=>!coreToolNames.has(name));
+    const allowedMainTools = () => canaryTools([...new Set([...toolNames(MAIN_TOOLS),...(native?pluginTools():[])])]);
+    const mainTools = () => allowedMainTools().filter(name=>userToolSelection===null || userToolSelection.includes(name));
+    const publishToolPolicy = () => pi.events.emit('biomind:tools_policy',{allowed:allowedMainTools(),selected:userToolSelection,
+      denied:native?[]:pluginTools().map(name=>({name,reason:'PROTECTED_PLUGIN_TOOL_UNSUPPORTED'})),
+      pluginExecution:native?'native_account_permissions':'not_authorized_by_protected_domain'});
+    let lastAppliedTools:string[]|undefined;
+    const sameTools=(a:readonly string[],b:readonly string[])=>JSON.stringify([...a].sort())===JSON.stringify([...b].sort());
+    const persistToolSelection=()=>{
+      if(!activeContext)return;
+      const saved=customEntries(activeContext.sessionManager.getBranch(),'biomind.tool_selection').at(-1)?.data as any;
+      if(saved?.version===1&&JSON.stringify(saved.selected)===JSON.stringify(userToolSelection))return;
+      pi.appendEntry('biomind.tool_selection',{version:1,selected:userToolSelection});
+    };
+    const restoreToolSelection=(ctx:ExtensionContext)=>{
+      const saved=customEntries(ctx.sessionManager.getBranch(),'biomind.tool_selection').at(-1)?.data as any;
+      if(saved?.version===1&&(saved.selected===null||Array.isArray(saved.selected)&&saved.selected.every((name:unknown)=>typeof name==='string')))
+        userToolSelection=saved.selected===null?null:[...saved.selected];
+      else userToolSelection=null;
+      lastAppliedTools=undefined;
+    };
+    const setActiveTools = (names: readonly string[]) => {
+      if(names===MAIN_TOOLS&&lastAppliedTools&&activeContext&&readySessions.has(activeContext.sessionManager.getSessionId())
+          &&!state(activeContext)?.maintenance?.outboxId&&typeof pi.getActiveTools==='function'){
+        const effective=pi.getActiveTools();
+        // Preserve the original UI's explicit setActiveTools changes, including [].
+        if(!sameTools(effective,lastAppliedTools)){userToolSelection=[...effective];persistToolSelection();}
+      }
+      const next=names===MAIN_TOOLS?mainTools():toolNames(names);
+      pi.setActiveTools(next);lastAppliedTools=[...next];
+    };
+
     const existingSessions = new Set<string>();
     const readySessions = new Set<string>();
     const backendStates = new Map<string, BioMindBackendState>();
@@ -196,6 +236,24 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
     let initialUserPending = false;
     let preparedInputRequestId: string | undefined;
     let activeContext: ExtensionContext | undefined;
+    let writerReady=false;
+    const claimWriter=async(ctx:ExtensionContext,reason:string,previousSessionFile?:string,target?:string)=>{
+      if(options.domainFactory)return; // Synthetic domain harness owns no production writer.
+      const sessionFile=target??ctx.sessionManager.getSessionFile();if(!sessionFile)return;
+      const id=target?writerHeader(target).id:ctx.sessionManager.getSessionId();
+      const mode=target||reason==='resume'||reason==='startup'&&process.env.BIOMIND_PI_SESSION_EXISTING==='1'?'resume':'new';
+      if(process.env.BIOMIND_SESSION_WRITER_MANAGED==='parent')await borrowNativeWriter({sessionFile,sessionId:id,cwd:ctx.cwd,mode,reason,previousSessionFile});
+      else if(process.env.BIOMIND_SESSION_WRITER_MANAGED==='json')await acquireSessionWriter({sessionFile,sessionId:id,cwd:ctx.cwd,mode,ownerGeneration:process.env.BIOMIND_SESSION_WRITER_OWNER_GENERATION??''});
+      else throw new SessionWriterError('SESSION_WRITER_PARENT_REQUIRED');
+    };
+    pi.events.on('biomind:tools_selection',(raw:unknown)=>{
+      const selected=asObject(raw).selected;
+      if(selected!==null && (!Array.isArray(selected)||selected.some(name=>typeof name!=='string'||!allowedMainTools().includes(name))))return;
+      userToolSelection=selected===null?null:[...selected];
+      if(asObject(raw).persist!==false)persistToolSelection();
+      lastAppliedTools=undefined;
+      if(activeContext && !state(activeContext)?.maintenance?.outboxId)setActiveTools(MAIN_TOOLS);
+    });
     let snapshot: Snapshot = { history_enabled: false };
     let snapshotKnown = false;
     let snapshotFailed = false;
@@ -492,6 +550,34 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
         pi.events.emit('biomind:settings_result', { id: request.id, status: 'ok', sessionId: sessionId(activeContext), ...result });
       } catch (error) { pi.events.emit('biomind:settings_result', { id: request.id, status: 'error', code: 'SETTINGS_UPDATE_FAILED', message: String(error) }); }
     });
+    pi.events.on('biomind:instructions_request',async(raw:unknown)=>{
+      const request=asObject(raw);
+      try {
+        if(!activeContext)throw new InstructionControlError('INSTRUCTIONS_OWNER_UNAVAILABLE');
+        await applySettings(activeContext,{});
+        const {id,loadedContextFiles,...operation}=request;
+        const data=await controlInstructions({cwd:activeContext.cwd,agentDir:getAgentDir(),preference:asObject(snapshot.preferences),
+          contextFiles:Array.isArray(loadedContextFiles)?loadedContextFiles:[],ownerLoaded:true},operation);
+        if(data.saved){savedInstructions.add(data.path);if(data.scope==='global')savedGlobalInstructions.add(data.path);}
+        pi.events.emit('biomind:instructions_result',{id,status:'ok',data});
+      }catch(error){pi.events.emit('biomind:instructions_result',{id:request.id,status:'error',
+        code:error instanceof InstructionControlError?error.code:'INSTRUCTIONS_READ_FAILED',
+        ...(error instanceof InstructionControlError && error.currentVersion?{currentVersion:error.currentVersion}:{})});}
+    });
+    pi.events.on('biomind:packages_state_request',async(raw:unknown)=>{
+      const request=asObject(raw);
+      try{
+        const ctx=activeContext;
+        if(!ctx||!writerReady||!readySessions.has(sessionId(ctx)))throw new Error('PACKAGES_STATE_UNAVAILABLE');
+        if(!ctx.isIdle()||pendingUI.size||inputQueue.length||state(ctx)?.maintenance?.outboxId&&!state(ctx)?.maintenance?.applied)
+          throw new Error('PACKAGES_BUSY');
+        const live=asObject(await client(ctx).call('session.lifecycle',{action:'inspect'}));
+        if(live.active_jobs!==false||live.count!==0||!ctx.isIdle()||pendingUI.size||inputQueue.length)
+          throw new Error(live.active_jobs===true||Number(live.count)>0?'PACKAGES_BUSY':'PACKAGES_STATE_UNAVAILABLE');
+        pi.events.emit('biomind:packages_state_result',{id:request.id,status:'ok',idle:true,activeJobs:0,sessionId:sessionId(ctx)});
+      }catch(error){pi.events.emit('biomind:packages_state_result',{id:request.id,status:'error',
+        code:error instanceof Error&&error.message==='PACKAGES_BUSY'?'PACKAGES_BUSY':'PACKAGES_STATE_UNAVAILABLE'});}
+    });
     const observePermissions = async (ctx: ExtensionContext, input: Record<string, unknown>): Promise<Record<string, any>> => {
       if (native && input.action === 'status') return { execution_profile: profile, approval_mode: { mode: 'not_applicable' }, grants: [] };
       if (native) throw new Error('native 普通工具不使用目录 grant；审批操作请在 protected 新进程中进行。');
@@ -607,15 +693,19 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
       return [options.find(option => option.choice === 'n') ?? options.find(option => option.choice === 'cancel')!, ...options.filter(option => option.choice !== 'n')];
     };
     async function ask(ctx: ExtensionContext, kind: 'question' | 'approval', toolCallId: string, question: string,
-      signal?: AbortSignal, proposal?: Record<string, unknown>, choices?: string[], fine = false): Promise<BioMindUIResponse> {
+      signal?: AbortSignal, proposal?: Record<string, unknown>, choices?: string[], fine = false,
+      editor?: { prefill?: string }): Promise<BioMindUIResponse> {
       if (kind === 'approval') signal = signal ? AbortSignal.any([signal, AbortSignal.timeout(300_000)]) : AbortSignal.timeout(300_000);
       const approval = kind === 'approval' ? approvalOptions(proposal ?? {}, fine) : [];
       if (kind === 'approval') choices = approval.map(option => option.label);
-      const request: BioMindUIRequest = { id: randomUUID(), requestId: current(ctx).requestId, sessionId: sessionId(ctx), kind, question, toolCallId, proposal, choices };
+      const request: BioMindUIRequest = { id: randomUUID(), requestId: current(ctx).requestId, sessionId: sessionId(ctx), kind, question, toolCallId, proposal, choices,
+        ...(editor ? { method: 'editor' as const, ...(editor.prefill !== undefined ? { prefill: editor.prefill } : {}) } : {}) };
       signal?.throwIfAborted();
       if (ctx.hasUI) {
         if (kind === 'question') {
-          const answer = choices?.length ? await ctx.ui.select(question, choices, { signal }) : await ctx.ui.input(question, undefined, { signal });
+          const answer = editor ? await ctx.ui.editor(question, editor.prefill)
+            : choices?.length ? await ctx.ui.select(question, choices, { signal }) : await ctx.ui.input(question, undefined, { signal });
+          signal?.throwIfAborted();
           return { ...request, answer, cancelled: answer === undefined };
         }
         // A blank Enter chooses the first (deny) item, never approval.
@@ -716,8 +806,9 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
       return value;
     }
     function register(name: string, description: string, parameters: TSchema,
-      execute: (id: string, args: Record<string, any>, signal: AbortSignal | undefined, ctx: ExtensionContext) => Promise<unknown>) {
-      pi.registerTool({ name, label: name, description, parameters, executionMode: 'sequential',
+      execute: (id: string, args: Record<string, any>, signal: AbortSignal | undefined, ctx: ExtensionContext) => Promise<unknown>,
+      prepareArguments?: ToolDefinition['prepareArguments']) {
+      pi.registerTool({ name, label: name, description, parameters, prepareArguments, executionMode: 'sequential',
         ...toolRenderers(name),
         async execute(id, args, signal, _update, ctx) { return reply(await execute(id, asObject(args), signal, ctx)); },
       } as ToolDefinition);
@@ -827,11 +918,31 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
         },
       } as ToolDefinition);
     }
-    register('ask_user', '询问关键选择并等待真实用户回答；不猜测答案。', OBJECT({ question: nonempty(), choices: Type.Optional(Type.Array(nonempty())) }),
+    const validateEditorQuestion = (args: Record<string, any>) => {
+      const editor = args.method === 'editor';
+      if ((args.method !== undefined && !editor) || (editor && args.choices !== undefined)
+        || (args.prefill !== undefined && (!editor || typeof args.prefill !== 'string'
+          || Buffer.byteLength(args.prefill, 'utf8') > MAX_QUESTION_PREFILL_BYTES))) {
+        throw new Error('INVALID_QUESTION_EDITOR_INPUT');
+      }
+      return editor;
+    };
+    register('ask_user', '询问关键选择并等待真实用户回答；method=editor 可请求多行编辑回答，不猜测答案。', OBJECT({
+      question: nonempty(), choices: Type.Optional(Type.Array(nonempty())),
+      method: Type.Optional(Type.Literal('editor')),
+      prefill: Type.Optional(Type.String({ maxLength: MAX_QUESTION_PREFILL_BYTES, description: '仅 method=editor 可用；UTF-8 最多 64 KiB。' })),
+    }),
       async (id, args, signal, ctx) => {
-        const response = await ask(ctx, 'question', id, args.question, signal, undefined, args.choices);
+        const editor = validateEditorQuestion(args);
+        const response = await ask(ctx, 'question', id, args.question, signal, undefined, args.choices, false,
+          editor ? { prefill: args.prefill } : undefined);
         if (response.cancelled || response.answer === undefined) { await pause(ctx, 'question_cancelled'); throw new Error('User cancelled the question; no answer available'); }
         return { question_id: response.id, request_id: response.requestId, question: args.question, answer: response.answer };
+      }, args => {
+        // Pi normally coerces optional strings/nulls before tool_call/execute.
+        // Reject invalid editor input while its original JSON types are intact.
+        validateEditorQuestion(asObject(args));
+        return args as Record<string, unknown>;
       });
     register('update_plan', '可选的当前分支工作笔记，不是执行许可或必须产物合同。', OBJECT({ steps: Type.Array(OBJECT({ step: nonempty(), status: Type.Union([Type.Literal('pending'), Type.Literal('in_progress'), Type.Literal('completed')]) })) }),
       async (_id, args, _signal, ctx) => { const value = current(ctx); publish(ctx, { ...value, plan: args.steps }); return { plan: args.steps, required_for_execution: false }; });
@@ -901,7 +1012,11 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
       });
 
     pi.on('session_start', async (event, ctx) => {
-      activeContext = ctx; snapshotKnown = false; snapshotFailed = false; instructionsFailed = false;
+      writerReady=false;
+      try{await claimWriter(ctx,event.reason,event.previousSessionFile);writerReady=true;}
+      catch(error){pi.events.emit('biomind:diagnostic',{code:'SESSION_WRITER_BINDING_FAILED'});setActiveTools([]);ctx.abort();ctx.ui.notify(error instanceof SessionWriterError?error.code:'SESSION_WRITER_CLAIM_FAILED','error');ctx.shutdown();return;}
+
+      activeContext = ctx; restoreToolSelection(ctx); snapshotKnown = false; snapshotFailed = false; instructionsFailed = false;
       const id = sessionId(ctx);
       const initialization = ++backendEpoch;
       notifiedFailures.delete(id);
@@ -941,6 +1056,7 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
         }
       }
       const epoch = ++welcomeEpoch;
+      publishToolPolicy();
       setActiveTools(MAIN_TOOLS);
       ctx.ui.setStatus('biomind-execution', `execution:${profile}${process.env.BIOMIND_PI_BUILD_ID ? ' · build:'+process.env.BIOMIND_PI_BUILD_ID : ''}`);
       ctx.ui.setStatus('biomind-approval', native ? 'approval:N/A' : state(ctx) ? 'approval:unknown' : 'approval:manual');
@@ -1020,6 +1136,7 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
       },
     });
     pi.on('input', async (event, ctx) => {
+      if(!writerReady){ctx.ui.notify('SESSION_WRITER_BINDING_FAILED','error');return {action:'handled'};}
       if (!readySessions.has(sessionId(ctx))) {
         pi.events.emit('biomind:diagnostic', { code: 'BACKEND_NOT_READY', sessionId: sessionId(ctx),
           state: backendStates.get(sessionId(ctx))?.state ?? 'starting' });
@@ -1085,7 +1202,8 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
       event.systemPromptOptions.contextFiles = filterNativeContextFiles(event.systemPromptOptions.contextFiles, ctx.cwd, getAgentDir());
       if (state(ctx)?.status !== 'active') { ctx.abort(); throw new Error('REQUEST_NOT_ACTIVE'); }
       preparedInputRequestId = undefined; initialUserPending = true;
-      event.systemPromptOptions.selectedTools = toolNames(MAIN_TOOLS);
+      setActiveTools(MAIN_TOOLS);
+      event.systemPromptOptions.selectedTools = mainTools();
     });
     pi.on('message_start', async (event, ctx) => {
       if (event.message.role !== 'user') return;
@@ -1175,6 +1293,11 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
         ? { ...message, sections: Object.fromEntries(Object.entries(message.sections).filter(([key]) => key !== 'biomind-current')) } : message);
       const rules = value?.maintenance?.outboxId ? MAINTENANCE_RULES : `${COMMON_RULES}\n${native ? NATIVE_RULES : PROTECTED_RULES}`;
       messages.push({ role: 'system', content: '', sections: { 'biomind-current': `${rules}\n当前有效状态与偏好：\n${JSON.stringify({ ...currentContext, execution_profile: profile, ...(native ? { approval_mode: 'not_applicable', authorization_refs: [] } : {}) })}` }, timestamp: Date.now() });
+      const sections=messages.filter(message=>message.role==='system').map(message=>({content:message.content,sections:message.sections}));
+      const projection=JSON.stringify(sections);
+      pi.events.emit('biomind:prompt_snapshot',{requestId:value?.requestId,time:new Date().toISOString(),phase:'prepared',sent:null,
+        systemPrompt:projection.length<=1024*1024?projection:projection.slice(0,1024*1024),truncated:projection.length>1024*1024,
+        representation:'Exact ordered system-message projection from context_with_system; not a reassembled provider payload'});
       return { messages };
     });
     pi.on('session_before_compact', async event => {
@@ -1226,12 +1349,14 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
     pi.on('tool_call', (event, ctx) => {
       if (!readySessions.has(sessionId(ctx))) return { block: true, reason: 'BioMind backend is unavailable', terminate: true };
       const value = state(ctx);
+      if(!value?.maintenance?.outboxId && !mainTools().includes(event.toolName))
+        return {block:true,reason:'Tool is not selected for the current BioMind session',terminate:true};
       if (native && (NATIVE_TOOLS as readonly string[]).includes(event.toolName) || native && event.toolName === 'file_stat') {
         if (!readySessions.has(sessionId(ctx)) || value?.status === 'paused' || value?.maintenance?.outboxId)
           return { block: true, reason: 'Session is paused or execution profile is not bound', terminate: true };
         return;
       }
-      const allowed = toolNames(value?.maintenance?.outboxId && !value.maintenance.applied ? ['maintenance_submit'] : MAIN_TOOLS);
+      const allowed = value?.maintenance?.outboxId && !value.maintenance.applied ? toolNames(['maintenance_submit']) : mainTools();
       if (value?.status !== 'active' || !allowed.includes(event.toolName)) return { block: true, reason: 'This execution entry is not available for the current BioMind request', terminate: true };
     });
     if (!native) pi.on('user_bash', () => ({ result: { output: 'Shell 快捷入口在 BioMind protected 模式不可用；请通过领域 run_command 执行并保留授权与作业句柄。', exitCode: 1, cancelled: false, truncated: false } }));
@@ -1256,7 +1381,9 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
           }
         } catch { ctx.ui.notify('目标会话目录无法确认；已保留当前会话。', 'warning'); return { cancel: true }; }
       }
-      return guardLifecycle(ctx, 'switch');
+      const blocked=await guardLifecycle(ctx,'switch');if(blocked)return blocked;
+      if(event.reason==='resume'&&event.targetSessionFile){try{await claimWriter(ctx,'resume',undefined,event.targetSessionFile);}
+        catch(error){ctx.ui.notify(error instanceof SessionWriterError?error.code:'SESSION_WRITER_CLAIM_FAILED','error');return {cancel:true};}}
     });
     pi.on('session_before_fork', (_event, ctx) => guardLifecycle(ctx, 'fork'));
     pi.on('session_before_tree', async (event, ctx) => {
@@ -1275,7 +1402,7 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
     });
     pi.on('session_tree', async (_event, ctx) => {
       if (!readySessions.has(sessionId(ctx))) return;
-      setActiveTools(MAIN_TOOLS);
+      restoreToolSelection(ctx);publishToolPolicy();setActiveTools(MAIN_TOOLS);
       await refreshApprovalStatus(ctx);
     });
     pi.on('session_shutdown', async (event, ctx) => {

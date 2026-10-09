@@ -3,11 +3,13 @@
   "version": "1.0.0-dev.1",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22.19.0" },
+  "engines": {
+    "node": ">=22.19.0"
+  },
   "scripts": {
-    "postinstall": "node compat/apply-pi-observer.mjs",
-    "check:compat": "node compat/apply-pi-observer.mjs --check",
-    "build": "node --max-old-space-size=1024 ./node_modules/typescript/bin/tsc -p tsconfig.json && node build-native-extension.mjs",
+    "postinstall": "node compat/apply-pi-observer.mjs && node compat/apply-plugin-guard.mjs",
+    "check:compat": "node compat/apply-pi-observer.mjs --check && node compat/apply-plugin-guard.mjs --check",
+    "build": "node --max-old-space-size=1024 ./node_modules/typescript/bin/tsc -p tsconfig.json && node build-native-extension.mjs && node build-manifest.mjs",
     "check": "node --max-old-space-size=1024 ./node_modules/typescript/bin/tsc -p tsconfig.json --noEmit",
     "test": "node --test --experimental-test-isolation=none --test-concurrency=1 dist/tests/*.test.js",
     "start": "node dist/host.js"

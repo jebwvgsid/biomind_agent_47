@@ -186,6 +186,8 @@ def main():
     initial_raw=sys.stdin.buffer.raw.readline(MAX_FRAME+1)
     if not initial_raw:return 0
     try:
+        from agent_core.pi_plugin_guard import adopt_inherited
+        _resource_fds=adopt_inherited()
         from domain_adapter.service import DomainService
         service=DomainService(**options)
     except Exception as exc:

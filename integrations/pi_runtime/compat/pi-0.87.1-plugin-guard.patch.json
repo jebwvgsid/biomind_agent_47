@@ -1,0 +1,93 @@
+{
+  "package": "@earendil-works/pi-coding-agent",
+  "originalVersion": "0.87.1",
+  "runtimeLabel": "0.87.1+biomind-observer.6+plugin-guard.1",
+  "files": [
+    {
+      "path": "dist/core/package-manager.js",
+      "originalSha256": "26aa8adf255f7b1ebf9b00732d2e9a1648e38b76a10eedcd443131e3708b6e88",
+      "patchedSha256": "8f6cefc5ffce42762dd1140348fc752a6cd3b45d41115f0a6c4a402e4b36727e",
+      "replacements": [
+        {
+          "before": "    async installNpm(source, scope, temporary) {",
+          "after": "    async installNpm(source, scope, temporary) {\n        (globalThis[Symbol.for(\"biomind.pi.package-write-guard.v1\")] ?? (() => { throw new Error(\"PACKAGE_GUARD_REQUIRED\"); }))(this.getNpmInstallRoot(scope, temporary));"
+        },
+        {
+          "before": "    async installNpmBatch(specs, scope) {",
+          "after": "    async installNpmBatch(specs, scope) {\n        (globalThis[Symbol.for(\"biomind.pi.package-write-guard.v1\")] ?? (() => { throw new Error(\"PACKAGE_GUARD_REQUIRED\"); }))(this.getNpmInstallRoot(scope, false));"
+        },
+        {
+          "before": "    async uninstallNpm(source, scope) {",
+          "after": "    async uninstallNpm(source, scope) {\n        (globalThis[Symbol.for(\"biomind.pi.package-write-guard.v1\")] ?? (() => { throw new Error(\"PACKAGE_GUARD_REQUIRED\"); }))(this.getNpmInstallRoot(scope, false));"
+        },
+        {
+          "before": "    async installGit(source, scope) {",
+          "after": "    async installGit(source, scope) {\n        (globalThis[Symbol.for(\"biomind.pi.package-write-guard.v1\")] ?? (() => { throw new Error(\"PACKAGE_GUARD_REQUIRED\"); }))(this.getGitInstallPath(source, scope));"
+        },
+        {
+          "before": "    async updateGit(source, scope) {",
+          "after": "    async updateGit(source, scope) {\n        (globalThis[Symbol.for(\"biomind.pi.package-write-guard.v1\")] ?? (() => { throw new Error(\"PACKAGE_GUARD_REQUIRED\"); }))(this.getGitInstallPath(source, scope));"
+        },
+        {
+          "before": "    async removeGit(source, scope) {",
+          "after": "    async removeGit(source, scope) {\n        (globalThis[Symbol.for(\"biomind.pi.package-write-guard.v1\")] ?? (() => { throw new Error(\"PACKAGE_GUARD_REQUIRED\"); }))(this.getGitInstallPath(source, scope));"
+        },
+        {
+          "before": "    mkdirSync(tempFolder, { recursive: true, mode: 0o700 });\n    chmodSync(tempFolder, 0o700);\n    return tempFolder;",
+          "after": "    // Read-only path discovery; actual installers prepare under the resource lease.\n    return tempFolder;"
+        },
+        {
+          "before": "        catch {\n            // Keep cached temporary checkout if refresh fails.",
+          "after": "        catch (error) {\n            if (/^(PACKAGE_|RESOURCE_)/.test(String(error?.message))) throw error;\n            // Keep cached temporary checkout if refresh fails."
+        },
+        {
+          "before": "            stdio: isStdoutTakenOver() ? [\"ignore\", 2, 2] : \"inherit\",\n            env,\n",
+          "after": "            stdio: isStdoutTakenOver() ? [\"ignore\", 2, 2] : \"inherit\",\n            env,\n            ...(globalThis[Symbol.for(\"biomind.pi.package-child-options.v1\")]?.(isStdoutTakenOver() ? [\"ignore\", 2, 2] : \"inherit\", env) ?? {}),\n"
+        }
+      ]
+    },
+    {
+      "path": "dist/bundle/chunks/chunk-OJP47DM6.js",
+      "originalSha256": "ef3529628e680bd6271dbb2b1420ad26b64e7841929abe8c442d72b78a70d35b",
+      "patchedSha256": "3d15d661092eb5d6467f536ed6434bb891aa2ea4f5249aef0fa525fa5eeb2584",
+      "replacements": [
+        {
+          "before": "async installNpm(source,scope,temporary){",
+          "after": "async installNpm(source,scope,temporary){(globalThis[Symbol.for(\"biomind.pi.package-write-guard.v1\")] ?? (() => { throw new Error(\"PACKAGE_GUARD_REQUIRED\"); }))(this.getNpmInstallRoot(scope,temporary));"
+        },
+        {
+          "before": "async installNpmBatch(specs,scope){",
+          "after": "async installNpmBatch(specs,scope){(globalThis[Symbol.for(\"biomind.pi.package-write-guard.v1\")] ?? (() => { throw new Error(\"PACKAGE_GUARD_REQUIRED\"); }))(this.getNpmInstallRoot(scope,!1));"
+        },
+        {
+          "before": "async uninstallNpm(source,scope){",
+          "after": "async uninstallNpm(source,scope){(globalThis[Symbol.for(\"biomind.pi.package-write-guard.v1\")] ?? (() => { throw new Error(\"PACKAGE_GUARD_REQUIRED\"); }))(this.getNpmInstallRoot(scope,!1));"
+        },
+        {
+          "before": "async installGit(source,scope){",
+          "after": "async installGit(source,scope){(globalThis[Symbol.for(\"biomind.pi.package-write-guard.v1\")] ?? (() => { throw new Error(\"PACKAGE_GUARD_REQUIRED\"); }))(this.getGitInstallPath(source,scope));"
+        },
+        {
+          "before": "async updateGit(source,scope){",
+          "after": "async updateGit(source,scope){(globalThis[Symbol.for(\"biomind.pi.package-write-guard.v1\")] ?? (() => { throw new Error(\"PACKAGE_GUARD_REQUIRED\"); }))(this.getGitInstallPath(source,scope));"
+        },
+        {
+          "before": "async removeGit(source,scope){",
+          "after": "async removeGit(source,scope){(globalThis[Symbol.for(\"biomind.pi.package-write-guard.v1\")] ?? (() => { throw new Error(\"PACKAGE_GUARD_REQUIRED\"); }))(this.getGitInstallPath(source,scope));"
+        },
+        {
+          "before": "return mkdirSync3(tempFolder,{recursive:!0,mode:448}),chmodSync(tempFolder,448),tempFolder",
+          "after": "return tempFolder"
+        },
+        {
+          "before": "await this.updateGit(source,\"temporary\")})}catch{}}async removeGit",
+          "after": "await this.updateGit(source,\"temporary\")})}catch(error){if(/^(PACKAGE_|RESOURCE_)/.test(String(error?.message)))throw error}}async removeGit"
+        },
+        {
+          "before": "stdio:isStdoutTakenOver()?[\"ignore\",2,2]:\"inherit\",env:env2})}spawnCaptureCommand",
+          "after": "stdio:isStdoutTakenOver()?[\"ignore\",2,2]:\"inherit\",env:env2,...(globalThis[Symbol.for(\"biomind.pi.package-child-options.v1\")]?.(isStdoutTakenOver()?[\"ignore\",2,2]:\"inherit\",env2)??{})})}spawnCaptureCommand"
+        }
+      ]
+    }
+  ]
+}

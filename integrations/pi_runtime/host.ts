@@ -6,13 +6,24 @@ import { spawn, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { parseArgs } from 'node:util';
 import { randomUUID, createHash } from 'node:crypto';
-import { StringDecoder } from 'node:string_decoder';
+import { JsonFrameDecoder } from './json-frame.js';
+import { IMAGE_LIMITS, ImageInputError, validateInputImages } from './image-input.js';
+import { AdmissionError, MessageAdmissions, validateFrameIds, type Admission } from './message-admissions.js';
+import { BoundedJsonOutput } from './bounded-output.js';
+import { loadBuildIdentity, type LoadedBuildIdentity } from './build-identity.js';
 import { resolveHandshakeTimeoutMs } from './domain-client.js';
 import { assertObservationMode, observationMode, runtimeObservationLabel, projectObservedUsage } from './usage-observer.js';
 import { validateSessionSelection, resolveSessionDir, ProductSessionError, TerminalInputError, type NativeSessionSelection } from './native-session-selection.js';
 import { selectConfiguredModel, validateConfiguredCustomModel, validateModelSelection, type ModelSelection } from './model-config.js';
 import { chooseExecutionProfile, sessionProfile, type ExecutionProfile } from './execution-profile.js';
+import { StudioResourceSelection } from './studio-resources.js';
+import { createStudioControls } from './studio-controls.js';
+import { acquireSessionWriter, SessionWriterError, type SessionWriterLease } from './session-writer.js';
+import { attachNativeWriter, writerHeader } from './session-writer-host.js';
 import { validateProjectRoot, ProjectDirectoryError } from './project-launcher.js';
+import { acquirePluginLease, pluginChildOptions } from './plugin-lease.js';
+import { StudioPackageShutdown } from './studio-package-shutdown.js';
+import { verifyObserverBytes } from './compatibility-check.js';
 
 
 const runtime = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -29,9 +40,13 @@ interface Config extends NativeSessionSelection {
   modelSelection?: ModelSelection;
   configPath?: string;
   launcherPython?: string;
+  loadedBuild?: LoadedBuildIdentity;
+  writerLeases?: SessionWriterLease[]; ownerGeneration?: string; writerClean?: boolean;
+  pythonSource?: 'config' | 'environment' | 'launcher';
+  resourceOwnership?: {protocol:'linux_flock_v1';mode:'shared';roots:string[];releaseOn:'last_actual_process_exit'};
   executionProfile?: ExecutionProfile; profileSource?: string; migrateProfile?: boolean;
 }
-function readConfig(filename?: string): Config {
+export function readConfig(filename?: string): Config {
   if (!filename) return {};
   const value = JSON.parse(fs.readFileSync(path.resolve(filename), 'utf8'));
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Runtime settings must be a JSON object');
@@ -65,15 +80,20 @@ function locatePackage(name: string): string {
   throw new Error(`Package manifest not found: ${name}`);
 }
 function configureDomain(config: Config, cwd: string, loadedExtension = extensionPath): void {
-  const installRoot = path.resolve(config.installRoot ?? path.join(runtime, '..', '..'));
-  const python = config.python ?? process.env.BIOMIND_PI_PYTHON ?? '/public/home/liusiqi/anaconda3/envs/biomind/bin/python';
+  const installRoot = config.loadedBuild?.releaseRoot ?? path.resolve(config.installRoot ?? path.join(runtime, '..', '..'));
+  if (config.loadedBuild && fs.realpathSync(config.installRoot ?? installRoot) !== fs.realpathSync(installRoot)) throw new Error('BIOMIND_BUILD_INSTALL_ROOT_MISMATCH');
+  const python = config.python ?? process.env.BIOMIND_PI_PYTHON ?? config.launcherPython;
+  if (typeof python !== 'string' || !python.trim()) throw new Error('DOMAIN_PYTHON_REQUIRED');
+  config.pythonSource = config.python !== undefined ? 'config' : process.env.BIOMIND_PI_PYTHON !== undefined ? 'environment' : 'launcher';
   // The domain client validates Python when a domain operation is requested;
   // native login/model/instructions must remain reachable without scientific Python.
   for (const [key, value] of Object.entries({ BIOMIND_PI_PYTHON: python,
     BIOMIND_PI_HANDSHAKE_TIMEOUT_MS: String(resolveHandshakeTimeoutMs(config.handshakeTimeoutMs)),
     BIOMIND_PI_INSTALL_ROOT: installRoot, BIOMIND_PI_PROJECT_ROOT: cwd,
+    BIOMIND_PI_RELEASE_ROOT: config.loadedBuild?.releaseRoot, BIOMIND_PI_RELEASE_ID: config.loadedBuild?.releaseId,
+    BIOMIND_PI_SOURCE_COMMIT:config.loadedBuild?.sourceCommit,
     BIOMIND_PI_EXECUTION_PROFILE: config.executionProfile,
-    BIOMIND_PI_BUILD_ID: createHash('sha256').update(fs.readFileSync(loadedExtension)).digest('hex').slice(0,12),
+    BIOMIND_PI_BUILD_ID: config.loadedBuild?.buildId ?? createHash('sha256').update(fs.readFileSync(loadedExtension)).digest('hex').slice(0,12),
     BIOMIND_PI_SESSION_EXISTING: config.session ? '1' : '0',
     BIOMIND_PI_PROFILE_SOURCE: config.profileSource,
     BIOMIND_PI_MIGRATE_PROFILE: config.migrateProfile ? '1' : '0',
@@ -95,8 +115,8 @@ function configureDomain(config: Config, cwd: string, loadedExtension = extensio
 }
 async function startNative(config: Config, cwd: string, prompt?: string): Promise<number> {
   if (!config.providerFixture && !!config.provider !== !!config.model) throw new Error('INCOMPLETE_PRODUCT_MODEL_CONFIGURATION');
-  if ((config.modelSelection && !validateConfiguredCustomModel(config.modelSelection)) ||
-      (!config.modelSelection && config.provider && config.model && !config.providerFixture)) {
+  if (!config.session && ((config.modelSelection && !validateConfiguredCustomModel(config.modelSelection)) ||
+      (!config.modelSelection && config.provider && config.model && !config.providerFixture))) {
     const { ModelRuntime, getAgentDir } = await import('@earendil-works/pi-coding-agent');
     const credentials = { async read() { return undefined; }, async list() { return []; },
       async modify() { throw new Error('Credential writes are unavailable'); }, async delete() { throw new Error('Credential writes are unavailable'); } };
@@ -114,12 +134,13 @@ async function startNative(config: Config, cwd: string, prompt?: string): Promis
   const manifest = JSON.parse(fs.readFileSync(path.join(packageRoot, 'package.json'), 'utf8'));
   const bin = typeof manifest.bin === 'string' ? manifest.bin : manifest.bin?.pi;
   if (typeof bin !== 'string' || !bin) throw new Error('PI_OFFICIAL_BIN_UNAVAILABLE');
-  const args = [path.resolve(packageRoot, bin),
-    '--no-extensions', '--extension', nativeExtensionPath, '--skill', process.env.BIOMIND_PI_SKILLS_ROOT ?? path.join(process.env.BIOMIND_PI_INSTALL_ROOT!, 'skills'),
-    '--no-prompt-templates', '--no-themes', ...(config.executionProfile === 'native' ? [] : ['--no-builtin-tools']), '--tui-mode', 'fullscreen'];
+  const args = ['--import', path.join(runtime, 'dist/plugin-lease.js'), path.resolve(packageRoot, bin),
+    '--extension', nativeExtensionPath, '--skill', process.env.BIOMIND_PI_SKILLS_ROOT ?? path.join(process.env.BIOMIND_PI_INSTALL_ROOT!, 'skills'),
+    ...(config.executionProfile === 'native' ? [] : ['--no-builtin-tools']), '--tui-mode', 'fullscreen'];
   if (config.providerFixture) {
-    args.push('--offline', '--extension', path.join(runtime, 'dist/native-fixture.ts'), '--provider', 'biomind-fixture', '--model', 'scripted');
-  } else {
+    args.push('--offline', '--extension', path.join(runtime, 'dist/native-fixture.ts'));
+    if(!config.session)args.push('--provider','biomind-fixture','--model','scripted');
+  } else if (!config.session) {
     if (config.provider) args.push('--provider', config.provider);
     if (config.model) args.push('--model', config.model);
   }
@@ -127,14 +148,19 @@ async function startNative(config: Config, cwd: string, prompt?: string): Promis
   if (config.sessionDir) args.push('--session-dir', config.sessionDir);
   if (config.session) args.push('--session', config.session);
   if (config.continueSession) args.push('--continue');
-  if (config.thinkingLevel) args.push('--thinking', config.thinkingLevel);
+  if (!config.session && config.thinkingLevel) args.push('--thinking', config.thinkingLevel);
   if (prompt !== undefined) args.push('--', prompt);
-  const env = { ...process.env, ...(agentDir !== undefined ? { PI_CODING_AGENT_DIR: agentDir } : {}),
+  const resourceChild = pluginChildOptions(['inherit','inherit','inherit','ipc']);
+  const env = { ...process.env, ...resourceChild.env, ...(agentDir !== undefined ? { PI_CODING_AGENT_DIR: agentDir } : {}),
+    BIOMIND_SESSION_WRITER_MANAGED:'parent',
     BIOMIND_PI_UI_COMMANDS: '1', BIOMIND_PI_QUIET_STARTUP: 'native', PI_SKIP_VERSION_CHECK: '1',
     ...(config.modelSelection ? { BIOMIND_PI_MODEL_SELECTION: JSON.stringify(config.modelSelection) } : {}),
     ...(config.providerFixture ? { PI_OFFLINE: '1', BIOMIND_PI_PROVIDER_FIXTURE: path.resolve(config.providerFixture) } : {}) };
-  const child = spawn(process.execPath, args, { cwd, env, stdio: 'inherit' });
-  const code = await new Promise<number>((resolve, reject) => { child.once('error', reject); child.once('exit', (code, signal) => resolve(code ?? (signal ? 130 : 1))); });
+  const child = spawn(process.execPath, args, { cwd, env, stdio: resourceChild.stdio });
+  const finishWriter=attachNativeWriter(child,{cwd,sessionDir:config.sessionDir,ownerGeneration:config.ownerGeneration!,leases:config.writerLeases!});
+  let code:number;
+  try {code = await new Promise<number>((resolve, reject) => { child.once('error', reject); child.once('exit', (code, signal) => {config.writerClean=code===0&&signal===null;resolve(code ?? (signal ? 130 : 1));}); });}
+  finally {await finishWriter();}
   return code;
 }
 
@@ -154,17 +180,25 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
   const settings = createProductSettings(cwd, agentDir);
   settings.applyOverrides({ cacheWarming: 'off', enableAnalytics: false, enableInstallTelemetry: false });
   const manager = openProductSession(cwd, config);
+  process.env.BIOMIND_SESSION_WRITER_MANAGED='json';
+  process.env.BIOMIND_SESSION_WRITER_OWNER_GENERATION=config.ownerGeneration!;
+  if(manager.getSessionFile()){
+    const lease=await acquireSessionWriter({sessionFile:manager.getSessionFile()!,sessionId:manager.getSessionId(),cwd,ownerGeneration:config.ownerGeneration!,mode:config.session?'resume':'new'});
+    if(!config.writerLeases!.some(item=>item.identity.sessionFile===lease.identity.sessionFile))config.writerLeases!.push(lease);
+  }
   // Match native Pi's public HTTP setup, including the existing proxy routing.
   const dispatcher = await import(pathToFileURL(path.join(locatePackage('@earendil-works/pi-coding-agent'), 'dist/core/http-dispatcher.js')).href);
   dispatcher.configureHttpDispatcher(settings.getHttpIdleTimeoutMs());
   const events = createEventBus();
+  const resourceSelection = new StudioResourceSelection(settings,cwd,agentDir,extensionPath);
   const resources = new DefaultResourceLoader({ cwd, agentDir, settingsManager: settings, eventBus: events,
-    noExtensions: true, additionalExtensionPaths: [extensionPath],
-    additionalSkillPaths: [process.env.BIOMIND_PI_SKILLS_ROOT ?? path.join(process.env.BIOMIND_PI_INSTALL_ROOT!, 'skills')], noPromptTemplates: true,
-    noThemes: true, agentsFilesOverride: ({ agentsFiles }) => ({ agentsFiles: filterNativeContextFiles(agentsFiles, cwd, agentDir) }) });
+    additionalExtensionPaths: [extensionPath],
+    additionalSkillPaths: [process.env.BIOMIND_PI_SKILLS_ROOT ?? path.join(process.env.BIOMIND_PI_INSTALL_ROOT!, 'skills')],
+    skillsOverride: resourceSelection.override,
+    agentsFilesOverride: ({ agentsFiles }) => ({ agentsFiles: filterNativeContextFiles(agentsFiles, cwd, agentDir) }) });
   await resources.reload();
   if (resources.getExtensions().errors.length) throw new Error('BioMind extension failed to load');
-  if (!resources.getExtensions().extensions.length) throw new Error('BioMind extension was not loaded');
+  if (!resources.getExtensions().extensions.some(extension=>path.resolve(extension.path)===extensionPath)) throw new Error('BioMind extension was not loaded');
   // Use Pi's same saved credential store as native mode. Synthetic fixtures
   // retain an empty in-memory store and never open the user's auth.json.
   const credentials = config.providerFixture ? {
@@ -180,34 +214,80 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
     modelRuntime.registerProvider('biomind-fixture', fixture.scriptedProvider(config.providerFixture));
     provider = 'biomind-fixture'; modelId = 'scripted';
   }
-  if (!provider || !modelId) throw new Error('Headless mode requires explicit existing provider/model or a synthetic providerFixture');
-  const model = config.modelSelection ? selectConfiguredModel(modelRuntime, config.modelSelection) : modelRuntime.getModel(provider, modelId);
-  if (!model) throw new Error('Requested model is unavailable in this pinned runtime');
-  const { session } = await createAgentSession({ cwd, agentDir, modelRuntime, model,
-    thinkingLevel: config.thinkingLevel ?? 'off', resourceLoader: resources, settingsManager: settings,
+  const restored = manager.buildSessionContext();
+  const restoring = !!config.session && restored.model !== null;
+  // Pi owns persisted choices. Refuse unavailable restored choices instead of
+  // allowing SDK fallback to a different configured (possibly paid) model.
+  if(restoring&&!['off','minimal','low','medium','high','xhigh'].includes(restored.thinkingLevel))throw new ProductSessionError('SESSION_THINKING_LEVEL_INVALID');
+  if (restoring && (!restored.model || !modelRuntime.getModel(restored.model.provider,restored.model.modelId)
+      || !modelRuntime.getProviderAuthStatus(restored.model.provider).configured)) throw new ProductSessionError('SESSION_MODEL_UNAVAILABLE');
+  if (!restoring && (!provider || !modelId)) throw new Error('Headless mode requires explicit existing provider/model or a synthetic providerFixture');
+  const model = restoring ? undefined : config.modelSelection ? selectConfiguredModel(modelRuntime, config.modelSelection) : modelRuntime.getModel(provider!, modelId!);
+  if (!restoring && !model) throw new Error('Requested model is unavailable in this pinned runtime');
+  const { session } = await createAgentSession({ cwd, agentDir, modelRuntime,
+    ...(!restoring ? {model,...(config.thinkingLevel!==undefined?{thinkingLevel:config.thinkingLevel}:{})}
+      : restored.messages.length ? {} : {model:modelRuntime.getModel(restored.model!.provider,restored.model!.modelId),thinkingLevel:restored.thinkingLevel as import('@earendil-works/pi-agent-core').ThinkingLevel}),
+    resourceLoader: resources, settingsManager: settings,
     sessionManager: manager,
     tools: [...new Set([...(config.executionProfile === 'native' ? ['read','write','edit','bash','ls','find','grep'] : []),
       ...resources.getExtensions().extensions.flatMap(extension => [...extension.tools.keys()])])] });
   session.agent.toolExecution = 'sequential';
-  let writeTail = Promise.resolve(); let detached = false; let active: Promise<void> | undefined;
+  let detached = false; let active: Promise<void> | undefined;
   let exitCode = 0; let usageAccountingFailed = false; let profileBindingFailed = false; let backendReady = false;
   let activeInputId: string | undefined; let outcome: string = 'unknown';
+  let controlBusy: 'reload' | 'compact' | undefined;
   const executionFacts: Json[] = [];
-  const identity = { execution_profile: config.executionProfile, profile_source: config.profileSource,
+  const identity = { resourceOwnership:config.resourceOwnership, loaded_build: config.loadedBuild, build_id: process.env.BIOMIND_PI_BUILD_ID, python: { path: process.env.BIOMIND_PI_PYTHON, source: config.pythonSource }, execution_profile: config.executionProfile, profile_source: config.profileSource,
     extension_sha256: createHash('sha256').update(fs.readFileSync(extensionPath)).digest('hex'),
     sessionId: session.sessionManager.getSessionId() };
-  const sessionIdentity = () => ({ ...identity, ...describeProductSession(manager) });
+  const ownerGeneration = config.ownerGeneration!;
+  const studio = createStudioControls({session,settings,resources,resourceSelection,events,ownerGeneration,
+    busy:()=>!!active||!!controlBusy,activeRequestId:()=>activeInputId,
+    memoryReadTimeoutMs:resolveHandshakeTimeoutMs(config.handshakeTimeoutMs)+10000});
+  const admissions = new MessageAdmissions({ ownerGeneration, sessionId: identity.sessionId, project: cwd });
+  const modelIdentity = () => ({ provider: session.model?.provider, id: session.model?.id,
+    input: session.model?.input ?? [], blockImages: settings.getBlockImages(),
+    autoResize: settings.getImageAutoResize(), providerInputLimits: session.model?.inputLimits ?? null });
+  const sessionIdentity = () => ({ ...identity, ...describeProductSession(manager),writerOwnership:{supported:true,acquired:!!manager.getSessionFile(),ownerGeneration,pid:process.pid,scope:'session',temporary:!manager.getSessionFile()} });
   const waiting = new Map<string, Json>();
-  const write = (value: unknown) => {
-    if (detached) return;
-    writeTail = writeTail.then(() => new Promise<void>((resolve, reject) => {
-      process.stdout.write(JSON.stringify(value) + '\n', error => error ? reject(error) : resolve());
-    })).catch(() => {
+  let lastJobReceipt: Json | undefined;
+  const pendingDomainControls=new Set<string>();
+  const packageReads=new Map<string,{resolve:(value:boolean)=>void,reject:(error:Error)=>void,timer:ReturnType<typeof setTimeout>}>();
+  // Associations are receipts only: Pi still owns its execution queues.
+  const queuedAdmissions: { entry?: Admission; command: 'steer' | 'follow_up'; textHash: string; imageHashes: string[] }[] = [];
+  let promptAdmission: Admission | undefined;
+  let promptUserPending = false;
+  const validationLifetime = new AbortController();
+  const outputLimits = { maxPendingBytes: 24 * 1024 * 1024, maxPendingFrames: 256 };
+  const output = new BoundedJsonOutput(process.stdout, outputLimits, () => {
       detached = true; exitCode = 2;
+      validationLifetime.abort();
       process.stderr.write('BioMind Pi output channel failed; request state is unavailable to this client.\n');
+      // This is a failed owned stdio connection, not a desktop detach. A future
+      // Studio adapter must keep consuming this stream when pages disconnect.
+      process.stdin.destroy();
       void session.abort();
-    });
+  });
+  const write = (value: unknown) => {
+    if (detached || output.detached) return;
+    const frame = value as Json;
+    output.write(value, { droppable: frame.type === 'event' && frame.event?.type === 'message_update' });
   };
+  const packages = new StudioPackageShutdown(
+    ()=>backendReady&&!active&&!controlBusy&&!waiting.size&&!pendingDomainControls.size
+      &&!session.isStreaming&&!session.isCompacting&&!session.agent.hasQueuedMessages()
+      &&queuedAdmissions.length===0,
+    ()=>new Promise<boolean>((resolve,reject)=>{
+      const id='packages-'+randomUUID();
+      const timer=setTimeout(()=>{packageReads.delete(id);reject(new Error('PACKAGES_STATE_UNAVAILABLE'));},10000);
+      packageReads.set(id,{resolve,reject,timer});events.emit('biomind:packages_state_request',{id});
+    }));
+  events.on('biomind:packages_state_result',(raw:unknown)=>{
+    const result=raw as Json, entry=packageReads.get(result.id);
+    if(!entry)return;clearTimeout(entry.timer);packageReads.delete(result.id);
+    if(result.status==='ok'&&result.sessionId===identity.sessionId&&result.idle===true&&result.activeJobs===0)entry.resolve(true);
+    else entry.reject(new Error(result.code==='PACKAGES_BUSY'?'PACKAGES_BUSY':'PACKAGES_STATE_UNAVAILABLE'));
+  });
   events.on('biomind:ui_request', (raw: unknown) => {
     const request = raw as Json; waiting.set(request.id, request);
     write({ type: request.kind, ...request, requestId: activeInputId,
@@ -223,9 +303,9 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
         stage: data.stage, ...(data.message ? { message: data.message } : {}) });
     }
   });
-  events.on('biomind:settings_result', (raw: unknown) => write({ type: 'settings_result', ...(raw as Json) }));
-  events.on('biomind:job_result', (raw: unknown) => write({ type: 'job_result', ...(raw as Json) }));
-  events.on('biomind:permissions_result', (raw: unknown) => write({ type: 'permissions_result', ...(raw as Json) }));
+  events.on('biomind:settings_result', (raw: unknown) => {pendingDomainControls.delete(String((raw as Json).id));write({ type: 'settings_result', ...(raw as Json) });});
+  events.on('biomind:job_result', (raw: unknown) => { lastJobReceipt = raw as Json; pendingDomainControls.delete(String(lastJobReceipt.id)); write({ type: 'job_result', ...lastJobReceipt }); });
+  events.on('biomind:permissions_result', (raw: unknown) => {pendingDomainControls.delete(String((raw as Json).id));write({ type: 'permissions_result', ...(raw as Json) });});
   events.on('biomind:archive', (raw: unknown) => write({ type: 'archive_receipt', ...(raw as Json) }));
   events.on('biomind:diagnostic', (raw: unknown) => {
     const code = String((raw as Json).code ?? 'EXTENSION_DIAGNOSTIC');
@@ -235,15 +315,40 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
         ? { reason: diagnostic.reason } : {}),
       ...(diagnostic.reason === 'DOMAIN_HANDSHAKE_TIMEOUT' && Number.isInteger(diagnostic.timeoutMs)
         ? { reason: 'DOMAIN_HANDSHAKE_TIMEOUT', timeoutMs: diagnostic.timeoutMs } : {}) });
-    if (['EXECUTION_PROFILE_BINDING_FAILED', 'REQUEST_INITIALIZATION_FAILED', 'CONTEXT_POLICY_UNAVAILABLE', 'BIOMIND_USAGE_OBSERVER_FAILED'].includes(code)) {
+    if (['EXECUTION_PROFILE_BINDING_FAILED', 'SESSION_WRITER_BINDING_FAILED', 'REQUEST_INITIALIZATION_FAILED', 'CONTEXT_POLICY_UNAVAILABLE', 'BIOMIND_USAGE_OBSERVER_FAILED'].includes(code)) {
       outcome = 'error'; exitCode = 2;
-      if (code === 'EXECUTION_PROFILE_BINDING_FAILED') profileBindingFailed = true;
+      if (['EXECUTION_PROFILE_BINDING_FAILED','SESSION_WRITER_BINDING_FAILED'].includes(code)) profileBindingFailed = true;
       if (code === 'BIOMIND_USAGE_OBSERVER_FAILED') usageAccountingFailed = true;
     }
   });
   events.on('biomind:settled', (raw: unknown) => { outcome = (raw as Json).outcome; write({ type: 'biomind_settled', data: raw }); });
   session.subscribe(event => {
+    if (event.type === 'message_start' && event.message.role === 'user') {
+      if (promptUserPending) { if (promptAdmission) promptAdmission.status = 'consumed'; promptAdmission = undefined; promptUserPending = false; }
+      else {
+        const content = event.message.content;
+        const text = typeof content === 'string' ? content : content.filter(part => part.type === 'text').map(part => part.text).join('');
+        const hashes = typeof content === 'string' ? [] : content.filter(part => part.type === 'image').map(part => createHash('sha256').update(Buffer.from(part.data, 'base64')).digest('hex'));
+        // Match exact content only. Skill expansion or other transformations remain
+        // unknown rather than assigning a consumed id by a guessed queue position.
+        const textHash = createHash('sha256').update(text).digest('hex');
+        const matches = queuedAdmissions.filter(item => item.textHash === textHash && JSON.stringify(item.imageHashes) === JSON.stringify(hashes));
+        const next = matches.find(item => item.command === 'steer') ?? matches[0];
+        if (next) {
+          queuedAdmissions.splice(queuedAdmissions.indexOf(next), 1);
+          if (next.entry) { next.entry.status = 'consumed'; delete next.entry.code;
+            write({ type: 'message_consumed', clientMessageId: next.entry.clientMessageId, ownerGeneration, sessionId: identity.sessionId }); }
+        } else {
+          // A transformed input cannot prove which accepted id was consumed.
+          // Retain bounded associations and forbid replay; never guess a position.
+          for (const item of queuedAdmissions) if (item.entry) {
+            item.entry.status = 'unknown'; item.entry.code = 'PI_INPUT_CONSUMPTION_UNKNOWN';
+          }
+        }
+      }
+    }
     write({ type: 'event', event });
+
     if (event.type === 'tool_execution_end') {
       const details = (event.result as Json)?.details;
       if (details?.execution_facts && Object.keys(details.execution_facts).length) executionFacts.push(details.execution_facts);
@@ -254,43 +359,178 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
   } });
   if (profileBindingFailed || !backendReady) {
     await session.extensionRunner?.emit({ type: 'session_shutdown', reason: 'quit' });
-    session.dispose(); await writeTail; return 2;
+    studio.dispose(); session.dispose(); await output.flush().catch(() => {}); return 2;
   }
-  write({ type: 'ready', engine: 'pi', version: runtimeObservationLabel(), cwd,
+  // Read the current Domain policy before exposing settings capability; no model or settings write.
+  await studio.refreshMemory();
+  if (!backendReady) {
+    await session.extensionRunner?.emit({type:'session_shutdown',reason:'quit'});
+    studio.dispose(); session.dispose(); await output.flush().catch(()=>{}); return 2;
+  }
+  write({ type: 'ready', engine: 'pi', version: runtimeObservationLabel(), protocolVersion: 1, ownerGeneration, model: modelIdentity(), inputLimits: IMAGE_LIMITS, outputLimits, cwd,
     sessionDir: manager.getSessionDir(), projectTrusted: settings.isProjectTrusted(),
+    resources: { contextFiles: resources.getAgentsFiles().agentsFiles.map(file => ({ path: file.path })),
+      skills: resources.getSkills().skills.map(skill => ({ name: skill.name, path: skill.filePath })),
+      activeTools: session.getActiveToolNames(), domainInitialization: 'before_ready' },
     extension: extensionPath, ...(config.modelSelection ? { model_selection: config.modelSelection } : {}), ...sessionIdentity(),
     capabilities: { sessionResume: 'startup_exact_id_or_file', continueSession: 'explicit_same_project', sessionSwitch: 'restart_with_explicit_session',
-      temporarySession: 'explicit', persistenceOwner: 'Pi SessionManager', jobOwnerTakeover: 'not_implied_by_session_resume' } });
+      temporarySession: 'explicit', persistenceOwner: 'Pi SessionManager', jobOwnerTakeover: 'not_implied_by_session_resume',
+      images: true, imageInputEnabled: !!session.model?.input.includes('image') && !settings.getBlockImages(),
+      getState: true, admissionReceipts: 'same_owner_bounded_no_eviction', maxAdmissionReceipts: admissions.capacity,
+      automaticReplay: false, clearQueue: false, ...studio.capabilities(),
+      maxPendingInputs: 16,
+      historyExport: false, settings: ['history_enabled','memory_mode'],
+      serviceDetach: false, remoteServerBinding: false } });
   const control = (operation: Promise<unknown>, id?: unknown) => {
     void operation.catch(() => write({ type: 'error', id, code: 'PI_CONTROL_FAILED' }));
   };
-  const handle = (frame: Json) => {
-    if (!backendReady && ['prompt', 'steer', 'follow_up', 'compact'].includes(frame.type)) {
-      write({ type: 'error', id: frame.id, code: 'BACKEND_NOT_READY' }); return;
+  const handle = async (frame: Json, frameBytes?: number) => {
+    try { validateFrameIds(frame); }
+    catch { write({ type: 'error', code: 'INVALID_CORRELATION_ID' }); return; }
+    if (!['prompt','steer','follow_up'].includes(frame.type) &&
+        ((frame.ownerGeneration !== undefined && frame.ownerGeneration !== ownerGeneration)
+        || (frame.sessionId !== undefined && frame.sessionId !== identity.sessionId)
+        || (frame.project !== undefined && frame.project !== cwd))) {
+      write({ type: 'error', id: frame.id, code: frame.type === 'ui_response' ? 'STALE_UI_RESPONSE' : 'MESSAGE_SCOPE_MISMATCH' }); return;
     }
-    if (frame.type === 'prompt') {
-      if (active) { write({ type: 'error', id: frame.id, code: 'REQUEST_ACTIVE_USE_STEER_OR_FOLLOW_UP' }); return; }
-      if (typeof frame.text !== 'string') { write({ type: 'error', id: frame.id, code: 'TEXT_REQUIRED' }); return; }
+    if(frame.type==='resume_packages_operations'){
+      packages.cancel();write({type:'packages_shutdown_cancelled',id:frame.id,...sessionIdentity(),ownerGeneration,cwd,safeToRelease:false,packagesIdle:false});return;
+    }
+    if(frame.type==='prepare_packages_shutdown'){
+      try{await packages.prepare();write({type:'packages_shutdown_ready',id:frame.id,...sessionIdentity(),ownerGeneration,cwd,safeToRelease:true,packagesIdle:true});}
+      catch(error){write({type:'error',id:frame.id,code:error instanceof Error&&error.message==='PACKAGES_BUSY'?'PACKAGES_BUSY':'PACKAGES_STATE_UNAVAILABLE'});}return;
+    }
+    if(packages.ready&&!['get_state','shutdown','get_models','get_tools','get_commands','get_resources','get_prompt_snapshot'].includes(frame.type)){
+      write({type:'error',id:frame.id,code:'PACKAGES_OWNER_QUIESCING'});return;
+    }
+    if (studio.handles(frame.type)) {
+      try { write({...await studio.handle(frame),id:frame.id,...sessionIdentity(),ownerGeneration}); }
+      catch(error) { const code=error instanceof Error && /^[A-Z][A-Z0-9_]+$/.test(error.message)?error.message:'STUDIO_CONTROL_FAILED';
+        write({type:'error',id:frame.id,code,...(error && typeof error==='object' && 'currentVersion' in error?{currentVersion:error.currentVersion}:{})}); }
+      return;
+    }
+    if (['prompt','steer','follow_up'].includes(frame.type)) {
+      let admission: Admission | undefined;
+      const fail = (code: string) => { if (admission) { admission.status = 'failed'; admission.code = code; }
+        write({ type: 'error', id: frame.id, clientMessageId: frame.clientMessageId, code }); };
+      let validated: Awaited<ReturnType<typeof validateInputImages>>;
+      try {
+        const attempt = admissions.begin(frame); admission = attempt.entry;
+        if (attempt.duplicate) {
+          if (admission?.receipt) write({ ...admission.receipt, duplicate: true });
+          else write({ type: 'message_status', id: frame.id, clientMessageId: admission?.clientMessageId,
+            status: admission?.status, code: admission?.code, ownerGeneration, sessionId: identity.sessionId });
+          return;
+        }
+        if (!backendReady) { fail('BACKEND_NOT_READY'); return; }
+        if (typeof frame.text !== 'string') { fail('TEXT_REQUIRED'); return; }
+        try { studio.validateCommand(frame.text); } catch { fail('UNSUPPORTED_COMMAND'); return; }
+        if (controlBusy) { fail('SESSION_CONTROL_BUSY'); return; }
+        if (frame.type === 'prompt' && active) { fail('REQUEST_ACTIVE_USE_STEER_OR_FOLLOW_UP'); return; }
+        if (frame.type !== 'prompt' && queuedAdmissions.length >= 16) {
+          fail('INPUT_QUEUE_LIMIT'); return;
+        }
+        validated = await validateInputImages(frame.images, { modelInput: session.model?.input,
+          blockImages: settings.getBlockImages(), autoResizeImages: settings.getImageAutoResize(),
+          resize: session.model?.inputLimits?.images?.resize,
+          maxPerMessage: session.model?.inputLimits?.images?.maxPerMessage, frameBytes, signal: validationLifetime.signal });
+        if (validated.images.length && frame.text.startsWith('/')) {
+          // Pi extension commands receive text arguments only and report a
+          // successful preflight even when no user/image message was admitted.
+          const space = frame.text.indexOf(' ');
+          const command = space < 0 ? frame.text.slice(1) : frame.text.slice(1, space);
+          if (session.extensionRunner?.getCommand(command)) { fail('IMAGE_EXTENSION_COMMAND_UNSUPPORTED'); return; }
+        }
+      } catch (error) {
+        fail(error instanceof ImageInputError || error instanceof AdmissionError ? error.code : 'INPUT_VALIDATION_FAILED'); return;
+      }
+      if (detached || output.detached) { if (admission) { admission.status = 'failed'; admission.code = 'OWNER_OUTPUT_UNAVAILABLE'; } return; }
+      const accept = () => {
+        if (!admission) return;
+        if (admission.status === 'pending') admission.status = 'accepted';
+        admission.receipt = { type: 'accepted', status: 'accepted', id: frame.id,
+          clientMessageId: admission.clientMessageId, command: frame.type,
+          ownerGeneration, sessionId: identity.sessionId, project: cwd, images: validated.receipts };
+        write(admission.receipt);
+      };
+      if (frame.type !== 'prompt') {
+        // Image decoding can outlive the run that the sender observed. Do not
+        // acknowledge a new remote append that will sit on an already idle Pi.
+        if ((admission || validated.images.length) && !session.isStreaming) { fail('REQUEST_NOT_ACTIVE_USE_PROMPT'); return; }
+        const queue = () => frame.type === 'steer' ? session.getSteeringMessages() : session.getFollowUpMessages();
+        let observedCount = queue().length; let enqueued = false;
+        // Net queue length can stay unchanged when an older message is consumed
+        // during input hooks. Observe Pi's actual enqueue edge instead. This host
+        // serializes commands and the sole BioMind extension has no other user-input producer.
+        const stopObserving = session.subscribe(event => {
+          if (event.type !== 'queue_update') return;
+          const count = frame.type === 'steer' ? event.steering.length : event.followUp.length;
+          if (count > observedCount) enqueued = true;
+          observedCount = count;
+        });
+        // Include legacy sends: this is a bounded hash/receipt association, not
+        // another execution queue. Every input still goes directly to Pi below.
+        const association = { entry: admission, command: frame.type as 'steer' | 'follow_up',
+          textHash: createHash('sha256').update(frame.text).digest('hex'),
+          imageHashes: validated.images.map(image => createHash('sha256').update(Buffer.from(image.data, 'base64')).digest('hex')) };
+        queuedAdmissions.push(association);
+        let failedBeforeAdmission = false;
+        try {
+          if (frame.type === 'steer') await session.steer(frame.text, validated.images);
+          else await session.followUp(frame.text, validated.images);
+          if (enqueued || admission?.status === 'consumed') accept();
+          else {
+            if (admission) { admission.status = 'unknown'; admission.code = 'PI_INPUT_ADMISSION_UNKNOWN'; }
+            write({ type: 'message_status', id: frame.id, clientMessageId: frame.clientMessageId, status: 'unknown', code: 'PI_INPUT_ADMISSION_UNKNOWN' });
+          }
+        } catch {
+          if (enqueued) { accept(); write({ type: 'error', id: frame.id, code: 'PI_CONTROL_FAILED_AFTER_ADMISSION' }); }
+          else { failedBeforeAdmission = true; fail('PI_CONTROL_FAILED'); }
+        } finally { stopObserving(); }
+        if (failedBeforeAdmission && queuedAdmissions.includes(association)) queuedAdmissions.splice(queuedAdmissions.indexOf(association), 1);
+        return;
+      }
       activeInputId = String(frame.requestId ?? frame.taskId ?? frame.id ?? randomUUID());
       const inputId = activeInputId; outcome = 'unknown'; executionFacts.splice(0);
       active = (async () => {
         try {
-          await session.prompt(frame.text); await session.waitForIdle();
+          await session.prompt(frame.text, { images: validated.images, preflightResult: success => {
+            if (success && outcome !== 'error') { promptUserPending = true; promptAdmission = admission; accept(); }
+            else fail('PI_INPUT_NOT_ACCEPTED');
+          } }); await session.waitForIdle();
           write({ type: 'result', ...sessionIdentity(), requestId: inputId, runtime_status: usageAccountingFailed || !backendReady ? 'error' : outcome,
             model_conclusion: session.getLastAssistantText() ?? '', execution_facts: [...executionFacts], scientific_success: null,
             usage_scope: projectObservedUsage(session.sessionManager.getEntries()).scope, usage: projectObservedUsage(session.sessionManager.getEntries()), pi_entry_usage: session.getSessionStats() });
         } catch {
+          if (admission?.status === 'pending') fail('PI_INPUT_NOT_ACCEPTED');
           write({ type: 'error', requestId: inputId, code: 'PI_RUN_FAILED' });
           write({ type: 'result', ...sessionIdentity(), requestId: inputId, runtime_status: 'error', model_conclusion: '', execution_facts: [...executionFacts], scientific_success: null,
             usage_scope: projectObservedUsage(session.sessionManager.getEntries()).scope, usage: projectObservedUsage(session.sessionManager.getEntries()), pi_entry_usage: session.getSessionStats() });
-        } finally { waiting.clear(); active = undefined; activeInputId = undefined; }
+        } finally { waiting.clear(); promptUserPending = false; promptAdmission = undefined; active = undefined; activeInputId = undefined; }
       })();
+    } else if (frame.type === 'get_state') {
+      if ((frame.ownerGeneration !== undefined && frame.ownerGeneration !== ownerGeneration)
+          || (frame.sessionId !== undefined && frame.sessionId !== identity.sessionId)
+          || (frame.project !== undefined && frame.project !== cwd)) {
+        write({ type: 'error', id: frame.id, code: 'MESSAGE_SCOPE_MISMATCH' }); return;
+      }
+      write({ type: 'state', id: frame.id, ...sessionIdentity(), ownerGeneration, cwd,
+        active: !!active, activeRequestId: activeInputId ?? null, controlBusy: controlBusy ?? null, model: modelIdentity(),
+        pendingUI: [...waiting.values()].map(request => ({ ...request, type: request.kind,
+          requestId: activeInputId, businessRequestId: request.requestId })), admissions: admissions.snapshot(),
+        queue: { pendingAssociationCount: queuedAdmissions.length, actualHasQueuedMessages: session.agent.hasQueuedMessages(),
+          nativeDisplayCounts: { steering: session.getSteeringMessages().length, followUp: session.getFollowUpMessages().length,
+            limitation: 'Pi 0.87.1 may retain consumed empty-text entries; these are not execution queue counts' },
+          associations: 'bounded_exact_content_only; transformed_unmatched_inputs_unknown; no_replay' },
+        jobs: { status: 'unknown', reason: 'use_job_list_or_status', ...(lastJobReceipt ? {lastReceipt:lastJobReceipt} : {}) },
+        output: output.stats(), safeToRelease: packages.ready, packagesIdle:packages.ready, packagesQuiescing:packages.ready, pendingDomainControlCount:pendingDomainControls.size, ...studio.state() });
     } else if (frame.type === 'ui_response') {
       const request = waiting.get(String(frame.id));
       if (!request) { write({ type: 'error', id: frame.id, code: 'STALE_UI_RESPONSE' }); return; }
       // The opaque UI id correlates legacy local clients. Clients supplying
       // explicit business/session/action identities must match the same prompt.
-      if ((frame.sessionId !== undefined && frame.sessionId !== request.sessionId)
+      if ((frame.ownerGeneration !== undefined && frame.ownerGeneration !== ownerGeneration)
+          || (frame.sessionId !== undefined && frame.sessionId !== request.sessionId)
           || (frame.requestId !== undefined && frame.requestId !== activeInputId)
           || (frame.businessRequestId !== undefined && frame.businessRequestId !== request.requestId)
           || (frame.action_hash !== undefined && frame.action_hash !== request.proposal?.action_hash)) {
@@ -305,16 +545,28 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
       const answer = typeof value === 'string' ? value : value?.answer;
       const rawChoice = typeof value === 'string' ? value : value?.choice;
       const choice = rawChoice === 'deny' ? 'n' : rawChoice === 'approve' ? 'y' : rawChoice;
-      const response = { ...(typeof value === 'object' && value ? value : {}), id: request.id,
+      if ((request.kind === 'question' && value?.cancelled !== true && typeof answer !== 'string')
+          || (request.kind !== 'question' && value?.cancelled !== true && typeof choice !== 'string')
+          || (value?.replacement !== undefined && (!value.replacement || typeof value.replacement !== 'object' || Array.isArray(value.replacement)))) {
+        write({ type: 'error', id: frame.id, code: 'INVALID_UI_RESPONSE' }); return;
+      }
+      const response = { id: request.id,
         requestId: request.requestId, sessionId: request.sessionId,
+        ...(value?.cancelled === true ? { cancelled: true } : {}),
+        ...(value?.replacement !== undefined ? { replacement: value.replacement } : {}),
         ...(request.kind === 'question' ? { answer } : { choice }) };
       waiting.delete(request.id); events.emit('biomind:ui_response', response);
+      // This acknowledges delivery to the existing UI promise, not approval of
+      // a domain action or completion of the current run.
+      write({ type: 'ui_response_result', id: frame.id, status: 'accepted', requestId: activeInputId,
+        businessRequestId: request.requestId, sessionId: identity.sessionId, ownerGeneration });
     } else if (frame.type === 'job') {
       if (!['list','status','logs','cancel'].includes(frame.action) ||
           (frame.action !== 'list' && typeof frame.run_ref !== 'string')) {
         write({ type: 'job_result', id: frame.id, status: 'error', code: 'INVALID_JOB_COMMAND' }); return;
       }
-      events.emit('biomind:job_request', { id: frame.id ?? randomUUID(), action: frame.action,
+      const controlId=String(frame.id??randomUUID());pendingDomainControls.add(controlId);
+      events.emit('biomind:job_request', { id: controlId, action: frame.action,
         ...(frame.run_ref ? { run_ref: frame.run_ref } : {}),
         ...(typeof frame.after_cursor === 'string' ? { after_cursor: frame.after_cursor } : {}) });
     } else if (frame.type === 'permissions') {
@@ -322,54 +574,75 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
           && (typeof frame.grant_id !== 'string' || !frame.request_scope || typeof frame.policy_revision !== 'string'))) {
         write({ type: 'permissions_result', id: frame.id, status: 'error', code: 'INVALID_PERMISSIONS_COMMAND' }); return;
       }
-      events.emit('biomind:permissions_request', { id: frame.id ?? randomUUID(), action: frame.action,
+      const controlId=String(frame.id??randomUUID());pendingDomainControls.add(controlId);
+      events.emit('biomind:permissions_request', { id: controlId, action: frame.action,
         ...(frame.action === 'revoke' ? { grant_id: frame.grant_id, request_scope: frame.request_scope, policy_revision: frame.policy_revision } : {}) });
     } else if (frame.type === 'settings') {
       if ((frame.history_enabled !== undefined && typeof frame.history_enabled !== 'boolean') ||
           (frame.memory_mode !== undefined && !['ask','auto','manual','disabled'].includes(frame.memory_mode))) {
         write({ type: 'settings_result', id: frame.id, status: 'error', code: 'INVALID_SETTINGS' }); return;
       }
-      events.emit('biomind:settings_request', { id: frame.id ?? randomUUID(),
+      const controlId=String(frame.id??randomUUID());pendingDomainControls.add(controlId);
+      events.emit('biomind:settings_request', { id: controlId,
         ...(frame.history_enabled !== undefined ? { history_enabled: frame.history_enabled } : {}),
         ...(frame.memory_mode !== undefined ? { memory_mode: frame.memory_mode } : {}) });
     } else if (frame.type === 'reload') {
       if (active) { write({ type: 'error', id: frame.id, code: 'REQUEST_ACTIVE_RELOAD_PENDING' }); return; }
-      backendReady = false;
-      control(session.reload().then(() => write({ type: 'reload_result', id: frame.id, status: 'reloaded' })), frame.id);
+      if (controlBusy) { write({ type: 'error', id: frame.id, code: 'SESSION_CONTROL_BUSY' }); return; }
+      // Reload project resources only while the code is still the loaded build.
+      // Otherwise the extension could change under a process whose identity is A.
+      try {
+        if (loadBuildIdentity(runtime, 'json').buildId !== config.loadedBuild?.buildId) {
+          write({ type: 'error', id: frame.id, code: 'BUILD_CHANGED_RESTART_REQUIRED' }); return;
+        }
+      } catch { write({ type: 'error', id: frame.id, code: 'BUILD_INVALID_RESTART_REQUIRED' }); return; }
+      controlBusy = 'reload'; backendReady = false;
+      control(session.reload().then(async() => {if(!backendReady)throw new Error('BACKEND_NOT_READY');studio.afterReload();await studio.refreshMemory();write({ type: 'reload_result', id: frame.id, status: 'reloaded',data:{...studio.state(),resources:resourceSelection.snapshot(resources)} });}).finally(() => {controlBusy = undefined;}), frame.id);
     } else if (frame.type === 'compact') {
+      if (!backendReady) { write({type:'error',id:frame.id,code:'BACKEND_NOT_READY'}); return; }
       if (active) { write({ type: 'error', id: frame.id, code: 'REQUEST_ACTIVE' }); return; }
-      control(session.compact().then(() => write({ type: 'compact_result', id: frame.id, status: 'compacted' })), frame.id);
-    } else if (frame.type === 'abort') { waiting.clear(); control(session.abort(), frame.id); }
-    else if (frame.type === 'steer' && typeof frame.text === 'string') { control(session.steer(frame.text), frame.id); }
-    else if (frame.type === 'follow_up' && typeof frame.text === 'string') { control(session.followUp(frame.text), frame.id); }
+      if (controlBusy) { write({ type: 'error', id: frame.id, code: 'SESSION_CONTROL_BUSY' }); return; }
+      if (frame.customInstructions !== undefined && typeof frame.customInstructions !== 'string') { write({ type: 'error', id: frame.id, code: 'INVALID_COMPACT_INSTRUCTIONS' }); return; }
+      controlBusy = 'compact';
+      control(session.compact(frame.customInstructions).then(result => write({ type: 'compact_result', id: frame.id, status: 'compacted',data:{result} })).finally(() => {controlBusy = undefined;}), frame.id);
+    } else if (frame.type === 'abort') {
+      waiting.clear();
+      control(session.abort().then(() => write({ type: 'abort_result', id: frame.id, status: 'requested',
+        sessionId: identity.sessionId, ownerGeneration })), frame.id);
+    }
     else if (frame.type === 'shutdown') { detached = true; control(session.abort(), frame.id); }
     else write({ type: 'error', id: frame.id, code: 'UNKNOWN_COMMAND' });
   };
-  const decoder = new StringDecoder('utf8'); let pending = '';
-  try {
-    if (initialPrompt !== undefined) handle({ type: 'prompt', text: initialPrompt, id: 'initial' });
-    for await (const chunk of process.stdin) {
-      pending += decoder.write(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-      if (Buffer.byteLength(pending) > 4 * 1024 * 1024) throw new Error('HOST_FRAME_LIMIT');
-      let index: number;
-      while ((index = pending.indexOf('\n')) >= 0) {
-        const line = pending.slice(0, index); pending = pending.slice(index + 1);
-        try { const frame = JSON.parse(line); if (!frame || typeof frame !== 'object') throw new Error(); handle(frame); }
-        catch { write({ type: 'error', code: 'INVALID_JSON_FRAME' }); exitCode = 2; detached = true; }
-        if (detached) break;
+  const decoder = new JsonFrameDecoder(IMAGE_LIMITS.maxFrameBytes);
+  const processFrames = async (frames: ReturnType<JsonFrameDecoder['push']>) => {
+    for (const item of frames) {
+      if (item.type === 'frame') await handle(item.value, item.bytes);
+      else {
+        write({ type: 'error', code: item.code, frameNumber: item.frameNumber, bytes: item.bytes });
+        // Preserve the current Main host's fail-closed transport lifetime. The
+        // decoder bounds and validates bytes; a malformed connection ends here.
+        exitCode = 2; detached = true; validationLifetime.abort();
       }
       if (detached) break;
     }
-    if (!detached && (pending + decoder.end()).trim()) {
-      write({ type: 'error', code: 'TRUNCATED_JSON_FRAME' }); exitCode = 2;
+  };
+  try {
+    if (initialPrompt !== undefined) await handle({ type: 'prompt', text: initialPrompt, id: 'initial' });
+    for await (const chunk of process.stdin) {
+      await processFrames(decoder.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+      if (detached) break;
     }
+    if (!detached) await processFrames(decoder.end());
   } finally {
     // EOF is disconnect, not a cancellation of a scientific job. Pi abort only
     // cancels conversation waiters; the extension closes the bridge disconnect-only.
-    detached = true; await session.abort(); await active;
+    detached = true; validationLifetime.abort(); await session.abort(); await active;
     await session.extensionRunner?.emit({ type: 'session_shutdown', reason: 'quit' });
-    session.dispose(); await writeTail;
+    for(const read of packageReads.values()){clearTimeout(read.timer);read.reject(new Error('OWNER_CLOSED'));}packageReads.clear();
+    studio.dispose(); session.dispose(); await output.flush().catch(() => { exitCode = 2; });
+    config.writerClean=exitCode===0;
   }
+
   return exitCode;
 }
 
@@ -396,11 +669,20 @@ export async function main(): Promise<number> {
   assertObservationMode();
   const compat = JSON.parse(fs.readFileSync(path.join(runtime, 'compat/pi-0.87.1-observer.patch.json'), 'utf8'));
   const packageRoot = locatePackage('@earendil-works/pi-coding-agent');
-  for (const target of compat.files) {
-    const actual = createHash('sha256').update(fs.readFileSync(path.join(packageRoot, target.path))).digest('hex');
-    if (actual !== target.patchedSha256) throw new Error('BIOMIND_PI_COMPAT_PATCH_REQUIRED');
+  const pluginCompat=JSON.parse(fs.readFileSync(path.join(runtime,'compat/pi-0.87.1-plugin-guard.patch.json'),'utf8'));
+  for(const target of compat.files){
+    const bytes=fs.readFileSync(path.join(packageRoot,target.path));
+    if(!verifyObserverBytes(bytes,target.patchedSha256,pluginCompat.files.find((file:any)=>file.path===target.path)))
+      throw new Error('BIOMIND_PI_COMPAT_PATCH_REQUIRED');
+  }
+  for(const target of pluginCompat.files){
+    if(createHash('sha256').update(fs.readFileSync(path.join(packageRoot,target.path))).digest('hex')!==target.patchedSha256)
+      throw new Error('BIOMIND_PI_PLUGIN_GUARD_PATCH_REQUIRED');
   }
   const config = readConfig(values.config);
+  config.loadedBuild = loadBuildIdentity(runtime, values.mode === 'interactive' ? 'native' : 'json');
+  if (config.installRoot && fs.realpathSync(config.installRoot) !== fs.realpathSync(config.loadedBuild.releaseRoot)) throw new Error('BIOMIND_BUILD_INSTALL_ROOT_MISMATCH');
+  config.installRoot = config.loadedBuild.releaseRoot;
   if (values['project-open']) { delete config.session; delete config.continueSession; }
   config.launcherPython = values['entry-python'];
   if (config.launcherPython) process.env.BIOMIND_PI_LAUNCHER_PYTHON = config.launcherPython;
@@ -540,14 +822,27 @@ export async function main(): Promise<number> {
       if (alias) process.env.DEEPSEEK_API_KEY = alias;
     }
   }
+  config.writerLeases=[];config.ownerGeneration=randomUUID();config.writerClean=false;
+  const resourceLease = acquirePluginLease({cwd,agentDir:config.agentDir!,python:config.python ?? process.env.BIOMIND_PI_PYTHON ?? config.launcherPython,mode:'shared'});
+  config.resourceOwnership={protocol:'linux_flock_v1',mode:'shared',roots:resourceLease.plan.resources.map(row=>row.root),releaseOn:'last_actual_process_exit'};
+  try {
   let previousProfile: ExecutionProfile | undefined;
   if (config.session || config.continueSession) {
-    const { openProductSession } = await import('./native-session.js');
-    const selected = openProductSession(cwd, config);
-    const filename = selected.getSessionFile();
-    if (filename && fs.existsSync(filename)) {
-      previousProfile = sessionProfile(path.resolve(cwd, config.dataRoot ?? '.biomind/pi-domain'), selected.getSessionId());
-      config.session = filename; delete config.continueSession;
+    const { SessionManager }=await import('@earendil-works/pi-coding-agent');
+    let filename=config.session;
+    if(config.continueSession){
+      // Use Pi's original mtime-based discovery without opening/migrating history.
+      const sessionModule=await import(pathToFileURL(path.join(packageRoot,'dist/core/session-manager.js')).href);
+      const directory=config.sessionDir??SessionManager.create(cwd).getSessionDir();
+      filename=sessionModule.findMostRecentSession(directory,cwd)??undefined;delete config.continueSession;
+    }
+    if(filename){
+      if(!path.isAbsolute(filename))filename=SessionManager.findById(cwd,filename,config.sessionDir)??undefined;
+      if(!filename)throw new ProductSessionError('SESSION_NOT_FOUND');
+      const header=writerHeader(filename);
+      const lease=await acquireSessionWriter({sessionFile:filename,sessionId:header.id,cwd,ownerGeneration:config.ownerGeneration,mode:'resume'});
+      config.writerLeases.push(lease);config.session=lease.identity.sessionFile;
+      previousProfile=sessionProfile(path.resolve(cwd,config.dataRoot??'.biomind/pi-domain'),header.id);
     }
   }
   const chosen = chooseExecutionProfile({ cli: values['execution-profile'], configured: config.executionProfile,
@@ -559,11 +854,21 @@ export async function main(): Promise<number> {
   if (values.mode === 'interactive') return await startNative(config, cwd, values.prompt);
   if (values.mode === 'json') return await startJson(config, cwd, values.prompt);
   throw new Error('Unsupported mode');
+  } finally {
+    resourceLease.close();
+    // Native returns only after actual CLI exit; JSON returns after abort/dispose.
+    if(config.writerClean){
+      let failure:unknown;for(const lease of config.writerLeases.reverse()){try{await lease.release();}catch(error){failure??=error;}}if(failure)throw failure;
+    }else if(config.writerLeases.length){
+      process.stderr.write('SESSION_WRITER_RETAINED_ABNORMAL_EXIT: ownership remains unknown/read-only; no stale claim was cleared.\n');
+    }
+  }
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try { process.exitCode = await main(); } catch (error) {
     // Never print unfiltered settings/provider exceptions (they can contain URLs
     // with credentials). Full typed fixture assertions live in test evidence.
+    if (error instanceof SessionWriterError) process.stderr.write(error.code + '\n');
     if (error instanceof ProductSessionError) {
       process.stderr.write(`BioMind 会话错误: ${error.message}. No temporary fallback was used.\n`);
     }
@@ -574,7 +879,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     if (error instanceof ProjectDirectoryError) process.stderr.write(`BioMind: ${error.message}\n`);
     if (error instanceof TerminalInputError) process.stderr.write(`${error.message}\n${error.inputError.stack ?? ''}\n`);
     if (process.argv.includes('json')) process.stdout.write(JSON.stringify({ type: 'error',
-      code: error instanceof ProductSessionError || error instanceof ProjectDirectoryError || error instanceof TerminalInputError ? error.code : 'PI_INITIALIZATION_FAILED',
+      code: error instanceof ProductSessionError || error instanceof ProjectDirectoryError || error instanceof TerminalInputError || error instanceof SessionWriterError ? error.code : error instanceof Error && /^(?:BIOMIND_BUILD|BIOMIND_PI|RESOURCE|PACKAGE|PACKAGES)_[A-Z_]+$/.test(error.message) ? error.message : 'PI_INITIALIZATION_FAILED',
       ...(error instanceof ProjectDirectoryError || error instanceof ProductSessionError ? { message: error.message } : {}) }) + '\n');
     process.stderr.write('BioMind Pi host failed to initialize or run; no legacy fallback was attempted.\n');
     process.exitCode = 2;

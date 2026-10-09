@@ -45,7 +45,21 @@ const plan = patch.files.map(file => {
     return { filename, next: source, remove: mode === 'revert', changed: mode === 'revert' ? !!current : currentHash !== file.patchedSha256,
       path: file.path, sha256: mode === 'revert' ? null : file.patchedSha256 };
   }
-  const original = fs.readFileSync(filename, 'utf8');
+  const installedBytes = fs.readFileSync(filename, 'utf8');
+  let original = installedBytes;
+  // The independent plugin guard is an exact overlay AFTER observer. Validate
+  // and reverse its known bytes in memory; never weaken observer's base hashes.
+  const pluginManifest = path.join(directory, 'pi-0.87.1-plugin-guard.patch.json');
+  const overlay = fs.existsSync(pluginManifest)
+    ? JSON.parse(fs.readFileSync(pluginManifest, 'utf8')).files.find(row => row.path === file.path && row.patchedSha256 === sha(installedBytes)) : undefined;
+  if (overlay) {
+    if (mode === 'revert') throw new Error('OBSERVER_REVERT_REQUIRES_PLUGIN_REVERT');
+    for (const edit of overlay.replacements.slice().reverse()) {
+      if (original.split(edit.after).length !== 2) throw new Error(`Plugin overlay anchor mismatch: ${file.path}`);
+      original = original.replace(edit.after, edit.before);
+    }
+    if (sha(original) !== overlay.originalSha256) throw new Error(`Plugin overlay checksum mismatch: ${file.path}`);
+  }
   const currentHash = sha(original);
   // Keep the earlier single-predecessor manifest format readable while allowing
   // exact upgrades from known .2, .3 and .4 installations to this revision.
@@ -77,7 +91,14 @@ const plan = patch.files.map(file => {
     }
     if (sha(next) !== target) throw new Error(`Patched checksum mismatch: ${file.path}`);
   }
-  return { filename, next, changed: next !== original, path: file.path, sha256: sha(next) };
+  if (overlay) {
+    for (const edit of overlay.replacements) {
+      if (next.split(edit.before).length !== 2) throw new Error(`Plugin overlay anchor mismatch: ${file.path}`);
+      next = next.replace(edit.before, edit.after);
+    }
+    if (sha(next) !== overlay.patchedSha256) throw new Error(`Plugin overlay checksum mismatch: ${file.path}`);
+  }
+  return { filename, next, changed: next !== installedBytes, path: file.path, sha256: sha(next) };
 });
 for (const entry of plan) if (entry.changed) {
   if (entry.remove) fs.unlinkSync(entry.filename);

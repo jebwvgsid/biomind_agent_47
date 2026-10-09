@@ -1,0 +1,80 @@
+BioMind Pi 0.87.1 plugin resource coordination
+
+The package/extension engine remains the installed Pi 0.87.1 SDK. Package
+declarations remain in Pi settings.json; there is no second plugin database.
+The marker and flock files contain coordination state only, not sessions,
+memory, credentials, or an alternative package catalog.
+
+Machine entry:
+  python3 <fixed-release>/bio_agents.py plugins --json --pi-config <runtime.json>
+One stdin JSON object selects action list/check/install/remove/update/config/
+trust/repair. cwd is the real Linux project; runtime.json supplies agentDir.
+The ordinary aliases biomind install/remove/uninstall/list/config/update use
+the same module before project selection or model/session initialization.
+config accepts --declaration with the complete native PackageSource object.
+update requires a source or --extensions; plain update, self, pi, --self and
+--all are refused because they would upgrade the pinned engine. Native
+update(source?) affects user and loaded project declarations; it has no local
+option. Exact npm versions and native git refs retain Pi's native semantics.
+
+Read-only list never calls resolve or DefaultResourceLoader.reload. It reports
+configured, installed, declarations and real installed manifest/git identity.
+Discovered/workerLoaded/active are unknown without a real worker snapshot.
+autoload:false can still contain positive explicit filters; it is not a
+package-wide off switch. config preserves the whole native declaration.
+
+Each managed npm install root, git scope root, and temporary extension root
+uses its canonical filesystem path as lock identity. Stable .biomind-resource-
+locks directories live beside these roots, outside directories npm/git may
+replace or remove. All roots are locked in deterministic path order. Admission
+gates precede resource locks. A worker holds shared flock descriptors for its
+entire process lifetime; native and domain children receive duplicated fds.
+Parent exit closes only its copies. A still-running child retains the kernel
+lease. File mutation takes nonblocking exclusive locks and returns BUSY before
+touching package/settings data. Settings-only edits use a short gate and Pi's
+incremental settings storage; they do not upgrade a worker's shared lease.
+
+The exact-byte plugin guard overlays both the SDK package manager and native
+CLI bundle after the existing observer compatibility patch. Shared loaders
+cannot auto-install missing/version-mismatched packages. Temporary unpinned
+git refresh cannot swallow a guard error. Read-only temporary path discovery
+does not mkdir/chmod a cache. npm/git children also inherit the exclusive fds,
+so a cancelled parent does not release a surviving install child's lease.
+The observer check reverses only the declared known overlay in memory and
+still verifies its original expected hashes. No Pi engine upgrade is included.
+
+Mutation writes a small incomplete marker before native package operations.
+Native installAndPersist is not filesystem/settings atomic. Success requires
+settings.flush(), drainErrors(), and a fresh native settings/path reconciliation.
+On failure the marker remains and later loads/mutations return repair_required.
+Explicit repair reinstalls the scope's configured packages plus the requested
+source using the same native manager under exclusive locks; failure keeps the
+marker. No automatic reinstall or model-task replay occurs. Local sources keep
+native direct-path semantics: these locks cannot prevent an external editor
+from changing a development source directory.
+
+Existing production/S2/CLI scope migration is BLOCKED in this release until a
+real maintenance proof is available. A new empty lock proves nothing about
+workers which never joined this protocol. Existing agentDir/.pi roots without
+a born-guarded marker never become trusted automatically. Do not change HOME,
+copy auth, or create another agentDir as a workaround.
+
+Maintenance sequence for an operator, preserving all current tasks:
+1. Freeze old official admission points and each Studio registry on every host
+   that can reach the package storage; record exact launcher/release identities.
+2. Let existing CLI/domain/scientific jobs finish. Do not kill unknown workers.
+3. From the real SSH host context, run the read-only report:
+   python3 <fixed-release>/scripts/audit-plugin-maintenance.py \
+     --agent-dir <existing-agentDir> --project-dir <project> \
+     --expected-host <actual-hostname> --frozen-entry <frozen-launcher>
+4. Reconcile all old registry owners and all relevant login/compute hosts.
+   An unavailable PID, empty local process list, empty job list, or new lock
+   acquired exclusively is insufficient on its own. The script intentionally
+   does not authorize adoption or write markers; cross-host/admission proof
+   remains BLOCKED. A future audited adoption command must consume verifiable
+   maintenance evidence while admission remains frozen, then reopen the new
+   guarded entrypoints. This implementation does not claim that final step.
+
+Acceptance must distinguish offline SDK/lock fixtures, a real model selecting
+a plugin tool, and the actual Windows package. Building or listing packages is
+not evidence that a Windows worker has loaded or executed an extension.

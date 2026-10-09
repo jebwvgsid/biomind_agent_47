@@ -314,6 +314,12 @@ def maybe_dispatch(argv: Sequence[str] | None = None) -> int:
     if remaining and remaining[0] in {"doctor", "integrate"}:
         from agent_core.runtime_integration import main as runtime_main
         return runtime_main(remaining, runtime=RUNTIME)
+    # Native package operations precede project menus, model resolution, and
+    # session startup. They use this same fixed runtime/agentDir, never HOME tricks.
+    from agent_core.pi_plugins import COMMANDS as package_commands
+    if remaining and remaining[0] in package_commands:
+        from agent_core.pi_plugins import main as package_main
+        return package_main(remaining, runtime=RUNTIME)
     return launch_pi(remaining)
 
 

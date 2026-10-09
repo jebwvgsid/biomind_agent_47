@@ -90,7 +90,7 @@ export function describeProductSession(manager: SessionManager) {
 /** Pi public trust store + native settings, with no prompt or trust writes in JSON mode. */
 export function createProductSettings(cwd: string, agentDir: string): SettingsManager {
   const user = SettingsManager.create(cwd, agentDir, { projectTrusted: false });
-  const saved = new ProjectTrustStore(agentDir).get(cwd);
+  const saved = fs.existsSync(path.join(agentDir, 'trust.json')) ? new ProjectTrustStore(agentDir).get(cwd) : null;
   const trusted = !hasTrustRequiringProjectResources(cwd) || (saved ?? user.getDefaultProjectTrust() === 'always');
   return SettingsManager.create(cwd, agentDir, { projectTrusted: trusted });
 }
