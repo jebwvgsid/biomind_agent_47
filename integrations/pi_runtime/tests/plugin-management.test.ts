@@ -73,6 +73,47 @@ test('legacy scopes fail closed before package or native settings changes', asyn
   assert.equal(fs.readFileSync(path.join(f.agentDir, 'settings.json'), 'utf8'), before);
 });
 
+test('maintenance-adopted legacy scopes rejoin the actual native manager with filters and trust intact', async t => {
+  const f = fixture(t), source = localPackage(f.root);
+  assert.equal((await managePlugins({ action: 'install', source }, f)).status, 'ok');
+  const declaration = { source, autoload: false, extensions: ['extension.ts'], skills: [] };
+  assert.equal((await managePlugins({ action: 'config', source, declaration }, f)).status, 'ok');
+  assert.equal((await managePlugins({ action: 'trust', scope: 'project', trusted: true }, f)).status, 'ok');
+  const savedDeclaration = (await managePlugins({ action: 'list' }, f)).packages![0].declaration;
+  for (const root of [f.agentDir, path.join(f.cwd, '.pi')]) fs.unlinkSync(path.join(root, '.biomind-resource-guard.json'));
+  const settings = fs.readFileSync(path.join(f.agentDir, 'settings.json'));
+  const trust = fs.readFileSync(path.join(f.agentDir, 'trust.json'));
+  assert.equal((await managePlugins({ action: 'remove', source }, f)).code, 'LEGACY_OCCUPANCY_UNVERIFIED');
+  const code = `
+import json,os,socket,sys,time
+from pathlib import Path
+sys.path.insert(0,sys.argv[1])
+from agent_core import pi_plugin_adoption as a
+f=json.loads(sys.argv[2]); root=Path(f['root'])
+legacy=root/'old-core'; legacy.mkdir()
+sessions=root/'old-sessions'; sessions.mkdir()
+entry=root/'old-launcher'; entry.write_text('#!/usr/bin/env python3\\n')
+plan={'schema':a.SCHEMA,'agentDir':f['agentDir'],'cwd':f['cwd'],'scopes':['user','project'],
+'stateDir':str(root/'adoption'),'hosts':[{'name':socket.gethostname()}],'scheduler':'none',
+'legacyCodeRoots':[str(legacy)],'sessionRoots':[str(sessions)],
+'entries':[{'path':str(entry),'expectedSha256':a.entry_snapshot(entry)['sha256']}],
+'maintenanceApproved':True,'entryInventoryConfirmed':True,'hostInventoryConfirmed':True}
+file=root/'plan.json';a.save(file,plan);plan=a.load_plan(file);a.fence(plan)
+# Occupancy fixture only: no bypass option exists on the production CLI.
+a.adopt(plan,collect=lambda p:[{'host':socket.gethostname(),'uid':os.getuid(),'at':time.time(),'planSha256':p['_sha256'],'status':'clear'}])
+`;
+  const adopted = spawnSync(python, ['-B', '-c', code, path.resolve(runtime, '../..'), JSON.stringify(f)], { encoding: 'utf8', timeout: 30000 });
+  assert.equal(adopted.status, 0, adopted.stderr);
+  assert.deepEqual(fs.readFileSync(path.join(f.agentDir, 'settings.json')), settings);
+  assert.deepEqual(fs.readFileSync(path.join(f.agentDir, 'trust.json')), trust);
+  assert.deepEqual((await managePlugins({ action: 'list' }, f)).packages![0].declaration, savedDeclaration);
+  const lease = acquirePluginLease(f);
+  assert.equal(childManage(f, { action: 'remove', source }).status, 'BUSY');
+  lease.close();
+  assert.equal((await managePlugins({ action: 'remove', source }, f)).status, 'ok');
+  assert.deepEqual(fs.readFileSync(path.join(f.agentDir, 'trust.json')), trust);
+});
+
 test('actual DefaultResourceLoader missing auto-install is blocked while shared, even noExtensions', async t => {
   const f = fixture(t); initialScope(f);
   const lease = acquirePluginLease(f); t.after(() => lease.close());

@@ -164,7 +164,7 @@ export async function managePlugins(raw: unknown, options: { agentDir?: string; 
     const rawCode = (error as any)?.code;
     const code = typeof rawCode === 'string' && /^[A-Z][A-Z0-9_]{0,80}$/.test(rawCode) ? rawCode
       : ((error as Error)?.message?.match(/^[A-Z][A-Z0-9_]{0,80}$/) ? (error as Error).message : 'PLUGIN_OPERATION_FAILED');
-    const blocked = ['LEGACY_OCCUPANCY_UNVERIFIED','PROJECT_TRUST_REQUIRED','PINNED_PI_SELF_UPDATE_REFUSED','PACKAGE_PREPARE_REQUIRED'].includes(code);
+    const blocked = ['LEGACY_OCCUPANCY_UNVERIFIED','RESOURCE_ADOPTION_RECOVERY_REQUIRED','PROJECT_TRUST_REQUIRED','PINNED_PI_SELF_UPDATE_REFUSED','PACKAGE_PREPARE_REQUIRED'].includes(code);
     return { schema: 'BioMindPluginsV1', status: touched || code === 'PACKAGE_REPAIR_REQUIRED' ? 'repair_required' : code === 'BUSY' ? 'BUSY' : blocked ? 'BLOCKED' : 'error',
       code, stage, errorName: ['Error','TypeError','RangeError','SyntaxError'].includes((error as Error)?.name) ? (error as Error).name : 'Error',
       context, affectedScopes, changed, reloadRequired: changed || touched, repairRequired: touched || code === 'PACKAGE_REPAIR_REQUIRED' };

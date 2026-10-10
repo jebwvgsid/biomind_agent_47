@@ -44,6 +44,62 @@ def paths_for(root):
             'repair': str(directory / (key + '.repair.json'))}
 
 
+def private_json(path, limit=1048576):
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+    with os.fdopen(fd) as stream:
+        info = os.fstat(stream.fileno())
+        if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or info.st_mode & 0o077 or info.st_size > limit:
+            raise GuardError('RESOURCE_ADOPTION_RECORD_UNSAFE')
+        data = stream.read(limit + 1)
+        if len(data) > limit:
+            raise GuardError('RESOURCE_ADOPTION_RECORD_UNSAFE')
+        return json.loads(data)
+
+
+def adoption_status(root):
+    """A durable pending transaction blocks admission even after its process dies."""
+    pointer = Path(paths_for(root)['lock']).with_suffix('.adoption.json')
+    if not pointer.exists() and not pointer.is_symlink():
+        return None
+    try:
+        record = private_json(pointer)
+        transaction = Path(record['transaction'])
+        if transaction.name != 'transaction.json' or not transaction.is_absolute():
+            raise ValueError()
+        value = private_json(transaction)
+        if value['schema'] != 'BioMindPluginAdoptionV1' or record['id'] != value['id'] or str(root) not in value['roots']:
+            raise ValueError()
+        return value
+    except (OSError, ValueError, KeyError, TypeError, GuardError):
+        return {'state': 'unknown'}
+
+
+def adopted_marker_trusted(root, marker, transaction):
+    if not transaction or transaction.get('state') != 'committed':
+        return False
+    if marker != {'schema': SCHEMA, 'root': str(root), 'origin': 'legacy-adopted', 'transactionId': transaction.get('id')}:
+        return False
+    # Restoring an old launcher invalidates adoption for subsequent mutations.
+    # Only the exact fence or the reviewed fixed-core redirect is accepted.
+    for entry in transaction.get('entries', []):
+        try:
+            p = Path(entry['path'])
+            info = p.lstat()
+            if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or info.st_size > 65536:
+                return False
+            if hashlib.sha256(p.read_bytes()).hexdigest() not in entry['acceptedSha256']:
+                return False
+            for binding in entry.get('bindings', []):
+                bound = Path(binding['path'])
+                if not bound.is_file() or bound.is_symlink() or bound.stat().st_size > 1048576:
+                    return False
+                if hashlib.sha256(bound.read_bytes()).hexdigest() != binding['sha256']:
+                    return False
+        except (OSError, KeyError, TypeError, ValueError):
+            return False
+    return bool(transaction.get('entries'))
+
+
 def plan(request):
     agent = canonical(request['agentDir'])
     cwd = canonical(request['cwd'])
@@ -54,17 +110,19 @@ def plan(request):
     for scope in sorted(set(selected)):
         root = agent if scope == 'user' else canonical(cwd / '.pi')
         mark = root / '.biomind-resource-guard.json'
+        adoption = adoption_status(root)
         trusted = False
         if mark.exists():
             info = mark.lstat()
             if stat.S_ISREG(info.st_mode) and info.st_uid == os.getuid() and not info.st_mode & 0o077:
                 try:
                     value = json.loads(mark.read_text())
-                    trusted = value == {'schema': SCHEMA, 'root': str(root), 'origin': 'born-guarded'}
+                    trusted = value == {'schema': SCHEMA, 'root': str(root), 'origin': 'born-guarded'} or adopted_marker_trusted(root, value, adoption)
                 except (OSError, ValueError):
                     pass
         row = {**paths_for(root), 'scope': scope, 'marker': str(mark),
-               'legacyUnverified': root.exists() and not trusted, 'fresh': not root.exists()}
+               'legacyUnverified': root.exists() and not trusted, 'fresh': not root.exists(),
+               'adoptionPending': adoption is not None and adoption.get('state') not in ('committed', 'rolled-back', 'restored')}
         scopes.append(row)
         names = ('npm', 'git', 'tmp/extensions') if scope == 'user' else ('npm', 'git')
         for name in names:
@@ -125,6 +183,8 @@ def initialize(request):
         if not row:
             raise GuardError('RESOURCE_ADMISSION_GATE_REQUIRED')
         validate_fd(row['fd'], row['path'], 'exclusive')
+        if item['adoptionPending']:
+            raise GuardError('RESOURCE_ADOPTION_RECOVERY_REQUIRED')
         root = Path(item['root'])
         if not root.exists():
             root.mkdir(mode=0o700)
