@@ -21,7 +21,7 @@ try {
   }
   const input = JSON.parse(Buffer.concat(chunks).toString('utf8'));
   const key = input.key;
-  if (typeof key !== 'string' || key.length < 8 || key.length > 8192 || /\s|\0/.test(key) || key.startsWith('!')) fail('INVALID_LITERAL_CREDENTIAL');
+  if (typeof key !== 'string' || key.length < 8 || key.length > 8192 || /\s|[\x00-\x1f\x7f-\x9f]/.test(key) || key.startsWith('!')) fail('INVALID_LITERAL_CREDENTIAL');
   const store = AuthStorage.create(authPath);
   await store.modify('deepseek', current => {
     // The native lock covers the read/merge/write, including this no-overwrite check.

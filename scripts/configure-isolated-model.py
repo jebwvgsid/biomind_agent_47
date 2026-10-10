@@ -17,6 +17,7 @@ import socket
 import subprocess
 import sys
 import uuid
+import warnings
 
 DEFAULT = Path('/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/deployments/isolated-server-1.3.0-rc.20261010.1')
 
@@ -32,10 +33,55 @@ def load_module(name, path):
     return module
 
 
+INPUT_ERRORS = {
+    'CREDENTIAL_EMPTY': '未收到输入。隐藏输入不会显示字符；请粘贴 API key 后按回车。',
+    'CREDENTIAL_LENGTH_INVALID': '输入长度不符合要求。请复制完整的 API key 本身。',
+    'CREDENTIAL_WHITESPACE': '输入中含空格或换行。请只复制 API key 本身，不带前后空白。',
+    'CREDENTIAL_CONTROL_CHARACTER': '输入中含不可见控制字符。请清空输入后重新粘贴 API key。',
+    'CREDENTIAL_COMMAND_LITERAL_REFUSED': '此处只接受 API key 本身，不能输入命令。',
+}
+
+
 def literal_key(key):
-    if not isinstance(key, str) or not 8 <= len(key) <= 8192 or re.search(r'\s|\0', key) or key.startswith('!'):
+    if not isinstance(key, str):
         raise Refused('INVALID_LITERAL_CREDENTIAL')
+    if not key:
+        raise Refused('CREDENTIAL_EMPTY')
+    if not 8 <= len(key) <= 8192:
+        raise Refused('CREDENTIAL_LENGTH_INVALID')
+    if re.search(r'\s', key):
+        raise Refused('CREDENTIAL_WHITESPACE')
+    if re.search(r'[\x00-\x1f\x7f-\x9f]', key):
+        raise Refused('CREDENTIAL_CONTROL_CHARACTER')
+    if key.startswith('!'):
+        raise Refused('CREDENTIAL_COMMAND_LITERAL_REFUSED')
     return key
+
+
+def read_hidden_key():
+    if not sys.stdin.isatty():
+        raise Refused('INTERACTIVE_TERMINAL_REQUIRED')
+    print('请粘贴 DeepSeek API key 本身，不加引号或 KEY= 前缀。不是工作台口令或 SSH 密码。输入时不会显示字符。', flush=True)
+    for attempt in range(3):
+        try:
+            # getpass normally warns and falls back to echoed input if it cannot
+            # disable terminal echo. Never accept that fallback for a credential.
+            with warnings.catch_warnings():
+                warnings.simplefilter('error', getpass.GetPassWarning)
+                key = getpass.getpass('输入 DeepSeek API key（隐藏输入，仅保存到隔离候选）：')
+        except getpass.GetPassWarning:
+            raise Refused('HIDDEN_INPUT_UNAVAILABLE') from None
+        except (EOFError, KeyboardInterrupt):
+            raise Refused('CREDENTIAL_INPUT_CANCELLED') from None
+        try:
+            return literal_key(key)
+        except Refused as error:
+            del key
+            code = str(error)
+            print(INPUT_ERRORS.get(code, '输入格式不符合要求。请只复制 API key 本身。'), flush=True)
+            if attempt == 2:
+                raise
+            print('尚未保存密钥或发送模型请求，请重新输入（还可输入 ' + str(2 - attempt) + ' 次）。', flush=True)
 
 
 def layout(root, verify):
@@ -128,9 +174,7 @@ def main():
             if 'deepseek' in stored:
                 result['credential'] = 'EXISTING_CANDIDATE_NATIVE_CREDENTIAL_REUSED'
             else:
-                if not sys.stdin.isatty():
-                    raise Refused('INTERACTIVE_TERMINAL_REQUIRED')
-                key = getpass.getpass('输入 DeepSeek API key（隐藏输入，仅保存到隔离候选）：')
+                key = read_hidden_key()
                 save_native(config, module, auth, key)
                 del key
                 result['credential'] = 'SAVED_TO_CANDIDATE_NATIVE_AUTH'

@@ -1,10 +1,13 @@
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+import warnings
+from types import SimpleNamespace
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -17,6 +20,110 @@ NODE = Path('/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.
 
 
 class ModelCredentialTests(unittest.TestCase):
+    def test_input_error_categories_are_safe_and_do_not_echo_input(self):
+        cases = [('', 'CREDENTIAL_EMPTY'), ('short', 'CREDENTIAL_LENGTH_INVALID'),
+            ('x' * 8193, 'CREDENTIAL_LENGTH_INVALID'), ('test-secret\nvalue', 'CREDENTIAL_WHITESPACE'),
+            ('test-secret value', 'CREDENTIAL_WHITESPACE'), ('test-secret\0value', 'CREDENTIAL_CONTROL_CHARACTER'),
+            ('test-\x1b[200~secret', 'CREDENTIAL_CONTROL_CHARACTER'), ('!test-secret', 'CREDENTIAL_COMMAND_LITERAL_REFUSED')]
+        for value, code in cases:
+            with self.subTest(code=code), self.assertRaisesRegex(helper.Refused, '^' + code + '$'):
+                helper.literal_key(value)
+
+    def test_hidden_input_retries_only_local_validation_without_changing_valid_key(self):
+        valid = 'test-literal-unmodified-value'
+        output = io.StringIO()
+        with patch.object(helper.sys.stdin, 'isatty', return_value=True), \
+                patch.object(helper.getpass, 'getpass', side_effect=['test-invalid value', valid]) as prompt, \
+                patch.object(helper.sys, 'stdout', output):
+            self.assertEqual(helper.read_hidden_key(), valid)
+        self.assertEqual(prompt.call_count, 2)
+        self.assertIn('空格或换行', output.getvalue())
+        self.assertNotIn('test-invalid value', output.getvalue())
+        self.assertNotIn(valid, output.getvalue())
+
+    def test_hidden_input_bounded_and_failed_inputs_not_printed(self):
+        output = io.StringIO()
+        with patch.object(helper.sys.stdin, 'isatty', return_value=True), \
+                patch.object(helper.getpass, 'getpass', return_value='test-invalid value') as prompt, \
+                patch.object(helper.sys, 'stdout', output), \
+                self.assertRaisesRegex(helper.Refused, '^CREDENTIAL_WHITESPACE$'):
+            helper.read_hidden_key()
+        self.assertEqual(prompt.call_count, 3)
+        self.assertNotIn('test-invalid value', output.getvalue())
+
+    def test_hidden_input_cancel_and_echo_fallback_refused(self):
+        def warn_echo(*_args):
+            warnings.warn('test echo fallback', helper.getpass.GetPassWarning)
+            self.fail('must not continue into echo fallback')
+        for effect, code in [(EOFError, 'CREDENTIAL_INPUT_CANCELLED'),
+                (KeyboardInterrupt, 'CREDENTIAL_INPUT_CANCELLED'), (warn_echo, 'HIDDEN_INPUT_UNAVAILABLE')]:
+            with self.subTest(code=code), patch.object(helper.sys.stdin, 'isatty', return_value=True), \
+                    patch.object(helper.getpass, 'getpass', side_effect=effect) as prompt, \
+                    patch.object(helper.sys, 'stdout', io.StringIO()), \
+                    self.assertRaisesRegex(helper.Refused, '^' + code + '$'):
+                helper.read_hidden_key()
+            self.assertEqual(prompt.call_count, 1)
+
+    def test_non_tty_never_requests_key(self):
+        with patch.object(helper.sys.stdin, 'isatty', return_value=False), \
+                patch.object(helper.getpass, 'getpass') as prompt, \
+                self.assertRaisesRegex(helper.Refused, '^INTERACTIVE_TERMINAL_REQUIRED$'):
+            helper.read_hidden_key()
+        prompt.assert_not_called()
+
+    def run_main_fixture(self, folder, inputs, *, existing_receipt=False, save_failure=False):
+        root = Path(folder)
+        (root / 'evidence').mkdir()
+        if existing_receipt:
+            (root / 'evidence/http-acceptance-credential-first-key.json').write_text('{}')
+        verify = SimpleNamespace(under=lambda p, _root: str(p), private_json=lambda _p: {})
+        config = {'environment': {'BIOMIND_LAUNCHER_PYTHON': '/python'}}
+        prepared = {'coreRoot': '/core', 'project': str(root / 'project')}
+        output = io.StringIO()
+        with patch.object(helper.sys, 'argv', ['helper', '--deployment', str(root), '--verify']), \
+                patch.object(helper.sys.stdin, 'isatty', return_value=True), \
+                patch.object(helper.sys, 'stdout', output), \
+                patch.object(helper, 'load_module', return_value=verify), \
+                patch.object(helper, 'layout', return_value=(prepared, config, {}, root / 'auth.json', MODULE)), \
+                patch.object(helper, 'connected', return_value={'serverId': 'test-server', 'instanceId': 'test-instance', 'host': 'test-host'}), \
+                patch.object(helper.getpass, 'getpass', side_effect=inputs) as prompt, \
+                patch.object(helper, 'save_native', side_effect=helper.Refused('TEST_NATIVE_SAVE_FAILED') if save_failure else None) as save, \
+                patch.object(helper.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0)) as run:
+            status = helper.main()
+        return status, prompt, save, run, output.getvalue()
+
+    def test_main_invalid_input_cannot_save_or_launch_verifier(self):
+        with tempfile.TemporaryDirectory() as folder:
+            status, prompt, save, run, output = self.run_main_fixture(folder, ['', '', ''])
+        self.assertEqual(status, 2)
+        self.assertEqual(prompt.call_count, 3)
+        save.assert_not_called()
+        run.assert_not_called()
+        self.assertEqual(json.loads(output.splitlines()[-1])['code'], 'CREDENTIAL_EMPTY')
+
+    def test_main_valid_input_saved_once_and_save_failure_not_retried(self):
+        for failure in (False, True):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as folder:
+                status, prompt, save, run, output = self.run_main_fixture(folder,
+                    ['test-invalid value', 'test-valid-value'], save_failure=failure)
+            self.assertEqual(status, 2 if failure else 0)
+            self.assertEqual(prompt.call_count, 2)
+            self.assertEqual(save.call_count, 1)
+            self.assertEqual(run.call_count, 0 if failure else 1)
+            self.assertNotIn('test-valid-value', output)
+            self.assertNotIn('test-invalid value', output)
+
+    def test_main_existing_receipt_never_prompts_or_saves_or_replays(self):
+        with tempfile.TemporaryDirectory() as folder:
+            status, prompt, save, run, _output = self.run_main_fixture(folder, [], existing_receipt=True)
+        self.assertEqual(status, 0)
+        prompt.assert_not_called()
+        save.assert_not_called()
+        self.assertEqual(run.call_count, 1)
+        command = run.call_args.args[0]
+        self.assertIn('--resume', command)
+        self.assertNotIn('--real-model', command)
+
     def test_reject_command_empty_newline_or_whitespace(self):
         for key in ('', '!echo secret', 'test\nsecret', 'test secret', 'test\0secret', 'x' * 8193):
             with self.subTest(key_length=len(key)), self.assertRaises(helper.Refused):
@@ -95,6 +202,14 @@ class ModelCredentialTests(unittest.TestCase):
     def test_actual_native_rejects_command_credential_without_write(self):
         with tempfile.TemporaryDirectory() as folder:
             result, auth = self.native(Path(folder), {}, '!printf must-not-execute')
+            self.assertEqual(result.returncode, 2)
+            self.assertEqual(json.loads(result.stdout)['code'], 'INVALID_LITERAL_CREDENTIAL')
+            self.assertEqual(json.loads(auth.read_text()), {})
+
+    @unittest.skipUnless(NODE.exists() and MODULE.exists(), 'actual pinned Pi runtime unavailable')
+    def test_actual_native_rejects_terminal_controls_without_write(self):
+        with tempfile.TemporaryDirectory() as folder:
+            result, auth = self.native(Path(folder), {}, 'test-\x1b[200~clipboard-value')
             self.assertEqual(result.returncode, 2)
             self.assertEqual(json.loads(result.stdout)['code'], 'INVALID_LITERAL_CREDENTIAL')
             self.assertEqual(json.loads(auth.read_text()), {})
