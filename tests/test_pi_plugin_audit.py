@@ -164,7 +164,7 @@ class AuditTests(unittest.TestCase):
             self.plan['scheduler'] = 'slurm'
             with patch.object(adoption.shutil, 'which', return_value=None):
                 report = adoption.audit_local(self.plan, require_host_namespace=False)
-            self.assertEqual(report['code'], 'ADOPTION_SCHEDULER_UNAVAILABLE')
+            self.assertEqual(report['code'], 'ADOPTION_SCHEDULER_EXECUTABLE_UNAVAILABLE')
             self.assertEqual(report['status'], 'BLOCKED')
             self.assertEqual(report['checks']['scheduler'], 'BLOCKED')
             self.assertIsNone(report['activeSlurmJobs'])
@@ -185,7 +185,7 @@ class AuditTests(unittest.TestCase):
     def test_slurm_inflight_job_reports_assigned_nodes_without_names_or_commands(self):
         self.plan['scheduler'] = 'slurm'
         reply = subprocess.CompletedProcess([], 0, '123|RUNNING|compute[01-02]\n124|PENDING|\n', '')
-        with patch.object(adoption.shutil, 'which', return_value='/usr/bin/squeue'), \
+        with patch.object(adoption.shutil, 'which', return_value=sys.executable), \
                 patch.object(adoption.subprocess, 'run', return_value=reply):
             report = adoption.audit_local(self.plan, require_host_namespace=False)
         self.assertEqual(report['activeSlurmJobs'], 2)
@@ -221,6 +221,61 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(result['status'], 'BLOCKED')
         self.assertNotIn('Traceback', response.stdout + response.stderr)
         self.assertNotIn('repair resumes', result['recovery'])
+
+    def test_explicit_scheduler_path_works_without_login_shell_path(self):
+        self.plan.update(scheduler='slurm', schedulerExecutable=sys.executable)
+        with patch.object(adoption.shutil, 'which', side_effect=AssertionError('Must not depend on PATH')), \
+                patch.object(adoption.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, '', '')) as run:
+            report = adoption.audit_local(self.plan, require_host_namespace=False)
+        self.assertEqual(report['checks']['scheduler'], 'PASS')
+        self.assertEqual(report['schedulerPathSource'], 'plan')
+        self.assertEqual(report['schedulerExecutable'], sys.executable)
+        self.assertEqual(run.call_args.args[0][0], sys.executable)
+
+    def test_missing_configured_scheduler_must_not_fall_back_or_claim_no_jobs(self):
+        self.plan.update(scheduler='slurm', schedulerExecutable=str(self.root / 'missing-squeue'))
+        with patch.object(adoption.subprocess, 'run', side_effect=AssertionError('Missing executable')):
+            report = adoption.audit_local(self.plan, require_host_namespace=False)
+        self.assertEqual(report['status'], 'BLOCKED')
+        self.assertEqual(report['code'], 'ADOPTION_SCHEDULER_EXECUTABLE_UNAVAILABLE')
+        self.assertIsNone(report['activeSlurmJobs'])
+
+    def test_scheduler_query_failure_differs_from_missing_executable(self):
+        self.plan.update(scheduler='slurm', schedulerExecutable=sys.executable)
+        with patch.object(adoption.subprocess, 'run', return_value=subprocess.CompletedProcess([], 1, '', 'PRIVATE')):
+            report = adoption.audit_local(self.plan, require_host_namespace=False)
+        self.assertEqual(report['code'], 'ADOPTION_SCHEDULER_QUERY_FAILED')
+        self.assertEqual(report['schedulerExitCode'], 1)
+        self.assertIsNone(report['activeSlurmJobs'])
+        self.assertNotIn('PRIVATE', json.dumps(report))
+
+    def test_scheduler_path_requires_absolute_private_plan_declaration(self):
+        self.raw['schedulerExecutable'] = 'squeue'
+        adoption.save(self.file, self.raw)
+        with self.assertRaisesRegex(guard.GuardError, 'ADOPTION_SCHEDULER_ABSOLUTE_PATH_REQUIRED'):
+            adoption.load_plan(self.file)
+
+    def test_unreadable_process_records_failed_field_and_errno_remains_blocked(self):
+        worker = self.root / 'legacy/denied.py'
+        worker.write_text('import sys\nprint("ready", flush=True)\nsys.stdin.readline()\n')
+        process = subprocess.Popen([sys.executable, '-B', str(worker)], stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE, text=True)
+        original = os.readlink
+        def readlink(path, *args, **kwargs):
+            if str(path) == f'/proc/{process.pid}/cwd': raise PermissionError(13, 'PRIVATE')
+            return original(path, *args, **kwargs)
+        try:
+            self.assertEqual(process.stdout.readline().strip(), 'ready')
+            with patch.object(adoption.os, 'readlink', side_effect=readlink):
+                report = adoption.audit_local(self.plan, require_host_namespace=False)
+            detail = next(row for row in report['unreadableProcesses'] if row['pid'] == process.pid)
+            self.assertEqual(detail['field'], 'cwd')
+            self.assertEqual(detail['errno'], 13)
+            self.assertIn('startTicks', detail)
+            self.assertEqual(report['code'], 'ADOPTION_PROCESS_VISIBILITY_INCOMPLETE')
+            self.assertIsNone(process.poll())
+            self.assertNotIn('PRIVATE', json.dumps(report))
+        finally: process.communicate('\n', timeout=10)
 
 
 if __name__ == '__main__': unittest.main()

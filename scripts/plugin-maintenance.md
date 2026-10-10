@@ -13,6 +13,7 @@
 - 不经过这些入口的直接 Python/Node/Pi 启动须在维护期间停用；这是正式入口协调边界，不是操作系统沙箱。
 - 审核 `entryInventoryConfirmed`、`hostInventoryConfirmed`、`maintenanceApproved`，只有实际确认才设 true。程序不会替用户自动确认未知入口/主机。
 - `scheduler: slurm` 会拒绝任何该用户的在途作业，保守地要求一次空闲维护窗口；不硬编码作业号/计算节点。非调度环境才使用 `none`。
+- 非登录 SSH 环境没有 Slurm PATH 时，在计划中设置 `schedulerExecutable` 为本集群经核实的 squeue 绝对路径。各宿主执行同一只读查询；路径缺失/不可执行与查询失败分别报告，不静默改用另一命令或跳过 Slurm。不需要在代码写死集群路径或 source 用户 shell 启动文件。
 - 未分类 Python/Node 进程须人工确认无关，再将审计输出的完整 PID/startTicks/executable/commandSha256 条目填入对应 host 的 `reviewedUnrelatedProcesses`。已识别的 BioMind、服务器或资源引用不能豁免。进程重启后身份改变须重新检查。
 - 审核完成后冻结计划。事务开始后改计划会被拒绝；不要编辑事务 JSON。确需改范围时先恢复旧入口，使用新的 stateDir 和新的计划。
 - `stateDir` 独立私有目录，存放入口备份和事务记录，不是插件注册库。不要删除它；已接管 worker 会验证它。
@@ -44,6 +45,8 @@
 `audit` 会尝试计划中的每个主机，即使前一个失败。`expectedHosts` 是计划范围，`checkedHosts` 是完成检查的主机，`incompleteHosts` 是无法完整检查的主机；`coverageComplete` 只指计划内检查是否完整，不代替 `hostInventoryConfirmed` 的清单审核。
 
 各 `reports` 保留检查阶段、已观察到的旧进程、未知进程、writer 主机和 Slurm 作业 ID/状态/节点列表。`checks` 中 NOT_RUN 或 BLOCKED 不能当作空闲；未查到作业状态用 null，不能写 0。发现未列入计划的 writer 宿主明确 BLOCKED。Slurm 在途作业即使节点尚未分配也阻止接管。
+
+`unreadableProcesses` 补充失败的 /proc 字段、errno 和已读到的 PID/startTicks/父 PID；不包含原始命令或异常文字。这些记录仍阻止接管，不能凭进程名称推断无关后直接忽略。`schedulerExecutable`、`schedulerPathSource`、`schedulerExitCode` 区分命令解析和实际调度器查询是否完成。
 
 SSH 失败分别报告主机密钥未信任/已改变、认证、解析、超时、拒绝连接或网络失败；远端 Python 已执行但命名空间/Slurm/计划检查失败会保留对应代码。原始 stderr、banner、命令内容、环境变量、任务和凭据不输出。SSH 仍要求 BatchMode 和严格主机密钥校验。
 

@@ -93,6 +93,10 @@ def load_plan(filename):
         if not re.fullmatch(r'[A-Za-z0-9_.-]{1,128}', h.get('name', '')) or (h.get('ssh') and not re.fullmatch(r'[A-Za-z0-9_.@-]{1,128}', h['ssh'])):
             fail('INVALID_ADOPTION_HOST')
     if value.get('scheduler') not in ('slurm', 'none'): fail('ADOPTION_SCHEDULER_REQUIRED')
+    if 'schedulerExecutable' in value:
+        if not isinstance(value['schedulerExecutable'], str) or not Path(value['schedulerExecutable']).is_absolute():
+            fail('ADOPTION_SCHEDULER_ABSOLUTE_PATH_REQUIRED')
+        value['schedulerExecutable'] = str(absolute(value['schedulerExecutable']))
     if not value.get('legacyCodeRoots') or not value.get('entries') or not value.get('sessionRoots'):
         fail('ADOPTION_INVENTORY_REQUIRED')
     for key in ('legacyCodeRoots', 'sessionRoots'):
@@ -238,7 +242,7 @@ def audit_local(plan, require_host_namespace=True):
     report = {'schema': SCHEMA, 'host': host, 'uid': os.getuid(), 'at': time.time(),
               'planSha256': plan['_sha256'], 'status': 'BLOCKED', 'signalsSent': False,
               'checks': {k: 'NOT_RUN' for k in ('hostNamespace', 'processes', 'writers', 'scheduler')},
-              'legacyProcesses': [], 'unreviewedProcesses': [], 'unreadablePids': [],
+              'legacyProcesses': [], 'unreviewedProcesses': [], 'unreadablePids': [], 'unreadableProcesses': [],
               'activeWriterClaims': [], 'observedWriterHosts': [], 'activeSlurmJobs': None,
               'slurmJobs': [], 'stage': 'hostNamespace'}
     try:
@@ -268,17 +272,25 @@ def _audit_local(plan, report, require_host_namespace):
     for directory in Path('/proc').iterdir():
         if not directory.name.isdecimal(): continue
         pid = int(directory.name)
+        field, identity = 'owner', {'pid': pid}
         try:
             if directory.stat().st_uid != os.getuid(): continue
+            field = 'stat'
             info = (directory / 'stat').read_text().rsplit(')', 1)[1].split()
             if info[0] == 'Z': continue
             ticks = info[19]; identities[str(pid)] = ticks
+            identity.update(startTicks=ticks, ppid=int(info[1]), state=info[0])
             if pid in excluded: continue
+            field = 'cmdline'
             cmd = (directory / 'cmdline').read_bytes()
+            field = 'cwd'
             cwd = os.readlink(directory / 'cwd')
+            field = 'exe'
             exe = os.readlink(directory / 'exe')
             references = [cwd] + [part.decode(errors='replace') for part in cmd.split(b'\0')[1:]]
+            field = 'fd-directory'
             for fd in (directory / 'fd').iterdir():
+                field = 'fd-link'
                 try: references.append(os.readlink(fd))
                 except FileNotFoundError: pass
             related = any(any(ref == root or ref.startswith(root + '/') or root + '/' in ref for root in roots) for ref in references)
@@ -288,9 +300,10 @@ def _audit_local(plan, report, require_host_namespace):
                 blockers.append({**row, 'reason': 'legacy-or-resource-reference'})
             elif Path(exe).name.startswith(('python', 'node', 'bun', 'deno')) and row not in allowed:
                 unknown.append(row)
-        except FileNotFoundError:
-            if directory.exists(): unreadable.append(pid)
-        except (OSError, ValueError, IndexError): unreadable.append(pid)
+        except (OSError, ValueError, IndexError) as error:
+            if isinstance(error, FileNotFoundError) and not directory.exists(): continue
+            unreadable.append(pid)
+            report['unreadableProcesses'].append({**identity, 'field': field, 'errno': getattr(error, 'errno', None)})
     report['checks']['processes'] = 'BLOCKED' if unreadable else 'PASS'
     report['stage'] = 'writers'
     writers = report['activeWriterClaims']
@@ -318,11 +331,15 @@ def _audit_local(plan, report, require_host_namespace):
     report['stage'] = 'scheduler'
     jobs = report['slurmJobs']
     if plan['scheduler'] == 'slurm':
-        executable = shutil.which('squeue')
-        if not executable: fail('ADOPTION_SCHEDULER_UNAVAILABLE')
+        executable = plan.get('schedulerExecutable') or shutil.which('squeue')
+        report['schedulerExecutable'] = executable
+        report['schedulerPathSource'] = 'plan' if plan.get('schedulerExecutable') else 'PATH'
+        if not executable or not Path(executable).is_file() or not os.access(executable, os.X_OK):
+            fail('ADOPTION_SCHEDULER_EXECUTABLE_UNAVAILABLE')
         result = subprocess.run([executable, '-h', '-u', pwd.getpwuid(os.getuid()).pw_name, '-o', '%i|%T|%N'],
                                 capture_output=True, text=True, timeout=20)
-        if result.returncode: fail('ADOPTION_SCHEDULER_UNAVAILABLE')
+        report['schedulerExitCode'] = result.returncode
+        if result.returncode: fail('ADOPTION_SCHEDULER_QUERY_FAILED')
         for line in result.stdout.splitlines():
             if not line.strip(): continue
             fields = line.strip().split('|')
