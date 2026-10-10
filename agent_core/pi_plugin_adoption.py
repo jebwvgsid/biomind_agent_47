@@ -10,6 +10,7 @@ import base64
 import contextlib
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import pwd
@@ -29,6 +30,22 @@ SCHEMA = 'BioMindPluginAdoptionV1'
 
 def fail(code):
     raise guard.GuardError(code)
+
+
+class AuditFailure(guard.GuardError):
+    """Incomplete coverage is an error, with safe evidence from every host."""
+    def __init__(self, result):
+        super().__init__(result['code'])
+        self.result = result
+
+
+def audit_error_code(error):
+    if isinstance(error, guard.GuardError) and re.fullmatch(r'[A-Z][A-Z0-9_]{1,95}', str(error)):
+        return str(error)
+    if isinstance(error, subprocess.TimeoutExpired): return 'ADOPTION_AUDIT_TIMEOUT'
+    if isinstance(error, PermissionError): return 'ADOPTION_AUDIT_PERMISSION_DENIED'
+    if isinstance(error, FileNotFoundError): return 'ADOPTION_AUDIT_PATH_UNAVAILABLE'
+    return 'ADOPTION_AUDIT_FAILED'
 
 
 def sha(data):
@@ -218,14 +235,35 @@ def ancestors():
 def audit_local(plan, require_host_namespace=True):
     """Read process/owner metadata only; never print argv, environ or history."""
     host = socket.gethostname()
+    report = {'schema': SCHEMA, 'host': host, 'uid': os.getuid(), 'at': time.time(),
+              'planSha256': plan['_sha256'], 'status': 'BLOCKED', 'signalsSent': False,
+              'checks': {k: 'NOT_RUN' for k in ('hostNamespace', 'processes', 'writers', 'scheduler')},
+              'legacyProcesses': [], 'unreviewedProcesses': [], 'unreadablePids': [],
+              'activeWriterClaims': [], 'observedWriterHosts': [], 'activeSlurmJobs': None,
+              'slurmJobs': [], 'stage': 'hostNamespace'}
+    try:
+        _audit_local(plan, report, require_host_namespace)
+    except (guard.GuardError, OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
+        report['code'] = audit_error_code(error)
+        report['checks'][report['stage']] = 'BLOCKED'
+        report['status'] = 'BLOCKED'
+    report['at'] = time.time()
+    return report
+
+
+def _audit_local(plan, report, require_host_namespace):
+    host = report['host']
     declared = next((h for h in plan['hosts'] if h['name'] == host), None)
     if declared is None: fail('ADOPTION_HOST_NOT_DECLARED')
     if require_host_namespace and Path('/proc/1/comm').read_text().strip() not in ('systemd', 'init'):
         fail('ADOPTION_HOST_PID_NAMESPACE_REQUIRED')
+    report['checks']['hostNamespace'] = 'PASS' if require_host_namespace else 'TEST_BYPASS'
+    report['stage'] = 'processes'
     resources = guard.plan(plan)
     roots = [str(p) for p in plan['legacyCodeRoots']] + [s['root'] for s in resources['scopes'] + resources['resources']]
     excluded = ancestors()
-    blockers, unknown, unreadable, identities = [], [], [], {}
+    blockers, unknown, unreadable = report['legacyProcesses'], report['unreviewedProcesses'], report['unreadablePids']
+    identities = {}
     allowed = declared.get('reviewedUnrelatedProcesses', [])
     for directory in Path('/proc').iterdir():
         if not directory.name.isdecimal(): continue
@@ -253,7 +291,10 @@ def audit_local(plan, require_host_namespace=True):
         except FileNotFoundError:
             if directory.exists(): unreadable.append(pid)
         except (OSError, ValueError, IndexError): unreadable.append(pid)
-    writers = []
+    report['checks']['processes'] = 'BLOCKED' if unreadable else 'PASS'
+    report['stage'] = 'writers'
+    writers = report['activeWriterClaims']
+    observed_hosts = set()
     for name in plan['sessionRoots']:
         root = Path(name)
         if not root.is_dir(): fail('ADOPTION_SESSION_ROOT_UNAVAILABLE')
@@ -264,42 +305,127 @@ def audit_local(plan, require_host_namespace=True):
                 if filename.is_symlink() or filename.stat().st_size > 32768: raise ValueError()
                 value = json.loads(filename.read_text())
                 if value.get('schema') != 1 or not isinstance(value.get('pid'), int): raise ValueError()
-                if value['hostname'] not in {h['name'] for h in plan['hosts']}: fail('ADOPTION_WRITER_HOST_UNDECLARED')
+                writer_host = value['hostname']
+                if not isinstance(writer_host, str) or not re.fullmatch(r'[A-Za-z0-9_.-]{1,128}', writer_host): raise ValueError()
+                observed_hosts.add(writer_host)
+                report['observedWriterHosts'] = sorted(observed_hosts)
+                if writer_host not in {h['name'] for h in plan['hosts']}: fail('ADOPTION_WRITER_HOST_UNDECLARED')
                 if value['hostname'] == host and str(value['pid']) in identities:
                     writers.append({'pid': value['pid'], 'recordSha256': sha(os.fsencode(filename))})
             except FileNotFoundError: continue
             except (OSError, KeyError, TypeError, ValueError): fail('ADOPTION_WRITER_STATE_UNKNOWN')
-    jobs = []
+    report['checks']['writers'] = 'PASS'
+    report['stage'] = 'scheduler'
+    jobs = report['slurmJobs']
     if plan['scheduler'] == 'slurm':
         executable = shutil.which('squeue')
         if not executable: fail('ADOPTION_SCHEDULER_UNAVAILABLE')
-        result = subprocess.run([executable, '-h', '-u', pwd.getpwuid(os.getuid()).pw_name, '-o', '%i'],
+        result = subprocess.run([executable, '-h', '-u', pwd.getpwuid(os.getuid()).pw_name, '-o', '%i|%T|%N'],
                                 capture_output=True, text=True, timeout=20)
         if result.returncode: fail('ADOPTION_SCHEDULER_UNAVAILABLE')
-        jobs = [line for line in result.stdout.splitlines() if line.strip()]
-    return {'schema': SCHEMA, 'host': host, 'uid': os.getuid(), 'at': time.time(), 'planSha256': plan['_sha256'],
-            'status': 'BUSY' if blockers or unknown or unreadable or writers or jobs else 'clear',
-            'legacyProcesses': blockers, 'unreviewedProcesses': unknown, 'unreadablePids': unreadable,
-            'activeWriterClaims': writers, 'activeSlurmJobs': len(jobs), 'signalsSent': False}
+        for line in result.stdout.splitlines():
+            if not line.strip(): continue
+            fields = line.strip().split('|')
+            if (len(fields) != 3 or not re.fullmatch(r'[0-9_+\[\],%.-]{1,256}', fields[0]) or
+                    not re.fullmatch(r'[A-Z_]{1,64}', fields[1]) or
+                    not re.fullmatch(r'[A-Za-z0-9_\[\],.()/ -]{0,2048}', fields[2])):
+                fail('ADOPTION_SCHEDULER_RESPONSE_INVALID')
+            jobs.append(dict(zip(('jobId', 'state', 'nodeList'), fields)))
+    report['activeSlurmJobs'] = len(jobs)
+    report['checks']['scheduler'] = 'PASS' if plan['scheduler'] == 'slurm' else 'NOT_APPLICABLE'
+    report['status'] = 'BLOCKED' if unreadable else 'BUSY' if blockers or unknown or writers or jobs else 'clear'
+    if unreadable: report['code'] = 'ADOPTION_PROCESS_VISIBILITY_INCOMPLETE'
+    report['stage'] = 'complete'
+
+
+def ssh_failure_code(stderr):
+    """Classify locally; never return raw SSH stderr (banners may contain secrets)."""
+    value = stderr.lower()
+    for fragments, code in (
+        (('remote host identification has changed',), 'ADOPTION_SSH_HOST_KEY_CHANGED'),
+        (('host key verification failed',), 'ADOPTION_SSH_HOST_KEY_UNVERIFIED'),
+        (('permission denied', 'authentication failed'), 'ADOPTION_SSH_AUTH_FAILED'),
+        (('could not resolve hostname', 'name or service not known'), 'ADOPTION_SSH_NAME_UNRESOLVED'),
+        (('connection timed out', 'operation timed out'), 'ADOPTION_SSH_CONNECT_TIMEOUT'),
+        (('connection refused',), 'ADOPTION_SSH_CONNECTION_REFUSED'),
+        (('no route to host', 'network is unreachable'), 'ADOPTION_SSH_NETWORK_UNREACHABLE'),
+        (('socket: operation not permitted',), 'ADOPTION_SSH_SOCKET_DENIED'),
+    ):
+        if any(text in value for text in fragments): return code
+    return 'ADOPTION_SSH_FAILED'
+
+
+def valid_host_report(report, host, plan):
+    identity_valid = (isinstance(report, dict) and report.get('schema') == SCHEMA and
+            report.get('host') == host['name'] and type(report.get('uid')) is int and
+            report['uid'] == os.getuid() and report.get('planSha256') == plan['_sha256'] and
+            type(report.get('at')) in (int, float) and math.isfinite(report['at']) and
+            abs(time.time() - report['at']) <= 120 and report.get('status') in ('clear', 'BUSY', 'BLOCKED'))
+    if not identity_valid: return False
+    if report['status'] == 'BLOCKED': return True
+    checks = report.get('checks', {})
+    if not isinstance(checks, dict) or any(checks.get(k) != 'PASS' for k in ('hostNamespace', 'processes', 'writers')):
+        return False
+    if checks.get('scheduler') != ('PASS' if plan['scheduler'] == 'slurm' else 'NOT_APPLICABLE'): return False
+    fields = ('legacyProcesses', 'unreviewedProcesses', 'unreadablePids', 'activeWriterClaims', 'slurmJobs')
+    if any(not isinstance(report.get(k), list) for k in fields): return False
+    if (type(report.get('activeSlurmJobs')) is not int or report['activeSlurmJobs'] < 0 or
+            report['activeSlurmJobs'] != len(report['slurmJobs']) or report['unreadablePids']): return False
+    if report['status'] == 'clear' and any(report[k] for k in fields): return False
+    return True
+
+
+def audit_summary(plan, reports):
+    incomplete = [r['host'] for r in reports if r['status'] == 'BLOCKED']
+    return {'schema': 'BioMindMaintenanceAuditV2', 'status': 'BLOCKED' if incomplete else
+            'BUSY' if any(r['status'] == 'BUSY' for r in reports) else 'clear',
+            'planSha256': plan['_sha256'], 'expectedHosts': [h['name'] for h in plan['hosts']],
+            'checkedHosts': [r['host'] for r in reports if r['status'] != 'BLOCKED'],
+            'incompleteHosts': incomplete, 'coverageComplete': not incomplete,
+            'inventoryConfirmed': plan.get('hostInventoryConfirmed') is True,
+            'reports': reports, 'signalsSent': False}
 
 
 def audit_hosts(plan):
     reports = []
     for host in plan['hosts']:
-        if host['name'] == socket.gethostname():
-            report = audit_local(plan)
-        else:
-            if not host.get('ssh'): fail('ADOPTION_REMOTE_HOST_UNAVAILABLE')
-            script = Path(__file__).resolve().parents[1] / 'scripts/plugin-maintenance.py'
-            command = shlex.join([sys.executable, '-B', str(script), 'audit-local', '--plan', plan['_path']])
-            reply = subprocess.run(['ssh', '-T', '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes',
-                                    '-o', 'ConnectTimeout=15', host['ssh'], command], capture_output=True, text=True, timeout=60)
-            try: report = json.loads(reply.stdout)
-            except ValueError: fail('ADOPTION_REMOTE_HOST_UNAVAILABLE')
-            if reply.returncode not in (0, 3): fail('ADOPTION_REMOTE_HOST_UNAVAILABLE')
-        if report.get('host') != host['name'] or report.get('uid') != os.getuid() or report.get('planSha256') != plan['_sha256'] or abs(time.time() - report.get('at', 0)) > 120:
-            fail('ADOPTION_HOST_EVIDENCE_MISMATCH')
+        stage, exit_code = 'local-audit', None
+        try:
+            if host['name'] == socket.gethostname():
+                report = audit_local(plan)
+            else:
+                stage = 'ssh'
+                if not host.get('ssh'): fail('ADOPTION_SSH_TARGET_MISSING')
+                script = Path(__file__).resolve().parents[1] / 'scripts/plugin-maintenance.py'
+                command = shlex.join([sys.executable, '-B', str(script), 'audit-local', '--plan', plan['_path']])
+                reply = subprocess.run(['ssh', '-T', '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes',
+                                        '-o', 'ConnectTimeout=15', '-o', 'ConnectionAttempts=1',
+                                        host['ssh'], command], capture_output=True, text=True, timeout=60)
+                exit_code = reply.returncode
+                if reply.returncode == 255: fail(ssh_failure_code(reply.stderr))
+                stage = 'remote-audit'
+                try: report = json.loads(reply.stdout)
+                except ValueError: fail('ADOPTION_REMOTE_RESPONSE_INVALID')
+                if not isinstance(report, dict): fail('ADOPTION_REMOTE_RESPONSE_INVALID')
+                # Pre-plan errors cannot attest host/uid/hash. Report only a safe
+                # reason and keep that host incomplete, never accept as evidence.
+                if isinstance(report, dict) and report.get('status') == 'BLOCKED' and 'host' not in report:
+                    code = report.get('code', '')
+                    if not isinstance(code, str): code = ''
+                    fail(code if re.fullmatch(r'ADOPTION_[A-Z0-9_]{1,80}|RESOURCE_[A-Z0-9_]{1,80}|MAINTENANCE_[A-Z0-9_]{1,80}|INVALID_ADOPTION_[A-Z0-9_]{1,64}', code) else 'ADOPTION_REMOTE_AUDIT_FAILED')
+                if reply.returncode not in (0, 2, 3): fail('ADOPTION_REMOTE_AUDIT_FAILED')
+                if reply.returncode != {'clear': 0, 'BUSY': 3, 'BLOCKED': 2}.get(report.get('status')):
+                    fail('ADOPTION_REMOTE_RESPONSE_INVALID')
+            if not valid_host_report(report, host, plan): fail('ADOPTION_HOST_EVIDENCE_MISMATCH')
+        except (guard.GuardError, OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
+            report = {'host': host['name'], 'status': 'BLOCKED', 'stage': stage,
+                      'code': audit_error_code(error), 'signalsSent': False}
+            if exit_code is not None: report['exitCode'] = exit_code
         reports.append(report)
+    summary = audit_summary(plan, reports)
+    if not summary['coverageComplete']:
+        raise AuditFailure({**summary, 'code': 'ADOPTION_HOST_AUDIT_INCOMPLETE',
+                            'recovery': 'Resolve each incomplete host and rerun audit. Do not adopt, kill tasks, or remove locks.'})
     return reports
 
 

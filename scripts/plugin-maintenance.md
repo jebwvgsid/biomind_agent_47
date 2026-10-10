@@ -38,3 +38,15 @@
 - 实际包操作失败使用已有 `biomind plugins --json` 的 repair，接管 repair 只恢复接管事务，两者不混用。
 
 目录接管完成不代表旧源码已可删除。S2 退役仍需独立检查所有消费者；不在本流程内自动删除。
+
+## 逐主机诊断（审计输出 V2）
+
+`audit` 会尝试计划中的每个主机，即使前一个失败。`expectedHosts` 是计划范围，`checkedHosts` 是完成检查的主机，`incompleteHosts` 是无法完整检查的主机；`coverageComplete` 只指计划内检查是否完整，不代替 `hostInventoryConfirmed` 的清单审核。
+
+各 `reports` 保留检查阶段、已观察到的旧进程、未知进程、writer 主机和 Slurm 作业 ID/状态/节点列表。`checks` 中 NOT_RUN 或 BLOCKED 不能当作空闲；未查到作业状态用 null，不能写 0。发现未列入计划的 writer 宿主明确 BLOCKED。Slurm 在途作业即使节点尚未分配也阻止接管。
+
+SSH 失败分别报告主机密钥未信任/已改变、认证、解析、超时、拒绝连接或网络失败；远端 Python 已执行但命名空间/Slurm/计划检查失败会保留对应代码。原始 stderr、banner、命令内容、环境变量、任务和凭据不输出。SSH 仍要求 BatchMode 和严格主机密钥校验。
+
+任一主机不可见时总状态 `BLOCKED / ADOPTION_HOST_AUDIT_INCOMPLETE`（exit 2），保留其他主机 BUSY/clear 结果；完整检查发现占用为 BUSY（exit 3）。不能用删除主机、删除 writer、取消 Slurm 检查或伪造进程豁免来消除错误。只读 audit 不创建维护事务，发生审计错误无需先运行 repair；修好可见性后重跑即可。真正 adopt 仍在围栏及全部锁内进行全新审计，不接受保存的旧报告作为通行凭据。
+
+维护工具可作为有独立版本、源码提交与 SHA256 的小型固定工具包交付；它复用同一源码中的 guard/adoption 模块和同一锁协议，不改变运行核心。此时 `$maint` 指向工具包脚本，计划的 `replacement.release` 仍指向已验证的服务核心。不能把工具包的提交号写成已连接 Main 的提交号。

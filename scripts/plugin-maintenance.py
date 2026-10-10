@@ -26,7 +26,7 @@ def main():
     if args.action == 'audit-local': result = adoption.audit_local(plan)
     elif args.action == 'audit':
         reports = adoption.audit_hosts(plan)
-        result = {'status': 'clear' if all(r['status'] == 'clear' for r in reports) else 'BUSY', 'reports': reports}
+        result = adoption.audit_summary(plan, reports)
     elif args.action == 'fence': result = adoption.fence(plan)
     elif args.action in ('adopt', 'repair'): result = adoption.adopt(plan)
     elif args.action == 'rollback': result = adoption.rollback(plan)
@@ -38,13 +38,18 @@ def main():
             result = {'status': record['state'], 'id': record['id'], 'roots': record['roots'], 'planSha256': record['planSha256']}
         else: result = {'status': 'not-started'}
     print(json.dumps(result, ensure_ascii=False))
-    return 3 if result.get('status') == 'BUSY' else 0
+    return {'BLOCKED': 2, 'BUSY': 3}.get(result.get('status'), 0)
 
 
 if __name__ == '__main__':
     try: raise SystemExit(main())
+    except adoption.AuditFailure as error:
+        print(json.dumps(error.result, ensure_ascii=False))
+        raise SystemExit(2)
     except (GuardError, OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
-        code = str(error) if isinstance(error, GuardError) else 'ADOPTION_OPERATION_FAILED'
+        is_audit = len(sys.argv) > 1 and sys.argv[1] in ('audit', 'audit-local')
+        code = adoption.audit_error_code(error) if is_audit else str(error) if isinstance(error, GuardError) else 'ADOPTION_OPERATION_FAILED'
         print(json.dumps({'status': 'BUSY' if code in ('BUSY', 'LEGACY_OCCUPANCY_BUSY') else 'BLOCKED', 'code': code,
-                          'recovery': 'Inspect status; repair resumes a pending adoption, rollback restores only admission metadata. No task is killed.'}))
+                          'recovery': 'Resolve the audit error and rerun; incomplete visibility is not proof of vacancy. No task is killed.' if is_audit else
+                          'Inspect status; repair resumes a pending adoption, rollback restores only admission metadata. No task is killed.'}))
         raise SystemExit(3 if code in ('BUSY', 'LEGACY_OCCUPANCY_BUSY') else 2)
