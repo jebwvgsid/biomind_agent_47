@@ -6,6 +6,7 @@ import { spawn, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { parseArgs } from 'node:util';
 import { randomUUID, createHash } from 'node:crypto';
+import type { ModelRuntime } from '@earendil-works/pi-coding-agent';
 import { JsonFrameDecoder } from './json-frame.js';
 import { IMAGE_LIMITS, ImageInputError, validateInputImages } from './image-input.js';
 import { AdmissionError, MessageAdmissions, validateFrameIds, type Admission } from './message-admissions.js';
@@ -14,7 +15,7 @@ import { loadBuildIdentity, type LoadedBuildIdentity } from './build-identity.js
 import { resolveHandshakeTimeoutMs } from './domain-client.js';
 import { assertObservationMode, observationMode, runtimeObservationLabel, projectObservedUsage } from './usage-observer.js';
 import { validateSessionSelection, resolveSessionDir, ProductSessionError, TerminalInputError, type NativeSessionSelection } from './native-session-selection.js';
-import { selectConfiguredModel, validateConfiguredCustomModel, validateModelSelection, type ModelSelection } from './model-config.js';
+import { configuredProvider, selectConfiguredModel, validateConfiguredCustomModel, validateModelSelection, type ModelSelection } from './model-config.js';
 import { chooseExecutionProfile, sessionProfile, type ExecutionProfile } from './execution-profile.js';
 import { StudioResourceSelection } from './studio-resources.js';
 import { createStudioControls } from './studio-controls.js';
@@ -63,6 +64,26 @@ export function readConfig(filename?: string): Config {
   }
   validateSessionSelection(value);
   return { ...value, configPath: path.resolve(filename) };
+}
+
+/** Check the saved choice against current definitions and native credential storage.
+ * This is local credential availability, not proof that a provider accepts the key.
+ */
+export async function validateRestoredModel(modelRuntime: ModelRuntime,
+  restoredModel: { provider: string; modelId: string } | null, selection?: ModelSelection) {
+  // Restoration runs before createAgentSession loads extension providers. Register
+  // the same confirmed custom definition as new sessions without selecting it.
+  if (selection) {
+    const custom = configuredProvider(selection);
+    if (custom) modelRuntime.registerProvider(selection.provider, custom);
+  }
+  // refreshOnCreate:false leaves auth-status snapshots empty; checkAuth consults
+  // the native store, including credentials saved by another process since launch.
+  const model = restoredModel && modelRuntime.getModel(restoredModel.provider, restoredModel.modelId);
+  if (!model || !(await modelRuntime.checkAuth(model.provider))) {
+    throw new ProductSessionError('SESSION_MODEL_UNAVAILABLE');
+  }
+  return model;
 }
 function locatePackage(name: string): string {
   let folder = path.dirname(fileURLToPath(import.meta.resolve(name)));
@@ -219,14 +240,15 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
   // Pi owns persisted choices. Refuse unavailable restored choices instead of
   // allowing SDK fallback to a different configured (possibly paid) model.
   if(restoring&&!['off','minimal','low','medium','high','xhigh'].includes(restored.thinkingLevel))throw new ProductSessionError('SESSION_THINKING_LEVEL_INVALID');
-  if (restoring && (!restored.model || !modelRuntime.getModel(restored.model.provider,restored.model.modelId)
-      || !modelRuntime.getProviderAuthStatus(restored.model.provider).configured)) throw new ProductSessionError('SESSION_MODEL_UNAVAILABLE');
+  const restoredModel = restoring ? await validateRestoredModel(modelRuntime, restored.model, config.modelSelection) : undefined;
   if (!restoring && (!provider || !modelId)) throw new Error('Headless mode requires explicit existing provider/model or a synthetic providerFixture');
-  const model = restoring ? undefined : config.modelSelection ? selectConfiguredModel(modelRuntime, config.modelSelection) : modelRuntime.getModel(provider!, modelId!);
+  const model = restoring ? restoredModel : config.modelSelection ? selectConfiguredModel(modelRuntime, config.modelSelection) : modelRuntime.getModel(provider!, modelId!);
   if (!restoring && !model) throw new Error('Requested model is unavailable in this pinned runtime');
   const { session } = await createAgentSession({ cwd, agentDir, modelRuntime,
     ...(!restoring ? {model,...(config.thinkingLevel!==undefined?{thinkingLevel:config.thinkingLevel}:{})}
-      : restored.messages.length ? {} : {model:modelRuntime.getModel(restored.model!.provider,restored.model!.modelId),thinkingLevel:restored.thinkingLevel as import('@earendil-works/pi-agent-core').ThinkingLevel}),
+      // Native SDK restoration also consults its auth snapshot. Supplying the
+      // checked saved choice prevents a fallback to a different default model.
+      : {model,thinkingLevel:restored.thinkingLevel as import('@earendil-works/pi-agent-core').ThinkingLevel}),
     resourceLoader: resources, settingsManager: settings,
     sessionManager: manager,
     tools: [...new Set([...(config.executionProfile === 'native' ? ['read','write','edit','bash','ls','find','grep'] : []),
