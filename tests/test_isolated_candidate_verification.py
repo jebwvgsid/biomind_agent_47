@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import tempfile
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location('isolated_verify', Path(__file__).resolve().parents[1] / 'scripts/verify-isolated-candidate.py')
@@ -12,6 +13,181 @@ spec.loader.exec_module(verify)
 
 
 class IsolatedVerification(unittest.TestCase):
+    def owner_state(self, name='A'):
+        return {'running': True, 'state': {
+            'loaded_build': {'releaseId': 'release-a', 'sourceCommit': 'commit-a',
+                             'releaseRoot': '/release/a', 'entrypoint': 'json', 'piVersion': '0.87.1'},
+            'cwd': '/candidate/project', 'sessionId': name, 'ownerGeneration': 'generation-' + name,
+            'sessionFile': '/candidate/agent/sessions/' + name + '.jsonl',
+            'active': False, 'activeRequestId': None, 'controlBusy': None, 'pendingUI': [],
+            'pendingDomainControlCount': 0, 'packagesQuiescing': False,
+            'queue': {'pendingAssociationCount': 0, 'actualHasQueuedMessages': False}}}
+
+    def old_receipt(self, path):
+        receipt = verify.Receipt(path)
+        receipt.data.update(serverId='server', project='/candidate/project', sessions={
+            name: {'id': name, 'ownerGeneration': 'generation-' + name} for name in ('A', 'B')})
+        receipt.save()
+        return receipt
+
+    def test_reuse_rejects_wrong_schema_scope_and_missing_owner(self):
+        with tempfile.TemporaryDirectory() as folder:
+            old = self.old_receipt(Path(folder) / 'old.json')
+            original = json.loads(old.path.read_text())
+            for change, code in [({'schema': 'another'}, 'SESSION_RECEIPT_SCHEMA_MISMATCH'),
+                    ({'serverId': 'production'}, 'SESSION_RECEIPT_SCOPE_MISMATCH'),
+                    ({'project': '/production'}, 'SESSION_RECEIPT_SCOPE_MISMATCH'),
+                    ({'sessions': {'A': original['sessions']['A']}}, 'SESSION_RECEIPT_OWNER_MISSING')]:
+                with self.subTest(change=change):
+                    old.data = {**original, **change}
+                    old.save()
+                    with self.assertRaises(verify.CheckError) as error:
+                        verify.reused_session_rows(old.path, 'server', '/candidate/project')
+                    self.assertEqual(error.exception.code, code)
+
+    def test_reuse_checks_actual_build_generation_and_idle_without_post(self):
+        args = ({'releaseId': 'release-a', 'sourceCommit': 'commit-a'}, Path('/release/a'),
+                '/candidate/agent', '/candidate/project')
+        row = {'id': 'A', 'ownerGeneration': 'generation-A'}
+        mutations = [('ownerGeneration', 'new-owner', 'ORIGINAL_OWNER_GENERATION_CHANGED'),
+            ('sessionId', 'replacement', 'MAIN_WORKER_IDENTITY_MISMATCH'),
+            ('loaded_build', {}, 'MAIN_WORKER_IDENTITY_MISMATCH'),
+            ('active', True, 'ORIGINAL_SESSION_NOT_IDLE'),
+            ('queue', {'pendingAssociationCount': 1, 'actualHasQueuedMessages': True}, 'ORIGINAL_SESSION_NOT_IDLE'),
+            ('queue', {}, 'ORIGINAL_SESSION_NOT_IDLE'),
+            ('pendingUI', [{'id': 'question'}], 'ORIGINAL_SESSION_NOT_IDLE'),
+            ('controlBusy', 'reload', 'ORIGINAL_SESSION_NOT_IDLE')]
+        for field, value, code in mutations:
+            state = self.owner_state()
+            state['state'][field] = value
+            calls = []
+            def fetch(route, payload=None):
+                calls.append((route, payload))
+                return state
+            with self.subTest(field=field), self.assertRaises(verify.CheckError) as error:
+                verify.check_existing_owner(SimpleNamespace(json=fetch), row, *args)
+            self.assertEqual(error.exception.code, code)
+            self.assertEqual(calls, [('/api/agent/A', None)])
+        state = {'running': False, 'resumable': True}
+        with self.assertRaises(verify.CheckError) as error:
+            verify.check_existing_owner(SimpleNamespace(json=lambda *_: state), row, *args)
+        self.assertEqual(error.exception.code, 'ORIGINAL_SESSION_NOT_RUNNING_NO_AUTO_RESUME')
+
+    def test_reuse_preserves_original_ids_and_does_not_create_resume_reload(self):
+        with tempfile.TemporaryDirectory() as folder:
+            old = self.old_receipt(Path(folder) / 'old.json')
+            current = verify.Receipt(Path(folder) / 'new.json')
+            calls = []
+            def fetch(route, payload=None):
+                calls.append((route, payload))
+                self.assertIsNone(payload)
+                return self.owner_state(route.rsplit('/', 1)[1])
+            verify.reuse_sessions(SimpleNamespace(json=fetch), current, old.path, 'server', '/candidate/project',
+                {'releaseId': 'release-a', 'sourceCommit': 'commit-a'}, Path('/release/a'), '/candidate/agent')
+            self.assertEqual(current.data['sessions'], old.data['sessions'])
+            self.assertEqual(calls, [('/api/agent/A', None), ('/api/agent/B', None)])
+            self.assertFalse(current.data['stages']['reuseA']['reloaded'])
+            self.assertEqual(current.data['stages']['reuseB']['ownerGeneration'], 'generation-B')
+
+    def test_native_probe_keeps_auth_cache_false_and_never_records_key(self):
+        models = {'current': {'provider': 'deepseek', 'id': 'test'},
+                  'models': [{'provider': 'deepseek', 'id': 'test', 'authenticated': False}]}
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            agent = root / 'agent'
+            agent.mkdir()
+            auth = agent / 'auth.json'
+            auth.write_text(json.dumps({'deepseek': {'type': 'api_key', 'key': 'test-only-private-value'}}))
+            auth.chmod(0o600)
+            proof = verify.native_credential_probe({'agentDir': str(agent)}, root, models)
+            self.assertTrue(proof['nativeCredentialPresent'])
+            self.assertFalse(proof['cachedAuthenticated'])
+            self.assertFalse(models['models'][0]['authenticated'])
+            self.assertEqual(proof['result'], 'NOT_RUN')
+            self.assertEqual(proof['authenticity'], 'not_yet_verified')
+            self.assertNotIn('test-only-private-value', json.dumps(proof))
+            for key in ('', ' ', '!echo do-not-execute'):
+                auth.write_text(json.dumps({'deepseek': {'type': 'api_key', 'key': key}}))
+                self.assertFalse(verify.native_credential_probe({'agentDir': str(agent)}, root, models)['nativeCredentialPresent'])
+            with self.assertRaises(verify.CheckError) as error:
+                verify.native_credential_probe({'agentDir': str(agent)}, root, {'current': {'provider': 'other'}})
+            self.assertEqual(error.exception.code, 'NATIVE_CREDENTIAL_PROBE_PROVIDER_UNSUPPORTED')
+
+    def test_full_reuse_requires_explicit_probe_and_posts_only_one_model_task(self):
+        for probe in (False, True):
+            with self.subTest(probe=probe), tempfile.TemporaryDirectory() as folder:
+                root = Path(folder)
+                agent, project, release = (root / name for name in ('agent', 'project', 'release'))
+                agent.mkdir()
+                project.mkdir()
+                (release / 'scripts').mkdir(parents=True)
+                (release / 'RELEASE.json').write_text(json.dumps({'releaseId': 'release-a', 'sourceCommit': 'commit-a'}))
+                (release / 'scripts/verify-studio-core.py').write_text('def validate(*args):\n    return {"result": "PASS"}\n')
+                runtime = root / 'runtime.json'
+                runtime.write_text(json.dumps({'agentDir': str(agent), 'sessionMode': 'persistent', 'provider': 'deepseek'}))
+                def write_private(path, data):
+                    path.write_text(json.dumps(data))
+                    path.chmod(0o600)
+                config, env = root / 'config.json', root / 'environment.json'
+                write_private(config, {'serverId': 'server', 'stateRoot': str(root / 'state'),
+                    'environmentFile': str(env), 'environment': {'BIOMIND_RUNTIME_CONFIG': str(runtime)}})
+                write_private(env, {'PI_WEB_PASSWORD': 'test-only-workbench-value'})
+                write_private(agent / 'auth.json', {'deepseek': {'type': 'api_key', 'key': 'test-only-native-value'}})
+                old = self.old_receipt(root / 'old.json')
+                old.data['project'] = str(project)
+                old.save()
+                receipt = verify.Receipt(root / 'new.json')
+                args = SimpleNamespace(config=config, release=release, project=project, service=root / 'service.py',
+                    isolation_root=root, base_url='http://127.0.0.1:1', timeout=10,
+                    sessions=False, real_model=True, real_search=False, resume=False,
+                    reuse_sessions_from=old.path, probe_native_credential=probe)
+                calls = []
+                def http(route, payload=None):
+                    calls.append((route, payload))
+                    if route.startswith('/api/plugins?'):
+                        return {'packages': [{'source': 'npm:pi-web-access@0.38.0', 'installed': True, 'installedVersion': '0.38.0'}]}
+                    if route in ('/_biomind_studio/health', '/api/agent/profile'):
+                        return {}
+                    self.assertIn(route, ('/api/agent/A', '/api/agent/B'))
+                    if payload is None:
+                        value = self.owner_state(route.rsplit('/', 1)[1])
+                        value['state']['cwd'] = str(project)
+                        value['state']['sessionFile'] = str(agent / 'sessions' / (value['state']['sessionId'] + '.jsonl'))
+                        value['state']['loaded_build']['releaseRoot'] = str(release)
+                        return value
+                    self.assertIn(payload['type'], ('get_tools', 'get_models'))
+                    self.assertEqual(payload['ownerGeneration'], 'generation-' + payload['sessionId'])
+                    if payload['type'] == 'get_tools':
+                        names = ['web_search', 'fetch_content', 'get_search_content', 'source_check', 'web_enable']
+                        return {'data': {'data': {'registered': [{'name': n} for n in names], 'effective': names}}}
+                    return {'data': {'data': {'current': {'provider': 'deepseek', 'id': 'test'},
+                        'models': [{'provider': 'deepseek', 'id': 'test', 'authenticated': False}]}}}
+                submitted = []
+                def prompt(client, target, stage, row, *_):
+                    submitted.append(row.copy())
+                    result = {'result': 'PASS'}
+                    target.stage(stage, result)
+                    return result
+                discovery = SimpleNamespace(returncode=0, stdout=json.dumps({'status': 'ready', 'host': 'host',
+                    'port': 1, 'serverId': 'server', 'instanceId': 'instance'}))
+                with patch.object(verify.subprocess, 'run', return_value=discovery), \
+                     patch.object(verify, 'Client', return_value=SimpleNamespace(json=http)), \
+                     patch.object(verify, 'prompt_once', side_effect=prompt):
+                    verify.run(args, receipt)
+                self.assertEqual(receipt.data['sessions'], old.data['sessions'])
+                self.assertEqual(submitted, [old.data['sessions']['A']] if probe else [])
+                self.assertEqual(receipt.data['stages']['modelsA']['models'][0]['authenticated'], False)
+                if probe:
+                    proof = receipt.data['stages']['authenticationProbe']
+                    self.assertEqual(proof['result'], 'PASS')
+                    self.assertFalse(proof['cachedAuthenticated'])
+                    self.assertEqual(proof['authenticity'], 'verified_by_real_model')
+                else:
+                    self.assertEqual(receipt.data['stages']['realModel']['code'], 'MODEL_CREDENTIAL_NOT_CONFIGURED')
+                    self.assertNotIn('authenticationProbe', receipt.data['stages'])
+                self.assertNotIn('test-only-native-value', receipt.path.read_text())
+                self.assertFalse(any(route == '/api/agent/new' or (payload and payload['type'] in ('reload', 'resume_session')) for route, payload in calls))
+
     def test_pending_receipt_prevents_duplicate_mutation(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / 'receipt.json'

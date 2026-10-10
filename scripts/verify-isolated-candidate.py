@@ -5,8 +5,12 @@ Default is read-only identity verification. --sessions creates two native owners
 only inside --isolation-root. --real-model and --real-search explicitly submit
 one task each. An existing receipt can ONLY be opened with --resume, which never
 repeats a POST. A failed/ambiguous POST is preserved for inspection, not retried.
-The private service environment file supplies workbench authentication; values
-are never logged. The checker does not load dotenv or provider auth files.
+--reuse-sessions-from reads a previous private receipt and verifies its exact
+owners without creating/replacing/reloading them. --probe-native-credential
+explicitly permits a real DeepSeek prompt with a newly saved candidate native
+credential even when the existing owner's model-list auth cache is stale.
+Credentials are never logged. Provider auth is read only for that explicit flag;
+dotenv is never loaded.
 """
 import argparse
 import base64
@@ -173,6 +177,86 @@ def scoped(session, project, server_id, command, **fields):
             'ownerGeneration': session['ownerGeneration'], 'project': project, **fields}
 
 
+def reused_session_rows(path, server_id, project):
+    previous = private_json(path)
+    if not isinstance(previous, dict) or previous.get('schema') != 'BioMindIsolatedHTTPAcceptanceV1':
+        raise CheckError('SESSION_RECEIPT_SCHEMA_MISMATCH')
+    if previous.get('serverId') != server_id or previous.get('project') != project:
+        raise CheckError('SESSION_RECEIPT_SCOPE_MISMATCH')
+    rows = previous.get('sessions') or {}
+    selected = {}
+    for name in ('A', 'B'):
+        row = rows.get(name)
+        if not isinstance(row, dict) or any(not isinstance(row.get(k), str) or not row[k] for k in ('id', 'ownerGeneration')):
+            raise CheckError('SESSION_RECEIPT_OWNER_MISSING')
+        selected[name] = {k: row[k] for k in ('id', 'ownerGeneration')}
+    if selected['A']['id'] == selected['B']['id']:
+        raise CheckError('SESSIONS_COLLIDED')
+    return selected
+
+
+def check_existing_owner(client, row, expected, release, agent_dir, project, idle=True):
+    value = client.json('/api/agent/' + urllib.parse.quote(row['id'], safe=''))
+    state = value.get('state') or {}
+    if value.get('running') is not True:
+        raise CheckError('ORIGINAL_SESSION_NOT_RUNNING_NO_AUTO_RESUME')
+    identity = worker_identity(state, expected, release, agent_dir, project, row['id'])
+    if identity['result'] != 'PASS':
+        raise CheckError('MAIN_WORKER_IDENTITY_MISMATCH')
+    if state.get('ownerGeneration') != row['ownerGeneration']:
+        raise CheckError('ORIGINAL_OWNER_GENERATION_CHANGED')
+    if idle:
+        queue = state.get('queue') or {}
+        # Missing fields are unknown, not evidence of an idle owner.
+        if (state.get('active') is not False or state.get('activeRequestId') is not None
+                or state.get('controlBusy') is not None or state.get('pendingUI') != []
+                or state.get('pendingDomainControlCount') != 0 or state.get('packagesQuiescing') is not False
+                or queue.get('pendingAssociationCount') != 0 or queue.get('actualHasQueuedMessages') is not False):
+            raise CheckError('ORIGINAL_SESSION_NOT_IDLE')
+    return identity
+
+
+def reuse_sessions(client, receipt, previous_path, server_id, project, expected, release, agent_dir):
+    rows = reused_session_rows(previous_path, server_id, project)
+    receipt.data['sessions'] = rows
+    receipt.data['reusedSessionsFrom'] = str(Path(previous_path).resolve())
+    receipt.save()
+    # Check both owners before issuing any POST, including harmless controls.
+    for name, row in rows.items():
+        identity = check_existing_owner(client, row, expected, release, agent_dir, project)
+        receipt.stage('reuse' + name, {**identity, 'created': False, 'resumed': False, 'reloaded': False})
+
+
+def model_authenticated(models):
+    current = models.get('current') or {}
+    return any(row.get('authenticated') is True and row.get('provider') == current.get('provider')
+               and row.get('id') == current.get('id') for row in models.get('models', []))
+
+
+def native_credential_probe(runtime, root, models):
+    current = models.get('current') or {}
+    if current.get('provider') != 'deepseek':
+        raise CheckError('NATIVE_CREDENTIAL_PROBE_PROVIDER_UNSUPPORTED')
+    auth_path = Path(under(Path(runtime['agentDir']) / 'auth.json', root))
+    try:
+        auth = private_json(auth_path)
+    except FileNotFoundError:
+        auth = {}
+    if not isinstance(auth, dict):
+        raise CheckError('NATIVE_CREDENTIAL_FILE_INVALID')
+    credential = auth.get('deepseek') or {}
+    # Only inspect literal credentials written by the native helper. Never
+    # execute command-valued auth or resolve env/production credential sources.
+    key = credential.get('key') if isinstance(credential, dict) else None
+    present = (credential.get('type') == 'api_key' and isinstance(key, str)
+               and bool(key.strip()) and not key.startswith('!')) if isinstance(credential, dict) else False
+    return {'result': 'NOT_RUN' if present else 'BLOCKED',
+            'code': 'NATIVE_CREDENTIAL_READY_FOR_SINGLE_PROBE' if present else 'NATIVE_CREDENTIAL_NOT_PRESENT',
+            'provider': 'deepseek', 'cachedAuthenticated': model_authenticated(models),
+            'nativeCredentialPresent': present, 'authenticity': 'not_yet_verified',
+            'modelListCacheModified': False, 'credentialValuesRecorded': False}
+
+
 def plugin_inventory(packages):
     rows = [{k: row.get(k) for k in ('source', 'scope', 'installedVersion', 'installed', 'declaration')}
             for row in packages.get('packages', [])]
@@ -293,7 +377,7 @@ def run(args, receipt):
     credential = private_json(config['environmentFile'])
     if not isinstance(credential.get('PI_WEB_PASSWORD'), str) or len(credential['PI_WEB_PASSWORD'].encode()) < 16:
         raise CheckError('INVALID_WORKBENCH_CREDENTIAL_FILE')
-    if args.sessions or args.real_model or args.real_search:
+    if args.sessions or args.real_model or args.real_search or args.reuse_sessions_from:
         if not args.isolation_root:
             raise CheckError('ISOLATION_ROOT_REQUIRED_FOR_SESSION_CREATION')
         validate_isolation(config, runtime, project, args.isolation_root)
@@ -332,25 +416,29 @@ def run(args, receipt):
                 'ownerGeneration': state.get('ownerGeneration')}
         receipt.stage('readOnlyRecovery', {'result': 'PASS', 'states': states, 'tasksResent': 0})
         return
-    if not (args.sessions or args.real_model or args.real_search):
+    if not (args.sessions or args.real_model or args.real_search or args.reuse_sessions_from):
         return
-    selected = client.json('/api/cwd/validate', {'cwd': project})
-    if selected.get('cwd') != project or selected.get('success') is not True:
-        raise CheckError('PROJECT_SELECTION_MISMATCH')
-    receipt.stage('projectSelection', {'result': 'PASS', 'project': project})
-    for name in ('A', 'B'):
-        receipt.stage('create' + name, {'result': 'BLOCKED', 'code': 'CREATION_PENDING_NO_AUTO_RETRY'})
-        created = client.json('/api/agent/new', {'type': 'ensure_session', 'cwd': project, 'serverId': config['serverId']})
-        if created.get('success') is not True or not created.get('sessionId') or not created.get('ownerGeneration'):
-            raise CheckError('SESSION_CREATION_FAILED')
-        row = {'id': created['sessionId'], 'ownerGeneration': created['ownerGeneration']}
-        receipt.data['sessions'][name] = row
-        receipt.save()
-        state = client.json('/api/agent/' + urllib.parse.quote(row['id'], safe='')).get('state') or {}
-        identity = worker_identity(state, expected, args.release.resolve(), runtime['agentDir'], project, row['id'])
-        receipt.stage('create' + name, identity)
-        if identity['result'] != 'PASS':
-            raise CheckError('MAIN_WORKER_IDENTITY_MISMATCH')
+    if args.reuse_sessions_from:
+        reuse_sessions(client, receipt, args.reuse_sessions_from, config['serverId'], project,
+                       expected, args.release.resolve(), runtime['agentDir'])
+    else:
+        selected = client.json('/api/cwd/validate', {'cwd': project})
+        if selected.get('cwd') != project or selected.get('success') is not True:
+            raise CheckError('PROJECT_SELECTION_MISMATCH')
+        receipt.stage('projectSelection', {'result': 'PASS', 'project': project})
+        for name in ('A', 'B'):
+            receipt.stage('create' + name, {'result': 'BLOCKED', 'code': 'CREATION_PENDING_NO_AUTO_RETRY'})
+            created = client.json('/api/agent/new', {'type': 'ensure_session', 'cwd': project, 'serverId': config['serverId']})
+            if created.get('success') is not True or not created.get('sessionId') or not created.get('ownerGeneration'):
+                raise CheckError('SESSION_CREATION_FAILED')
+            row = {'id': created['sessionId'], 'ownerGeneration': created['ownerGeneration']}
+            receipt.data['sessions'][name] = row
+            receipt.save()
+            state = client.json('/api/agent/' + urllib.parse.quote(row['id'], safe='')).get('state') or {}
+            identity = worker_identity(state, expected, args.release.resolve(), runtime['agentDir'], project, row['id'])
+            receipt.stage('create' + name, identity)
+            if identity['result'] != 'PASS':
+                raise CheckError('MAIN_WORKER_IDENTITY_MISMATCH')
     if receipt.data['sessions']['A']['id'] == receipt.data['sessions']['B']['id']:
         raise CheckError('SESSIONS_COLLIDED')
     checks = []
@@ -375,17 +463,31 @@ def run(args, receipt):
         if runtime.get('providerFixture') or runtime.get('offline') or runtime.get('offlineModel') or runtime.get('provider') in ('fixture', 'offline', 'test'):
             raise CheckError('REAL_PROVIDER_REQUIRED')
         models = receipt.data['stages']['modelsA']
-        current = models.get('current') or {}
-        if not any(row.get('authenticated') is True and row.get('provider') == current.get('provider') and row.get('id') == current.get('id') for row in models['models']):
+        authenticated = model_authenticated(models)
+        native_probe = None
+        if args.probe_native_credential:
+            native_probe = native_credential_probe(runtime, args.isolation_root, models)
+            receipt.stage('authenticationProbe', native_probe)
+        if ((native_probe is not None and not native_probe['nativeCredentialPresent'])
+                or (not authenticated and not (native_probe and native_probe['nativeCredentialPresent']))):
             receipt.stage('realModel', {'result': 'BLOCKED', 'code': 'MODEL_CREDENTIAL_NOT_CONFIGURED'})
         else:
+            if args.reuse_sessions_from:
+                for row in receipt.data['sessions'].values():
+                    check_existing_owner(client, row, expected, args.release.resolve(), runtime['agentDir'], project)
             marker = 'BIOMIND_ACCEPT_' + uuid.uuid4().hex
-            prompt_once(client, receipt, 'realModel', receipt.data['sessions']['A'], project, config['serverId'],
+            result = prompt_once(client, receipt, 'realModel', receipt.data['sessions']['A'], project, config['serverId'],
                 '请不要调用工具，只原样回复以下验证字符串：' + marker, marker, args.timeout)
+            if native_probe:
+                receipt.stage('authenticationProbe', {**native_probe,
+                    'result': result['result'], 'authenticity': 'verified_by_real_model' if result['result'] == 'PASS' else 'not_verified',
+                    'code': 'REAL_MODEL_AUTHENTICATED' if result['result'] == 'PASS' else 'REAL_MODEL_AUTHENTICATION_UNCONFIRMED'})
     if args.real_search:
         if receipt.data['stages'].get('realModel', {}).get('result') != 'PASS':
             receipt.stage('realSearch', {'result': 'BLOCKED', 'code': 'REAL_MODEL_NOT_VERIFIED'})
         else:
+            if args.reuse_sessions_from:
+                check_existing_owner(client, receipt.data['sessions']['B'], expected, args.release.resolve(), runtime['agentDir'], project)
             marker = 'network-check-' + uuid.uuid4().hex
             prompt_once(client, receipt, 'realSearch', receipt.data['sessions']['B'], project, config['serverId'],
                 '请使用 pi-web-access 的 web_search 实际联网搜索 NCBI BLAST official documentation。'
@@ -404,9 +506,15 @@ def main():
     parser.add_argument('--real-model', action='store_true')
     parser.add_argument('--real-search', '--web-search', action='store_true')
     parser.add_argument('--resume', action='store_true')
+    parser.add_argument('--reuse-sessions-from', type=Path)
+    parser.add_argument('--probe-native-credential', action='store_true')
     args = parser.parse_args()
     if not 10 <= args.timeout <= 600:
         parser.error('--timeout must be between 10 and 600 seconds')
+    if args.resume and (args.reuse_sessions_from or args.probe_native_credential):
+        parser.error('--resume is read-only and cannot combine with session reuse/probe')
+    if args.probe_native_credential and (not args.reuse_sessions_from or not (args.real_model or args.real_search)):
+        parser.error('--probe-native-credential requires --reuse-sessions-from and --real-model/--web-search')
     receipt = None
     try:
         receipt = Receipt(args.evidence, args.resume)
