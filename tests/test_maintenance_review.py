@@ -57,5 +57,34 @@ class ReviewTests(unittest.TestCase):
         self.assertEqual(len(original['hosts']),1)
         self.assertNotIn('_sha256',plan)
 
+    def test_unreachable_host_has_unknown_counts_and_incomplete_coverage(self):
+        row={'host':'c142','status':'BLOCKED','stage':'ssh','code':'ADOPTION_SSH_HOST_KEY_UNVERIFIED'}
+        summary=review.host_summary(row)
+        for key in ('legacyReferences','unknownProcesses','unreadableProcesses','activeWriters'):
+            self.assertIsNone(summary[key])
+        coverage=review.job_host_coverage(['c142'],['ln01','c142'],{'reports':[row]})
+        self.assertEqual(coverage['jobHostsAttempted'],['c142'])
+        self.assertEqual(coverage['jobHostsNotDeclared'],[])
+        self.assertEqual(coverage['jobHostsNotYetAudited'],['c142'])
+        self.assertFalse(coverage['jobHostCoverageComplete'])
+
+    def test_full_busy_inventory_is_covered_without_claiming_idle(self):
+        row={'host':'c01','status':'BUSY','checks':{k:'PASS' for k in ('hostNamespace','processes','writers','scheduler')},
+             'legacyProcesses':[],'unreviewedProcesses':[],'unreadablePids':[],'activeWriterClaims':[]}
+        self.assertEqual(review.host_summary(row)['activeWriters'],0)
+        coverage=review.job_host_coverage(['c01'],['c01'],{'reports':[row]})
+        self.assertEqual(coverage['jobHostsVerified'],['c01'])
+        self.assertTrue(coverage['jobHostCoverageComplete'])
+        self.assertEqual(row['status'],'BUSY')
+
+    def test_partial_visibility_or_new_node_cannot_satisfy_coverage(self):
+        row={'host':'c01','status':'BLOCKED','checks':{'hostNamespace':'PASS','processes':'BLOCKED','writers':'PASS','scheduler':'PASS'},
+             'legacyProcesses':[],'unreviewedProcesses':[],'unreadablePids':[1],'activeWriterClaims':[]}
+        self.assertEqual(review.host_summary(row)['unreadableProcesses'],1)
+        coverage=review.job_host_coverage(['c01','c02'],['c01'],{'reports':[row]})
+        self.assertEqual(coverage['jobHostsNotDeclared'],['c02'])
+        self.assertEqual(coverage['jobHostsNotYetAudited'],['c01','c02'])
+        self.assertFalse(coverage['jobHostCoverageComplete'])
+
 
 if __name__=='__main__':unittest.main()

@@ -99,6 +99,40 @@ def review_plan(source, hosts):
     return plan
 
 
+def host_summary(report):
+    """Absent observations are unknown, not empty process inventories."""
+    checks = report.get('checks', {})
+    process_checked = checks.get('processes') in ('PASS', 'BLOCKED')
+    writers_checked = checks.get('writers') in ('PASS', 'BLOCKED')
+    def count(field, checked):
+        rows = report.get(field)
+        return len(rows) if checked and isinstance(rows, list) else None
+    return {'host': report['host'], 'status': report['status'], 'code': report.get('code'),
+            'checks': checks, 'stage': report.get('stage'),
+            'legacyReferences': count('legacyProcesses', process_checked),
+            'unknownProcesses': count('unreviewedProcesses', process_checked),
+            'unreadableProcesses': count('unreadablePids', process_checked),
+            'activeWriters': count('activeWriterClaims', writers_checked)}
+
+
+def job_host_coverage(hosts, declared, audit):
+    """Requested SSH targets and complete host observations are different sets."""
+    required = set(hosts)
+    reports = {r['host']: r for r in audit.get('reports', [])}
+    complete = set()
+    for host, report in reports.items():
+        checks = report.get('checks', {})
+        if (report.get('status') in ('clear', 'BUSY') and
+                all(checks.get(k) == 'PASS' for k in ('hostNamespace', 'processes', 'writers')) and
+                checks.get('scheduler') in ('PASS', 'NOT_APPLICABLE')):
+            complete.add(host)
+    return {'jobHostsNotDeclared': sorted(required-set(declared)),
+            'jobHostsAttempted': sorted(required & reports.keys()),
+            'jobHostsVerified': sorted(required & complete),
+            'jobHostsNotYetAudited': sorted(required-complete),
+            'jobHostCoverageComplete': required <= complete}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--plan', required=True)
@@ -128,26 +162,22 @@ def main():
     print('Inspecting declared and discovered hosts: '+', '.join(h['name'] for h in expanded['hosts']), flush=True)
     audit = collect_audit(expanded)
     final_jobs = job_review(audit, str(scheduler))
-    missing_hosts = sorted(set(final_jobs['hosts']) - {h['name'] for h in expanded['hosts']})
+    coverage = job_host_coverage(final_jobs['hosts'], [h['name'] for h in expanded['hosts']], audit)
     report = {'schema':'BioMindMaintenanceBlockerReviewV1','status':'REVIEW_REQUIRED',
               'atUTC':datetime.datetime.now(datetime.timezone.utc).isoformat(), 'originHost':socket.gethostname(),
               'originPid1':Path('/proc/1/comm').read_text().strip(), 'sourcePlan':str(args.plan),
               'sourcePlanSha256':original['_sha256'], 'reviewPlan':str(expanded_path),
               'initialAudit':str(initial_file), 'jobDiscovery':discovered, 'latestJobReview':final_jobs,
-              'jobHostsNotYetAudited':missing_hosts, 'audit':audit,
+              **coverage, 'audit':audit,
               'productionChanged':False,'processesStopped':False,'inventoryApproved':False,
               'resourceAdopted':False,'formalSwitch':False}
     output = directory / ('blocker-review-'+stamp+'.json')
     adoption.save(output, report)
     print(json.dumps({'status':'REVIEW_REQUIRED','hostAuditStatus':audit['status'],
-        'hosts':[{'host':r['host'],'status':r['status'],'code':r.get('code'),
-                  'legacyReferences':len(r.get('legacyProcesses',[])),
-                  'unknownProcesses':len(r.get('unreviewedProcesses',[])),
-                  'unreadableProcesses':len(r.get('unreadablePids',[])),
-                  'activeWriters':len(r.get('activeWriterClaims',[]))} for r in audit['reports']],
+        'hosts':[host_summary(r) for r in audit['reports']],
         'jobDiscoveryFailures':discovered['failures']+final_jobs['failures'],
-        'jobHostsNotYetAudited':missing_hosts, 'report':str(output),'productionChanged':False},ensure_ascii=False),flush=True)
-    return 2 if audit['status']=='BLOCKED' or discovered['failures'] or final_jobs['failures'] or missing_hosts else 0
+        **coverage, 'report':str(output),'productionChanged':False},ensure_ascii=False),flush=True)
+    return 2 if audit['status']=='BLOCKED' or discovered['failures'] or final_jobs['failures'] or not coverage['jobHostCoverageComplete'] else 0
 
 
 if __name__ == '__main__':
