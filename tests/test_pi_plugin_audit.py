@@ -277,5 +277,34 @@ class AuditTests(unittest.TestCase):
             self.assertNotIn('PRIVATE', json.dumps(report))
         finally: process.communicate('\n', timeout=10)
 
+    def test_script_identity_hint_never_outputs_command_arguments(self):
+        hint = adoption.process_hint(b'/usr/bin/node\0/home/user/.editor/server.js\0--token\0PRIVATE_VALUE\0', '/tmp', '/usr/bin/node')
+        self.assertEqual(hint['entryProgram'], '/home/user/.editor/server.js')
+        self.assertNotIn('PRIVATE_VALUE', json.dumps(hint))
+        inline = adoption.process_hint(b'python\0-c\0PRIVATE_CODE\0', '/tmp', '/usr/bin/python')
+        self.assertNotIn('entryProgram', inline)
+        self.assertNotIn('PRIVATE_CODE', json.dumps(inline))
+        self.assertEqual(adoption.process_hint(b'sshd: user@notty\0')['roleHint'], 'ssh-login-helper')
+
+    def test_reference_evidence_distinguishes_resource_and_code_without_filenames(self):
+        refs = adoption.reference_evidence([('cwd', '/legacy'), ('argv', '/legacy/a.py'),
+                ('fd', '/legacy/agent/private-history.jsonl')], ['/legacy'], ['/legacy/agent'])
+        self.assertIn({'source':'cwd','kind':'code','root':'/legacy'}, refs)
+        self.assertIn({'source':'fd','kind':'resource','root':'/legacy/agent'}, refs)
+        self.assertNotIn('private-history', json.dumps(refs))
+
+    def test_shell_cwd_reference_is_explained_but_not_automatically_exempted(self):
+        process = subprocess.Popen(['/usr/bin/bash','--noprofile','--norc','-c','read unused'],
+                                   cwd=self.root/'legacy',stdin=subprocess.PIPE)
+        try:
+            report = adoption.audit_local(self.plan, require_host_namespace=False)
+            row = next(r for r in report['processEvidence'] if r['pid']==process.pid)
+            self.assertEqual(row['roleHint'],'shell')
+            self.assertIn({'source':'cwd','kind':'code','root':str(self.root/'legacy')},row['references'])
+            self.assertIn(process.pid,[r['pid'] for r in report['legacyProcesses']])
+            self.assertNotEqual(report['status'],'clear')
+            self.assertIsNone(process.poll())
+        finally: process.communicate(b'\n',timeout=10)
+
 
 if __name__ == '__main__': unittest.main()

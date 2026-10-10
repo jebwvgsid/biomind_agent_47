@@ -236,6 +236,44 @@ def ancestors():
     return values
 
 
+def process_hint(cmd, cwd=None, executable=None):
+    """A review aid, never an exemption. No raw argv, prompts or environment."""
+    argv = [os.fsdecode(p) for p in cmd.split(b'\0') if p]
+    result = {'commandSha256': sha(cmd)}
+    if not argv: return result
+    helpers = {'sshd': 'ssh-login-helper', '(sd-pam)': 'pam-session-helper',
+               'systemd': 'user-service-manager', 'gnome-keyring-d': 'keyring-helper',
+               'gnome-keyring-daemon': 'keyring-helper', 'bwrap': 'sandbox-wrapper', 'bash': 'shell'}
+    name = Path(executable or argv[0]).name
+    if argv[0].startswith('sshd: '): name = 'sshd'
+    if name in helpers:
+        result['roleHint'] = helpers[name]
+    if name.startswith(('node', 'python', 'bun', 'deno')):
+        args = argv[1:]
+        while args and args[0] in ('-B', '-u'): args = args[1:]
+        if args and not args[0].startswith('-'):
+            script = Path(args[0])
+            if cwd and not script.is_absolute(): script = Path(cwd) / script
+            # A script path is sufficient for manual classification; arguments
+            # (including -c/-e programs and tokens) are deliberately omitted.
+            if script.is_absolute() and script.suffix in ('.py', '.js', '.mjs', '.cjs', '.ts'):
+                result['entryProgram'] = str(script)
+            else:
+                result['entryProgramSha256'] = sha(os.fsencode(args[0]))
+    return result
+
+
+def reference_evidence(references, code_roots, resource_roots):
+    """Describe why a row blocks, without logging file names or argument data."""
+    result = set()
+    for source, ref in references:
+        for kind, roots in (('code', code_roots), ('resource', resource_roots)):
+            for root in roots:
+                if ref == root or ref.startswith(root + '/') or root + '/' in ref:
+                    result.add((source, kind, root))
+    return [{'source': source, 'kind': kind, 'root': root} for source, kind, root in sorted(result)]
+
+
 def audit_local(plan, require_host_namespace=True):
     """Read process/owner metadata only; never print argv, environ or history."""
     host = socket.gethostname()
@@ -243,6 +281,7 @@ def audit_local(plan, require_host_namespace=True):
               'planSha256': plan['_sha256'], 'status': 'BLOCKED', 'signalsSent': False,
               'checks': {k: 'NOT_RUN' for k in ('hostNamespace', 'processes', 'writers', 'scheduler')},
               'legacyProcesses': [], 'unreviewedProcesses': [], 'unreadablePids': [], 'unreadableProcesses': [],
+              'processEvidence': [],
               'activeWriterClaims': [], 'observedWriterHosts': [], 'activeSlurmJobs': None,
               'slurmJobs': [], 'stage': 'hostNamespace'}
     try:
@@ -264,7 +303,8 @@ def _audit_local(plan, report, require_host_namespace):
     report['checks']['hostNamespace'] = 'PASS' if require_host_namespace else 'TEST_BYPASS'
     report['stage'] = 'processes'
     resources = guard.plan(plan)
-    roots = [str(p) for p in plan['legacyCodeRoots']] + [s['root'] for s in resources['scopes'] + resources['resources']]
+    code_roots = [str(p) for p in plan['legacyCodeRoots']]
+    resource_roots = [s['root'] for s in resources['scopes'] + resources['resources']]
     excluded = ancestors()
     blockers, unknown, unreadable = report['legacyProcesses'], report['unreviewedProcesses'], report['unreadablePids']
     identities = {}
@@ -283,23 +323,28 @@ def _audit_local(plan, report, require_host_namespace):
             if pid in excluded: continue
             field = 'cmdline'
             cmd = (directory / 'cmdline').read_bytes()
+            identity.update(process_hint(cmd))
             field = 'cwd'
             cwd = os.readlink(directory / 'cwd')
             field = 'exe'
             exe = os.readlink(directory / 'exe')
-            references = [cwd] + [part.decode(errors='replace') for part in cmd.split(b'\0')[1:]]
+            references = [('cwd', cwd)] + [('argv', part.decode(errors='replace')) for part in cmd.split(b'\0')[1:]]
             field = 'fd-directory'
             for fd in (directory / 'fd').iterdir():
                 field = 'fd-link'
-                try: references.append(os.readlink(fd))
+                try: references.append(('fd', os.readlink(fd)))
                 except FileNotFoundError: pass
-            related = any(any(ref == root or ref.startswith(root + '/') or root + '/' in ref for root in roots) for ref in references)
+            refs = reference_evidence(references, code_roots, resource_roots)
+            related = bool(refs)
             pi_process = any(word in cmd for word in (b'bio_agents.py', b'python_service.py', b'pi-coding-agent', b'/dist/host.js', b'/host.ts', b'next-service.mjs', b'server-service.py'))
             row = {'pid': pid, 'startTicks': ticks, 'executable': exe, 'commandSha256': sha(cmd)}
             if related or pi_process:
                 blockers.append({**row, 'reason': 'legacy-or-resource-reference'})
             elif Path(exe).name.startswith(('python', 'node', 'bun', 'deno')) and row not in allowed:
                 unknown.append(row)
+            if related or pi_process or (Path(exe).name.startswith(('python', 'node', 'bun', 'deno')) and row not in allowed):
+                report['processEvidence'].append({**row, 'ppid': int(info[1]),
+                    **process_hint(cmd, cwd, exe), 'references': refs, 'bioMindCommandMarker': pi_process})
         except (OSError, ValueError, IndexError) as error:
             if isinstance(error, FileNotFoundError) and not directory.exists(): continue
             unreadable.append(pid)
