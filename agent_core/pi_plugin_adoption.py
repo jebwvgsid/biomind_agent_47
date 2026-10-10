@@ -281,9 +281,9 @@ def audit_local(plan, require_host_namespace=True):
               'planSha256': plan['_sha256'], 'status': 'BLOCKED', 'signalsSent': False,
               'checks': {k: 'NOT_RUN' for k in ('hostNamespace', 'processes', 'writers', 'scheduler')},
               'legacyProcesses': [], 'unreviewedProcesses': [], 'unreadablePids': [], 'unreadableProcesses': [],
-              'processEvidence': [],
+              'processEvidence': [], 'exitedDuringScan': [],
               'activeWriterClaims': [], 'observedWriterHosts': [], 'activeSlurmJobs': None,
-              'slurmJobs': [], 'stage': 'hostNamespace'}
+              'slurmJobs': [], 'schedulerResourceEvidence': {'status': 'NOT_RUN'}, 'stage': 'hostNamespace'}
     try:
         _audit_local(plan, report, require_host_namespace)
     except (guard.GuardError, OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
@@ -346,9 +346,15 @@ def _audit_local(plan, report, require_host_namespace):
                 report['processEvidence'].append({**row, 'ppid': int(info[1]),
                     **process_hint(cmd, cwd, exe), 'references': refs, 'bioMindCommandMarker': pi_process})
         except (OSError, ValueError, IndexError) as error:
-            if isinstance(error, FileNotFoundError) and not directory.exists(): continue
+            if isinstance(error, FileNotFoundError) and not directory.exists():
+                report['exitedDuringScan'].append({**identity, 'field': field, 'reason': 'PROCESS_EXITED_DURING_SCAN'})
+                continue
             unreadable.append(pid)
-            report['unreadableProcesses'].append({**identity, 'field': field, 'errno': getattr(error, 'errno', None)})
+            reason = ('PERMISSION_DENIED' if isinstance(error, PermissionError) else
+                      'PROCESS_FIELD_UNAVAILABLE' if isinstance(error, FileNotFoundError) else
+                      'INVALID_PROCESS_RECORD' if isinstance(error, (ValueError, IndexError)) else 'PROCESS_READ_FAILED')
+            report['unreadableProcesses'].append({**identity, 'field': field,
+                'errno': getattr(error, 'errno', None), 'reason': reason})
     report['checks']['processes'] = 'BLOCKED' if unreadable else 'PASS'
     report['stage'] = 'writers'
     writers = report['activeWriterClaims']
@@ -395,8 +401,16 @@ def _audit_local(plan, report, require_host_namespace):
             jobs.append(dict(zip(('jobId', 'state', 'nodeList'), fields)))
     report['activeSlurmJobs'] = len(jobs)
     report['checks']['scheduler'] = 'PASS' if plan['scheduler'] == 'slurm' else 'NOT_APPLICABLE'
-    report['status'] = 'BLOCKED' if unreadable else 'BUSY' if blockers or unknown or writers or jobs else 'clear'
+    # squeue proves allocation/state, not use of the resources being adopted.
+    # Preserve fail-closed admission while separating unknown relevance from
+    # confirmed occupancy. No filename/name-only exemption is accepted here.
+    report['schedulerResourceEvidence'] = {
+        'status': 'UNRESOLVED' if jobs else 'NO_ACTIVE_JOBS' if plan['scheduler'] == 'slurm' else 'NOT_APPLICABLE',
+        'confirmedRelatedJobIds': [], 'unresolvedJobIds': [row['jobId'] for row in jobs],
+        'nodeProcessCheck': 'NOT_RUN', 'resourceAssociation': 'NOT_ESTABLISHED' if jobs else 'NOT_APPLICABLE'}
+    report['status'] = 'BLOCKED' if unreadable or jobs else 'BUSY' if blockers or unknown or writers else 'clear'
     if unreadable: report['code'] = 'ADOPTION_PROCESS_VISIBILITY_INCOMPLETE'
+    elif jobs: report['code'] = 'ADOPTION_SCHEDULER_RESOURCE_RELEVANCE_UNKNOWN'
     report['stage'] = 'complete'
 
 

@@ -190,7 +190,30 @@ class AuditTests(unittest.TestCase):
             report = adoption.audit_local(self.plan, require_host_namespace=False)
         self.assertEqual(report['activeSlurmJobs'], 2)
         self.assertEqual(report['slurmJobs'][0], {'jobId': '123', 'state': 'RUNNING', 'nodeList': 'compute[01-02]'})
-        self.assertNotEqual(report['status'], 'clear')
+        self.assertEqual(report['status'], 'BLOCKED')
+        self.assertEqual(report['checks']['scheduler'], 'PASS')
+        self.assertEqual(report['schedulerResourceEvidence']['unresolvedJobIds'], ['123', '124'])
+        self.assertEqual(report['schedulerResourceEvidence']['confirmedRelatedJobIds'], [])
+        self.assertEqual(report['schedulerResourceEvidence']['nodeProcessCheck'], 'NOT_RUN')
+        self.assertEqual(report['schedulerResourceEvidence']['resourceAssociation'], 'NOT_ESTABLISHED')
+
+    def test_unrelated_job_name_or_metadata_cannot_exempt_unknown_resource_relevance(self):
+        # The maintenance API has no trusted Slurm resource-association proof.
+        # A tempting caller-supplied classification must never make it clear.
+        self.plan.update(scheduler='slurm', schedulerExecutable=sys.executable,
+                         reviewedUnrelatedJobs=[{'jobId': '5095443', 'name': 'methylation', 'status': 'unrelated'}])
+        reply = subprocess.CompletedProcess([], 0, '5095443|RUNNING|c142\n', '')
+        original_iterdir = Path.iterdir
+        def isolated_iterdir(path):
+            return iter(()) if path == Path('/proc') else original_iterdir(path)
+        with patch.object(Path, 'iterdir', isolated_iterdir), \
+                patch.object(adoption.subprocess, 'run', return_value=reply):
+            report = adoption.audit_local(self.plan, require_host_namespace=False)
+        self.assertEqual(report['code'], 'ADOPTION_SCHEDULER_RESOURCE_RELEVANCE_UNKNOWN')
+        self.assertEqual(report['status'], 'BLOCKED')
+        self.assertEqual(report['schedulerResourceEvidence']['status'], 'UNRESOLVED')
+        self.assertEqual(report['activeSlurmJobs'], 1)
+        self.assertEqual(report['legacyProcesses'], [])
 
     def test_incomplete_audit_stops_adoption_before_markers_or_settings_writes(self):
         settings = self.root / 'agent/settings.json'
@@ -271,11 +294,34 @@ class AuditTests(unittest.TestCase):
             detail = next(row for row in report['unreadableProcesses'] if row['pid'] == process.pid)
             self.assertEqual(detail['field'], 'cwd')
             self.assertEqual(detail['errno'], 13)
+            self.assertEqual(detail['reason'], 'PERMISSION_DENIED')
             self.assertIn('startTicks', detail)
             self.assertEqual(report['code'], 'ADOPTION_PROCESS_VISIBILITY_INCOMPLETE')
             self.assertIsNone(process.poll())
             self.assertNotIn('PRIVATE', json.dumps(report))
         finally: process.communicate('\n', timeout=10)
+
+    def test_confirmed_exit_during_scan_is_separate_from_permission_failure(self):
+        worker = self.root / 'legacy/exiting.py'
+        worker.write_text('import sys\nprint("ready", flush=True)\nsys.stdin.readline()\n')
+        process = subprocess.Popen([sys.executable, '-B', str(worker)], stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE, text=True)
+        original = os.readlink
+        def readlink(path, *args, **kwargs):
+            if str(path) == f'/proc/{process.pid}/cwd':
+                process.communicate('\n', timeout=10)
+                raise FileNotFoundError(2, 'process exited')
+            return original(path, *args, **kwargs)
+        try:
+            self.assertEqual(process.stdout.readline().strip(), 'ready')
+            with patch.object(adoption.os, 'readlink', side_effect=readlink):
+                report = adoption.audit_local(self.plan, require_host_namespace=False)
+            self.assertNotIn(process.pid, report['unreadablePids'])
+            row = next(row for row in report['exitedDuringScan'] if row['pid'] == process.pid)
+            self.assertEqual(row['reason'], 'PROCESS_EXITED_DURING_SCAN')
+            self.assertEqual(row['field'], 'cwd')
+        finally:
+            if process.poll() is None: process.communicate('\n', timeout=10)
 
     def test_script_identity_hint_never_outputs_command_arguments(self):
         hint = adoption.process_hint(b'/usr/bin/node\0/home/user/.editor/server.js\0--token\0PRIVATE_VALUE\0', '/tmp', '/usr/bin/node')
