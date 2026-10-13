@@ -1,0 +1,24 @@
+# Source management added on 2026-10-13; all existing files remain in place.
+/backend/pi-studio/node_modules
+/backend/pi-studio/.next/
+/backend/pi-studio/.next-pkg/
+/backend/pi-studio/pi-web-uploads/
+/backend/pi-studio/tsconfig.tsbuildinfo
+/backend/pi-studio/.backend-build.lock
+/backend/pi-studio/.env*
+/desktop/node_modules
+/desktop/out/
+/desktop/.desktop-build.lock
+/desktop/.env*
+/deployment/
+/evidence/
+/delivery/
+/build/
+/private/
+/state/
+/sessions/
+/.env*
+# This is the current installation preset, not a portable source example.
+/server/setup-preset.json
+**/__pycache__/
+**/*.pyc

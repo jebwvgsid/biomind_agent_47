@@ -1,0 +1,311 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import type { CSSProperties, MouseEvent, ReactNode } from "react";
+import { useI18n } from "@/hooks/useI18n";
+
+/** First-level capability entries (一级导航). Terminal moved to right panel. */
+export type Activity = "sessions" | "files" | "skills" | "settings" | "rightPanel";
+
+interface ActivityItem {
+  id: Activity;
+  titleKey: string;
+  /** 图标主色——仅主会话跟随主题色（accent），其余走中性 text-muted，整体单色导航栏。 */
+  tint?: string;
+  icon: (active: boolean) => ReactNode;
+}
+
+const RAIL_WIDTH = 68;
+
+/* ── Custom tooltip (replaces the native `title` tooltip) ────────────────
+ * Dark pill to the right of the icon with a tiny left arrow; appears after a
+ * short hover delay so it never flickers while moving between entries. */
+const TOOLTIP_STYLE: CSSProperties = {
+  position: "absolute",
+  left: "calc(100% + 8px)",
+  top: "50%",
+  transform: "translateY(-50%)",
+  zIndex: 400,
+  pointerEvents: "none",
+  whiteSpace: "nowrap",
+  background: "var(--text)",
+  color: "var(--bg)",
+  fontSize: 12,
+  fontWeight: 450,
+  padding: "6px 9px",
+  borderRadius: "var(--radius-sm)",
+  boxShadow: "var(--shadow-md)",
+};
+
+const TOOLTIP_ARROW_STYLE: CSSProperties = {
+  position: "absolute",
+  left: -4,
+  top: "50%",
+  transform: "translateY(-50%) rotate(45deg)",
+  width: 8,
+  height: 8,
+  background: "var(--text)",
+  borderRadius: 1.5,
+};
+
+function IconSvg({ children, active }: { children: ReactNode; active: boolean }) {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={active ? 2 : 1.7}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {children}
+    </svg>
+  );
+}
+
+const ITEMS: ActivityItem[] = [
+  {
+    id: "sessions",
+    titleKey: "activity.sessions",
+    tint: "var(--accent)",
+    icon: (active) => (
+      <IconSvg active={active}>
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+      </IconSvg>
+    ),
+  },
+  {
+    id: "skills",
+    titleKey: "activity.skills",
+    icon: (active) => (
+      <IconSvg active={active}>
+        <path d="M14.5 6.5v-3a1 1 0 0 0-1-1h-3a1 1 0 0 0-1 1v3" />
+        <path d="M14.5 17.5v3a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1v-3" />
+        <path d="M6.5 9.5h-3a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h3" />
+        <path d="M17.5 9.5h3a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-3" />
+        <rect x="6.5" y="6.5" width="11" height="11" rx="2" />
+      </IconSvg>
+    ),
+  },
+];
+
+const FILES_ITEM: ActivityItem = {
+  id: "files",
+  titleKey: "activity.filesBrowser",
+  icon: (active) => (
+    <IconSvg active={active}>
+      <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    </IconSvg>
+  ),
+};
+
+interface Props {
+  allowStudioControls?: boolean;
+  allowSettings?: boolean;
+  allowResources?: boolean;
+  active: Activity;
+  onSelect: (activity: Activity) => void;
+  onSearch: () => void;
+  onToggleSidebar: () => void;
+  sidebarOpen: boolean;
+  hasRunningSession: boolean;
+  hasUnreadSessions: boolean;
+}
+
+/** Icon-only rail entry: 20px icon, hover highlight + custom tooltip on the right. */
+function RailButton({
+  label,
+  active = false,
+  onClick,
+  badge,
+  children,
+  tint,
+}: {
+  label: string;
+  active?: boolean;
+  onClick: () => void;
+  badge?: ReactNode;
+  children: ReactNode;
+  tint?: string;
+}) {
+  const [showTip, setShowTip] = useState(false);
+  const timerRef = useRef<number | null>(null);
+
+  useEffect(() => () => {
+    if (timerRef.current) window.clearTimeout(timerRef.current);
+  }, []);
+
+  const enter = (e: MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.background = active ? "var(--accent-soft)" : "var(--bg-hover)";
+    e.currentTarget.style.color = active ? "var(--accent-hover)" : (tint ?? "var(--text)");
+    if (timerRef.current) window.clearTimeout(timerRef.current);
+    timerRef.current = window.setTimeout(() => setShowTip(true), 120);
+  };
+
+  const leave = (e: MouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.background = active ? "var(--accent-soft)" : "transparent";
+    e.currentTarget.style.color = active ? "var(--accent-hover)" : (tint ?? "var(--text-muted)");
+    if (timerRef.current) window.clearTimeout(timerRef.current);
+    timerRef.current = null;
+    setShowTip(false);
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      aria-pressed={active}
+      onMouseEnter={enter}
+      onMouseLeave={leave}
+      style={{
+        position: "relative",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: 40,
+        height: 44,
+        padding: 0,
+        margin: "1px auto",
+        background: active ? "var(--accent-soft)" : "transparent",
+        border: "none",
+        borderRadius: "var(--radius-md)",
+        color: active ? "var(--accent-hover)" : (tint ?? "var(--text-muted)"),
+        cursor: "pointer",
+        transition: "background 0.12s, color 0.12s",
+      }}
+    >
+      {/* active indicator bar — flush at the rail's left edge */}
+      <span
+        style={{
+          position: "absolute",
+          left: -14,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: 3.5,
+          height: 26,
+          borderRadius: "0 4px 4px 0",
+          background: active ? "var(--accent)" : "transparent",
+          transition: "background 0.12s",
+        }}
+      />
+      <span style={{ display: "inline-flex", position: "relative" }}>
+        {children}
+        {badge}
+      </span>
+      {showTip && (
+        <span style={TOOLTIP_STYLE}>
+          <span style={TOOLTIP_ARROW_STYLE} />
+          {label}
+        </span>
+      )}
+    </button>
+  );
+}
+
+export function ActivityBar({ allowStudioControls = true, allowSettings = allowStudioControls, allowResources = allowStudioControls, active, onSelect, onSearch, onToggleSidebar, sidebarOpen, hasRunningSession, hasUnreadSessions }: Props) {
+  const { t } = useI18n();
+
+  const sessionsBadge = (
+    <>
+      {hasRunningSession && (
+        <span
+          title={t("sidebar.agentRunning")}
+          style={{
+            position: "absolute",
+            top: -2,
+            right: -4,
+            width: 7,
+            height: 7,
+            borderRadius: "50%",
+            background: "var(--accent)",
+            boxShadow: "0 0 0 2px var(--bg)",
+          }}
+        />
+      )}
+      {!hasRunningSession && hasUnreadSessions && (
+        <span
+          title={t("sidebar.newActivity")}
+          style={{
+            position: "absolute",
+            top: -1,
+            right: -3,
+            width: 6,
+            height: 6,
+            borderRadius: "50%",
+            background: "#0891b2",
+            boxShadow: "0 0 0 2px var(--bg)",
+          }}
+        />
+      )}
+    </>
+  );
+
+  return (
+    <div
+      className="glass-card"
+      style={{
+        width: RAIL_WIDTH,
+        flexShrink: 0,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        /* 悬浮玻璃卡：与右侧会话栏各成一张卡，中间缝隙透出壁纸/星图。
+           材质/模糊由 .glass-card 统一提供（内联 backdropFilter 会引入
+           containing block 副作用，容器上不再写）。 */
+        zIndex: 210,
+      }}
+    >
+      <nav style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", flex: 1, paddingTop: 10 }}>
+        <RailButton
+          label={t("activity.sessions")}
+          active={active === "sessions"}
+          onClick={() => onSelect("sessions")}
+          badge={sessionsBadge}
+          tint={ITEMS[0].tint}
+        >
+          {ITEMS[0].icon(active === "sessions")}
+        </RailButton>
+        <RailButton label={t("activity.filesBrowser")} active={active === "files"} onClick={() => onSelect("files")}>
+          {FILES_ITEM.icon(active === "files")}
+        </RailButton>
+        {allowStudioControls && <RailButton label={`${t("activity.search")} (Ctrl+K)`} onClick={onSearch}>
+          <IconSvg active={false}>
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </IconSvg>
+        </RailButton>}
+        {ITEMS.slice(1).filter(item => allowStudioControls || (allowResources && item.id === "skills")).map((item) => (
+          <RailButton
+            key={item.id}
+            label={t(item.titleKey)}
+            active={active === item.id}
+            onClick={() => onSelect(item.id)}
+            tint={item.tint}
+          >
+            {item.icon(active === item.id)}
+          </RailButton>
+        ))}
+      </nav>
+
+      {/* Bottom: settings + collapse. The right-panel toggle lives in the top
+          bar (left of window controls) — the duplicate here was removed. */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", marginTop: 4 }}>
+        {allowSettings && <RailButton label={t("common.settings")} active={active === "settings"} onClick={() => onSelect("settings")}>
+          <IconSvg active={active === "settings"}>
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </IconSvg>
+        </RailButton>}
+        <RailButton label={sidebarOpen ? t("sidebar.hide") : t("sidebar.show")} onClick={onToggleSidebar}>
+          <IconSvg active={false}>
+            {sidebarOpen ? <polyline points="11 6 5 12 11 18" /> : <polyline points="13 6 19 12 13 18" />}
+          </IconSvg>
+        </RailButton>
+      </div>
+    </div>
+  );
+}

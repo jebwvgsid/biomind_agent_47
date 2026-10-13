@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BioMind</title><link rel="stylesheet" href="connection.css"><script src="connection.js" defer></script></head>
+<body><main>
+  <header><p class="eyebrow">BioMind</p><h1 data-i18n="title">连接服务器</h1><p data-i18n="intro">在本地发送消息，由服务器上的完整 BioMind 会话执行。</p></header>
+  <section aria-labelledby="saved-title"><h2 id="saved-title" data-i18n="saved">已保存的服务器</h2><select id="saved" aria-labelledby="saved-title"></select><div class="actions"><button id="remove" type="button" data-i18n="remove">删除快捷项</button><button id="clear-auth" type="button" data-i18n="clearAuth">清理认证缓存</button></div><p class="hint" data-i18n="storage">这两项操作会断开对应连接，保留本地草稿，不撤销服务器权限。修改别名、跳板或端口将使用新的独立存储；旧草稿不会自动迁移。</p></section>
+  <form id="connection-form">
+    <div class="fields">
+      <label><span data-i18n="label">显示名称</span><input id="label" maxlength="128" autocomplete="off"></label>
+      <label><span data-i18n="alias">SSH 主机别名</span><input id="alias" required maxlength="128" autocomplete="off" spellcheck="false" placeholder="lab-server"></label>
+      <label><span data-i18n="local">本地端口</span><input id="localPort" type="number" min="1024" max="65535" value="30142" required></label>
+      <label><span data-i18n="remote">远端工作台端口</span><input id="remotePort" type="number" min="1" max="65535" value="30141" required></label>
+      <label class="wide"><span data-i18n="jump">跳板机别名（可选，留空复用 SSH 配置）</span><input id="jump" maxlength="515" autocomplete="off" spellcheck="false"></label>
+      <label class="wide"><span data-i18n="password">服务器工作台口令（仅保留在本次连接中）</span><input id="password" type="password" autocomplete="off" maxlength="4096"></label>
+    </div>
+    <p class="hint" data-i18n="trust">使用系统已配置的 SSH 身份与主机信任。首次主机信任或 SSH 密钥配置请由管理员完成；这里不会自动接受密钥。</p>
+    <div class="actions"><button class="primary" id="connect" type="submit" data-i18n="connect">连接</button><button id="save" type="button" data-i18n="save">保存配置</button><button id="disconnect" type="button" data-i18n="disconnect">断开</button></div>
+  </form>
+  <section class="connection-status" aria-live="polite"><h2 data-i18n="status">连接状态</h2><p id="status" role="status"></p><p class="hint" data-i18n="lifecycle">断开只关闭本地展示和隧道。远端会话由服务器持有；重连后先核对状态，不自动重发消息或批准。</p></section>
+</main></body></html>

@@ -1,0 +1,2698 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: var(--bg);
+  --color-bg-panel: var(--bg-panel);
+  --color-bg-hover: var(--bg-hover);
+  --color-bg-selected: var(--bg-selected);
+  --color-border: var(--border);
+  --color-hairline: var(--hairline);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-text-dim: var(--text-dim);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-user-bg: var(--user-bg);
+  --color-assistant-bg: var(--assistant-bg);
+  --color-tool-bg: var(--tool-bg);
+  --color-bg-subtle: var(--bg-subtle);
+  --color-rate-fast: var(--rate-fast);
+  --color-rate-ok: var(--rate-ok);
+  --color-rate-slow: var(--rate-slow);
+  --color-rate-idle: var(--rate-idle);
+  --font-mono-font: var(--font-mono);
+  /* percho chat 移植 token（语义别名，映射到 pi-web 现有变量） */
+  --color-canvas: var(--bg);
+  --color-surface: var(--bg-panel);
+  --color-ink: var(--text);
+  --color-ink-2: var(--text-muted);
+  --color-ink-dim: var(--text-muted);
+  --color-ink-faint: var(--text-dim);
+  --color-ink-working: var(--text-muted);
+  --color-hover: var(--bg-hover);
+  --shadow-pop: var(--shadow-pop);
+  --shadow-soft: var(--shadow-pop);
+}
+
+:root {
+  /* Neutral surfaces — deliberately NOT accent-tinted: the dynamic background
+     and accent-colored icons carry the theme color, the base stays clean.
+     单一冷灰色相（slate）：canvas 极浅灰 → panel 纯白 → elevated 纯白，
+     中间不再出现 #ECECEC/#B8B8B8 那种「重灰 + 硬边」，避免白底旁显脏。 */
+  --bg: #F7F8FA;
+  --bg-panel: #FFFFFF;
+  --bg-elevated: #FFFFFF;
+  --bg-sunken: #F1F3F6;
+  --bg-hover: rgba(15, 23, 42, 0.045);
+  --bg-selected: rgba(15, 23, 42, 0.075);
+  --border: rgba(15, 23, 42, 0.10);
+  --hairline: rgba(15, 23, 42, 0.07);
+  --text: #111827;
+  /* 备注/提示层：桌面玻璃下文字坐在「石板灰纱 + 半透明白卡」上，实测比纯白底暗一档。
+     2026-09 五轮压深（对比度按玻璃卡实测底 ~#cbd2db 计）：
+     dim 3.88 → 5.36 → 6.75 → 8.0 → 9.3，muted 4.79 → 6.16 → 8.48 → 9.9 → 11.0；白底/PWA 下只会更清楚，
+     层级仍是 muted 深于 dim，且两档差保持一档（dim 这轮明显向 muted 收拢，照顾时间戳/工具名等最小字）。*/
+  --text-muted: #161C28;
+  --text-dim: #242B3B;
+  --accent: #2563EB;
+  /* 逗号分隔的 RGB 通道，供 rgba(var(--accent-rgb), α) 使用（见 .pi-flow-char） */
+  --accent-rgb: 37, 99, 235;
+  --accent-hover: #1D4ED8;
+  --accent-contrast: #ffffff;
+  --accent-soft: rgba(37, 99, 235, 0.09);
+  --user-bg: rgba(37, 99, 235, 0.06);
+  --assistant-bg: #FFFFFF;
+  --tool-bg: rgba(15, 23, 42, 0.035);
+  --bg-subtle: rgba(15, 23, 42, 0.04);
+  --shadow-pop: 0 12px 32px rgba(15, 23, 42, 0.12), 0 2px 8px rgba(15, 23, 42, 0.06);
+
+  /* ── 输出速率语义色（--rate-*）── 档位色是**药丸底色**，字色走 --rate-on。
+     为什么不用「彩色文字」：浅色主题下 11px 小字要过 4.5:1，绿色只能选到 #38650f
+     那种暗橄榄——实测在玻璃底上读起来就是黑色（用户反馈「有时显示黑色」的根因之一）。
+     反色药丸能同时拿到鲜艳色相与可读字色：白字对 fast/ok/slow = 5.02 / 5.02 / 4.83。
+     阈值按「字符/秒」标定（中文 1 字≈1 token）：≥80 快 / 40–80 一般 / <40 慢。 */
+  --rate-fast: #15803d;
+  --rate-ok: #b45309;
+  --rate-slow: #dc2626;
+  --rate-on: #ffffff;
+  /* 空闲态（工具执行中 / 本轮已结束）不画药丸，退回真正的石板灰。
+     不能用 --text-dim：本项目为保证小字可读把它压到 #242B3B（9.3:1），当「灰」用会看着是黑的。 */
+  --rate-idle: #4b5563;
+
+  /* ── Radius scale ── 统一 6/8/10/14/18，替代散落的 5/7/9 魔法数字 */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-pill: 999px;
+
+  /* ── Elevation ── 冷灰阴影（不用纯黑，避免发脏） */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.07), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.09), 0 1px 3px rgba(15, 23, 42, 0.05);
+  --shadow-lg: var(--shadow-pop);
+
+  /* ── Glass ── 桌面玻璃卡片（顶部/左侧/右侧/聊天区共用同一配方）。
+     窗口是 Electron transparent 窗口：浅色下 html 根背景透明，卡片之间的缝隙
+     直接透出桌面壁纸，卡片本身靠 backdrop-filter 模糊壁纸成磨砂玻璃；
+     深色下根背景是深空底色，卡片模糊的是下面的 GlowBackground 星图。 */
+  --glass-tint: color-mix(in srgb, var(--accent) 5%, transparent);
+  /* 不透明度由「设置 → 桌面玻璃」两条滑块驱动（useGlassOpacity 写入 :root 行内样式，
+     行内优先级高于这里，所以直接改滑杆即时生效、不需要重渲染）。 */
+  --glass-foreground-opacity: 0.52;
+  --glass-background-opacity: 0.28;
+  --glass-bg: color-mix(in srgb, var(--bg-panel) calc(var(--glass-foreground-opacity) * 100%), transparent);
+  --glass-blur: blur(24px) saturate(1.35);
+  /* 卡片背景 = 顶部淡 accent 染 + 半透明面板色（内联写法避开打包 -webkit- 折叠坑） */
+  --glass-card-surface: linear-gradient(180deg, var(--glass-tint) 0%, transparent 46%), var(--glass-bg);
+  --glass-card-shadow: 0 18px 46px rgba(15, 23, 42, 0.13), 0 2px 10px rgba(15, 23, 42, 0.07);
+  /* 卡片几何：窗口四周留 --glass-card-edge 露出壁纸，卡片间留 --glass-card-gap */
+  --glass-card-edge: 12px;
+  --glass-card-gap: 10px;
+  --glass-card-radius: 16px;
+
+  /* ── 内容承载面 ── 聊天列本身就是一张玻璃卡，正文可读性由消息气泡自身的
+     底色（--bg-panel / --user-bg 等）保证，不再需要额外的色纱变量。 */
+}
+
+html.dark {
+  --bg: #0D0F12;
+  --bg-panel: #15181D;
+  --bg-elevated: #1B1F25;
+  --bg-sunken: #0A0B0E;
+  --bg-hover: rgba(255, 255, 255, 0.055);
+  --bg-selected: rgba(255, 255, 255, 0.085);
+  --border: rgba(255, 255, 255, 0.11);
+  --hairline: rgba(255, 255, 255, 0.075);
+  --text: #E6E8EB;
+  /* 深色是反方向：压深=提亮（底 #15181D 计，muted 13.65→15.5→16.2、dim 9.46→11.1→13.0） */
+  --text-muted: #ECF3FB;
+  --text-dim: #D6DFEB;
+  --accent: #60A5FA;
+  --accent-rgb: 96, 165, 250;
+  --accent-hover: #93C5FD;
+  --accent-contrast: #0B1220;
+  --accent-soft: rgba(96, 165, 250, 0.14);
+  --user-bg: rgba(96, 165, 250, 0.12);
+  --assistant-bg: #0D0F12;
+  --tool-bg: rgba(255, 255, 255, 0.04);
+  --bg-subtle: rgba(255, 255, 255, 0.045);
+  --shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.50), 0 2px 8px rgba(0, 0, 0, 0.35);
+
+  /* 深色反向：亮底 + 深字（对 #0B1220 = 10.74 / 11.22 / 6.77） */
+  --rate-fast: #4ade80;
+  --rate-ok: #fbbf24;
+  --rate-slow: #f87171;
+  --rate-on: #0b1220;
+  --rate-idle: #8b95a5;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.40);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.30);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.50), 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+/* 深色下玻璃基底用 elevated 面板色，避免 #15181D 之外再叠一层灰 */
+html.dark {
+  --glass-bg: color-mix(in srgb, var(--bg-panel) 72%, transparent);
+  --glass-card-shadow: 0 20px 52px rgba(0, 0, 0, 0.46), 0 2px 10px rgba(0, 0, 0, 0.34);
+}
+
+/* ── 会话信息浮窗（SessionInfoModal）────────────────────────────────
+   深度定制色只在必要时本地化：告警色 + 进度轨道，其余全走主题变量，
+   所以浅色/深色（以及用户自定义 accent）都能自动跟上。 */
+.session-info-modal {
+  --si-warn: #b45309;
+  --si-danger: #dc2626;
+  --si-track: rgba(15, 23, 42, 0.09);
+  --si-row: rgba(15, 23, 42, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+  font-size: 12.5px;
+  color: var(--text);
+}
+html.dark .session-info-modal {
+  --si-warn: #fbbf24;
+  --si-danger: #f87171;
+  --si-track: rgba(255, 255, 255, 0.11);
+  --si-row: rgba(255, 255, 255, 0.035);
+}
+.session-info-modal .si-empty {
+  padding: 28px 8px;
+  text-align: center;
+  color: var(--text-dim);
+}
+
+/* ① 会话标识 */
+.session-info-modal .si-identity {
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  background: var(--si-row);
+  padding: 10px 12px;
+}
+.session-info-modal .si-identity-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.session-info-modal .si-identity-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.session-info-modal .si-identity-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.session-info-modal .si-identity-key {
+  flex: 0 0 46px;
+  color: var(--text-dim);
+  font-size: 11px;
+}
+.session-info-modal .si-identity-val {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+.session-info-modal .si-copy,
+.session-info-modal .si-copy-spacer {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+}
+.session-info-modal .si-copy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-xs);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+.session-info-modal .si-copy:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+.session-info-modal .si-copy-done {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+/* ② KPI 卡片 */
+.session-info-modal .si-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  gap: 8px;
+}
+.session-info-modal .si-kpi {
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  background: var(--si-row);
+  padding: 9px 11px 10px;
+  min-width: 0;
+}
+.session-info-modal .si-kpi-label {
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  color: var(--text-dim);
+  margin-bottom: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.session-info-modal .si-kpi-value {
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.session-info-modal .si-kpi-sub {
+  margin-top: 4px;
+  font-size: 10.5px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.session-info-modal .si-ctx-track {
+  margin-top: 7px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--si-track);
+  overflow: hidden;
+}
+.session-info-modal .si-ctx-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+/* ③ 明细面板 */
+.session-info-modal .si-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+@media (max-width: 620px) {
+  .session-info-modal .si-detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.session-info-modal .si-panel {
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  background: var(--si-row);
+  padding: 10px 12px 12px;
+  min-width: 0;
+}
+.session-info-modal .si-panel-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 9px;
+}
+.session-info-modal .si-panel-empty {
+  color: var(--text-dim);
+  font-size: 11.5px;
+  padding: 6px 0;
+}
+
+/* Token 占比条 */
+.session-info-modal .si-stack {
+  display: flex;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--si-track);
+}
+.session-info-modal .si-stack-seg {
+  height: 100%;
+  min-width: 2px;
+}
+.session-info-modal .si-stack-seg + .si-stack-seg {
+  box-shadow: inset 1px 0 0 var(--bg-panel);
+}
+.session-info-modal .si-legend {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.session-info-modal .si-legend-row {
+  display: grid;
+  grid-template-columns: 9px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 0;
+  font-variant-numeric: tabular-nums;
+}
+.session-info-modal .si-legend-total {
+  margin-top: 3px;
+  padding-top: 6px;
+  border-top: 1px solid var(--hairline);
+  font-weight: 600;
+}
+.session-info-modal .si-swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+}
+.session-info-modal .si-swatch-none {
+  background: none;
+}
+.session-info-modal .si-legend-label {
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.session-info-modal .si-legend-value {
+  color: var(--text);
+}
+.session-info-modal .si-legend-pct {
+  min-width: 46px;
+  text-align: right;
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+/* 消息构成条形 */
+.session-info-modal .si-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.session-info-modal .si-bar-row {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  font-variant-numeric: tabular-nums;
+}
+.session-info-modal .si-bar-label {
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.session-info-modal .si-bar-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--si-track);
+  overflow: hidden;
+}
+.session-info-modal .si-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.45), var(--accent));
+}
+.session-info-modal .si-bar-value {
+  min-width: 46px;
+  text-align: right;
+  color: var(--text);
+}
+
+/* 费用估算明细：让「费用」卡里的数字能被解释，而不是一个凭空出现的金额 */
+.session-info-modal .si-cost-detail {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid var(--hairline);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: var(--text-dim);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.session-info-modal .si-cost-rows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  color: var(--text-muted);
+}
+.session-info-modal .si-cost-unit {
+  color: var(--text-dim);
+  font-size: 10.5px;
+}
+
+/* percho chat 移植：todo 面板呼吸灯 / 对勾描边 / 极细滚动条 */
+.todo-breath-dot {
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: var(--text-muted);
+  animation: todo-breath 2.2s ease-in-out infinite;
+  transition: opacity 0.3s;
+}
+.todo-breath-dot-paused {
+  animation-play-state: paused;
+  opacity: 0.3;
+}
+@keyframes todo-breath {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(0.72);
+  }
+}
+.todo-check-path {
+  stroke-dasharray: 16;
+  stroke-dashoffset: 16;
+  animation: todo-check-draw 0.45s cubic-bezier(0.65, 0, 0.35, 1) 0.05s forwards;
+}
+@keyframes todo-check-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.todo-thin-scroll::-webkit-scrollbar {
+  width: 3px;
+}
+.todo-thin-scroll::-webkit-scrollbar-thumb {
+  background: var(--text-dim);
+  border-radius: 2px;
+}
+.todo-thin-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+.todo-thin-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+@media (prefers-reduced-motion: reduce) {
+  .todo-breath-dot {
+    animation: none;
+  }
+  .todo-check-path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Theme toggle: circular wipe via View Transitions API.
+   Disable the UA cross-fade; the actual clip-path animation is driven by
+   Element.animate() in hooks/useTheme.ts after transition.ready resolves. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 2;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  height: var(--app-viewport-height, 100dvh);
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', 'Helvetica Neue', sans-serif;
+  font-size: 14px;
+  overscroll-behavior: none;
+}
+
+/* 底色只能住在 html（根背景 = canvas 最底层）：body 若有背景会变成
+   「块级后代背景」，直接盖住 z-index:-1 的动态背景层。 */
+html {
+  background: var(--bg);
+}
+body {
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+}
+
+/* ── 桌面玻璃（Electron 透明窗口）───────────────────────────────────────
+   由 layout.tsx 在 Electron 客户端挂上的 html.desktop-glass。
+
+   浅色下「看得到桌面」不等于把壁纸原样透出来：壁纸对比强/色彩花时，文字读不清，
+   每张卡还会像孤零零浮在花丛上。所以分三层：
+     ① html 根背景透明（真透桌面）；
+     ② ::before（z-index:-3）**中和底板**——一层略深的石板灰纱把壁纸对比压平，
+        文字有稳定基底，卡片也不再各自悬浮；
+     ③ ::after（z-index:-2）主题色晕，叠在星图/水波画布（-1）下面；
+   再往上才是各张玻璃卡。整窗因此读成一块连成一体的磨砂桌面，壁纸只以模糊光影参与。
+
+   深色：根背景保留深空底色（不透桌面，保证正文对比度），走同一套水波光影。
+   浏览器模式同样生效：缝隙里透出的是页面底色。 */
+html.desktop-glass:not(.dark) {
+  background: transparent;
+}
+
+/* 深色根背景不透桌面 */
+html.desktop-glass.dark {
+  background: var(--bg);
+}
+
+/* ① 中和底板：一层**略深的石板灰纱**（用户要求：浅色下也压一层稍深的透明白板）
+   ——把壁纸对比压平、色彩去饱和，文字才有稳定基底；同时让所有玻璃卡读成
+   同一块桌面上的分区，而不是各自悬浮的孤岛。不用 backdrop blur（会与卡片
+   自己的 backdrop-filter 叠加成“双层模糊”，糊成一片没细节）。 */
+html.desktop-glass:not(.dark)::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -3;
+  pointer-events: none;
+  background: color-mix(in srgb, #5b6579 calc(var(--glass-background-opacity) * 100%), transparent);
+}
+
+/* ② 主题色晕：排在水波画布（-1）下面 */
+html.desktop-glass:not(.dark)::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 16% 8%, rgba(91, 145, 255, 0.1), transparent 46%),
+    radial-gradient(ellipse at 88% 88%, rgba(255, 153, 112, 0.08), transparent 44%);
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
+}
+
+:root {
+  --font-mono: 'SF Mono', var(--font-noto-mono), 'JetBrains Mono', 'Fira Code', 'Consolas', ui-monospace, 'PingFang SC', 'Microsoft YaHei', monospace;
+}
+
+pre, code {
+  font-family: var(--font-mono);
+}
+
+/* react-markdown output styles */
+.markdown-body {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text);
+  word-break: break-word;
+}
+.markdown-body p { margin: 0 0 8px; }
+.markdown-body p:last-child { margin-bottom: 0; }
+.markdown-body h1, .markdown-body h2, .markdown-body h3,
+.markdown-body h4, .markdown-body h5, .markdown-body h6 {
+  font-weight: 600;
+  margin: 10px 0 5px;
+  color: var(--text);
+  line-height: 1.35;
+  letter-spacing: 0;
+}
+.markdown-body h1 { font-size: 1.16em; }
+.markdown-body h2 { font-size: 1.08em; }
+.markdown-body h3 { font-size: 0.98em; color: color-mix(in srgb, var(--text) 88%, var(--text-muted)); }
+.markdown-body ul, .markdown-body ol {
+  padding-left: 22px;
+  margin: 5px 0 8px;
+  list-style-position: outside;
+}
+.markdown-body li { margin: 3px 0; padding-left: 2px; }
+.markdown-body ul > li { list-style-type: disc; }
+.markdown-body ol > li { list-style-type: decimal; }
+.markdown-body li > p { margin: 0; }
+.markdown-body li::marker {
+  color: color-mix(in srgb, var(--accent) 72%, var(--text-muted));
+  font-weight: 600;
+}
+.markdown-body strong {
+  color: color-mix(in srgb, var(--text) 88%, var(--accent));
+  font-weight: 700;
+}
+.markdown-body em { color: var(--text-muted); }
+.markdown-body a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.markdown-body a:hover { text-decoration-color: var(--accent); }
+.markdown-body img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 8px 0;
+  border-radius: 6px;
+}
+.markdown-body .markdown-inline-code {
+  background: var(--bg-subtle);
+  border-radius: 5px;
+  padding: 1px 5px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border) 70%, transparent);
+}
+.markdown-body .contains-task-list {
+  padding-left: 0;
+  list-style: none;
+}
+.markdown-body .task-list-item {
+  display: block;
+  position: relative;
+  padding-left: 25px;
+}
+.markdown-body .task-list-item::marker { content: ""; }
+.markdown-body .task-list-item > input[type="checkbox"],
+.markdown-body .task-list-item > p:first-child > input[type="checkbox"]:first-child {
+  appearance: none;
+  position: absolute;
+  left: 0;
+  top: 0.35em;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  display: inline-grid;
+  place-content: center;
+}
+.markdown-body .task-list-item > input[type="checkbox"]:checked,
+.markdown-body .task-list-item > p:first-child > input[type="checkbox"]:first-child:checked {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg));
+}
+.markdown-body .task-list-item > input[type="checkbox"]:checked::before,
+.markdown-body .task-list-item > p:first-child > input[type="checkbox"]:first-child:checked::before {
+  content: "";
+  width: 4px;
+  height: 8px;
+  border: solid var(--accent);
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg) translateY(-1px);
+}
+.markdown-body blockquote {
+  border-left: 3px solid color-mix(in srgb, var(--border) 75%, var(--text-muted));
+  border-radius: 0 6px 6px 0;
+  margin: 6px 0;
+  padding: 6px 11px;
+  background: var(--bg-subtle);
+  color: var(--text-muted);
+}
+.markdown-table-wrap {
+  width: 100%;
+  margin: 8px 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+}
+.markdown-body table {
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 100%;
+  font-size: 13px;
+}
+.markdown-body th, .markdown-body td {
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  padding: 6px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+.markdown-body tr:last-child td { border-bottom: 0; }
+.markdown-body th {
+  background: var(--bg-panel);
+  color: color-mix(in srgb, var(--text) 88%, var(--text-muted));
+  font-weight: 650;
+}
+.markdown-body tbody tr:nth-child(even) td { background: var(--bg-subtle); }
+.markdown-body hr {
+  border: none;
+  height: 1px;
+  margin: 12px 0;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+}
+.markdown-body .katex-display {
+  margin: 0.6em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 0;
+}
+.markdown-body .katex {
+  font-size: 1.05em;
+}
+.markdown-user-message p {
+  white-space: pre-wrap;
+}
+
+.markdown-custom-message {
+  line-height: 1.32;
+}
+.markdown-custom-message p { margin: 0; }
+.markdown-custom-message h1,
+.markdown-custom-message h2,
+.markdown-custom-message h3,
+.markdown-custom-message h4,
+.markdown-custom-message h5,
+.markdown-custom-message h6 {
+  margin: 4px 0 2px;
+  line-height: 1.18;
+}
+.markdown-custom-message ul,
+.markdown-custom-message ol {
+  margin: 2px 0 3px;
+}
+.markdown-custom-message li { margin: 0; }
+.markdown-custom-message blockquote {
+  margin: 3px 0;
+  padding: 4px 8px;
+}
+.markdown-custom-message .markdown-table-wrap,
+.markdown-custom-message .markdown-code-block {
+  margin: 4px 0;
+}
+
+/* 项目组聊天消息：紧凑 markdown（适配气泡），允许 pre-wrap 保留换行 */
+.markdown-team-message {
+  line-height: 1.45;
+  word-break: break-word;
+}
+.markdown-team-message p {
+  white-space: pre-wrap;
+  margin: 0 0 4px;
+}
+.markdown-team-message p:last-child { margin-bottom: 0; }
+.markdown-team-message h1,
+.markdown-team-message h2,
+.markdown-team-message h3,
+.markdown-team-message h4 {
+  margin: 6px 0 3px;
+  line-height: 1.25;
+  font-size: 1.02em;
+}
+.markdown-team-message ul,
+.markdown-team-message ol {
+  margin: 2px 0 4px;
+  padding-left: 18px;
+}
+.markdown-team-message li { margin: 1px 0; }
+.markdown-team-message blockquote {
+  margin: 3px 0;
+  padding: 3px 8px;
+  border-left: 3px solid var(--border);
+  color: var(--text-muted);
+}
+.markdown-team-message code {
+  font-size: 0.92em;
+}
+.markdown-team-message .markdown-table-wrap,
+.markdown-team-message .markdown-code-block {
+  margin: 4px 0;
+}
+.markdown-team-message hr {
+  margin: 6px 0;
+  border: none;
+  border-top: 1px solid var(--border);
+}
+
+/* 项目组用户气泡（蓝色底）里的链接：底是 accent 色，链接默认也用 accent，
+   会不可见。这里把用户在蓝色气泡中的链接改成白色高亮，保证可读。 */
+.markdown-team-user a {
+  color: #fff;
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(255, 255, 255, 0.6);
+}
+.markdown-team-user a:hover {
+  text-decoration-color: #fff;
+}
+
+.markdown-compaction-message {
+  line-height: 1.5;
+}
+.markdown-compaction-message p { margin: 0 0 7px; }
+.markdown-compaction-message h1,
+.markdown-compaction-message h2,
+.markdown-compaction-message h3,
+.markdown-compaction-message h4,
+.markdown-compaction-message h5,
+.markdown-compaction-message h6 {
+  margin: 8px 0 3px;
+  line-height: 1.25;
+}
+.markdown-compaction-message ul,
+.markdown-compaction-message ol {
+  margin: 4px 0 8px;
+}
+.markdown-compaction-message li { margin: 2px 0; }
+.markdown-compaction-message .markdown-table-wrap,
+.markdown-compaction-message .markdown-code-block {
+  margin: 6px 0;
+}
+
+.compaction-file-details {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.compaction-file-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.compaction-file-section {
+  margin-top: 8px;
+}
+.compaction-file-title {
+  margin-bottom: 4px;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 650;
+}
+.compaction-file-list {
+  max-height: 180px;
+  margin: 0;
+  padding: 7px 8px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-panel);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.45;
+  list-style: none;
+}
+.compaction-file-list li {
+  overflow-wrap: anywhere;
+}
+.compaction-file-list li + li {
+  margin-top: 3px;
+}
+
+.markdown-code-block {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  margin: 6px 0;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  overflow: hidden;
+  background: var(--bg);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--border) 42%, transparent);
+}
+.markdown-code-header {
+  padding: 5px 10px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 11px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.markdown-code-lang {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-weight: 650;
+}
+.markdown-code-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.markdown-code-action {
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 2px 7px;
+  background: var(--bg);
+  color: var(--text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  line-height: 1.25;
+}
+.markdown-code-action:hover:not(:disabled) {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--border) 70%, var(--text-muted));
+}
+.markdown-code-action:disabled {
+  color: var(--text-dim);
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+.markdown-code-action.is-active {
+  background: var(--bg-selected);
+  color: var(--text);
+}
+
+.mermaid-block {
+  padding: 12px;
+  overflow-x: auto;
+  background: color-mix(in srgb, var(--bg) 92%, var(--bg-panel));
+}
+.mermaid-block svg {
+  display: block;
+  max-width: none;
+}
+.mermaid-block-loading {
+  min-height: 120px;
+}
+.mermaid-block-error {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.mermaid-preview-button {
+  width: 100%;
+  border: 0;
+  color: inherit;
+  cursor: zoom-in;
+  text-align: left;
+}
+.mermaid-preview-button:hover {
+  opacity: 0.85;
+}
+.mermaid-preview-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.mermaid-zoom-dialog {
+  width: 100vw;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+.mermaid-zoom-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.35);
+}
+.mermaid-zoom-layout {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100%;
+}
+.mermaid-zoom-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 7px 10px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+}
+.mermaid-zoom-title {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mermaid-zoom-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+.mermaid-zoom-stepper {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--bg);
+}
+.mermaid-zoom-stepper button,
+.mermaid-zoom-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.mermaid-zoom-stepper button {
+  height: 22px;
+}
+.mermaid-zoom-stepper button + .mermaid-zoom-value,
+.mermaid-zoom-value + button {
+  border-left: 1px solid var(--border);
+}
+.mermaid-zoom-icon-button {
+  flex: 0 0 24px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+}
+.mermaid-zoom-stepper button:hover:not(:disabled),
+.mermaid-zoom-icon-button:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+.mermaid-zoom-stepper button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.mermaid-zoom-stepper button:focus-visible,
+.mermaid-zoom-icon-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.mermaid-zoom-value {
+  min-width: 48px;
+  height: 22px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 22px;
+  text-align: center;
+  user-select: none;
+}
+.mermaid-zoom-viewport {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 24px;
+  background: var(--bg);
+  -webkit-overflow-scrolling: touch;
+}
+.mermaid-zoom-canvas {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg-panel);
+  margin: 0 auto;
+  transition: width 0.15s ease;
+}
+.mermaid-zoom-canvas svg {
+  display: block;
+  width: 100% !important;
+  height: auto;
+  max-width: none !important;
+}
+
+@media (max-width: 480px) {
+  .mermaid-zoom-toolbar {
+    padding-inline: 8px;
+  }
+
+  .mermaid-zoom-title {
+    font-size: 10px;
+  }
+
+  .mermaid-zoom-viewport {
+    padding: 12px;
+  }
+}
+
+/* Electron custom title bar drag region (titleBarStyle: hidden) */
+/* ── 桌面玻璃布局骨架 ─────────────────────────────────────────────────
+   整页 = 纵向 flex（顶栏 + 内容行），四周 padding 让桌面壁纸/星空透出，
+   子级统一留 --glass-card-gap 的间隙。窄屏（手机/窄窗口）退化回平铺：
+   edge/gap 归零，侧栏/右栏走各自的全屏抽屉逻辑。 */
+.app-shell-root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: var(--app-viewport-height, 100dvh);
+  overflow: hidden;
+  padding: calc(var(--glass-card-edge) + env(safe-area-inset-top)) calc(var(--glass-card-edge) + env(safe-area-inset-right))
+    calc(var(--glass-card-edge) + env(safe-area-inset-bottom)) calc(var(--glass-card-edge) + env(safe-area-inset-left));
+  gap: var(--glass-card-gap);
+}
+.app-shell-row {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  min-width: 0;
+  gap: var(--glass-card-gap);
+}
+@media (max-width: 640px) {
+  :root {
+    --glass-card-edge: 0px;
+    --glass-card-gap: 0px;
+  }
+}
+
+/* ── 悬浮玻璃卡（顶栏 / 左侧栏 / 聊天区 / 右栏共用）─────────────────────
+   背景与 backdrop 模糊放在 ::before（z-index:-1，paints 在卡内容之下、卡父级背景之上）
+   而不是卡元素自身：backdrop-filter 会让该元素成为 fixed 后代的 containing block，
+   卡内有大量 position:fixed 的浮层（文件栏菜单、搜索下拉、Portal 之外的面板），
+   放在卡上会全体错位。::before 没后代，无此副作用。 */
+.glass-card {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: var(--glass-card-radius);
+  box-shadow: var(--glass-card-shadow);
+}
+.glass-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: calc(var(--glass-card-radius) - 1px);
+  background: var(--glass-card-surface);
+  backdrop-filter: var(--glass-blur);
+  pointer-events: none;
+}
+
+/* ★ 对话区（中间那张 .glass-card）**故意不用 backdrop 模糊**（2026-09-12）：
+   大块 backdrop-filter 会把整块对话区提升成一个独立合成层（CDP LayerTree 里是
+   `1528x1308 [BackdropFilter,OverflowScrolling,RootScroller]`），第三方截图工具
+   的「窗口截图」路径（实测 Snipaste，鼠标停在对话区里必现）读不到这一层，
+   读不到的部分按透明处理 —— 表现为「截图/贴图里对话区空白、直接透出桌面壁纸」。
+   关掉后背景仍是同一套半透明玻璃（前面还有桌面底板灰纱），只是壁纸不再被模糊，
+   视觉几乎无差；换来的是对话区回到窗口根合成层，任何截图方式都能抓到内容。
+   顶栏/左栏/侧栏那些小块模糊不受影响（不触发该问题），保持原样。 */
+.chat-glass-flat {
+  /* 用变量关掉 ::before 的 backdrop-filter（直接写 backdrop-filter: none 会被
+     构建期 CSS 压缩器当成默认值丢掉，写成空规则）。 */
+  --glass-blur: none;
+}
+
+.app-region-drag {
+  -webkit-app-region: drag;
+  user-select: none;
+}
+.app-region-no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* File viewer toolbar */
+.file-viewer-toolbar {
+  min-width: 0;
+  min-height: 35px;
+}
+
+.file-viewer-path {
+  flex: 1 1 auto;
+  min-width: 48px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-viewer-meta {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-viewer-live-indicator {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: 0 0 7px;
+}
+
+.file-viewer-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.file-viewer-actions {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  gap: 4px;
+  flex-shrink: 0;
+  order: -1;
+}
+
+.file-viewer-mode-switch {
+  display: flex;
+  height: 24px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+}
+
+.file-viewer-mode-button {
+  height: 22px;
+  padding: 0 8px;
+  border: 0;
+  border-left: 1px solid var(--border);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.file-viewer-mode-button:first-child {
+  border-left: 0;
+}
+
+.file-viewer-mode-button:hover {
+  filter: brightness(1.08);
+}
+
+.file-viewer-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  box-sizing: border-box;
+  flex: 0 0 24px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.file-viewer-icon-button:hover {
+  background: var(--bg-hover) !important;
+  color: var(--text);
+}
+
+.file-viewer-icon-button:disabled {
+  color: var(--text-dim);
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.file-viewer-icon-button:disabled:hover {
+  background: transparent !important;
+  color: var(--text-dim);
+}
+
+.file-viewer-mode-button:focus-visible,
+.file-viewer-icon-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.directory-picker-path:focus-visible {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+/* 右侧文件查看器内容区滚动条。
+   全局 ::-webkit-scrollbar 只有 4px 且用描边色 --border（仅 10% 不透明），
+   在 Windows/Electron 上几乎不可见，几千行的源码文件看起来就像「没有滚动条、滚不动」。
+   这里给内容区一套可辨识的：10px 轨道 + 内缩胶囊滑块，滚动时可见、静止时不抢视觉。 */
+.file-viewer-content::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.file-viewer-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+.file-viewer-content::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text-muted) 32%, transparent);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+  border-radius: 999px;
+}
+.file-viewer-content::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--text-muted) 58%, transparent);
+  background-clip: padding-box;
+}
+.file-viewer-content::-webkit-scrollbar-thumb:active {
+  background: color-mix(in srgb, var(--text-muted) 75%, transparent);
+  background-clip: padding-box;
+}
+.file-viewer-content::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox 专用：不支持 ::-webkit-scrollbar，走标准属性。
+   不能与上面共存于 Chromium——设了 scrollbar-width 会让 Chromium 忽略整套 ::-webkit-scrollbar 自定义。 */
+@supports not selector(::-webkit-scrollbar) {
+  .file-viewer-content {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--text-muted) 38%, transparent) transparent;
+  }
+}
+
+@media (max-width: 640px) {
+  .file-viewer-meta {
+    display: none;
+  }
+}
+
+@media (max-width: 380px) {
+  .file-viewer-toolbar {
+    gap: 6px !important;
+    padding-inline: 8px !important;
+  }
+
+  .file-viewer-mode-button {
+    padding-inline: 6px;
+  }
+}
+
+/* 大文件只预览了开头一段时的顶部提示条（贴在滚动区顶部，不遮挡阅读）。 */
+.file-preview-note {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg));
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+/* File viewer markdown preview — larger headings */
+.markdown-file-preview h1 { font-size: 1.8em; }
+.markdown-file-preview h2 { font-size: 1.4em; }
+.markdown-file-preview h3 { font-size: 1.15em; }
+.markdown-file-preview p { margin: 0 0 12px; }
+.markdown-file-preview pre {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 16px;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  margin: 12px 0;
+}
+.markdown-file-preview code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--bg-panel);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.markdown-file-preview pre code {
+  background: none;
+  padding: 0;
+}
+
+/* syntax highlighter line numbers */
+.markdown-body span.linenumber,
+span.linenumber {
+  color: var(--text-dim) !important;
+  font-style: normal !important;
+}
+
+@keyframes drop-zone-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes drop-icon-float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-6px); }
+}
+
+@keyframes drop-ring-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%       { opacity: 1;   transform: scale(1.06); }
+}
+
+@keyframes drop-ripple {
+  0%   { transform: scale(0); opacity: 0.6; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* 项目组：实时进行中的角色「正在思考」呼吸圆点 */
+.team-live-dot {
+  display: inline-block;
+  margin-right: 2px;
+  color: var(--accent);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .team-live-dot {
+    animation: none;
+  }
+}
+
+@keyframes notice-shelf-in {
+  from {
+    opacity: 0;
+    height: 0;
+    max-height: 0;
+    min-height: 0;
+    margin-bottom: 0;
+    transform: translateY(-6px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    height: 60px;
+    max-height: 60px;
+    min-height: 60px;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes notice-shelf-out {
+  from {
+    opacity: 1;
+    height: 60px;
+    max-height: 60px;
+    min-height: 60px;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    height: 0;
+    max-height: 0;
+    min-height: 0;
+    margin-bottom: 0;
+    transform: translateY(-5px) scale(0.995);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notice-shelf-item {
+    animation-duration: 0.001ms !important;
+  }
+}
+
+@keyframes saved-pop {
+  0%   { transform: scale(1); box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.55); }
+  40%  { transform: scale(1.08); box-shadow: 0 0 0 6px rgba(74, 222, 128, 0.25); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+}
+
+@keyframes saved-check-draw {
+  from { stroke-dashoffset: 18; opacity: 0; }
+  to   { stroke-dashoffset: 0;  opacity: 1; }
+}
+
+/* Keep the panel border as the idle separator; this element only expands the hit target. */
+.panel-resize-handle {
+  position: relative;
+  z-index: 220;
+  width: 12px;
+  margin: 0 -6px;
+  flex: 0 0 12px;
+  cursor: col-resize;
+  touch-action: none;
+  outline: none;
+  /* 玻璃单卡片下方是透出的壁纸，拖动条不能比卡片边缘高（否则会在缝隙中间
+     拉出一根悬空竖条）。 */
+  align-self: center;
+  height: 100%;
+}
+.panel-resize-handle::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 5px;
+  width: 2px;
+  pointer-events: none;
+  background: transparent;
+  transition: background 0.12s ease;
+}
+.panel-resize-handle:hover::after,
+.panel-resize-handle:focus-visible::after,
+.panel-resize-handle.is-resizing::after {
+  background: color-mix(in srgb, var(--text-muted) 70%, var(--border));
+}
+.right-panel-overlay-backdrop {
+  display: none;
+}
+
+/* Desktop sidebar: animate width */
+@media (min-width: 641px) {
+  .sidebar-overlay-backdrop {
+    display: none !important;
+  }
+  .sidebar-container {
+    position: relative;
+    overflow: hidden;
+    transition: width 0.2s ease, min-width 0.2s ease;
+  }
+  .sidebar-container.sidebar-open {
+    width: var(--sidebar-width, 260px);
+    min-width: var(--sidebar-width, 260px);
+  }
+  .sidebar-container.sidebar-closed {
+    width: 0;
+    min-width: 0;
+    /* 收起时不能留卡边框/玻璃底：宽度归零后 border + ::before 会变成 2px 竖条 */
+    border: none !important;
+    box-shadow: none;
+  }
+  .sidebar-container.sidebar-closed::before {
+    display: none;
+  }
+  /* keep inner content at fixed width so it doesn't reflow during animation */
+  .sidebar-container > * {
+    width: var(--sidebar-width, 260px);
+    min-width: var(--sidebar-width, 260px);
+  }
+  .sidebar-container.sidebar-resizing,
+  .sidebar-container.sidebar-resizing > * {
+    transition: none !important;
+  }
+}
+
+/* Wide desktop file panel: participate in the split layout. */
+@media (min-width: 960px) {
+  .right-panel-container {
+    overflow: hidden;
+    transition: width 0.2s ease, min-width 0.2s ease;
+    flex-shrink: 0;
+  }
+  .right-panel-container.right-panel-open {
+    width: var(--right-panel-width, clamp(360px, 42vw, 640px));
+    min-width: 300px;
+  }
+  .right-panel-container.right-panel-closed {
+    width: 0;
+    min-width: 0;
+    /* 同上：收起态不能留卡边框/玻璃底 */
+    border: none !important;
+    box-shadow: none;
+  }
+  .right-panel-container.right-panel-closed::before {
+    display: none;
+  }
+  /* keep inner content at fixed width so it doesn't reflow during animation */
+  .right-panel-container > * {
+    width: var(--right-panel-width, clamp(360px, 42vw, 640px));
+    min-width: 300px;
+  }
+  .right-panel-container.right-panel-resizing,
+  .right-panel-container.right-panel-resizing > * {
+    transition: none !important;
+  }
+  /* Maximized file panel: overlay the whole window (chat/sidebar hidden).
+     Restore via the panel's restore button, Esc, or the top-right toggle. */
+  .right-panel-container.right-panel-maximized {
+    position: fixed;
+    inset: var(--glass-card-edge);
+    z-index: 260;
+    width: auto;
+    min-width: 0;
+    transition: none;
+  }
+  .right-panel-container.right-panel-maximized > * {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+/* Compact desktop file panel: overlay the chat instead of collapsing it. */
+@media (min-width: 641px) and (max-width: 959px) {
+  .right-panel-resize-handle {
+    display: none;
+  }
+  .right-panel-overlay-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 240;
+    display: block;
+    background: rgba(0, 0, 0, 0.24);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .right-panel-overlay-backdrop.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .right-panel-container {
+    position: fixed;
+    top: 0;
+    right: env(safe-area-inset-right);
+    bottom: 0;
+    z-index: 250;
+    width: min(560px, calc(100vw - 48px));
+    min-width: 300px;
+    overflow: hidden;
+    box-shadow: -12px 0 32px rgba(0, 0, 0, 0.18);
+    transition: transform 0.2s ease;
+  }
+  .right-panel-container.right-panel-open {
+    transform: translateX(0);
+  }
+  .right-panel-container.right-panel-closed {
+    transform: translateX(100%);
+    pointer-events: none;
+  }
+  .right-panel-container.right-panel-maximized {
+    inset: 0;
+    width: 100%;
+    min-width: 0;
+    transition: none;
+  }
+  .right-panel-container > * {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+/* Mobile sidebar: slide in/out as overlay */
+@media (max-width: 640px) {
+  .chat-stats-center {
+    display: none !important;
+  }
+  .sidebar-container {
+    position: fixed !important;
+    top: 0;
+    left: env(safe-area-inset-left);
+    bottom: 0;
+    width: 280px;
+    max-width: 85vw;
+    /* 抽屉是 position:fixed（不受 .app-shell-root 的 padding 影响），
+       这里补上玻璃卡的四周留白 + 浏海安全区 */
+    height: var(--app-viewport-height, 100dvh);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    /* 抽屉是贴左满高的 sheet：左侧方角（与屏幕边齐），右侧保留玻璃卡圆角 */
+    border-radius: 0 var(--glass-card-radius) var(--glass-card-radius) 0;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  .sidebar-container.sidebar-open {
+    transform: translateX(0);
+    box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+  }
+  .sidebar-container.sidebar-closed {
+    transform: translateX(calc(-100% - env(safe-area-inset-left)));
+    box-shadow: none;
+  }
+
+  .right-panel-container {
+    position: fixed;
+    inset: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left);
+    height: var(--app-viewport-height, 100dvh);
+    /* 同侧栏抽屉：固定定位层自己处理安全区 */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    z-index: 250;
+    overflow: hidden;
+    transition: transform 0.2s ease;
+  }
+  .right-panel-container.right-panel-open {
+    width: auto;
+    min-width: 0;
+  }
+  .right-panel-container.right-panel-closed {
+    width: 0 !important;
+    min-width: 0 !important;
+    border-left: none !important;
+    display: none !important;
+  }
+  .right-panel-container > * {
+    width: 100%;
+    min-width: 0;
+  }
+  .panel-resize-handle,
+  .right-panel-overlay-backdrop {
+    display: none;
+  }
+  .directory-picker-back,
+  .directory-picker-entry,
+  .directory-picker-action {
+    min-height: 44px !important;
+  }
+  .directory-picker-back {
+    min-width: 44px !important;
+  }
+  .directory-picker-footer {
+    flex-wrap: wrap;
+    padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
+  }
+  textarea,
+  input,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* ============================================================
+   percho chat 移植（markstream/折叠组/turn-diff/错误重试）
+   来源：percho packages/desktop/src/renderer/src/styles/globals.css
+   ============================================================ */
+:root {
+  --shimmer-highlight: rgba(219, 234, 254, 0.9);
+  --markdown-quote-border: color-mix(in srgb, var(--text-dim) 55%, transparent);
+  --markdown-quote-text: var(--text-muted);
+  --markdown-link-decoration: var(--accent);
+  --markdown-link-hover: var(--accent-hover);
+  --markdown-table-border: var(--hairline);
+}
+html.dark {
+  --shimmer-highlight: rgba(96, 165, 250, 0.7);
+  --markdown-quote-border: color-mix(in srgb, var(--text-dim) 55%, transparent);
+  --markdown-quote-text: var(--text-muted);
+  --markdown-link-decoration: var(--accent);
+  --markdown-link-hover: var(--accent-hover);
+  --markdown-table-border: var(--hairline);
+}
+
+/* 对话消息流专用滚动条：Notion 风格 —— 极细、半透明、hover 变亮 */
+.chat-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.chat-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chat-scrollbar::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text-muted) 38%, transparent);
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+.chat-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--text-muted) 62%, transparent);
+}
+.chat-scrollbar::-webkit-scrollbar-thumb:active {
+  background: color-mix(in srgb, var(--text-dim) 72%, transparent);
+}
+/* Firefox */
+.chat-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--text-muted) 40%, transparent) transparent;
+}
+
+/* ===== Notion 风格目录（TOC）：毛玻璃大纲卡片，贴主题不突兀 ===== */
+.toc-card {
+  background: color-mix(in srgb, var(--bg-panel) 72%, transparent);
+  backdrop-filter: blur(20px) saturate(1.35);
+  border: 1px solid color-mix(in srgb, var(--border) 62%, transparent);
+  box-shadow:
+    0 12px 40px -8px rgba(0, 0, 0, 0.28),
+    0 2px 10px rgba(0, 0, 0, 0.1);
+  animation: toc-card-in 160ms ease-out;
+}
+@keyframes toc-card-in {
+  from {
+    opacity: 0;
+  }
+}
+.toc-item {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: left;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text-muted);
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+}
+.toc-item:hover {
+  background: color-mix(in srgb, var(--text-muted) 12%, transparent);
+  color: var(--text);
+}
+.toc-item.is-active {
+  color: var(--accent);
+}
+/* 用户消息分隔节点：加点号标记 + 微强调色，作为目录里的一次“你发送的消息”分割线 */
+.toc-item.toc-user {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--text-muted) 72%, var(--accent));
+}
+.toc-item.toc-user.is-active {
+  color: var(--accent);
+}
+.toc-user-marker {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--accent) 55%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+.toc-user-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Working 文字高亮扫过（codex 风格）：光带只扫文字本身 */
+.shimmer-sweep {
+  background-image: linear-gradient(
+    90deg,
+    currentColor 0%,
+    color-mix(in srgb, currentColor 75%, var(--shimmer-highlight)) 28%,
+    color-mix(in srgb, currentColor 30%, var(--shimmer-highlight)) 46%,
+    color-mix(in srgb, var(--shimmer-highlight) 90%, currentColor) 50%,
+    color-mix(in srgb, currentColor 30%, var(--shimmer-highlight)) 54%,
+    color-mix(in srgb, currentColor 75%, var(--shimmer-highlight)) 72%,
+    currentColor 100%
+  );
+  background-size: 200% 100%;
+  background-position: 200% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer-sweep 3.6s linear infinite;
+}
+@keyframes shimmer-sweep {
+  from { background-position: 200% 0; }
+  to { background-position: -100% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-sweep { animation: none; }
+}
+
+/* markstream-react 视觉覆写 */
+.markdown-body {
+  --link-color: var(--accent);
+  --ms-radius: 10px;
+}
+.markdown-body .paragraph-node { margin: 0.375rem 0; }
+.markdown-body ul,
+.markdown-body ol { margin: 0.375rem 0; padding-left: 1.25rem; }
+.markdown-body li { margin: 0.125rem 0; }
+.markdown-body .blockquote-node {
+  margin: 0.375rem 0;
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--markdown-quote-border);
+  color: var(--markdown-quote-text);
+}
+.markdown-body .heading-node { font-weight: 600; }
+.markdown-body .heading-1 { margin: 0.75rem 0 0.25rem; font-size: 1.125rem; line-height: 1.4; }
+.markdown-body .heading-2 { margin: 0.75rem 0 0.25rem; font-size: 1rem; line-height: 1.4; }
+.markdown-body .heading-3 { margin: 0.5rem 0 0.25rem; font-size: 0.875rem; line-height: 1.4; }
+.markdown-body .link-node {
+  text-decoration: underline;
+  text-decoration-color: var(--markdown-link-decoration);
+}
+.markdown-body .link-node:hover {
+  color: var(--markdown-link-hover);
+  text-decoration-color: var(--markdown-link-decoration);
+  text-underline-offset: auto;
+}
+/* ==================================================================
+   markstream 代码块：玻璃水滴质感（随主题色顶部高光）。
+   注意：markstream 实际渲染的 DOM 是 .code-block-container（带内联
+   background-color:var(--vscode-editor-background,…) 的背景，落到 #111827 纯色），
+   并不存在 .code-block/.code-block-node。—— 因此必须咬住 .code-block-container，
+   并用 !important 盖过内联 style + Tailwind 的 bg-gray-900。
+   ================================================================== */
+.markdown-body .code-block-container {
+  --markstream-code-fallback-bg: transparent;
+  --vscode-editor-background: transparent;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--accent) 13%, transparent) 0%,
+      transparent 58%
+    ),
+    color-mix(in srgb, var(--bg-panel) 60%, transparent) !important;
+  backdrop-filter: blur(22px) saturate(1.5);
+  border: 1px solid color-mix(in srgb, var(--border) 30%, transparent) !important;
+  border-radius: 10px;
+  box-shadow:
+    inset 0 1px 0 0 color-mix(in srgb, var(--accent) 26%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--bg-panel) 8%, transparent),
+    0 8px 26px -18px rgba(0, 0, 0, 0.22) !important;
+}
+.markdown-body .code-block-container .code-block-header {
+  background: color-mix(in srgb, var(--bg-panel) 38%, transparent) !important;
+  border-bottom-color: color-mix(in srgb, var(--border) 28%, transparent) !important;
+  color: var(--text-muted) !important;
+}
+/* 对比(diff)代码块：同样玻璃化。markstream 用 --markstream-diff-* 变量撑出内层实心底，
+   置透明以露出外层毛玻璃；增删行的红/绿半透明高亮保留。 */
+.markdown-body .code-block-container.is-diff {
+  --markstream-diff-shell-bg: transparent;
+  --markstream-diff-stage-bg: transparent;
+  --markstream-diff-editor-bg: transparent;
+  --markstream-diff-panel-bg: transparent;
+  --markstream-diff-panel-bg-soft: transparent;
+  --markstream-diff-shell-shadow: none;
+  --markstream-diff-pane-divider: color-mix(in srgb, var(--border) 28%, transparent);
+}
+/* 代码正文/编辑器各层背景全部透明，露出外层毛玻璃与主题色高光 */
+.markdown-body .code-block-content,
+.markdown-body .code-block-content .code-block-render,
+.markdown-body .code-block-content .shiki,
+.markdown-body .code-block-content .shiki-fallback,
+.markdown-body .code-block-content pre,
+.markdown-body .code-block-content pre code,
+.markdown-body .code-fallback-plain {
+  background: transparent !important;
+}
+.markdown-body .code-block-content .shiki,
+.markdown-body .code-fallback-plain {
+  color: var(--text) !important;
+}
+/* Monaco 编辑器的各层背景也透明（若走 Monaco 渲染路径） */
+.markdown-body .code-block-container .monaco-editor,
+.markdown-body .code-block-container .monaco-editor .monaco-editor-background,
+.markdown-body .code-block-container .monaco-editor .margin,
+.markdown-body .code-block-container .monaco-editor .inputarea,
+.markdown-body .code-block-container .monaco-editor .lines-content,
+.markdown-body .code-block-container .monaco-editor .view-lines,
+.markdown-body .code-block-container .monaco-editor .view-line {
+  background: transparent !important;
+}
+/* is-plain-text（```text 等纯文本块）专属坑：markstream 对
+   .code-block-container.is-plain-text:not(.is-diff) .monaco-editor… 用 (0,4,0)!important
+   强制 background: var(--vscode-editor-background, …)，而 Monaco 主题服务运行时会生成
+   `.monaco-editor { --vscode-editor-background: <主题色> }` 直接定义在元素上——
+   元素自有定义压过容器继承的 transparent，于是纯文本块回到黑底。
+   这里逐条复刻 markstream 选择器并加 .markdown-body 前缀（每组恰好 +1 特异性）反杀。 */
+.markdown-body .code-block-container.is-plain-text:not(.is-diff) .monaco-editor,
+.markdown-body .code-block-container.is-plain-text:not(.is-diff) .monaco-editor .monaco-editor-background,
+.markdown-body .code-block-container.is-plain-text:not(.is-diff) .monaco-editor .margin,
+.markdown-body .code-block-container.is-plain-text:not(.is-diff) .monaco-editor .lines-content,
+.markdown-body .code-block-container.is-plain-text:not(.is-diff) .monaco-editor .view-lines,
+.markdown-body .code-block-container.is-plain-text:not(.is-diff) .monaco-editor .view-line {
+  background: transparent !important;
+}
+.markdown-body .shiki span,
+.markdown-body .code-fallback-plain span,
+.markdown-body .code-block-content pre code span {
+  /* 保留语法高亮 token 颜色，仅清掉背景 */
+  background: transparent !important;
+}
+
+/* 内联代码变量（crud.tsx 这类 chip）：轻玻璃，圆角/透明度小于代码块 */
+.markdown-body .inline-code {
+  background: color-mix(in srgb, var(--bg-panel) 55%, transparent);
+  backdrop-filter: blur(8px) saturate(1.2);
+  border: 1px solid color-mix(in srgb, var(--border) 22%, transparent);
+  box-shadow: inset 0 1px 0 0 color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--text);
+  border-radius: 5px;
+  padding: 1px 5px;
+  font-size: 0.92em;
+}
+
+/* 用户消息气泡：苹果 iMessage 玻璃水滴 —— 半透明磨砂玻璃 + 强模糊 + 顶部高光（随主题色，非白光） */
+.percho-user-bubble {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--accent) 14%, transparent) 0%,
+      color-mix(in srgb, var(--accent) 5%, transparent) 36%,
+      transparent 66%
+    ),
+    color-mix(in srgb, var(--bg-panel) 66%, transparent);
+  backdrop-filter: blur(22px) saturate(1.6);
+  border: 1px solid color-mix(in srgb, var(--border) 26%, color-mix(in srgb, var(--accent) 32%, transparent));
+}
+/* 顶部玻璃反光高光涂层（glass sheen）：光泽随主题色（accent），铺在内容之下 */
+.percho-user-bubble::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent) 16%, transparent) 0%,
+    color-mix(in srgb, var(--accent) 6%, transparent) 20%,
+    transparent 46%
+  );
+}
+
+/* 回到底部悬浮按钮：与消息气泡同款的玻璃水滴质感（吸顶式，滚动不消失） */
+.percho-fab {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--accent) 12%, transparent) 0%,
+      transparent 55%
+    ),
+    color-mix(in srgb, var(--bg-panel) 66%, transparent);
+  backdrop-filter: blur(18px) saturate(1.5);
+  border: 1px solid color-mix(in srgb, var(--border) 28%, transparent);
+  box-shadow:
+    inset 0 1px 0 0 color-mix(in srgb, var(--accent) 38%, transparent),
+    0 6px 18px -12px rgba(0, 0, 0, 0.24);
+  transition: border-color 0.15s, opacity 0.15s;
+}
+.percho-fab:hover {
+  border-color: color-mix(in srgb, var(--accent) 48%, transparent);
+}
+
+/* ── Chat 输入框：中性玻璃卡片（主题适配）+ 边框光束（border beam）──
+   ★ 不再给 composer 铺 accent 渐变 + 顶部高光涂层：那层蓝色调在浅色主题下
+     一下就把输入框从整个界面里“挑”出来（用户反馈“对话框太明显了”）。
+     改成中性玻璃底（只借 bg-panel + border 推导），强调色改由**边框上走的光束**给，
+     随 --accent 联动，所以任何主题下都协调。
+   注意不能设 overflow:hidden：slash/@/历史菜单和 thinking/tool 下拉要从卡内向上弹出 */
+.chat-composer {
+  position: relative;
+  /* 中性玻璃：不再是“一块白”。62% 的 --bg-panel（浅色主题就是 62% 白）叠在
+     同样接近白的页面上，肉眼就是“涂了一层白颜料”（用户反馈）。改成
+     面板色只占四成 + 一层极淡的冷调，靠 backdrop-filter 去吃背景，
+     卡片靠 border 与阴影与页面分层。强调色全部交给 border beam。 */
+  background:
+    linear-gradient(color-mix(in srgb, var(--accent) 2.5%, transparent), color-mix(in srgb, var(--accent) 2.5%, transparent)),
+    color-mix(in srgb, var(--bg-panel) 42%, transparent);
+  backdrop-filter: blur(24px) saturate(1.5);
+  border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  border-radius: 20px;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.05),
+    0 14px 40px -22px rgba(15, 23, 42, 0.24);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+/* ── 边框光束
+   做法：一个铺满卡片的绝对定位层，背景是一段 conic-gradient 的**窄弧**；
+   用 mask 的两层 xor（padding-box 与 border-box）把中间掏空，只剩 2px 的
+   “环”是可见的 → 那段彩色弧就沿边框滑动，形成流光。
+   旋转用 @property 注册的 <angle> 自定义属性驱动（纯 CSS，无需 JS 逐帧）。
+   ★ 颜色只用 var(--accent) + 一点紫，跟着主题变色。 */
+@property --pi-beam-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+.chat-composer-beam {
+  position: absolute;
+  /* 外扩 1px：让光环贴在卡片**外沿**，不压住内部文字/按钮 */
+  inset: -1px;
+  border-radius: 21px;
+  pointer-events: none;
+  padding: 2px;
+  background: conic-gradient(
+    from var(--pi-beam-angle),
+    transparent 0deg,
+    color-mix(in srgb, var(--accent) 92%, transparent) 42deg,
+    color-mix(in srgb, var(--accent) 55%, #a78bfa) 74deg,
+    transparent 118deg,
+    transparent 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  /* 静息（既不在对话中、也没聚焦）：完全不显示 —— 用户要的“没有在对话中的时候光圈不显示” */
+  opacity: 0;
+  animation: pi-beam-spin 7s linear infinite;
+  transition: opacity 0.4s ease, filter 0.4s ease;
+}
+@keyframes pi-beam-spin {
+  to { --pi-beam-angle: 360deg; }
+}
+/* ── 光圈三种状态，三套观感（用户要求“对话结束和对话中的光圈效果不一样”）──
+   ① 静息（不在对话中、未聚焦）：完全不显示（上面的 opacity:0）
+   ② 聚焦 · 对话已结束、正在输入：淡而慢的一圈，只有一圈“在等你”的微光
+   ③ 对话中（agent 正在工作）：整圈更亮、转得明显更快，并叠一层呼吸与外发光 */
+.chat-composer:focus-within:not(.chat-composer-streaming) .chat-composer-beam {
+  opacity: 0.5;
+}
+.chat-composer.chat-composer-streaming .chat-composer-beam {
+  opacity: 1;
+  animation:
+    pi-beam-spin 1.9s linear infinite,
+    pi-beam-breathe 2.4s ease-in-out infinite;
+  filter: drop-shadow(0 0 9px color-mix(in srgb, var(--accent) 78%, transparent));
+}
+@keyframes pi-beam-breathe {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* 流体链（已废弃）：旧实现靠 goo 把一串小球融成**连续液柱**，在发送按钮与 60px 外的
+   新按钮之间来回扭动，观感是一团抢眼的蓝色水波（用户反馈“效果还不行”）。
+   现在改成**按钮本体的形变**（不再有任何液体：见下方 .pi-morph-* 与 LiquidSendFx 的 registry.split）。
+   保留此说明是因为“goo 融合距离上限 ≈ stdDeviation（blur=8 时约 12px）”这条结论
+   对文字流光仍有参考价值。 */
+
+/* placeholder 对比度：从 UA 默认（≈text-dim，浅色玻璃底上不可读）提到 muted */
+.chat-composer textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+/* ── 发送液态反馈（Liquid gooey）────────────────────────────────────────
+   见 components/LiquidSendFx.tsx。三个技术点：
+     ① gooey 融合：全局 SVG 滤镜 #pi-goo（app/layout.tsx）+ 本层 filter:url()，
+        层内圆/胶囊被模糊后 alpha 放大，自动粘成一体，缝隙里长出水滴桥；
+     ② 液态抽水：发送时尾巴 scaleX 猛拉再回弹、主球脉冲、两滴水飞出；
+     ③ 文字水流：输入框文字逐字复制成覆盖层（portal 到 body），飞向按钮并消散。
+   位置全靠实测写入 CSS 变量（--pi-goo-r/-b/-size、--pi-chip-*），
+   所以任意宽度（含移动端 compact 布局）都贴着真实发送按钮，不写死坐标。
+   动画与发送完全解耦：handleSend 在触发动画的同一帧就执行，动画只是覆盖层。 */
+.pi-liquid-root {
+  position: fixed;
+  left: 0;
+  top: 0;
+  /* fixed + 实测坐标挂在 body 上（全局单例）。z-index 取 1：高于卡片背景、
+     低于正文/控件（它们在各自层叠上下文里），液体从内容下面流过去 */
+  z-index: 1;
+  pointer-events: none;
+}
+.pi-liquid {
+  position: absolute;
+  /* 负 inset 给滤镜 blur 留出扩散空间，否则水滴边缘被自己的盒子截掉 */
+  inset: 0;
+  pointer-events: none;
+  filter: url(#pi-goo);
+  /* 不加 opacity 过渡：本层只在动画相位内出现，淡入会额外滞后 ~0.3s；
+     相位类挂上的那一刻就应该是可见的（同步、不依赖后续重渲染） */
+  opacity: 0;
+}
+/* 静止态不常驻显示（宿主在 body 上，没有 hover 语境），仅动画相位内可见。
+   ★ 必须把三个相位都列上：之前只写了 .pi-flow，于是**只发附件、不写字**时
+   （handleSend 里 playLiquidSend 要求有文字，beginSplit 却总是调用）
+   只有 pi-split 相位 → .pi-liquid 停在 opacity:0，整个分裂动画肉眼完全看不到。 */
+.pi-liquid-root.pi-flow .pi-liquid,
+.pi-liquid-root.pi-chip-flow .pi-liquid {
+  opacity: 1;
+}
+/* 按钮分裂进行中：把「液态泵」压掉。
+   ★ 两者抢的是同一格（发送钮）：.pi-morph-ghost 里的真实克隆本来就画在
+     发送钮原位，而 .pi-liquid 的主球比按钮大一圈、还带着尾巴探到左侧，
+     同时出现就是“一颗大蓝球裹着红环”—— 用户形容为“像涂了一层颜料”。
+     分裂的视觉主角是按钮本身（见 LiquidSendFx.tsx 文件头），泵就退场。
+   ★ 只压 .pi-liquid，**不动 .pi-flow-text**：文字流光照常飞。
+   ★ 必须写在上面那条 .pi-flow 规则之后：两者特异度相同，靠源码顺序取胜。 */
+.pi-liquid-root.pi-morphing .pi-liquid {
+  opacity: 0;
+}
+/* 水块公共部分：只放定位与形状。**背景不在这里给** —— 这条选择器带子组合器
+   （.pi-liquid > span 特异度 0,1,1）会盖过 .pi-liquid-main / .pi-liquid-tail 的
+   自身 background（0,1,0），曾导致主球的径向渐变整个失效。背景一律由各自规则给。 */
+.pi-liquid > span {
+  position: absolute;
+  border-radius: 9999px;
+  background: var(--accent);
+}
+/* 主球：与发送按钮同尺寸同位置，液体脉动的“泵” */
+.pi-liquid-main {
+  right: var(--pi-goo-r, 21px);
+  bottom: var(--pi-goo-b, 9px);
+  width: var(--pi-goo-size, 32px);
+  height: var(--pi-goo-size, 32px);
+  background: radial-gradient(
+    circle at 34% 28%,
+    color-mix(in srgb, var(--accent) 22%, #ffffff) 0%,
+    var(--accent) 52%,
+    color-mix(in srgb, var(--accent) 66%, #8b5cf6) 100%
+  );
+  box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 42%, transparent);
+}
+/* 尾巴：静止是一条被压扁的薄胶囊（探出主球左侧） */
+.pi-liquid-tail {
+  right: calc(var(--pi-goo-r, 21px) + var(--pi-goo-size, 32px) * 1.25);
+  bottom: calc(var(--pi-goo-b, 9px) + var(--pi-goo-size, 32px) / 2 - var(--pi-goo-size, 32px) * 0.21);
+  width: calc(var(--pi-goo-size, 32px) * 3.4);
+  height: calc(var(--pi-goo-size, 32px) * 0.42);
+  transform: scaleX(0.36);
+  transform-origin: right center;
+  background: color-mix(in srgb, var(--accent) 78%, #8b5cf6);
+  opacity: 0.85;
+}
+/* 桥：主球与尾巴之间的额外水块，脉动时产生“拉丝” */
+.pi-liquid-ghost {
+  right: calc(var(--pi-goo-r, 21px) + var(--pi-goo-size, 32px) * 0.5);
+  bottom: calc(var(--pi-goo-b, 9px) + var(--pi-goo-size, 32px) * 0.28);
+  width: calc(var(--pi-goo-size, 32px) * 0.7);
+  height: calc(var(--pi-goo-size, 32px) * 0.7);
+  opacity: 0.9;
+}
+/* 主球背景单独重申：特异度高于 .pi-liquid > span，保证渐变不被公共 background 盖掉 */
+.pi-liquid > .pi-liquid-main {
+  background: radial-gradient(
+    circle at 34% 28%,
+    color-mix(in srgb, var(--accent) 22%, #ffffff) 0%,
+    var(--accent) 52%,
+    color-mix(in srgb, var(--accent) 66%, #8b5cf6) 100%
+  );
+}
+.pi-liquid > .pi-liquid-tail {
+  background: color-mix(in srgb, var(--accent) 78%, #8b5cf6);
+}
+.pi-liquid > .pi-liquid-drop-b {
+  background: color-mix(in srgb, var(--accent) 62%, #6d8cff);
+}
+/* 两滴水：静止藏在主球身上，点击时被打散出去 */
+.pi-liquid-drop-a,
+.pi-liquid-drop-b {
+  width: calc(var(--pi-goo-size, 32px) * 0.32);
+  height: calc(var(--pi-goo-size, 32px) * 0.32);
+  opacity: 0;
+}
+.pi-liquid-drop-a {
+  right: calc(var(--pi-goo-r, 21px) + var(--pi-goo-size, 32px) * 0.1);
+  bottom: calc(var(--pi-goo-b, 9px) + var(--pi-goo-size, 32px) * 0.94);
+}
+.pi-liquid-drop-b {
+  right: calc(var(--pi-goo-r, 21px) + var(--pi-goo-size, 32px) * 0.86);
+  bottom: calc(var(--pi-goo-b, 9px) - var(--pi-goo-size, 32px) * 0.1);
+  background: color-mix(in srgb, var(--accent) 62%, #6d8cff);
+}
+
+/* 点击发送：整条液体向发送按钮“抽水” */
+.pi-liquid-root.pi-flow .pi-liquid-main {
+  animation: pi-main-pulse 0.9s cubic-bezier(0.18, 0.85, 0.2, 1) both;
+}
+.pi-liquid-root.pi-flow .pi-liquid-tail {
+  animation: pi-tail-pull 0.9s cubic-bezier(0.18, 0.85, 0.2, 1) both;
+}
+.pi-liquid-root.pi-flow .pi-liquid-ghost {
+  animation: pi-ghost-stretch 0.9s cubic-bezier(0.18, 0.85, 0.2, 1) both;
+}
+.pi-liquid-root.pi-flow .pi-liquid-drop-a {
+  animation: pi-drop-a 0.9s ease both;
+}
+.pi-liquid-root.pi-flow .pi-liquid-drop-b {
+  animation: pi-drop-b 0.9s ease both;
+}
+@keyframes pi-main-pulse {
+  0% { transform: scale(0.92); }
+  25% { transform: scale(1.16); }
+  48% { transform: scale(0.8); }
+  72% { transform: scale(1.07); }
+  100% { transform: scale(0.92); }
+}
+@keyframes pi-tail-pull {
+  0% { transform: scaleX(0.36); }
+  22% { transform: scaleX(1.5) translateX(-14px); }
+  45% { transform: scaleX(2.2) translateX(-16px); }
+  70% { transform: scaleX(1.1) translateX(-6px); }
+  100% { transform: scaleX(0.36); }
+}
+@keyframes pi-ghost-stretch {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.5) translateX(-6px); }
+  55% { transform: scale(0.7) translateX(-14px); }
+  100% { transform: scale(1); }
+}
+@keyframes pi-drop-a {
+  0% { transform: scale(0.7); opacity: 0.9; }
+  42% { transform: translate(22px, -26px) scale(1.25); opacity: 0.85; }
+  100% { transform: translate(44px, -12px) scale(0); opacity: 0; }
+}
+@keyframes pi-drop-b {
+  0% { transform: scale(0.8); opacity: 0.85; }
+  35% { transform: translate(30px, -10px) scale(1.15); opacity: 0.8; }
+  100% { transform: translate(58px, -4px) scale(0); opacity: 0; }
+}
+
+/* 底部波纹条：抽水时沿输入框底边掠过一道光 */
+.pi-liquid-wave {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 1px;
+  height: 3px;
+  border-radius: 9999px;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--accent) 70%, #55d8ff),
+    color-mix(in srgb, var(--accent) 55%, #a548ff),
+    transparent
+  );
+  filter: blur(3px);
+}
+.pi-liquid-root.pi-flow .pi-liquid-wave {
+  animation: pi-wave 0.9s ease both;
+}
+@keyframes pi-wave {
+  0% { opacity: 0; transform: scaleX(0.2); }
+  25% { opacity: 0.9; transform: scaleX(0.7); }
+  55% { opacity: 0.8; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(0.15); }
+}
+
+/* ── 发送按钮「一分三」（第七版 · 定稿）────────────────────────────────
+   整个分裂只做**按钮自己的形变**，不引入任何新颜色/新材质：
+   · .pi-morph-ghost 是圆钮坑位的临时舞台：发送按钮与停止按钮的**真实克隆**
+     叠在同一个圆里，颜色交接就在原位发生，读作“同一个按钮在变”，
+     而不是“有东西飞过来”（前六版的液柱/水珠就是死在这里：液体和按钮材质无关，
+     颜色再准也像在按钮上涂了一层颜料）。
+   · 其余按钮走 FLIP：起点位移 = 自己到圆钮中心的距离，于是它们是从圆钮底下
+     被**抽出来**的，不是从别处飘过来。
+   · 所有位移/缩放/透明度由 WAAPI（LiquidSendFx.splitToTargets）逐元素驱动，
+     这里只提供舞台与静息态。 */
+.pi-morph-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  /* 夹在卡片控件（卡片自己的层叠上下文，z-index 0 量级）与文字流光层（.pi-flow-text，
+     z-index 4000）之间：分裂必须盖住 composer 自己的边框，但绝不能被飞过的光字
+     把按钮涂掉；固定弹窗在 9999，仍然在上。 */
+  z-index: 4500;
+}
+.pi-morph-ghost {
+  position: absolute;
+  border-radius: 9999px;
+  /* 不给底色：ghost 里装的是真实按钮的克隆，任何自画背景都会变成“颜料” */
+  isolation: isolate;
+}
+/* 克隆的按钮：干掉自身定位与交互，就是一层会呼吸的贴图。
+   ★ 绝对不能碰 border/background/color —— 那正是“跟界面搭配”的来源 */
+.pi-morph-ghost > .pi-morph-origin,
+.pi-morph-ghost > .pi-morph-target {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* ★ box-sizing 必须写：克隆体带着原按钮的 padding（胶囊按钮是 0 12px），
+     content-box 下 100% + padding 会超宽，两个克隆就会并排成“半个红半个蓝”（实测） */
+  box-sizing: border-box;
+  pointer-events: none;
+}
+/* 圆钮涟漪：只借主题 accent 的一圈细边，扩散时自己淡掉 */
+.pi-morph-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid color-mix(in srgb, var(--accent) 62%, transparent);
+  opacity: 0;
+}
+/* 新按钮的静息态：React 渲染的占位（无过渡；位移交给 WAAPI 的 backwards fill，
+   所以延迟期间稳稳停在 opacity:0，不会先闪一帧） */
+.pi-morph-pending {
+  opacity: 0;
+}
+
+/* 新用户气泡「从右侧滑入」。
+   ★ 方向与光字一致：光字向右飘出、气泡从右侧滑入，读作「内容先被送出去，
+     再从右边卷回来凝成一条消息」。
+   ★ 为什么不让光字去追气泡：气泡位置无法在点击时可靠得知（React 异步插入 +
+     消息列表滚动），光字追气泡必然飘错（用户实测“飘的位置差距很大”）。
+     所以做成两个解耦的相对动效，只在**时间**上衔接 —— 气泡必须等光字飘出大半
+     之后才进场（见 LiquidSendFx.tsx 的 BUBBLE_DELAY_MS），绝不能跟点击同帧冒出来。
+
+   实现要点：
+     · .pi-bubble-in-right-pending 是入场**前**的静息态（不可见 + 右移），
+       由 MutationObserver 在微任务里加上，早于下一帧渲染，所以不会先闪一帧。
+     · .pi-bubble-in-right 是入场动画；两者都只动 transform / opacity，
+       绝不碰布局属性（不引发重排、不推挤列表）。 */
+.pi-bubble-in-right-pending {
+  opacity: 0;
+  transform: translateX(34px) scale(0.96);
+}
+.pi-bubble-in-right {
+  animation: pi-bubble-in-right 0.56s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: right center;
+}
+@keyframes pi-bubble-in-right {
+  0% { opacity: 0; transform: translateX(34px) scale(0.96); }
+  55% { opacity: 1; transform: translateX(-3px) scale(1.005); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+/* ★ 发送液态效果**故意不遵从** prefers-reduced-motion：见 components/LiquidSendFx.tsx
+   里 RESPECT_REDUCED_MOTION 的说明。本机 Windows 关闭「显示动画」后该媒体查询
+   恒为 reduce，会把整套发送反馈整个吞掉（用户反馈“看不到效果”的真正原因）。 */
+
+/* 引导 / 后续消息 chip：点一下 → 一滴水从 chip 被吸进发送按钮（只做反馈，不发送） */
+.pi-liquid-chip {
+  left: var(--pi-chip-x, 50%);
+  top: var(--pi-chip-y, 50%);
+  width: var(--pi-chip-w, 18px);
+  height: var(--pi-chip-w, 18px);
+  margin-left: calc(var(--pi-chip-w, 18px) / -2);
+  margin-top: calc(var(--pi-chip-w, 18px) / -2);
+  opacity: 0;
+}
+.pi-liquid-root.pi-chip-flow .pi-liquid-chip {
+  animation: pi-chip-absorb 0.6s cubic-bezier(0.3, 0.8, 0.3, 1) both;
+}
+@keyframes pi-chip-absorb {
+  0% { transform: translate(0, 0) scale(0.2); opacity: 0.9; }
+  35% { transform: translate(calc(var(--pi-chip-dx, 0px) * 0.3), calc(var(--pi-chip-dy, 0px) * 0.3)) scale(1.1); opacity: 0.95; }
+  70% { transform: translate(calc(var(--pi-chip-dx, 0px) * 0.75), calc(var(--pi-chip-dy, 0px) * 0.75)) scale(0.85); opacity: 0.85; }
+  100% { transform: translate(var(--pi-chip-dx, 0px), var(--pi-chip-dy, 0px)) scale(0.15); opacity: 0; }
+}
+/* chip 自身被“捏”一下 */
+.pi-chip-squish {
+  animation: pi-chip-squish 0.18s ease;
+}
+@keyframes pi-chip-squish {
+  0% { transform: scale(1); }
+  45% { transform: scale(0.93); }
+  100% { transform: scale(1); }
+}
+
+/* 长文本附件卡片：出现时像一滴水凝成形（跟发送的液态语言同一套） */
+.pi-text-attach {
+  animation: pi-text-attach-in 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes pi-text-attach-in {
+  0% { opacity: 0; transform: scale(0.88) translateY(2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* 文字水流覆盖层（命令式定位到 textarea 的矩形上）
+   ★ 绝不能设 overflow:hidden —— 逐字 span 是**飞到盒子外面**去的（终点在对话区
+   气泡上，横跨整个视口）。曾经写了 overflow:hidden，结果每个字一离开输入框
+   就被裁掉：肉眼只看到输入框里闪一下字，完全看不到“飞向对话区”（用户实测反馈）。 */
+.pi-flow-text {
+  position: fixed;
+  display: none;
+  z-index: 4000;
+  pointer-events: none;
+  color: var(--text);
+}
+.pi-flow-text > div {
+  white-space: pre-wrap;
+}
+/* 字符 → **发光文字**（与参考 demo 一致）：文字本身变成蓝紫色辉光，
+   向右飘出时逐渐虚化消散。
+
+   ★ 为什么不做成“光点圆球”：纯圆点读不出「我刚敲的字被送走了」这层语义，
+     保留真实字形 + glow 才既有信息量又有流动感（用户参照 demo 的反馈）。
+   ★ 位移由 driveFlow 逐帧写 transform / opacity / filter（只做**相对**向右飘移，
+     不依赖任何绝对坐标——见 LiquidSendFx.tsx 里 MAX_FLOW_CHARS 上方的设计说明），
+     所以这里**不能**再写 CSS 动画。 */
+.pi-flow-char {
+  position: relative;
+  display: inline-block;
+  white-space: pre;
+  color: var(--accent);
+  text-shadow:
+    0 0 8px rgba(var(--accent-rgb), 0.75),
+    0 0 18px rgba(var(--accent-rgb), 0.45);
+  will-change: transform, opacity, filter;
+  opacity: 0;
+}
+/* 空白字符不发光（仍占位，保证逐字排版位置与真实文字一致） */
+.pi-flow-char[data-blank="1"] {
+  color: transparent;
+  text-shadow: none;
+}
+
+/* 液态效果（.pi-liquid* / .pi-flow-* / .pi-morph-* / .pi-bubble-in-right*）
+   **故意不在这里关闭**，原因见 LiquidSendFx.tsx 的 RESPECT_REDUCED_MOTION。 */
+
+/* <details> 内容区抽屉式展开/折叠动画 */
+.drawer-details::details-content {
+  height: 0;
+  overflow: clip;
+  transition: height 0.28s cubic-bezier(0.16, 1, 0.3, 1), content-visibility 0.28s allow-discrete;
+}
+.drawer-details[open]::details-content {
+  height: calc-size(auto, size);
+}
+@media (prefers-reduced-motion: reduce) {
+  .drawer-details::details-content { transition: none; }
+}
+
+/* 工作中折叠组圆点行：运行中工具 = 空心呼吸点 */
+.meta-dot-running {
+  background: var(--accent);
+  animation: meta-dot-breathe 1.6s ease-in-out infinite;
+}
+@keyframes meta-dot-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .meta-dot-running { animation: none; }
+}
+
+/* 错误卡 / 自动重试状态行（简化错误卡用） */
+.retry-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+  padding: 8px 0;
+  font-size: 12.5px;
+  color: #b45309;
+}
+html.dark .retry-note { color: #fbbf24; }
+
+/* 轮末文件变更 chip */
+.turn-diff { font-size: 12.5px; }
+.turn-diff-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  color: var(--text-muted);
+  transition: color 0.15s;
+}
+.turn-diff-head:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--bg-panel) 52%, transparent);
+  backdrop-filter: blur(10px) saturate(1.3);
+  border-radius: 8px;
+}
+.turn-diff-head::-webkit-details-marker { display: none; }
+.turn-diff-stat { font-variant-numeric: tabular-nums; font-weight: 600; }
+.turn-diff-added { color: #16a34a; }
+.turn-diff-removed { color: #dc2626; }
+.turn-diff-chev { display: flex; transition: transform 0.25s; }
+.turn-diff[open] .turn-diff-chev { transform: rotate(90deg); }
+.turn-diff-enter {
+  animation: turn-diff-in 0.42s cubic-bezier(0.34, 1.35, 0.64, 1) both;
+}
+@keyframes turn-diff-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.97); filter: blur(1px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+
+/* chip 内联文件列表 */
+.turn-diff-files {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 4px 0 2px 8px;
+}
+.turn-diff-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--text-muted);
+  transition: background 0.12s, border-color 0.12s;
+  text-align: left;
+  width: fit-content;
+  max-width: 100%;
+}
+.turn-diff-file:hover {
+  background: color-mix(in srgb, var(--bg-panel) 64%, transparent);
+  backdrop-filter: blur(12px) saturate(1.3);
+  border-color: color-mix(in srgb, var(--accent) 32%, transparent);
+}
+.turn-diff-path {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+  text-align: left;
+  max-width: 420px;
+}
+.turn-diff-path-clickable {
+  cursor: pointer;
+  transition: color 0.12s;
+}
+.turn-diff-path-clickable:hover {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

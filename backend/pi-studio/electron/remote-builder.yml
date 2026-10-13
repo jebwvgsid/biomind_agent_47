@@ -1,0 +1,26 @@
+# Candidate packaging recipe only; no build/dependency download was run.
+appId: org.biomind.remote
+productName: BioMind Remote
+asar: true
+npmRebuild: false
+electronVersion: 43.3.0
+extraMetadata:
+  main: electron/remote-main.cjs
+directories:
+  output: release-remote
+files:
+  - "electron/remote-main.cjs"
+  - "electron/remote-controller.cjs"
+  - "electron/remote-preload.cjs"
+  - "electron/remote-connection.html"
+  - "electron/remote-connection.css"
+  - "electron/remote-connection.js"
+  - "package.json"
+  - "!node_modules/**"
+win:
+  icon: build/icon.ico
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: portable
+      arch: [x64]

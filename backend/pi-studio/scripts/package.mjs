@@ -1,0 +1,74 @@
+#!/usr/bin/env node
+// 桌面版构建 + 打包：
+//   node scripts/package.mjs          → next build(.next-pkg) + electron-builder --win
+//   node scripts/package.mjs --dir    → 只生成 release/win-unpacked（快速验证）
+//   node scripts/package.mjs --portable / --nsis → 只生成对应 .exe
+
+import { spawnSync } from "child_process";
+import { existsSync, rmSync } from "fs";
+import { resolve } from "path";
+
+const root = process.cwd();
+const nextBin = resolve(root, "node_modules", "next", "dist", "bin", "next");
+const electronBuilderBin = resolve(root, "node_modules", "electron-builder", "cli.js");
+const env = {
+  ...process.env,
+  // 打包必须用 webpack（Turbopack 与 --webpack 不可同时开；若外部设置了 TURBOPACK=1
+  // 会导致 next build 报 "Multiple bundler flags set"，这里强制清掉）。
+  TURBOPACK: "",
+  NODE_ENV: "production",
+  PI_WEB_DIST_DIR: ".next-pkg",
+  // GitHub 在你的网络环境不可达时，打包工具默认会卡在下载上；这里默认走国内镜像。
+  ELECTRON_BUILDER_BINARIES_MIRROR:
+    process.env.ELECTRON_BUILDER_BINARIES_MIRROR
+    || "https://npmmirror.com/mirrors/electron-builder-binaries/",
+  ELECTRON_MIRROR:
+    process.env.ELECTRON_MIRROR
+    || "https://npmmirror.com/mirrors/electron/",
+};
+
+if (!existsSync(nextBin)) {
+  console.error("[pack] next bin not found:", nextBin);
+  process.exit(1);
+}
+
+// next build 子进程注入 preload：项目跨盘移动后，nft 文件追踪会枚举用户主目录
+// C:\Users\zheng，撞上 Windows 系统兼容 junction（My Documents 等）的 EPERM 并
+// 直接判编译失败。背景与机制见 scripts/next-build-preload.cjs 头注释。
+// 仅注入构建步骤；electron-builder 阶段不带（env 不动）。
+const preloadModule = resolve(root, "scripts", "next-build-preload.cjs");
+const buildNodeOptions = [
+  (process.env.NODE_OPTIONS || "").trim(),
+  `--require ${preloadModule}`,
+].filter(Boolean).join(" ");
+const buildEnv = {
+  ...env,
+  NODE_OPTIONS: buildNodeOptions,
+};
+
+// 桌面版使用独立构建目录，避免污染 npm run dev 的 .next。
+rmSync(resolve(root, ".next-pkg"), { recursive: true, force: true });
+const build = spawnSync(process.execPath, [nextBin, "build", "--webpack"], {
+  cwd: root,
+  env: buildEnv,
+  stdio: "inherit",
+});
+if (build.status !== 0) process.exit(build.status ?? 1);
+
+if (!existsSync(electronBuilderBin)) {
+  console.error("[pack] electron-builder not found:", electronBuilderBin);
+  process.exit(1);
+}
+
+const mode = (process.argv[2] || "").replace(/^--/, "");
+const builderArgs = ["--win"];
+if (mode === "dir") builderArgs.push("--dir");
+else if (["portable", "nsis", "msi"].includes(mode)) builderArgs.push(mode);
+else if (mode) builderArgs.push(mode);
+builderArgs.push("--publish", "never");
+const builder = spawnSync(process.execPath, [electronBuilderBin, ...builderArgs], {
+  cwd: root,
+  env,
+  stdio: "inherit",
+});
+process.exit(builder.status ?? 1);

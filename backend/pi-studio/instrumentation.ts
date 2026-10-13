@@ -1,0 +1,55 @@
+export async function register(): Promise<void> {
+  if (process.env.NEXT_RUNTIME !== "nodejs") return;
+  // BioMind loads its own skills, settings and environment through its formal
+  // entrypoint. Server bootstrap must not migrate/register Studio agent state.
+  if (process.env.PI_STUDIO_AGENT_PROFILE === "biomind") return;
+
+  // Move pi-studio's legacy data (~/.pi/agent/pi-studio-*) into the project-local,
+  // configurable data dir (default <project>/pi-web-uploads) before anything
+  // starts writing to the new location (open-file marker, univer daemon home, …).
+  try {
+    const { migrateLegacyData } = await import("./lib/storage-config");
+    migrateLegacyData();
+  } catch {
+    /* best-effort */
+  }
+
+  const { configureHttpDispatcher } = await import("@/lib/http-dispatcher");
+  configureHttpDispatcher();
+
+  // 注册随应用分发的内置 pi 包（pi-memory-zh 中文记忆插件）到 settings.json 的
+  // packages 数组，首次启动后 pi 引擎自动加载其扩展。幂等：已配置过/用户手动
+  // 安装过的同名包不会被重复注册；失败不阻塞启动。
+  try {
+    const { ensureBuiltinPackagesRegistered } = await import("./lib/builtin-packages");
+    ensureBuiltinPackagesRegistered();
+  } catch {
+    /* best-effort */
+  }
+
+  // 打包分发关键路径：把随应用分发的内置技能（.agents/skills，electron-builder
+  // 已白名单进 resources/app）同步到用户全局 ~/.agents/skills（SDK 全局信任），
+  // 终端用户在任何 cwd 下发「创建 PPT」都能加载 office-edit 骨架流水线；
+  // 同时向 agent bash 暴露 UNIVER_CLI / PI_WEB_PORT。幂等且失败不阻塞启动。
+  try {
+    const { ensureBuiltinSkillsSynced, ensureAgentEnvExposed } = await import("./lib/bundled-skills");
+    ensureBuiltinSkillsSynced();
+    ensureAgentEnvExposed();
+  } catch {
+    /* best-effort */
+  }
+
+  // Warm the univer daemon in the background so the first .univer command from
+  // the user isn't paying the cold-start cost (~4s + race retries). The warm-up
+  // is idempotent and failure-tolerant (see lib/univer-cli.ts); boot must never
+  // fail because of it.
+  try {
+    const { warmUpUniverDaemon } = await import("./lib/univer-cli");
+    void warmUpUniverDaemon();
+  } catch {
+    /* best-effort */
+  }
+
+  // 右侧浏览器由 Electron 原生 WebContentsView + 控制桥提供（electron/main.cjs 启动
+  // bridge.cjs），npm run dev 纯浏览器模式不支持右端浏览器——无需任何后台侧车。
+}

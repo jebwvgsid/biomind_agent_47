@@ -1,0 +1,115 @@
+# Pi Studio 桌面应用打包配置（electron-builder）
+# 用法：npm run pack            → 生成安装版 + 便携版 .exe（release/ 目录）
+#       npm run pack:dir        → 只生成未打包目录（release/win-unpacked），快速验证
+#       npm run pack:portable   → 只生成单文件便携版 .exe
+#       npm run pack:nsis       → 只生成安装版 .exe
+#       npm run pack:msi        → 只生成 .msi 安装包
+# 首次运行需要联网下载 nsis/winCodeSign 工具（脚本已配置国内镜像）。
+
+appId: com.agegr.piweb
+productName: Pi Studio
+copyright: Copyright © 2026 agegr
+
+directories:
+  output: release
+
+# 内置服务由 electron/main.cjs 用「本 exe + ELECTRON_RUN_AS_NODE」方式启动，
+# 需要真实文件路径，因此关闭 asar（避免子进程/daemon 读不到打包内文件）。
+asar: false
+
+# 所有原生依赖均为预编译产物（sharp、pi-tui native 等），无需 node-gyp 重编译
+npmRebuild: false
+
+# ⚠️ 打包完成后补回被收集器压平丢弃的嵌套 node_modules（minimatch@10/chalk/glob/
+# semver/marked 等，见 scripts/after-pack.cjs 头注释）。不补会导致 pi 系列包在
+# 运行时解析到错误版本，打包 exe 大批 API（/api/sessions、/api/cwd/validate…）
+# 模块加载即炸 → 全部裸 500。
+afterPack: scripts/after-pack.cjs
+
+electronVersion: 43.3.0
+
+files:
+  - ".next-pkg/**"
+  - "electron/**"
+  - "bin/**"
+  - "public/**"
+  - ".agents/skills/**"
+  - ".agents/**"
+  - "packages/pi-memory-zh/**"   # 内置中文记忆插件（pi-memory-zh），随应用分发
+  - "next.config.mjs"
+  - "package.json"
+
+  # ---- 排除项 ----
+  - "!**/*.map"                     # sourcemap 缩小体积
+  - "!**/*.tsbuildinfo"
+
+  # ---- node_modules 瘦身（以下均已实测验证：移除后 next start 与全部 API 正常）----
+  # next build 会把应用代码（xlsx/fflate/@univerjs/presets 等）打进 .next-pkg 的 chunk，
+  # 因此这些可以排除。
+  # ⚠️ 但 @earendil-works/pi-*（serverExternalPackages，不打进 chunk）在运行时从
+  # node_modules 加载，它们依赖的包（proper-lockfile 及其依赖 graceful-fs/p-retry/
+  # retry/signal-exit 等）绝不能排除！曾经在打包时临时排除 proper-lockfile 导致安装版
+  # 全部 auth/session API ERR_MODULE_NOT_FOUND → 启动即 HTTP 500。
+  - "!node_modules/@next/swc*/**"                                   # SWC 编译器 ~130MB，next start 不需要
+  - "!node_modules/typescript/**"                                   # 类型系统 ~20MB，仅 dev/build 用
+  - "!node_modules/xlsx/**"                                         # 已打进 chunk
+  - "!node_modules/codepage/**"                                     # xlsx 的依赖，同上
+  - "!node_modules/fflate/**"                                       # 已打进 chunk
+  # 注意：不要在这里加 !node_modules/proper-lockfile/** 或任何 @earendil-works/pi-* 的
+  # 运行时依赖排除项（见上方注释，运行时从 node_modules 加载）。
+  - "!node_modules/@univerjs/presets/**"                            # 前端查看器，已打进 client chunk
+  # ⚠️ 以下两个 @univerjs-pro native 包绝不能排除：univer-cli 的 import/export 运行时需要
+  # 两个都是 markstream-react 的可选依赖（D2 图 / InfoGraphic 图），而项目 UI 没有这两种
+  # 代码块的渲染入口，运行时永不触发 → 排除（已从 package.json 移除顶层声明）。
+  - "!node_modules/@terrastruct/d2/**"                               # D2 图 ~33MB，UI 无入口
+  - "!node_modules/@antv/infographic/**"                             # InfoGraphic 图 ~11MB，UI 无入口
+  # ⚠️ 以下两个 @univerjs-pro native 包绝不能排除：univer-cli 的 import/export 运行时需要
+  # （@univerjs-pro/uexcli → uexcli-windows-x64 的 exe；doc 转换 → doc-typst-native-binding）。
+  # 此前误排除导致 AI 编辑报 Cannot find module '@univerjs-pro/uexcli-windows-x64/uexcli-windows.exe'
+  # 终端 PTY 只留 win32-x64 预编译二进制，其余平台的 @lydell/node-pty-* 无意义（可选依赖，装时按平台装，
+  # 打包时排除其他平台可省体积）。
+  - "!node_modules/@lydell/node-pty-linux*/**"
+  - "!node_modules/@lydell/node-pty-darwin*/**"
+
+  # 项目目录里的开发/临时内容
+  - "!**/.next/**"
+  - "!**/.next-pkg/cache/**"
+  - "!**/.git/**"
+  - "!**/docs/**"
+  - "!**/screenshots-cf/**"
+  - "!**/pi-web-uploads/**"
+  - "!**/release/**"
+  - "!**/*.xlsx"
+  - "!**/*.univer"
+  # ⚠️ 只排除 next 构建产物的 html；绝不能全局排除 *.html —— univer-cli 的 daemon
+  # 启动需要 view/index.html 与 view/machine/index.html（之前全局排除导致
+  # AI 编辑报 ENOENT: view/index.html，daemon 起不来）
+  - "!**/.next-pkg/**/*.html"
+  - "!**/*.log"
+  # ⚠️ .pi-web-config.json 包含开发者本机的 uploadsDir 路径（如 D:\zheng\data\APP\pi），
+  # 打包时绝不能带入——否则用户安装后数据目录指向不存在的绝对路径，导致文件浏览
+  # 等依赖数据目录的功能在重启后「爆红」。
+  - "!**/.pi-web-config.json"
+  - "!**/测试模板*"
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: portable
+      arch: [x64]
+  icon: build/icon.ico
+
+nsis:
+  oneClick: true
+  perMachine: false
+  allowToChangeInstallationDirectory: false
+  artifactName: ${productName}-${version}-setup.${ext}
+
+portable:
+  artifactName: ${productName}-${version}-portable.${ext}
+
+msi:
+  oneClick: false
+  perMachine: false
+  artifactName: ${productName}-${version}-${arch}.${ext}

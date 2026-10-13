@@ -1,0 +1,14 @@
+nodeLinker: hoisted
+
+# 依赖安装脚本白名单（pnpm 11 默认拦截构建脚本）
+allowBuilds:
+  '@google/genai': true
+  electron-winstaller: true
+  protobufjs: true
+  sharp: true
+  univer-cli: true
+  unrs-resolver: true
+
+patchedDependencies:
+  '@earendil-works/pi-ai': patches/@earendil-works__pi-ai.patch
+  '@univerjs-pro/uexcli@0.4.1': patches/@univerjs-pro__uexcli@0.4.1.patch

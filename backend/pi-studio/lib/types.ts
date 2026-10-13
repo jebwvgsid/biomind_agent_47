@@ -1,0 +1,357 @@
+// Types mirrored from pi-mono coding-agent session-manager
+
+export interface SessionHeader {
+  type: "session";
+  version?: number;
+  id: string;
+  timestamp: string;
+  cwd: string;
+  parentSession?: string;
+}
+
+export interface SessionEntryBase {
+  type: string;
+  id: string;
+  parentId: string | null;
+  timestamp: string;
+}
+
+export interface TextContent {
+  type: "text";
+  text: string;
+}
+
+export interface ImageContent {
+  type: "image";
+  source: {
+    type: "base64" | "url";
+    media_type?: string;
+    data?: string;
+    url?: string;
+  };
+  /** 扁平 base64（SDK 实际落盘格式，live reducer 亦用此） */
+  data?: string;
+  mimeType?: string;
+  /**
+   * 初始历史负载里被剔掉的图片（deferMedia=1）：正文不再内嵌 base64，
+   * 改为客户端按需拉取 `GET /api/sessions/[id]/media?ref=<mediaRef>`。
+   * 格式 `<entryId>:<contentBlockIndex>`。
+   */
+  mediaRef?: string;
+}
+
+export interface ThinkingContent {
+  type: "thinking";
+  thinking: string;
+  /** Historical content omitted from the initial response and loaded on demand. */
+  deferred?: boolean;
+}
+
+export interface ToolCallContent {
+  type: "toolCall";
+  toolCallId: string;
+  toolName: string;
+  input: Record<string, unknown>;
+}
+
+export type AssistantContentBlock = TextContent | ImageContent | ThinkingContent | ToolCallContent;
+
+export interface UserMessage {
+  role: "user";
+  content: string | (TextContent | ImageContent)[];
+  /** 发送时刻（= 条目落盘时刻） */
+  timestamp?: number;
+  /** 条目落盘时刻（历史回放补齐；用户消息与 timestamp 相同） */
+  endTimestamp?: number;
+  /**
+   * `false` = 宿主注入的隐藏指令（如收尾守卫 turn-nudge），**不在对话区渲染**。
+   *
+   * 为什么隐藏消息会是 user 角色：`role:"custom"` 的消息在 pi-ai 的
+   * openai-completions 转换链里会被整条丢弃（convertMessages 只处理
+   * system/user/assistant/toolResult），所以给模型的提醒必须走 user 角色下发；
+   * 靠这个字段把两类“假用户消息”从 UI 上区分出去。
+   * 实时流（useAgentSession 的 message_end）与历史回放（session-reader）两侧都要过滤。
+   */
+  display?: boolean;
+}
+
+export interface AssistantMessage {
+  role: "assistant";
+  content: AssistantContentBlock[];
+  model: string;
+  provider: string;
+  stopReason?: string;
+  errorMessage?: string;
+  /** 本轮回复「开始」时刻（pi 写入 message 时打的时间戳） */
+  timestamp?: number;
+  /**
+   * 本轮回复「完成」时刻：取会话条目的落盘时间戳（entry.timestamp）。
+   * 与 timestamp 区分：assistant 的 message.timestamp 是生成起点，条目写入才是终点；
+   * 对话区显示「模型回复完成节点」和每轮耗时用这个。
+   */
+  endTimestamp?: number;
+  usage?: {
+    input: number;
+    output: number;
+    cacheRead: number;
+    cacheWrite: number;
+    cost: {
+      input: number;
+      output: number;
+      cacheRead: number;
+      cacheWrite: number;
+      total: number;
+    };
+  };
+}
+
+export interface ToolResultMessage {
+  role: "toolResult";
+  toolCallId: string;
+  toolName?: string;
+  content: (TextContent | ImageContent)[];
+  isError?: boolean;
+  details?: unknown;
+  timestamp?: number;
+  /** 条目落盘时刻（工具执行完成）；历史回放由 entry.timestamp 补齐 */
+  endTimestamp?: number;
+}
+
+export interface CustomMessage {
+  role: "custom";
+  customType: string;
+  content: string | (TextContent | ImageContent)[];
+  display: boolean;
+  details?: unknown;
+  timestamp?: number;
+  endTimestamp?: number;
+}
+
+export interface BashExecutionMessage {
+  role: "bashExecution";
+  command: string;
+  output: string;
+  exitCode?: number;
+  cancelled?: boolean;
+  truncated?: boolean;
+  fullOutputPath?: string;
+  excludeFromContext?: boolean;
+  timestamp?: number;
+  endTimestamp?: number;
+}
+
+export type AgentMessage = UserMessage | AssistantMessage | ToolResultMessage | CustomMessage | BashExecutionMessage;
+
+export type ExtensionUiRequest =
+  | {
+      type: "extension_ui_request";
+      id: string;
+      method: "select";
+      title: string;
+      options: string[];
+      timeout?: number;
+      expiresAt?: number;
+    }
+  | {
+      type: "extension_ui_request";
+      id: string;
+      method: "confirm";
+      title: string;
+      message: string;
+      timeout?: number;
+      expiresAt?: number;
+    }
+  | {
+      type: "extension_ui_request";
+      id: string;
+      method: "input";
+      title: string;
+      placeholder?: string;
+      timeout?: number;
+      expiresAt?: number;
+    }
+  | {
+      type: "extension_ui_request";
+      id: string;
+      method: "editor";
+      title: string;
+      prefill?: string;
+      timeout?: number;
+      expiresAt?: number;
+    }
+  | {
+      type: "extension_ui_request";
+      id: string;
+      method: "notify";
+      message: string;
+      notifyType?: "info" | "warning" | "error";
+    }
+  | {
+      type: "extension_ui_request";
+      id: string;
+      method: "setStatus";
+      statusKey: string;
+      statusText?: string;
+    }
+  | {
+      type: "extension_ui_request";
+      id: string;
+      method: "setWidget";
+      widgetKey: string;
+      widgetLines?: string[];
+      widgetPlacement?: "aboveEditor" | "belowEditor";
+    }
+  | {
+      type: "extension_ui_request";
+      id: string;
+      method: "setTitle";
+      title: string;
+    }
+  | {
+      type: "extension_ui_request";
+      id: string;
+      method: "set_editor_text";
+      text: string;
+    }
+  | {
+      type: "extension_ui_request";
+      id: string;
+      method: "custom";
+      lines: string[];
+      closed?: boolean;
+    };
+
+export type ExtensionUiResponse =
+  | { type: "extension_ui_response"; id: string; value: string }
+  | { type: "extension_ui_response"; id: string; confirmed: boolean }
+  | { type: "extension_ui_response"; id: string; cancelled: true };
+
+export interface ExtensionStatusItem {
+  key: string;
+  text: string;
+}
+
+export interface ExtensionWidgetItem {
+  key: string;
+  lines: string[];
+  placement: "aboveEditor" | "belowEditor";
+}
+
+export interface SessionMessageEntry extends SessionEntryBase {
+  type: "message";
+  message: AgentMessage;
+}
+
+export interface ThinkingLevelChangeEntry extends SessionEntryBase {
+  type: "thinking_level_change";
+  thinkingLevel: string;
+}
+
+export interface ModelChangeEntry extends SessionEntryBase {
+  type: "model_change";
+  provider: string;
+  modelId: string;
+}
+
+export interface CompactionEntry extends SessionEntryBase {
+  type: "compaction";
+  summary: string;
+  firstKeptEntryId: string;
+  tokensBefore: number;
+  details?: unknown;
+  fromHook?: boolean;
+}
+
+export interface BranchSummaryEntry extends SessionEntryBase {
+  type: "branch_summary";
+  fromId: string;
+  summary: string;
+  details?: unknown;
+  fromHook?: boolean;
+}
+
+export interface CustomEntry extends SessionEntryBase {
+  type: "custom";
+  customType: string;
+  data?: unknown;
+}
+
+export interface CustomMessageEntry extends SessionEntryBase {
+  type: "custom_message";
+  customType: string;
+  content: string | (TextContent | ImageContent)[];
+  details?: unknown;
+  display: boolean;
+}
+
+export interface LabelEntry extends SessionEntryBase {
+  type: "label";
+  targetId: string;
+  label: string | undefined;
+}
+
+export interface SessionInfoEntry extends SessionEntryBase {
+  type: "session_info";
+  name?: string;
+}
+
+export type SessionEntry =
+  | SessionMessageEntry
+  | ThinkingLevelChangeEntry
+  | ModelChangeEntry
+  | CompactionEntry
+  | BranchSummaryEntry
+  | CustomEntry
+  | CustomMessageEntry
+  | LabelEntry
+  | SessionInfoEntry;
+
+export type FileEntry = SessionHeader | SessionEntry;
+
+export interface SessionTreeNode {
+  entry: SessionEntry;
+  children: SessionTreeNode[];
+  label?: string;
+  compressedEntryIds?: string[];
+}
+
+export interface SessionInfo {
+  profile?: "pi" | "biomind";
+  path: string;
+  id: string;
+  cwd: string;
+  name?: string;
+  created: string;
+  modified: string;
+  messageCount: number;
+  firstMessage: string;
+  /** Main's read-only ownership/provenance inspection, never inferred from registry absence. */
+  resumable?: boolean;
+  resumeReason?: string;
+  parentSessionId?: string; // set if this session was forked from another
+  /** Main repo root shared by all worktrees of this cwd (cwd itself for non-git dirs).
+   *  Always set by the server; optional because the client builds transient
+   *  SessionInfo objects before the first refresh. Fall back to cwd. */
+  projectRoot?: string;
+  /** Branch name when cwd is a linked git worktree (not the main checkout) */
+  worktreeBranch?: string;
+  /** Team-backed session: set when this session is a 项目组 (multi-agent team) */
+  teamId?: string;
+  /** 项目组显示名（teamId 存在时） */
+  teamName?: string;
+  /** 项目组 UI 模式："team"=群聊视图，"chat"=已转回普通会话（数据保留） */
+  teamUiMode?: "team" | "chat";
+}
+
+export interface RecentFile {
+  path: string;
+  name: string;
+  openedAt: number;
+}
+
+export interface SessionContext {
+  messages: AgentMessage[];
+  entryIds: string[]; // parallel to messages — the session entry id for each message
+  thinkingLevel: string;
+  model: { provider: string; modelId: string } | null;
+}
