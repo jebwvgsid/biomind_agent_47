@@ -1,0 +1,221 @@
+import type { ToolRun, ViewMessage } from "./types";
+
+export interface FileArtifact {
+  path: string;
+  name: string;
+  displayPath: string;
+  ext: string;
+  action: "created" | "updated" | "presented";
+  description?: string;
+}
+
+const FILE_TOOL = /(?:^|[_-])(write|edit|create|save|export)(?:[_-]|$)/i;
+const COMMAND_TOOL = /(?:^|[_-])(bash|shell|exec|execute|command|run|python|powershell|pwsh)(?:[_-]|$)/i;
+const OUTPUT_HINT = /(?:已生成|已创建|已保存|已就绪|输出(?:文件|路径)?|生成(?:文件|路径)?|保存(?:为|到|路径)?|写入(?:到)?|产物|generated|created|saved|written|output|exported|ready at)/i;
+const OUTPUT_EXTENSIONS =
+  "html?|pdf|csv|xlsx?|docx|pptx|json|md|txt|xml|svg|png|jpe?g|gif|webp|zip|tar|gz|mp4|webm|py|js|jsx|ts|tsx|css";
+const ABSOLUTE_OUTPUT_PATH = new RegExp(
+  String.raw`(?:[a-zA-Z]:[\\/]|/[a-zA-Z]/)[^"'` + "`" + String.raw`<>\r\n|?*]+?\.(?:${OUTPUT_EXTENSIONS})`,
+  "gi",
+);
+const QUOTED_OUTPUT_PATH = new RegExp(
+  String.raw`["'` + "`" + String.raw`]([^"'` + "`" + String.raw`<>\r\n|?*]+?\.(?:${OUTPUT_EXTENSIONS}))["'` + "`" + String.raw`]`,
+  "gi",
+);
+const SIMPLE_OUTPUT_PATH = new RegExp(
+  String.raw`(?:^|[\s(（:：])((?:\.{0,2}[\\/])?[\w\u3400-\u9fff@()（）.+ -]+(?:[\\/][\w\u3400-\u9fff@()（）.+ -]+)*\.(?:${OUTPUT_EXTENSIONS}))(?=$|[\s,，。;；:：)）])`,
+  "gi",
+);
+function cleanPath(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const path = value.trim().replace(/^["']|["']$/g, "");
+  return path || null;
+}
+
+function pathFromArgs(args: unknown): string | null {
+  if (!args || typeof args !== "object") return null;
+  const record = args as Record<string, unknown>;
+  for (const key of ["path", "filePath", "file_path", "filename", "file"]) {
+    const path = cleanPath(record[key]);
+    if (path) return path;
+  }
+  return null;
+}
+
+function normalizeSegments(path: string): string {
+  const rooted = path.startsWith("/");
+  const parts: string[] = [];
+  for (const part of path.split("/")) {
+    if (!part || part === ".") continue;
+    if (part === "..") {
+      if (parts.length && parts[parts.length - 1] !== "..") parts.pop();
+      else if (!rooted) parts.push(part);
+      continue;
+    }
+    parts.push(part);
+  }
+  return (rooted ? "/" : "") + parts.join("/");
+}
+
+/** Tool paths belong to remote Linux, including case and literal backslashes. */
+export function resolveArtifactPath(rawPath: string, cwd: string): string {
+  return normalizeSegments(rawPath.startsWith("/") ? rawPath : `${cwd}/${rawPath}`);
+}
+
+function basename(path: string): string {
+  return path.split("/").filter(Boolean).pop() || path;
+}
+
+function extension(name: string): string {
+  const dot = name.lastIndexOf(".");
+  return dot > 0 ? name.slice(dot).toLowerCase() : "";
+}
+
+function relativeDisplayPath(path: string, cwd: string): string {
+  const normalizedPath = path;
+  const normalizedCwd = normalizeSegments(cwd).replace(/\/+$/, "");
+  if (normalizedPath.startsWith(`${normalizedCwd}/`)) {
+    return normalizedPath.slice(normalizedCwd.length + 1);
+  }
+  return normalizedPath;
+}
+
+function actionForTool(name: string): FileArtifact["action"] {
+  return /edit|patch|replace|update/i.test(name) ? "updated" : "created";
+}
+
+function outputPathsFromText(text: string, requireHint: boolean): string[] {
+  const found: string[] = [];
+  const lines = text.split(/\r?\n/);
+  let previousHint = false;
+  for (const line of lines) {
+    const currentHint = OUTPUT_HINT.test(line);
+    const linePaths: string[] = [];
+    if (!requireHint || currentHint || previousHint) {
+      ABSOLUTE_OUTPUT_PATH.lastIndex = 0;
+      QUOTED_OUTPUT_PATH.lastIndex = 0;
+      SIMPLE_OUTPUT_PATH.lastIndex = 0;
+      for (const match of line.matchAll(ABSOLUTE_OUTPUT_PATH)) linePaths.push(match[0]);
+      if (!linePaths.length) {
+        for (const match of line.matchAll(QUOTED_OUTPUT_PATH)) linePaths.push(match[1]);
+      }
+      if (!linePaths.length) {
+        for (const match of line.matchAll(SIMPLE_OUTPUT_PATH)) linePaths.push(match[1]);
+      }
+      found.push(...linePaths);
+    }
+    previousHint = currentHint && linePaths.length === 0;
+  }
+  return found;
+}
+
+/**
+ * Recover successful file outputs from the tool calls stored in a Pi assistant
+ * round. Because tool calls are persisted in the session transcript, this also
+ * works after reopening an older thread.
+ */
+export function collectFileArtifacts(
+  messages: ViewMessage[],
+  toolRuns: Record<string, ToolRun>,
+  cwd: string,
+): FileArtifact[] {
+  const byPath = new Map<string, FileArtifact>();
+  const roundToolIds = new Set<string>();
+
+  const addArtifact = (rawPath: string, action: FileArtifact["action"]) => {
+    const cleaned = cleanPath(rawPath);
+    if (!cleaned) return;
+    const path = resolveArtifactPath(cleaned, cwd);
+    const name = basename(path);
+    const key = path;
+    const next: FileArtifact = {
+      path,
+      name,
+      displayPath: relativeDisplayPath(path, cwd),
+      ext: extension(name),
+      action,
+    };
+    const previous = byPath.get(key);
+    byPath.set(key, previous ? { ...next, action: previous.action === "created" ? "created" : next.action } : next);
+  };
+
+  for (const message of messages) {
+    for (const block of message.blocks || []) {
+      if (block.type === "toolCall") {
+        roundToolIds.add(block.id);
+        const run = toolRuns[block.id];
+        const toolName = run?.name || block.name || "";
+        if (!run?.completed || run.running || run.isError) continue;
+        if (FILE_TOOL.test(toolName)) {
+          const rawPath = pathFromArgs(run?.args) || pathFromArgs(block.arguments);
+          if (rawPath) addArtifact(rawPath, actionForTool(toolName));
+        }
+        continue;
+      }
+    }
+  }
+
+  // A successful script or shell command can create files that never appear in
+  // the command arguments (for example `python build_dashboard.py` writing an
+  // HTML dashboard internally). Recover only paths printed with an explicit
+  // output/create/save hint. Scanning every path in command output would turn
+  // `dir`, `ls`, `git status`, and similar workspace inspections into false
+  // artifacts for every historical file in the same folder.
+  // Do not scan ordinary assistant prose: mentioning an older output file is
+  // not evidence that the file changed in this round.
+  for (const id of roundToolIds) {
+    const run = toolRuns[id];
+    if (!run?.completed || run.running || run.isError || !COMMAND_TOOL.test(run.name || "")) continue;
+    for (const rawPath of outputPathsFromText(run.resultText || "", true)) {
+      addArtifact(rawPath, "created");
+    }
+  }
+
+  return [...byPath.values()];
+}
+
+/** Final delivery selection, independent of the list of files touched by tools. */
+export function selectFinalArtifacts(messages: ViewMessage[], toolRuns: Record<string, ToolRun>, cwd: string): FileArtifact[] {
+  let presented: FileArtifact[] | undefined;
+  for (const message of messages) {
+    for (const block of message.blocks || []) {
+      if (block.type !== "toolCall" || block.name !== "pi_studio_present") continue;
+      const run = toolRuns[block.id];
+      if (!run?.completed || run.running || run.isError) continue;
+      try {
+        const result = JSON.parse(run.resultText || "");
+        if (result.kind !== "pi-studio-deliverables" || result.version !== 1 || !Array.isArray(result.files)) continue;
+        if (!result.files.length || result.files.length > 20 || result.files.some((file: any) => typeof file?.path !== "string" || !file.path.trim())) continue;
+        const unique = new Map<string, FileArtifact>();
+        for (const file of result.files) {
+          const path = resolveArtifactPath(file.path, cwd);
+          const name = basename(path);
+          unique.set(path, { path, name, displayPath: relativeDisplayPath(path, cwd), ext: extension(name), action: "presented", description: typeof file.description === "string" ? file.description : undefined });
+        }
+        presented = [...unique.values()];
+      } catch { /* Incomplete or incompatible results are not delivery declarations. */ }
+    }
+  }
+  if (presented !== undefined) return presented;
+
+  // Older sessions have no presentation tool. Only a final response referencing
+  // a successful output of this round can promote that output to a delivery.
+  const final = messages[messages.length - 1];
+  if (!final || final.errorMessage || final.blocks?.some(block => block.type === "toolCall")) return [];
+  const text = (final.blocks || []).filter(block => block.type === "text").map(block => block.text || "").join("\n").replace(/```[\s\S]*?```/g, "");
+  const references: string[] = [];
+  for (const match of text.matchAll(/\[[^\]]*\]\((?:<([^>]+)>|([^\s)]+))\)/g)) {
+    try { references.push(decodeURIComponent(match[1] || match[2])); } catch { /* Bad URI escape. */ }
+  }
+  for (const match of text.matchAll(/`([^`\n]+)`/g)) references.push(match[1]);
+  references.push(...outputPathsFromText(text, true));
+  const candidates = collectFileArtifacts(messages, toolRuns, cwd);
+  return candidates.filter(candidate => references.some(reference => {
+    if (/^[a-z][a-z\d+.-]*:\/\//i.test(reference)) return false;
+    const normalized = resolveArtifactPath(reference, cwd);
+    if (normalized === candidate.path) return true;
+    // A basename is safe only when it identifies exactly one output this round.
+    return !reference.includes("/") && reference === candidate.name
+      && candidates.filter(file => file.name === candidate.name).length === 1;
+  }));
+}

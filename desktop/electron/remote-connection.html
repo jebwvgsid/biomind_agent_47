@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BioMind Studio · 连接服务器</title><link rel="stylesheet" href="connection.css"><script src="connection.js" defer></script></head>
+<body><main>
+  <header><p class="eyebrow">BioMind Studio</p><h1>连接你的 BioMind 服务器</h1><p>在桌面选择远端项目，让服务器上的 Main agent 执行任务。</p></header>
+  <section class="connection-status"><h2>连接状态</h2><p id="status" role="status" aria-live="polite" aria-atomic="true">正在加载连接模块与保存的配置…</p></section>
+  <section><label>已保存的服务器<select id="saved"><option value="">添加服务器</option></select></label><div class="actions"><button id="remove" type="button">删除配置</button><button id="clear-auth" type="button">忘记工作台口令</button></div></section>
+  <form id="connection-form" novalidate aria-busy="false"><div class="fields">
+    <label>显示名称<input id="label" maxlength="128" placeholder="我的实验室"></label>
+    <label>连接方式<select id="ssh-kind"><option value="alias">已有 SSH 别名</option><option value="host">主机地址与用户名</option></select></label>
+    <label id="alias-field" class="wide">SSH 别名<input id="alias" placeholder="例如 yongjiusuo（须与 Windows SSH 配置一致）" maxlength="253" spellcheck="false"></label>
+    <label id="host-field" hidden>服务器地址<input id="host" maxlength="253" spellcheck="false"></label>
+    <label id="user-field" hidden>SSH 用户名<input id="user" maxlength="128" spellcheck="false"></label>
+    <label>SSH 端口<input id="sshPort" type="number" min="1" max="65535" value="22"></label>
+    <label>Windows 本地端口<input id="localPort" type="number" min="1024" max="65535" value="30142"></label>
+    <label class="wide">SSH 私钥文件（可选，留空使用已有配置）<span class="key-row"><input id="identityFile" maxlength="4096" spellcheck="false"><button id="select-key" type="button">选择文件</button></span></label>
+    <label class="wide">跳板机别名（可选）<input id="jump" maxlength="515" spellcheck="false"></label>
+    <label class="wide">服务连接方式<select id="service-mode"><option value="managed">自动发现和启动 BioMind 服务</option><option value="manual">连接已经运行的服务</option></select></label>
+    <label class="wide managed-field">服务器服务管理器路径<input id="servicePath" maxlength="4096" spellcheck="false" placeholder="/…/BioMind_Studio_Workbench_20261009/server/server-service.py"></label>
+    <label class="wide managed-field">服务器服务配置路径<input id="serviceConfig" maxlength="4096" spellcheck="false" placeholder="/…/biomind-studio/service.json"></label>
+    <label id="remote-port-field" hidden>已有服务端口<input id="remotePort" type="number" min="1" max="65535" value="30141"></label>
+    <label class="wide">工作台口令（不是 SSH 登录密码）<input id="password" type="password" maxlength="4096" autocomplete="off" placeholder="首次安装在此设置；连接时使用同一口令"></label>
+    <label class="wide checkbox"><input id="remember" type="checkbox" checked>使用 Windows 加密存储口令，下次打开自动连接</label>
+  </div>
+  <details class="managed-field setup"><summary>首次安装：配置服务器上的已有 BioMind</summary>
+    <p class="hint">填写服务器上的完整路径。软件会上传服务管理脚本并保存启动配置；任务继续使用已有 Main、原生会话和记忆。已有服务配置可以跳过这里直接连接。</p>
+    <button type="button" id="load-preset">载入本次服务器部署预设</button>
+    <div class="fields">
+      <label class="wide">本次工作台后端目录<input id="backendRoot" maxlength="4096" placeholder="/…/BioMind_Studio_Workbench_20261009/backend/pi-studio"></label>
+      <label class="wide">BioMind Main 目录<input id="mainRoot" maxlength="4096" placeholder="/…/已验证的BioMind/bio_agents.py 所在目录"></label>
+      <label class="wide">已有 Main 运行配置 JSON<input id="runtimeConfig" maxlength="4096" placeholder="/…/runtime-config.json"></label>
+      <label class="wide">已有模型选择记录（可选）<input id="modelRecordPath" maxlength="4096" placeholder="/…/model-selection.json，不是 API 密钥文件"></label>
+      <label class="wide">原生会话目录<input id="sessionRoot" maxlength="4096" placeholder="与 sessionDir 一致；未设置时使用 agentDir/sessions"></label>
+      <label class="wide">服务器 Python 完整路径<input id="pythonPath" maxlength="4096" placeholder="/…/envs/biomind/bin/python"></label>
+      <label class="wide">服务器 Node 完整路径<input id="nodePath" maxlength="4096" placeholder="/…/pi_runtime/.runtime/node/bin/node"></label>
+      <label class="wide">允许访问的项目根目录（每行一个）<textarea id="projectRoots" rows="2" maxlength="32768"></textarea></label>
+      <label class="wide">允许访问的数据根目录（每行一个）<textarea id="dataRoots" rows="2" maxlength="32768"></textarea></label>
+      <label class="wide">已有附件目录<input id="uploadsRoot" maxlength="4096" placeholder="须位于上面的允许目录之内"></label>
+      <label>工作台服务启动方式<select id="start-mode"><option value="local">直接运行（服务器允许时）</option><option value="slurm">Slurm 调度</option></select></label>
+      <label class="slurm-field">分区（留空用集群默认）<input id="partition" maxlength="128"></label>
+      <label class="slurm-field">最长运行时间<input id="slurm-time" value="08:00:00" maxlength="32"></label>
+      <label class="slurm-field">CPU 数<input id="cpus" type="number" min="1" max="512" value="4"></label>
+      <label class="slurm-field">内存（可选，留空用集群默认）<input id="memory" placeholder="如 8G" maxlength="16"></label>
+      <label class="slurm-field">账户（可选）<input id="account" maxlength="128"></label>
+      <label class="slurm-field">QoS（可选）<input id="qos" maxlength="128"></label>
+    </div>
+    <p class="hint">仅决定工作台后台服务如何启动；计算任务仍由 BioMind 按项目流程提交 Slurm。</p>
+    <p class="hint">首次安装在上方自行设置工作台口令（至少 16 个英文字母、数字或符号），安装后用同一口令连接。它与 SSH 登录密码独立。服务配置放在仅本人可访问的独立目录；已有内容不同的管理脚本不会被覆盖，请为新版本使用新的脚本目录。</p>
+    <button type="button" id="install">安装服务管理脚本并保存服务器配置</button>
+    <button type="button" id="focus-password">填写工作台口令</button>
+    <p id="install-status" class="action-status" aria-hidden="true">尚未操作。</p>
+  </details>
+  <p class="hint">使用系统 OpenSSH。SSH 私钥与主机信任须已配置；工作台口令是服务器服务的口令。自动启动会遵循服务器配置的 Slurm 或直接运行方式，无需填写作业号或计算节点。</p>
+  <p id="action-status" class="action-status" aria-hidden="true">尚未操作。</p>
+  <div class="actions"><button class="primary" id="connect" type="submit">连接并进入工作台</button><button id="save" type="button">保存连接配置</button><button id="disconnect" type="button">断开</button></div>
+  <p class="hint">关闭窗口只断开桌面连接。任务与历史由服务器持有；重连恢复原会话，不重发任务。</p></form>
+  <footer class="hint">BioMind Studio 1.3.0-rc.20261009.1 · flowflic/Pi-Studio 0.4.6 · 0fbc8178<br>服务器 Main 引擎沿用现有版本，未跟随上游 Pi 1.1.0 升级。</footer>
+</main></body></html>

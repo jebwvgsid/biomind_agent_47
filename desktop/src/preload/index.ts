@@ -1,0 +1,183 @@
+import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from "electron";
+import type { SkillHubSkill, PluginManagementRequest, PluginManagementResult } from "../renderer/src/lib/types";
+
+/**
+ * The renderer talks to the main process exclusively through this surface.
+ * Keep it narrow and typed; the matching declaration lives in index.d.ts.
+ */
+
+type Unsub = () => void;
+function on(channel: string, cb: (payload: any) => void): Unsub {
+  const listener = (_e: IpcRendererEvent, payload: any) => cb(payload);
+  ipcRenderer.on(channel, listener);
+  return () => ipcRenderer.off(channel, listener);
+}
+
+const api = {
+  biomind: {
+    getStatus: () => ipcRenderer.invoke("biomind:getStatus"),
+    onStatus: (cb: (status: any) => void) => on("biomind:status", cb),
+    getLocalUIState: () => ipcRenderer.invoke("biomind:getLocalUIState") as Promise<{ status: "saved" | "pending" | "unsaved"; code?: string }>,
+    onLocalUIState: (cb: (state: { status: "saved" | "pending" | "unsaved"; code?: string }) => void) => on("biomind:localUIState", cb),
+    reportRendererIssue: (issue: { source: "render" | "window_error" | "unhandledrejection"; name?: string; stack?: string; code?: string }) => ipcRenderer.invoke("biomind:reportRendererIssue", issue),
+    onSnapshot: (cb: (snapshot: any) => void) => on("biomind:snapshot", cb),
+    showConnection: () => ipcRenderer.invoke("biomind:showConnection"),
+    browseProjects: (path?: string) => ipcRenderer.invoke("biomind:browseProjects", path),
+    restoreThreads: () => ipcRenderer.invoke("biomind:restoreThreads") as Promise<any[]>,
+    activateThread: (id: string) => ipcRenderer.invoke("biomind:activateThread", id),
+    focusThread: (id: string | null) => ipcRenderer.invoke("biomind:focusThread", id),
+    finishInput: (receipt: any) => ipcRenderer.invoke("biomind:finishInput", receipt),
+    getControls: (threadId?: string) => ipcRenderer.invoke("biomind:getControls", threadId),
+    control: (args: Record<string, unknown>) => ipcRenderer.invoke("biomind:control", args),
+  },
+  app: {
+    getVersion: () => ipcRenderer.invoke("app:getVersion"),
+    getConfig: () => ipcRenderer.invoke("app:getConfig"),
+    setConfig: (patch: Record<string, unknown>) => ipcRenderer.invoke("app:setConfig", patch),
+    resolveRuntime: () => ipcRenderer.invoke("app:resolveRuntime"),
+    getProjects: () => ipcRenderer.invoke("app:getProjects"),
+    searchThreads: (query: string) => ipcRenderer.invoke("app:searchThreads", query),
+    getTotalUsage: () => ipcRenderer.invoke("app:getTotalUsage"),
+    openProject: (absPath: string) => ipcRenderer.invoke("app:openProject", absPath),
+    openFolderInExplorer: (absPath: string) => ipcRenderer.invoke("app:openFolderInExplorer", absPath),
+    prewarm: (cwd: string) => ipcRenderer.invoke("app:prewarm", cwd),
+    unpinProject: (absPath: string) => ipcRenderer.invoke("app:unpinProject", absPath),
+    setProjectPinned: (args: { cwd: string; pinned: boolean }) => ipcRenderer.invoke("app:setProjectPinned", args),
+    setThreadPinned: (args: { file: string; pinned: boolean }) => ipcRenderer.invoke("app:setThreadPinned", args),
+    showOpenDialog: (kind: "folder" | "file" | "files") => ipcRenderer.invoke("app:showOpenDialog", kind),
+    getFileTree: (cwd: string, rel?: string) => ipcRenderer.invoke("app:getFileTree", cwd, rel),
+    fileExists: (absPath: string) => ipcRenderer.invoke("app:fileExists", absPath),
+    getPathForFile: (file: File) => {
+      try {
+        return webUtils.getPathForFile(file);
+      } catch {
+        return "";
+      }
+    },
+    stageClipboardFile: (args: { name?: string; mimeType?: string; data: string; cwd: string }) =>
+      ipcRenderer.invoke("app:stageClipboardFile", args),
+    readPreview: (absPath: string, projectRoot?: string) => ipcRenderer.invoke("app:readPreview", absPath, projectRoot),
+    savePreviewHtml: (args: { absPath: string; projectRoot?: string; html: string }) =>
+      ipcRenderer.invoke("app:savePreviewHtml", args),
+    showFileContextMenu: (absPath: string) => ipcRenderer.invoke("app:showFileContextMenu", absPath),
+    updatePi: () => ipcRenderer.invoke("app:updatePi"),
+    checkAppUpdate: () => ipcRenderer.invoke("app:checkAppUpdate"),
+    downloadAppUpdate: () => ipcRenderer.invoke("app:downloadAppUpdate"),
+    installAppUpdate: () => ipcRenderer.invoke("app:installAppUpdate"),
+    checkCoreUpdate: () => ipcRenderer.invoke("app:checkCoreUpdate"),
+    relaunch: () => ipcRenderer.invoke("app:relaunch"),
+    editAction: (action: "copy" | "cut" | "paste" | "delete" | "selectAll") => ipcRenderer.invoke("app:editAction", action),
+  },
+  plugins: {
+    getPackages: (args: { cwd?: string } = {}) => ipcRenderer.invoke("plugins:getPackages", args) as Promise<PluginManagementResult>,
+    managePackages: (args: PluginManagementRequest) => ipcRenderer.invoke("plugins:managePackages", args) as Promise<PluginManagementResult>,
+    getSkills: (args: { threadId: string; cwd: string }) => ipcRenderer.invoke("plugins:getSkills", args),
+    setSkillEnabled: (args: { threadId: string; cwd: string; resourceId: string; path: string; enabled: boolean }) => ipcRenderer.invoke("plugins:setSkillEnabled", args),
+    getSkillsHubLeaderboard: () => ipcRenderer.invoke("skillsHub:leaderboard"),
+    searchSkillsHub: (query: string) => ipcRenderer.invoke("skillsHub:search", query),
+    getSkillDetails: (skill: SkillHubSkill) => ipcRenderer.invoke("skillsHub:detail", skill),
+    installSkill: (args: { source: string; skillId: string }) => ipcRenderer.invoke("skillsHub:install", args),
+  },
+  automation: {
+    getTasks: () => ipcRenderer.invoke("automation:getTasks"),
+    saveTask: (task: unknown) => ipcRenderer.invoke("automation:saveTask", task),
+    deleteTask: (id: string) => ipcRenderer.invoke("automation:deleteTask", id),
+    runNow: (id: string) => ipcRenderer.invoke("automation:runNow", id),
+  },
+  remote: {
+    getStatus: () => ipcRenderer.invoke("remote:getStatus"),
+    createPairing: () => ipcRenderer.invoke("remote:createPairing"),
+    enableSignaling: (manual = false) => ipcRenderer.invoke("remote:enableSignaling", { manual }),
+    disableSignaling: () => ipcRenderer.invoke("remote:disableSignaling"),
+    approvePairing: (connectionId: string) => ipcRenderer.invoke("remote:approvePairing", connectionId),
+    rejectPairing: (connectionId: string) => ipcRenderer.invoke("remote:rejectPairing", connectionId),
+    revokeDevice: (deviceId: string) => ipcRenderer.invoke("remote:revokeDevice", deviceId),
+    getTransportConfig: () => ipcRenderer.invoke("remote:getTransportConfig"),
+    setConfig: (patch: { signalingUrl?: string }) => ipcRenderer.invoke("remote:setConfig", patch),
+    transportOpen: (args: { connectionId: string; sessionId?: string }) => ipcRenderer.invoke("remote:transportOpen", args),
+    transportClose: (args: { connectionId: string; reason?: string }) => ipcRenderer.invoke("remote:transportClose", args),
+    transportStatus: (args: { connectionId: string; state?: string; candidateType?: string; localCandidateType?: string; remoteCandidateType?: string }) =>
+      ipcRenderer.invoke("remote:transportStatus", args),
+    transportFrame: (args: { connectionId: string; frame: string }) => ipcRenderer.invoke("remote:transportFrame", args),
+    sendSignal: (args: { connectionId: string; payload: Record<string, unknown> }) => ipcRenderer.invoke("remote:sendSignal", args),
+    onSignal: (cb: (p: { connectionId: string; message: any }) => void) => on("remote:signal", cb),
+    onOutbound: (cb: (p: { connectionId: string; frame: string }) => void) => on("remote:outbound", cb),
+    onPairingRequest: (cb: (p: { connectionId: string; deviceId: string; deviceName: string }) => void) => on("remote:pairing-request", cb),
+  },
+  thread: {
+    open: (args: { cwd: string; sessionFile?: string; name?: string; permission?: "sandbox" | "full"; clientOpenId?: string }) => ipcRenderer.invoke("thread:open", args),
+    loadHistory: (args: { cwd: string; sessionFile: string }) => ipcRenderer.invoke("thread:loadHistory", args),
+    close: (threadId: string) => ipcRenderer.invoke("thread:close", threadId),
+    delete: (file: string) => ipcRenderer.invoke("thread:delete", file),
+    prompt: (args: { threadId: string; text: string; images?: unknown[]; attachments?: { abs: string; name: string }[] }) =>
+      ipcRenderer.invoke("thread:prompt", args),
+    steer: (args: { threadId: string; text: string; images?: unknown[]; attachments?: { abs: string; name: string }[] }) =>
+      ipcRenderer.invoke("thread:steer", args),
+    followUp: (args: { threadId: string; text: string; images?: unknown[]; attachments?: { abs: string; name: string }[] }) =>
+      ipcRenderer.invoke("thread:followUp", args),
+    abort: (threadId: string) => ipcRenderer.invoke("thread:abort", threadId),
+    setModel: (args: { threadId: string; provider: string; modelId: string }) => ipcRenderer.invoke("thread:setModel", args),
+    getModels: (threadId: string) => ipcRenderer.invoke("thread:getModels", threadId),
+    refreshModels: (threadId: string) => ipcRenderer.invoke("thread:refreshModels", threadId),
+    setThinking: (args: { threadId: string; level: string }) => ipcRenderer.invoke("thread:setThinking", args),
+    getThinkingLevels: (threadId: string) => ipcRenderer.invoke("thread:getThinkingLevels", threadId),
+    newSession: (threadId: string) => ipcRenderer.invoke("thread:newSession", threadId),
+    getBranchMessages: (threadId: string) => ipcRenderer.invoke("thread:getBranchMessages", threadId),
+    fork: (args: { threadId: string; entryId: string }) => ipcRenderer.invoke("thread:fork", args),
+    clone: (args: { threadId: string; entryId: string }) => ipcRenderer.invoke("thread:clone", args),
+    setName: (args: { threadId: string; name: string }) => ipcRenderer.invoke("thread:setName", args),
+    getStats: (threadId: string) => ipcRenderer.invoke("thread:getStats", threadId),
+    getCommands: (threadId: string) => ipcRenderer.invoke("thread:getCommands", threadId),
+    extuiResponse: (args: { threadId: string; id: string; payload: Record<string, unknown> }) =>
+      ipcRenderer.invoke("thread:extuiResponse", args),
+    setPermission: (args: { threadId: string; permission: "sandbox" | "full" }) => ipcRenderer.invoke("thread:setPermission", args),
+  },
+  settings: {
+    getUsagePricing: () => ipcRenderer.invoke("settings:getUsagePricing") as Promise<{ config: import("../main/usage-pricing").PricingConfig; catalog: ReturnType<typeof import("../main/usage-pricing").pricingCatalog>; snapshot: string }>,
+    saveUsagePricing: (config: unknown) => ipcRenderer.invoke("settings:saveUsagePricing", config) as Promise<import("../main/usage-pricing").PricingConfig>,
+    getPlanQuotas: (force = false) => ipcRenderer.invoke("settings:getPlanQuotas", force) as Promise<import("../main/plan-quotas").PlanQuota[]>,
+    getUsage: (range: { from: number; to: number }) => ipcRenderer.invoke("settings:getUsage", range) as Promise<import("../main/usage-service").UsageReport>,
+    getMcp: () => ipcRenderer.invoke("settings:getMcp") as Promise<{ path: string; config: import("../main/mcp-service").McpConfig }>,
+    saveMcp: (config: unknown) => ipcRenderer.invoke("settings:saveMcp", config),
+    getCodemode: () => ipcRenderer.invoke("settings:getCodemode") as Promise<import("../main/mcp-service").CodemodeSettings>,
+    saveCodemode: (settings: import("../main/mcp-service").CodemodeSettings) => ipcRenderer.invoke("settings:saveCodemode", settings) as Promise<import("../main/mcp-service").CodemodeSettings>,
+    mcpAction: (action: "list" | "login" | "logout", name?: string, requestId = crypto.randomUUID()) => ipcRenderer.invoke("settings:mcpAction", { action, name, requestId }) as Promise<{ code: number | null; stdout: string; stderr: string; cancelled?: boolean; timedOut?: boolean }>,
+    cancelMcpAction: (requestId: string) => ipcRenderer.invoke("settings:cancelMcpAction", requestId),
+    onMcpOutput: (cb: (payload: { requestId: string; text: string }) => void) => on("settings:mcpOutput", cb),
+    getModels: () => ipcRenderer.invoke("settings:getModels"),
+    discoverModels: (provider: Record<string, unknown>) => ipcRenderer.invoke("settings:discoverModels", provider),
+    testModel: (args: { providerId: string; provider: Record<string, unknown>; modelId: string }) =>
+      ipcRenderer.invoke("settings:testModel", args),
+    saveModels: (providers: Record<string, unknown>) => ipcRenderer.invoke("settings:saveModels", providers),
+    getThinking: () => ipcRenderer.invoke("settings:getThinking"),
+    saveThinking: (patch: Record<string, unknown>) => ipcRenderer.invoke("settings:saveThinking", patch),
+    getDiagnostics: () => ipcRenderer.invoke("settings:getDiagnostics"),
+    getPaths: () => ipcRenderer.invoke("settings:getPaths"),
+    openPath: (abs: string) => ipcRenderer.invoke("settings:openPath", abs),
+    showItem: (abs: string) => ipcRenderer.invoke("settings:showItem", abs),
+    openAgentDir: () => ipcRenderer.invoke("settings:openAgentDir"),
+  },
+  window: {
+    minimize: () => ipcRenderer.invoke("window:minimize"),
+    maximize: () => ipcRenderer.invoke("window:maximize"),
+    close: () => ipcRenderer.invoke("window:close"),
+    isMaximized: () => ipcRenderer.invoke("window:isMaximized"),
+    onMaximizedChanged: (cb: (max: boolean) => void) => on("window:maximized-changed", cb),
+  },
+  on: {
+    event: (cb: (p: { threadId: string; event: any }) => void) => on("pi:event", cb),
+    extui: (cb: (p: { threadId: string; request: any }) => void) => on("pi:extui", cb),
+    exit: (cb: (p: { threadId: string; code: number | null; signal: string | null; stderr: string }) => void) => on("pi:exit", cb),
+    error: (cb: (p: { threadId: string; message: string }) => void) => on("pi:error", cb),
+    focusThread: (cb: (p: { threadId: string }) => void) => on("app:focus-thread", cb),
+    automation: (cb: (p: { type: "start" | "done"; taskId: string; name: string; ok?: boolean; error?: string }) => void) =>
+      on("pi:automation", cb),
+    projectsChanged: (cb: (p: { cwd?: string; sessionFile?: string }) => void) => on("pi:projects-changed", cb),
+    appUpdate: (cb: (p: { stage: string; message: string; pct?: number }) => void) => on("pi:appUpdate", cb),
+    coreUpdate: (cb: (p: { stage: string; message: string; pct?: number }) => void) => on("pi:coreUpdate", cb),
+  },
+};
+
+contextBridge.exposeInMainWorld("pi", api);
+
+export type PiApi = typeof api;

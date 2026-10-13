@@ -1,0 +1,1184 @@
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { getDisplayThreadTitle, normalizeThreadFile, parseSkillBlock, useStore } from "../store";
+import { Markdown } from "../lib/markdown";
+import { formatClock, formatTokens } from "../lib/format";
+import { selectFinalArtifacts } from "../lib/artifacts";
+import { parseHtmlReferenceText } from "../lib/html-reference";
+import { attachChatScroll } from "../lib/chat-scroll";
+import { useOutsideClose } from "../lib/useOutsideClose";
+import type { ContentBlock, HtmlElementReference, ToolRun, ViewMessage } from "../lib/types";
+import { Composer } from "./Composer";
+import { ReplyDuration } from "./ReplyDuration";
+import { ExtUiPromptCard } from "./ExtUiPromptCard";
+import { Sidebar, PanelRight, Copy, ThumbUp, ThumbDown, Refresh, Edit, Folder, Files, Gauge, Branch, ChevronRight } from "./icons";
+import appIconUrl from "../../../../resources/icon.png";
+
+const USER_MESSAGE_NAV_MIN_ITEMS = 6;
+
+export function Chat() {
+  const activeThreadId = useStore((s) => s.activeThreadId);
+  const thread = useStore((s) => (activeThreadId ? s.threads[activeThreadId] : null));
+  const projects = useStore((s) => s.projects);
+  const toggleSidebar = useStore((s) => s.toggleSidebar);
+  const togglePreview = useStore((s) => s.togglePreview);
+  const newSessionInThread = useStore((s) => s.newSessionInThread);
+  const renameThread = useStore((s) => s.renameThread);
+  const switchThreadFolder = useStore((s) => s.switchThreadFolder);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollPositionsRef = useRef(new Map<string, number>());
+  const highlightedUserMessageRef = useRef<HTMLElement | null>(null);
+  const jumpHighlightTimerRef = useRef<number | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [editValue, setEditValue] = useState("");
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const editInputRef = useRef<HTMLInputElement>(null);
+  const language = useStore((s) => s.config?.language || "en");
+
+  // context-usage popover
+  const [ctxOpen, setCtxOpen] = useState(false);
+  const [ctxStats, setCtxStats] = useState<any>(null);
+  const [ctxLoading, setCtxLoading] = useState(false);
+  const ctxRef = useRef<HTMLDivElement>(null);
+  useOutsideClose(ctxRef, ctxOpen, () => setCtxOpen(false));
+
+  const streaming = thread?.streaming;
+  const chatReady = !!thread && !thread.loading;
+
+  // Attach once per visible transcript. Text deltas, images and tool output
+  // can change its height without changing the number of messages or blocks.
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    const content = el?.querySelector<HTMLElement>(".messages");
+    if (!el || !content || !activeThreadId || !chatReady) return;
+    return attachChatScroll(el, content, activeThreadId, scrollPositionsRef.current);
+  }, [activeThreadId, chatReady]);
+
+  useEffect(() => {
+    if (!previewImage) return;
+    const close = (e: KeyboardEvent) => e.key === "Escape" && setPreviewImage(null);
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, [previewImage]);
+
+  useEffect(() => {
+    return () => {
+      if (jumpHighlightTimerRef.current !== null) window.clearTimeout(jumpHighlightTimerRef.current);
+    };
+  }, []);
+
+  // These hooks must also run with no selection and while a remote session is
+  // loading. Chat stays mounted when switching threads or adopting a native ID.
+  // Group a completed assistant turn under one avatar, including its tool runs.
+  const messages = thread?.messages;
+  const groups = useMemo(() => groupMessages(messages || []), [messages]);
+  const userGroups = useMemo(
+    () => groups.filter((group) => group.items[0]?.role === "user"),
+    [groups],
+  );
+
+  if (!thread || !activeThreadId) return null;
+
+  // Keep the workbench visible while the server opens/restores this session.
+  if (thread.loading) {
+    return (
+      <section className="main">
+        <div className="chat-head">
+          <button className="iconbtn" title={language === "zh" ? "切换侧栏" : "Toggle sidebar"} onClick={toggleSidebar}>
+            <Sidebar size={16} />
+          </button>
+          <div className="chat-head-titlewrap">
+            <div className="chat-head-title">{language === "zh" ? "新线程" : "New Thread"}</div>
+          </div>
+          <div className="spacer" />
+        </div>
+        <div className="chat-loading">
+          <span className="spinner" />
+          {language === "zh" ? "正在连接 BioMind 远端会话…" : "Connecting to the remote BioMind session…"}
+        </div>
+      </section>
+    );
+  }
+
+  const firstUserText = thread.messages.find((m) => m.role === "user")?.text || "";
+  const isEmptyDraft = thread.messages.length === 0 && !thread.streaming;
+  const titleFile = thread.sessionFile || activeThreadId;
+  const sidebarTitle = activeThreadId
+    ? projects
+        .flatMap((project) => project.threads)
+        .find((summary) => normalizeThreadFile(summary.file || summary.id) === normalizeThreadFile(titleFile))?.title || ""
+    : "";
+  // A stale fresh-session flag must never hide the title of a real transcript.
+  // Once this view has messages, derive the header from this thread itself;
+  // only an actually empty draft uses the default label.
+  const title = isEmptyDraft
+    ? language === "zh" ? "新线程" : "New Thread"
+    : getDisplayThreadTitle(sidebarTitle || thread.sessionName, firstUserText, language).slice(0, 40) || (language === "zh" ? "新线程" : "New Thread");
+
+  const lastGroup = groups[groups.length - 1];
+  const streamingExtends = !!streaming && !!lastGroup && lastGroup.role === "assistant" &&
+    streaming.replyStartedAt === lastGroup.items[0].replyStartedAt;
+  const headGroups = streamingExtends ? groups.slice(0, -1) : groups;
+
+  const jumpToUserMessage = (key: string) => {
+    const scroll = scrollRef.current;
+    if (!scroll) return;
+    const target = Array.from(scroll.querySelectorAll<HTMLElement>("[data-user-message-key]"))
+      .find((node) => node.dataset.userMessageKey === key);
+    if (!target) return;
+
+    const scrollRect = scroll.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const targetOffset = targetRect.top - scrollRect.top - (scroll.clientHeight - targetRect.height) / 2;
+    const maxScrollTop = Math.max(0, scroll.scrollHeight - scroll.clientHeight);
+    const nextScrollTop = Math.min(maxScrollTop, Math.max(0, scroll.scrollTop + targetOffset));
+    scroll.scrollTo({
+      top: nextScrollTop,
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+    });
+
+    highlightedUserMessageRef.current?.classList.remove("message-jump-target");
+    target.classList.remove("message-jump-target");
+    void target.offsetWidth;
+    target.classList.add("message-jump-target");
+    highlightedUserMessageRef.current = target;
+    if (jumpHighlightTimerRef.current !== null) window.clearTimeout(jumpHighlightTimerRef.current);
+    jumpHighlightTimerRef.current = window.setTimeout(() => {
+      target.classList.remove("message-jump-target");
+      if (highlightedUserMessageRef.current === target) highlightedUserMessageRef.current = null;
+      jumpHighlightTimerRef.current = null;
+    }, 900);
+  };
+
+  const startRename = () => {
+    setEditValue(thread.sessionName || "");
+    setEditing(true);
+    requestAnimationFrame(() => editInputRef.current?.focus());
+  };
+
+  const commitRename = () => {
+    setEditing(false);
+    const v = editValue.trim();
+    if (v) renameThread(activeThreadId, v);
+  };
+
+  const cancelRename = () => {
+    setEditing(false);
+  };
+
+  const loadCtx = async () => {
+    if (!activeThreadId) return;
+    setCtxLoading(true);
+    try {
+      const id = await useStore.getState().ensureConnected(activeThreadId);
+      setCtxStats(id ? await window.pi.thread.getStats(id) : null);
+    } catch {
+      setCtxStats(null);
+    }
+    setCtxLoading(false);
+  };
+  const toggleCtx = () => {
+    const next = !ctxOpen;
+    setCtxOpen(next);
+    if (next) loadCtx();
+  };
+
+  const ctxUsage = ctxStats?.contextUsage;
+  const ctxUsed = ctxUsage?.tokens ?? 0;
+  const ctxTotal = ctxUsage?.contextWindow ?? 0;
+  const ctxRemaining = Math.max(0, ctxTotal - ctxUsed);
+  const ctxPct = ctxUsage ? ctxUsage.percent ?? (ctxTotal ? Math.round((ctxUsed / ctxTotal) * 100) : 0) : 0;
+
+  return (
+    <section className="main">
+      <div className="chat-head">
+        <button className="iconbtn" title={language === "zh" ? "切换侧栏" : "Toggle sidebar"} onClick={toggleSidebar}>
+          <Sidebar size={16} />
+        </button>
+        <div className="chat-head-titlewrap">
+          {editing ? (
+            <input
+              ref={editInputRef}
+              className="chat-head-input"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") commitRename();
+                if (e.key === "Escape") cancelRename();
+              }}
+              onBlur={commitRename}
+            />
+          ) : (
+            <>
+              <div key={`${activeThreadId}:${title}`} className="chat-head-title" title={title} onDoubleClick={startRename}>
+                {title}
+              </div>
+              {thread.cwd && (
+                <button
+                  className="chat-head-folder"
+                  title={`在文件管理器中打开：${thread.cwd}`}
+                  onClick={() => {
+                    window.pi.settings.openPath(thread.cwd).catch(() => {});
+                  }}
+                >
+                  <Folder size={11} />
+                  <span className="chat-head-folder-path">{thread.cwd}</span>
+                </button>
+              )}
+            </>
+          )}
+        </div>
+        {!thread.connected && (
+          <span className="chat-connecting" title="BioMind 远端会话尚未连接；历史可浏览，连接恢复前不能发送任务">
+            <span className="spinner" /> 连接中
+          </span>
+        )}
+        <button className="iconbtn" title="重命名" onClick={startRename}>
+          <Edit size={14} />
+        </button>
+        <div className="spacer" />
+        <div className="ctx-wrap" ref={ctxRef}>
+          <button className={`iconbtn ${ctxOpen ? "on" : ""}`} title="当前线程上下文用量" onClick={toggleCtx}>
+            <Gauge size={15} />
+          </button>
+          {ctxOpen && (
+            <div className="ctx-pop">
+              <div className="ctx-pop-head">
+                <span>上下文</span>
+                <button className="ctx-refresh" title="刷新" onClick={loadCtx}>
+                  <Refresh size={12} />
+                </button>
+              </div>
+              {ctxLoading ? (
+                <div className="ctx-loading">
+                  <span className="spinner" />
+                </div>
+              ) : ctxUsage ? (
+                <>
+                  <div className="ctx-bignum">
+                    {formatTokens(ctxUsed)}
+                    <span className="ctx-of"> / {formatTokens(ctxTotal)}</span>
+                  </div>
+                  <div className={`ctx-bar ${ctxPct >= 85 ? "hi" : ctxPct >= 60 ? "mid" : ""}`}>
+                    <div className="ctx-bar-fill" style={{ width: `${Math.min(100, ctxPct)}%` }} />
+                  </div>
+                  <div className="ctx-rows">
+                    <div className="ctx-row">
+                      <span>已使用</span>
+                      <b>{formatTokens(ctxUsed)}</b>
+                    </div>
+                    <div className="ctx-row">
+                      <span>总上下文</span>
+                      <b>{formatTokens(ctxTotal)}</b>
+                    </div>
+                    <div className="ctx-row">
+                      <span>剩余</span>
+                      <b>{formatTokens(ctxRemaining)}</b>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="ctx-empty">暂无上下文数据</div>
+              )}
+            </div>
+          )}
+        </div>
+        <button className="iconbtn" title="切换工作文件夹" onClick={() => switchThreadFolder(activeThreadId)}>
+          <Folder size={15} />
+        </button>
+        <button className="iconbtn" title="新会话" onClick={() => newSessionInThread(activeThreadId)}>
+          <Refresh size={15} />
+        </button>
+        <button className="iconbtn" title="切换预览" onClick={togglePreview}>
+          <PanelRight size={16} />
+        </button>
+      </div>
+
+      <div className="chat-stage">
+        <div className="chat-scroll" ref={scrollRef}>
+          <div className="messages">
+            {headGroups.map((g) => (
+              <MessageGroup key={g.key} threadId={activeThreadId} group={g} toolRuns={thread.toolRuns} locked={thread.isStreaming}
+                streaming={thread.isStreaming && g.role === "assistant" && g.items.some(m => m.replyStartedAt !== undefined && m.replyStartedAt === thread.replyStartedAt)} onPreviewImage={setPreviewImage} />
+            ))}
+            {streaming && streamingExtends && lastGroup && (
+              <MessageGroup
+                key={lastGroup.key}
+                threadId={activeThreadId}
+                group={{ key: lastGroup.key, role: "assistant", items: [...lastGroup.items, streaming] }}
+                toolRuns={thread.toolRuns}
+                locked
+                streaming
+                onPreviewImage={setPreviewImage}
+              />
+            )}
+            {streaming && !streamingExtends && (
+              <MessageGroup
+                key={streaming.key}
+                threadId={activeThreadId}
+                group={{ key: streaming.key, role: "assistant", items: [streaming] }}
+                toolRuns={thread.toolRuns}
+                locked
+                streaming
+                onPreviewImage={setPreviewImage}
+              />
+            )}
+            {thread.error && (
+              <div className="msg system">
+                <div className="msg-body">⚠ {thread.error}</div>
+              </div>
+            )}
+          </div>
+        </div>
+        {userGroups.length >= USER_MESSAGE_NAV_MIN_ITEMS && (
+          <UserMessageNav groups={userGroups} language={language} onJump={jumpToUserMessage} />
+        )}
+      </div>
+
+      <div className="composer-confirmation-region" aria-live="assertive">
+        <ExtUiPromptCard threadId={activeThreadId} />
+      </div>
+      {Object.entries(thread.extensionWidgets || {}).filter(([, widget]) => widget.placement === "aboveEditor").map(([key, widget]) => <pre key={key} className="extension-widget">{widget.lines.join("\n")}</pre>)}
+      <Composer threadId={activeThreadId} />
+      {Object.entries(thread.extensionWidgets || {}).filter(([, widget]) => widget.placement === "belowEditor").map(([key, widget]) => <pre key={key} className="extension-widget">{widget.lines.join("\n")}</pre>)}
+      {Object.keys(thread.extensionStatuses || {}).length > 0 && <div className="extension-statuses" role="status">{Object.entries(thread.extensionStatuses || {}).map(([key, text]) => <span key={key}>{text}</span>)}</div>}
+      {previewImage && (
+        <div className="image-lightbox" role="dialog" aria-modal="true" aria-label="图片预览" onMouseDown={() => setPreviewImage(null)}>
+          <button className="image-lightbox-close" title="关闭" onClick={() => setPreviewImage(null)}>×</button>
+          <img src={previewImage} alt="图片预览" onMouseDown={(e) => e.stopPropagation()} />
+        </div>
+      )}
+    </section>
+  );
+}
+
+/** Tool-run ids a message actually renders — for targeted re-render checks. */
+function referencedRunIds(m: ViewMessage): string[] {
+  if (!m.blocks) return [];
+  const ids: string[] = [];
+  for (const b of m.blocks) if (b.type === "toolCall") ids.push(b.id);
+  return ids;
+}
+
+/** A visual turn: one user message, or a run of consecutive assistant messages
+ *  (a whole agent round) rendered under a single avatar. */
+interface MsgGroup {
+  key: string;
+  role: "user" | "assistant";
+  items: ViewMessage[];
+}
+
+function groupMessages(messages: ViewMessage[]): MsgGroup[] {
+  const groups: MsgGroup[] = [];
+  for (const m of messages) {
+    const last = groups[groups.length - 1];
+    if (m.role === "assistant" && last && last.role === "assistant" &&
+      m.replyStartedAt === last.items[0].replyStartedAt) {
+      last.items.push(m);
+    } else {
+      groups.push({ key: m.key, role: m.role === "assistant" ? "assistant" : "user", items: [m] });
+    }
+  }
+  return groups;
+}
+
+function userMessagePreview(group: MsgGroup, language: string): string {
+  const text = (group.items[0]?.text || "").replace(/\s+/g, " ").trim();
+  if (!text) return language === "zh" ? "图片消息" : "Image message";
+  const chars = Array.from(text);
+  return chars.length > 20 ? `${chars.slice(0, 20).join("")}…` : text;
+}
+
+function UserMessageNav({
+  groups,
+  language,
+  onJump,
+}: {
+  groups: MsgGroup[];
+  language: string;
+  onJump: (key: string) => void;
+}) {
+  const navRef = useRef<HTMLElement>(null);
+  const [hovered, setHovered] = useState<{ text: string; top: number } | null>(null);
+
+  if (groups.length < USER_MESSAGE_NAV_MIN_ITEMS) return null;
+
+  return (
+    <nav
+      ref={navRef}
+      className="user-message-nav"
+      aria-label={language === "zh" ? "用户消息导航" : "User message navigation"}
+    >
+      <div className="user-message-nav-scroll">
+        {groups.map((group, index) => {
+          const preview = userMessagePreview(group, language);
+          return (
+            <button
+              key={group.key}
+              type="button"
+              className="user-message-nav-dot"
+              aria-label={language === "zh" ? `跳转到第 ${index + 1} 条用户消息：${preview}` : `Jump to user message ${index + 1}: ${preview}`}
+              title={preview}
+              onClick={() => onJump(group.key)}
+              onMouseEnter={(event) => {
+                const nav = navRef.current;
+                if (!nav) return;
+                const navRect = nav.getBoundingClientRect();
+                const dotRect = event.currentTarget.getBoundingClientRect();
+                setHovered({ text: preview, top: dotRect.top - navRect.top + dotRect.height / 2 });
+              }}
+              onMouseLeave={() => setHovered(null)}
+              onFocus={(event) => {
+                const nav = navRef.current;
+                if (!nav) return;
+                const navRect = nav.getBoundingClientRect();
+                const dotRect = event.currentTarget.getBoundingClientRect();
+                setHovered({ text: preview, top: dotRect.top - navRect.top + dotRect.height / 2 });
+              }}
+              onBlur={() => setHovered(null)}
+            >
+              <span aria-hidden="true" />
+            </button>
+          );
+        })}
+      </div>
+      {hovered && <div className="user-message-nav-tooltip" style={{ top: hovered.top }}>{hovered.text}</div>}
+    </nav>
+  );
+}
+
+/**
+ * Memoized on (group identity, streaming flag, and only the tool runs this
+ * group references). Past groups are immutable in the store, so during
+ * streaming only the live group re-renders — not the whole history.
+ */
+const MessageGroup = memo(MessageGroupInner, (prev, next) => {
+  if (
+    prev.group !== next.group ||
+    prev.threadId !== next.threadId ||
+    prev.locked !== next.locked ||
+    !!prev.streaming !== !!next.streaming
+    || prev.onPreviewImage !== next.onPreviewImage
+  ) {
+    return false;
+  }
+  for (const m of prev.group.items) {
+    for (const id of referencedRunIds(m)) {
+      if (prev.toolRuns[id] !== next.toolRuns[id]) return false;
+    }
+  }
+  return true;
+});
+
+function MessageGroupInner({
+  threadId,
+  group,
+  toolRuns,
+  locked,
+  streaming,
+  onPreviewImage,
+}: {
+  threadId: string;
+  group: MsgGroup;
+  toolRuns: Record<string, ToolRun>;
+  locked?: boolean;
+  streaming?: boolean;
+  onPreviewImage: (src: string) => void;
+}) {
+  const forkThreadFromAgentReply = useStore((s) => s.forkThreadFromAgentReply);
+  const cloneThread = useStore((s) => s.cloneThread);
+  const openPreview = useStore((s) => s.openPreview);
+  const cwd = useStore((s) => s.threads[threadId]?.cwd || "");
+  const language = useStore((s) => s.config?.language || "en");
+  const [branching, setBranching] = useState<"fork" | "clone" | null>(null);
+  const artifacts = useMemo(
+    () => (group.role === "assistant" && !streaming ? selectFinalArtifacts(group.items, toolRuns, cwd) : []),
+    [cwd, group.items, group.role, toolRuns, streaming],
+  );
+  const artifactCheckKey = useMemo(() => {
+    const paths = artifacts.map((artifact) => artifact.path).join("|");
+    const toolStates = group.items
+      .flatMap((message) => (message.blocks || []).filter((block) => block.type === "toolCall"))
+      .map((block) => {
+        const run = toolRuns[block.id];
+        return `${block.id}:${run?.running ? "running" : run?.completed ? "done" : "pending"}:${run?.isError ? "error" : "ok"}`;
+      })
+      .join("|");
+    return `${paths}::${toolStates}`;
+  }, [artifacts, group.items, toolRuns]);
+  const [artifactExists, setArtifactExists] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!artifacts.length) {
+      setArtifactExists({});
+      return () => {
+        cancelled = true;
+      };
+    }
+    void Promise.all(
+      artifacts.map(async (artifact) => {
+        const key = artifact.path;
+        try {
+          const exists = await window.pi.app.fileExists(artifact.path);
+          return [key, !!exists] as const;
+        } catch {
+          // Keep the historical artifact visible when an existence probe is
+          // unavailable; the click handler will perform the same safe check.
+          return [key, true] as const;
+        }
+      }),
+    ).then((results) => {
+      if (!cancelled) setArtifactExists(Object.fromEntries(results));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [artifactCheckKey]);
+
+  const visibleArtifacts = artifacts.filter((artifact) => artifactExists[artifact.path] !== false);
+
+  if (group.role === "user") {
+    const m = group.items[0];
+    const parsedHtml = m.text ? parseHtmlReferenceText(m.text) : { text: "", references: [] };
+    const skillBlock = parsedHtml.text ? parseSkillBlock(parsedHtml.text) : null;
+    const openAttachment = async (attachment: NonNullable<ViewMessage["attachments"]>[number]) => {
+      if (!attachment.path) return;
+      try {
+        const exists = await window.pi.app.fileExists(attachment.path);
+        if (!exists) return;
+      } catch {
+        // Let the preview panel report the read error if the existence probe
+        // is unavailable in the current environment.
+      }
+      await openPreview(attachment.path, cwd);
+    };
+    return (
+      <div className="msg user" data-user-message-key={group.key}>
+        <div className="msg-user-stack">
+          <div className="msg-body">
+            {m.sendKind && (
+              <div className={`msg-kind ${m.sendKind}`}>
+                {m.sendKind === "steer" ? (language === "zh" ? "立即插入" : "steering") : language === "zh" ? "待处理后续" : "follow-up"}
+              </div>
+            )}
+            {skillBlock ? (
+              <>
+                <SkillInvocation name={skillBlock.name} language={language} />
+                {skillBlock.userMessage && <div className="msg-user-text msg-user-skill-request">{skillBlock.userMessage}</div>}
+              </>
+            ) : (
+              parsedHtml.text && <div className="msg-user-text">{parsedHtml.text}</div>
+            )}
+            {parsedHtml.references.length > 0 && (
+              <div className="msg-html-references" aria-label={language === "zh" ? "HTML 元素引用" : "HTML element references"}>
+                {parsedHtml.references.map((reference) => (
+                  <HtmlReferenceCard key={reference.id} reference={reference} language={language} />
+                ))}
+              </div>
+            )}
+            {m.images && m.images.length > 0 && (
+              <div className="msg-user-imgs">
+                {m.images.map((im, i) => (
+                  <button key={i} className="msg-user-img-button" onClick={() => onPreviewImage(im.dataUrl)} title="图片预览">
+                    <img className="msg-user-img" src={im.dataUrl} alt={language === "zh" ? "附件" : "attachment"} />
+                  </button>
+                ))}
+              </div>
+            )}
+            {m.attachments && m.attachments.length > 0 && (
+              <div className="msg-user-files" aria-label={language === "zh" ? "文件附件" : "File attachments"}>
+                {m.attachments.map((attachment, index) => (
+                  <button
+                    type="button"
+                    className="msg-user-file"
+                    key={`${attachment.name}-${index}`}
+                    disabled={!attachment.path}
+                    title={attachment.path ? language === "zh" ? "在 BioMind Studio 中查看附件" : "View attachment in BioMind Studio" : attachment.name}
+                    aria-label={attachment.path ? `${language === "zh" ? "查看附件" : "View attachment"}: ${attachment.name}` : attachment.name}
+                    onClick={() => void openAttachment(attachment)}
+                  >
+                    <span className="msg-user-file-icon" aria-hidden="true">
+                      <Files size={15} />
+                    </span>
+                    <span className="msg-user-file-copy">
+                      <span className="msg-user-file-name">{attachment.name}</span>
+                      <span className={`msg-user-file-meta${attachment.error ? " error" : ""}`}>
+                        {attachment.error
+                          ? language === "zh" ? "附件读取失败" : "Attachment unavailable"
+                          : language === "zh" ? "文件附件" : "File attachment"}
+                      </span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="msg-user-actions">
+            <button
+              disabled={!m.text}
+              title="复制这条用户消息"
+              onClick={() => m.text && navigator.clipboard?.writeText(m.text)}
+            >
+              <Copy size={11} /> 复制
+            </button>
+          </div>
+        </div>
+        <div className="msg-avatar" aria-label="用户">
+          <span className="msg-user-character" aria-hidden="true">
+            🧑
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // Assistant round: ONE avatar shared by every assistant message in the group.
+  const last = group.items[group.items.length - 1];
+  const hasBlocks = group.items.some((m) => m.blocks && m.blocks.length > 0);
+  const openArtifact = async (artifact: (typeof artifacts)[number]) => {
+    try {
+      const exists = await window.pi.app.fileExists(artifact.path);
+      if (!exists) {
+        setArtifactExists((current) => ({ ...current, [artifact.path]: false }));
+        return;
+      }
+    } catch {
+      // Fall through to the normal preview path if the probe is unavailable.
+    }
+    openPreview(artifact.path, cwd);
+  };
+  const runBranchAction = async (kind: "fork" | "clone") => {
+    if (locked || branching || !last.branchEntryId) return;
+    setBranching(kind);
+    try {
+      if (kind === "fork") await forkThreadFromAgentReply(threadId, last.branchEntryId);
+      else await cloneThread(threadId, last.branchEntryId);
+    } finally {
+      setBranching(null);
+    }
+  };
+  return (
+    <div className="msg assistant">
+      <div className="msg-avatar" aria-label={language === "zh" ? "BioMind Studio 智能体" : "BioMind Studio Agent"}>
+        <img className="msg-app-icon" src={appIconUrl} alt="" />
+      </div>
+      <div className="msg-body">
+        {renderAssistantBlocks(group.items, toolRuns, language)}
+        {streaming && !hasBlocks && <span className="muted">思考中</span>}
+        {streaming && <span className="streaming-dot" />}
+        {last.errorMessage && <div style={{ color: "#c0392b", marginTop: 6 }}>{last.errorMessage}</div>}
+        {!streaming && !last.errorMessage && last.stopReason !== "aborted" && last.stopReason !== "error" && last.stopReason !== "toolUse" && visibleArtifacts.length > 0 && (
+          <section className="msg-artifacts" aria-label={language === "zh" ? "最终产物" : "Final deliverables"}>
+            <div className="msg-artifacts-head">
+              <Files size={13} />
+              <span>{language === "zh" ? "最终产物" : "Final deliverables"}</span>
+              <span className="msg-artifacts-count">{visibleArtifacts.length}</span>
+            </div>
+            <div className="msg-artifacts-list">
+              {visibleArtifacts.map((artifact) => (
+                <button
+                  key={artifact.path}
+                  className="msg-artifact"
+                  title={`${language === "zh" ? "在 BioMind Studio 中查看" : "View in BioMind Studio"} · ${artifact.path}`}
+                  onClick={() => void openArtifact(artifact)}
+                  onContextMenu={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    void window.pi.app.showFileContextMenu(artifact.path);
+                  }}
+                >
+                  <span className="msg-artifact-icon" aria-hidden="true">
+                    {artifact.ext ? artifact.ext.slice(1, 5).toUpperCase() : <Files size={14} />}
+                  </span>
+                  <span className="msg-artifact-copy">
+                    <span className="msg-artifact-name">{artifact.name}</span>
+                    <span className="msg-artifact-path">{artifact.displayPath}</span>
+                    {artifact.description && <span className="msg-artifact-path">{artifact.description}</span>}
+                  </span>
+                  <span className={`msg-artifact-action ${artifact.action}`}>
+                    {language === "zh"
+                      ? artifact.action === "presented" ? "已交付" : artifact.action === "created"
+                        ? "已生成"
+                        : "已更新"
+                      : artifact.action === "presented" ? "Delivered" : artifact.action === "created"
+                        ? "Created"
+                        : "Updated"}
+                  </span>
+                  <PanelRight size={14} className="msg-artifact-open" />
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+        {group.items[0].replyStartedAt !== undefined && (
+          <div className="msg-footer"><ReplyDuration startedAt={group.items[0].replyStartedAt}
+            endedAt={last.replyEndedAt} running={!!streaming} language={language} /></div>
+        )}
+        {!streaming && (
+          <div className="msg-footer">
+            {last.model && <span>{last.model}</span>}
+            {last.timestamp && <span>{formatClock(last.timestamp)}</span>}
+            <span className="msg-actions">
+              <button title={language === "zh" ? "复制" : "Copy"} onClick={() => navigator.clipboard?.writeText(plainOfGroup(group))}>
+                <Copy size={12} />
+              </button>
+              <button title={language === "zh" ? "有帮助" : "Good"}>
+                <ThumbUp size={12} />
+              </button>
+              <button title={language === "zh" ? "没帮助" : "Bad"}>
+                <ThumbDown size={12} />
+              </button>
+            </span>
+            <span className="msg-branch-actions" aria-label={language === "zh" ? "从此智能体回复创建分支" : "Branch from this Agent reply"}>
+              <button
+                disabled={locked || !!branching || !last.branchEntryId}
+                title={last.branchEntryId
+                  ? language === "zh" ? "从这条智能体回复开始创建新分支" : "Create a new branch from this Agent reply"
+                  : language === "zh" ? "连接并保存会话后可创建分支" : "Fork is available after the session connects and saves"}
+                onClick={() => runBranchAction("fork")}
+              >
+                <Branch size={11} /> {branching === "fork" ? language === "zh" ? "创建中…" : "Forking…" : language === "zh" ? "分支" : "Fork"}
+              </button>
+              <button
+                disabled={locked || !!branching || !last.branchEntryId}
+                title={last.branchEntryId
+                  ? language === "zh" ? "复制截至这条智能体回复的分支" : "Clone the branch through this Agent reply"
+                  : language === "zh" ? "连接并保存会话后可克隆" : "Clone is available after the session connects and saves"}
+                onClick={() => runBranchAction("clone")}
+              >
+                <Copy size={11} /> {branching === "clone" ? language === "zh" ? "克隆中…" : "Cloning…" : language === "zh" ? "克隆" : "Clone"}
+              </button>
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function plainOfGroup(g: MsgGroup): string {
+  return g.items
+    .map((m) =>
+      (m.blocks || [])
+        .map((b) => (b.type === "text" ? b.text : b.type === "thinking" ? b.thinking : ""))
+        .filter(Boolean)
+        .join("\n\n")
+    )
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+function renderAssistantBlocks(items: ViewMessage[], toolRuns: Record<string, ToolRun>, language: "en" | "zh"): ReactNode[] {
+  const toolCount = items
+    .flatMap((message) => message.blocks || [])
+    .filter((block) => block.type === "toolCall")
+    .length;
+  let activityShown = false;
+  const nodes: ReactNode[] = [];
+  items.forEach((message) => {
+    (message.blocks || []).forEach((block, index) => {
+      const key = `${message.key}:${index}`;
+      if (block.type === "toolCall" && !activityShown) {
+        activityShown = true;
+        nodes.push(
+          <div className="tool-activity-summary" key={`${key}:activity`}>
+            <span className="tool-activity-label">{language === "zh" ? "工具活动" : "Tool activity"}</span>
+            <span className="tool-activity-count">{toolCount} {language === "zh" ? "次调用" : toolCount === 1 ? "call" : "calls"}</span>
+          </div>,
+        );
+      }
+      nodes.push(<BlockView key={key} block={block} toolRuns={toolRuns} language={language} />);
+    });
+  });
+  return nodes;
+}
+
+function BlockView({ block, toolRuns, language }: { block: ContentBlock; toolRuns: Record<string, ToolRun>; language: "en" | "zh" }) {
+  if (block.type === "text") return <Markdown text={block.text} />;
+  if (block.type === "thinking") return <Thinking text={block.thinking} language={language} />;
+  const run = toolRuns[block.id] || (block.contentIndex === undefined ? undefined : Object.values(toolRuns).find((candidate) => candidate.contentIndex === block.contentIndex));
+  return <ToolCard id={block.id} name={effectiveToolName(block.name, run)} blockArgs={block.arguments} run={run} language={language} />;
+}
+
+const SkillInvocation = memo(function SkillInvocation({ name, language }: { name: string; language: "en" | "zh" }) {
+  return (
+    <div className="skill-invocation" role="status" aria-label={`${language === "zh" ? "技能" : "skill"}: ${name}`}>
+        <span className="skill-invocation-label">{language === "zh" ? "技能" : "skill"}: {name}</span>
+    </div>
+  );
+});
+
+const HtmlReferenceCard = memo(function HtmlReferenceCard({
+  reference,
+  language,
+}: {
+  reference: HtmlElementReference;
+  language: "en" | "zh";
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const tag = reference.tagName ? `<${reference.tagName}>` : language === "zh" ? "HTML 元素" : "HTML element";
+  const selector = reference.selector || (language === "zh" ? "未提供选择器" : "No selector provided");
+  const detailLabel = language === "zh" ? "展开 HTML 元素详情" : "Expand HTML element details";
+
+  return (
+    <div className={`composer-html-reference msg-html-reference ${expanded ? "expanded" : ""}`}>
+      <div className="composer-html-reference-row">
+        <button
+          type="button"
+          className="composer-html-reference-toggle"
+          aria-expanded={expanded}
+          aria-label={`${detailLabel}: ${selector}`}
+          onClick={() => setExpanded((current) => !current)}
+        >
+          <ChevronRight className={`composer-html-reference-chevron ${expanded ? "open" : ""}`} size={13} />
+          <span className="composer-html-reference-badge">HTML</span>
+          <span className="composer-html-reference-tag">{tag}</span>
+          <code className="composer-html-reference-selector" title={selector}>{selector}</code>
+        </button>
+      </div>
+      {expanded && (
+        <pre className="composer-html-reference-code" aria-label={language === "zh" ? "HTML 元素引用详情" : "HTML element reference details"}>
+          {reference.reference}
+        </pre>
+      )}
+    </div>
+  );
+});
+
+const Thinking = memo(function Thinking({ text, language }: { text: string; language: "en" | "zh" }) {
+  const [open, setOpen] = useState(false);
+  const displayText = normalizeTranscriptText(text);
+  return (
+    <div className="thinking">
+      <button className="thinking-toggle" onClick={() => setOpen((v) => !v)}>
+        <span style={{ transform: open ? "rotate(90deg)" : "none", display: "inline-block", transition: "transform .12s" }}>›</span>
+        {language === "zh" ? `思考过程 · ${displayText.length} 字` : `Reasoning · ${displayText.length} chars`}
+      </button>
+      {open && (
+        <div className="thinking-body">
+          <Markdown text={displayText} />
+        </div>
+      )}
+    </div>
+  );
+});
+
+function effectiveToolName(blockName: string, run?: ToolRun): string {
+  const runtimeName = typeof run?.name === "string" ? run.name.trim() : "";
+  if (runtimeName && runtimeName.toLowerCase() !== "tool") return runtimeName;
+  const fallbackName = typeof blockName === "string" ? blockName.trim() : "";
+  return fallbackName || runtimeName || "tool";
+}
+
+type ToolStatus = "queued" | "running" | "done" | "error";
+
+function toolStatus(run?: ToolRun): ToolStatus {
+  if (!run) return "queued";
+  if (run.running) return "running";
+  if (run.isError) return "error";
+  if (run.completed === true) return "done";
+  return "queued";
+}
+
+function toolStatusLabel(status: ToolStatus): string {
+  return status === "queued" ? "排队中" : status === "running" ? "运行中" : status === "done" ? "已完成" : "出错";
+}
+
+function firstLine(value: unknown, maxLength = 120): string {
+  const text = normalizeTranscriptText(value)
+    .split("\n")
+    .map((line) => line.trim())
+    .find(Boolean) || "";
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, Math.max(1, maxLength - 1)).trimEnd()}…`;
+}
+
+function toolSummary(name: string, run: ToolRun | undefined, fallbackArgs: unknown, language: "en" | "zh"): string {
+  const args = parseToolArgs(run, fallbackArgs);
+  const command = toolArg(args, ["command", "cmd", "script"]);
+  if (typeof command === "string" && command.trim()) return firstLine(command);
+
+  const path = toolArg(args, ["path", "filePath", "file_path", "filename", "file"]);
+  if (typeof path === "string" && path.trim()) return normalizeTranscriptText(path);
+
+  const result = run?.resultText ?? run?.partialText;
+  const resultLine = firstLine(result);
+  if (resultLine) return resultLine;
+
+  if (args && Object.keys(args).length > 0) {
+    const count = Object.keys(args).length;
+    return language === "zh" ? `${count} 个参数` : `${count} argument${count === 1 ? "" : "s"}`;
+  }
+  if (run?.argsStr) return firstLine(run.argsStr);
+  return name === "tool" ? (language === "zh" ? "等待工具数据" : "Waiting for tool data") : "";
+}
+
+function toolDuration(run?: ToolRun): string {
+  if (!run?.startedAt) return "";
+  const end = run.endedAt || Date.now();
+  const seconds = Math.max(0, (end - run.startedAt) / 1000);
+  return seconds < 1 ? "<1s" : `${seconds.toFixed(seconds < 10 ? 1 : 0)}s`;
+}
+
+const ToolCard = memo(function ToolCard({ id, name, blockArgs, run, language }: { id: string; name: string; blockArgs?: unknown; run?: ToolRun; language: "en" | "zh" }) {
+  const [open, setOpen] = useState(false);
+  const running = run?.running;
+  const argsView = renderToolArgs(name, run, blockArgs, language);
+  const result = run?.resultText ?? run?.partialText ?? "";
+  const status = toolStatus(run);
+  const summary = toolSummary(name, run, blockArgs, language);
+  const duration = toolDuration(run);
+  const detailsId = `tool-details-${id.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
+  const emptyMessage = !run
+    ? language === "zh" ? "等待执行数据" : "Waiting for execution data"
+    : running
+      ? language === "zh" ? "工具运行时会显示输出" : "Output will appear here while the tool runs"
+      : run.completed !== true && !run.isError
+        ? language === "zh" ? "排队中，尚未开始执行" : "Queued — execution has not started"
+        : language === "zh" ? "未返回输出" : "No output returned";
+  return (
+    <div className={`tool-card state-${status} ${open ? "is-open" : ""}`}>
+      <button
+        className="tool-head"
+        type="button"
+        aria-expanded={open}
+        aria-controls={detailsId}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span style={{ transform: open ? "rotate(90deg)" : "none", display: "inline-block", transition: "transform .12s" }}>›</span>
+        <span className="tool-name">{name}</span>
+        {summary && <span className="tool-summary" title={summary}>{summary}</span>}
+        <span className={`tool-status state-${status}`}>
+          {running ? <span className="spinner" /> : language === "zh" ? toolStatusLabel(status) : status}
+        </span>
+        {duration && <span className="tool-duration">{duration}</span>}
+      </button>
+      {open && (
+        <div className="tool-details" id={detailsId}>
+          <section className="tool-section">
+            <div className="tool-section-label">{language === "zh" ? "参数" : "Arguments"}</div>
+            <div className="tool-args">{argsView || <div className="tool-empty compact">{language === "zh" ? "参数不可用" : "Arguments unavailable"}</div>}</div>
+          </section>
+          <section className="tool-section">
+            <div className="tool-section-label">{language === "zh" ? "输出" : "Output"}</div>
+            {result ? (
+              <div className={`tool-result ${run?.isError ? "err" : ""}`}>
+                <ToolCode text={normalizeTranscriptText(result)} language={languageForResult(name, run, blockArgs)} />
+              </div>
+            ) : (
+              <div className="tool-empty compact">{emptyMessage}</div>
+            )}
+          </section>
+          {!!run?.nestedCalls?.calls.length && <section className="tool-section">
+            <div className="tool-section-label">{language === "zh" ? "嵌套工具调用" : "Nested tool calls"}</div>
+            {run.nestedCalls.calls.map(call => <details key={call.id} className="nested-tool-call"><summary>{call.name} · {call.status === "unfinished" ? (language === "zh" ? "运行中" : "Running") : call.status === "error" ? (language === "zh" ? "出错" : "Error") : (language === "zh" ? "已完成" : "Done")}{call.durationMs !== undefined ? ` · ${(call.durationMs / 1000).toFixed(1)}s` : ""}</summary>{call.arguments !== undefined && <ToolCode text={JSON.stringify(call.arguments, null, 2)} language="json" />}{call.error && <pre>{call.error}</pre>}</details>)}
+            {!run.nestedCalls.complete && <div className="set-hint">{language === "zh" ? "调用记录可能省略了部分参数或尚未完成。" : "Some arguments may be omitted or calls may be unfinished."}</div>}
+          </section>}
+        </div>
+      )}
+    </div>
+  );
+});
+
+/**
+ * Tool arguments arrive in two forms: a parsed object after toolcall_end, or
+ * an escaped JSON fragment while the call is still streaming. Keep the
+ * session data untouched and normalize only the visible representation.
+ */
+function normalizeTranscriptText(value: unknown): string {
+  if (value == null) return "";
+  let text = typeof value === "string" ? value : String(value);
+  text = text.replace(/\r\n?/g, "\n");
+
+  const trimmed = text.trim();
+  if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (typeof parsed === "string") text = parsed.replace(/\r\n?/g, "\n");
+    } catch {
+      /* Keep the original text when it is not a complete JSON string. */
+    }
+  }
+
+  // A partial toolcall or older transcript may still contain transport-level
+  // escape sequences. Decode them only when there are no real line breaks, so
+  // source code containing a literal "\\n" remains intact.
+  if (!text.includes("\n") && /\\(?:r\\n|n|r|t|\")/.test(text)) {
+    text = text
+      .replace(/\\r\\n/g, "\n")
+      .replace(/\\n/g, "\n")
+      .replace(/\\r/g, "\r")
+      .replace(/\\t/g, "\t")
+      .replace(/\\"/g, '"');
+  }
+  return text;
+}
+
+function parseToolArgs(run?: ToolRun, fallbackArgs?: unknown): Record<string, unknown> | null {
+  const candidate = run?.args && hasToolArgumentObject(run.args) && Object.keys(run.args).length > 0 ? run.args : fallbackArgs ?? run?.args;
+  if (candidate && typeof candidate === "object" && !Array.isArray(candidate)) {
+    if (Object.keys(candidate).length > 0 || !run?.argsStr) return candidate as Record<string, unknown>;
+  }
+
+  const raw = typeof candidate === "string" ? candidate : run?.argsStr;
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
+
+function hasToolArgumentObject(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function toolArg(args: Record<string, unknown> | null, names: string[]): unknown {
+  if (!args) return undefined;
+  for (const name of names) {
+    if (Object.prototype.hasOwnProperty.call(args, name)) return args[name];
+  }
+  return undefined;
+}
+
+function matchesTool(name: string, names: string[]): boolean {
+  const normalized = name.toLowerCase();
+  return names.some((candidate) =>
+    new RegExp(`(^|[-_:])${candidate}(?:$|[-_:])`, "i").test(normalized),
+  );
+}
+
+function languageForPath(path: string): string | undefined {
+  const ext = path.toLowerCase().split(/[./\\]/).pop() || "";
+  const languages: Record<string, string> = {
+    js: "javascript",
+    jsx: "jsx",
+    ts: "typescript",
+    tsx: "tsx",
+    json: "json",
+    html: "html",
+    htm: "html",
+    css: "css",
+    scss: "scss",
+    less: "less",
+    py: "python",
+    sh: "bash",
+    bash: "bash",
+    zsh: "bash",
+    ps1: "powershell",
+    psm1: "powershell",
+    psd1: "powershell",
+    md: "markdown",
+    yml: "yaml",
+    yaml: "yaml",
+    xml: "xml",
+    sql: "sql",
+    java: "java",
+    go: "go",
+    rs: "rust",
+  };
+  return languages[ext];
+}
+
+function languageForTool(name: string): string | undefined {
+  if (matchesTool(name, ["codemode"])) return "javascript";
+  if (matchesTool(name, ["python"])) return "python";
+  if (matchesTool(name, ["powershell", "pwsh"])) return "powershell";
+  if (matchesTool(name, ["bash", "shell", "sh", "zsh"])) return "bash";
+  return undefined;
+}
+
+function languageForResult(name: string, run?: ToolRun, fallbackArgs?: unknown): string | undefined {
+  const toolLanguage = languageForTool(name);
+  if (toolLanguage) return toolLanguage;
+  const args = parseToolArgs(run, fallbackArgs);
+  const path = toolArg(args, ["path", "filePath", "file_path", "filename", "file"]);
+  return typeof path === "string" ? languageForPath(normalizeTranscriptText(path)) : undefined;
+}
+
+function codeFence(text: string, language?: string): string {
+  const normalized = normalizeTranscriptText(text);
+  const longest = Math.max(2, ...((normalized.match(/`+/g) || []).map((part) => part.length)));
+  const fence = "`".repeat(longest + 1);
+  return `${fence}${language || ""}\n${normalized}${normalized.endsWith("\n") ? "" : "\n"}${fence}`;
+}
+
+function ToolCode({ text, language }: { text: string; language?: string }) {
+  return <Markdown text={codeFence(text, language)} />;
+}
+
+function renderToolArgs(name: string, run: ToolRun | undefined, fallbackArgs: unknown, language: "en" | "zh"): ReactNode {
+  const args = parseToolArgs(run, fallbackArgs);
+  const command = toolArg(args, ["command", "cmd", "script", "code"]);
+  if (matchesTool(name, ["bash", "powershell", "pwsh", "codemode", "shell", "sh", "zsh", "exec", "execute", "command", "run", "python"])) {
+    const text = typeof command === "string" ? normalizeTranscriptText(command) : typeof run?.argsStr === "string" ? normalizeTranscriptText(run.argsStr) : "";
+    return text ? <ToolCode text={text} language={languageForTool(name)} /> : null;
+  }
+
+  const isEdit = matchesTool(name, ["edit", "patch", "replace", "update"]);
+  const isWrite = matchesTool(name, ["write", "create", "save", "export"]);
+  const isRead = matchesTool(name, ["read", "cat", "file"]);
+  if (isRead && args && Object.keys(args).length > 0) {
+    const path = normalizeTranscriptText(toolArg(args, ["path", "filePath", "file_path", "filename", "file"]));
+    let generic = "";
+    try {
+      generic = JSON.stringify(args, null, 2);
+    } catch {
+      generic = String(args);
+    }
+    return (
+      <div className="tool-operation">
+        <div className="tool-operation-title">{language === "zh" ? "读取" : "Read"}{path ? ` · ${path}` : ""}</div>
+        <ToolCode text={generic} language="json" />
+      </div>
+    );
+  }
+  if (isEdit || isWrite) {
+    const path = normalizeTranscriptText(toolArg(args, ["path", "filePath", "file_path", "filename", "file"]));
+    const oldText = normalizeTranscriptText(toolArg(args, ["oldText", "old_text", "old", "before", "original"]));
+    const newText = normalizeTranscriptText(toolArg(args, ["newText", "new_text", "new", "after", "replacement", "content", "text"]));
+    const patch = normalizeTranscriptText(toolArg(args, ["patch", "diff"]));
+    const content = isEdit ? newText || patch : normalizeTranscriptText(toolArg(args, ["content", "text", "data", "newText", "new_text"]));
+    const language = languageForPath(path);
+    const sections: ReactNode[] = [];
+    if (isEdit && oldText) {
+      sections.push(
+        <div className="tool-code-section" key="old">
+          <div className="tool-code-label removed">原内容</div>
+          <ToolCode text={oldText} language={language} />
+        </div>,
+      );
+    }
+    if (content) {
+      sections.push(
+        <div className="tool-code-section" key="new">
+          <div className="tool-code-label">{isEdit ? "新内容" : "写入内容"}</div>
+          <ToolCode text={content} language={language} />
+        </div>,
+      );
+    }
+    if (!sections.length && run?.argsStr) {
+      return <ToolCode text={normalizeTranscriptText(run.argsStr)} language="json" />;
+    }
+    if (!sections.length && !path) return null;
+    return (
+      <div className="tool-operation">
+        <div className="tool-operation-title">{isEdit ? "编辑" : "写入"}{path ? ` · ${path}` : ""}</div>
+        {sections}
+      </div>
+    );
+  }
+
+  if (args && Object.keys(args).length > 0) {
+    let generic = "";
+    try {
+      generic = JSON.stringify(args, null, 2);
+    } catch {
+      generic = String(args);
+    }
+    return <ToolCode text={generic} language="json" />;
+  }
+
+  return run?.argsStr ? <ToolCode text={normalizeTranscriptText(run.argsStr)} language="json" /> : null;
+}
