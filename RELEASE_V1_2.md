@@ -27,3 +27,5 @@ Linux 文件/安装器归档校验不代表 Windows 安装、卸载、当前窗�
 `server/rebind-managed-services.py` 默认只检查；只有显式 `--apply` 才修改指定服务的非认证元数据。它要求配置/服务/后端三把独占锁、持久状态为 stopped、固定核心与构建清单对应，并按精确原字节保留私有回滚副本。认证文件只检查路径、权限和归属，绝不读取；不会 ensure、启动、停止或发送信号。活动服务应在后续有条件维护窗口处理，不得强制通过检查。
 
 离线测试运行 `python3 -B tests/test_rebind_managed_services.py`；只在系统临时目录创建并清理自己的合成夹具，不接触真实服务。生产实际应用与回滚位置只写本轮交付回执，不能从源码存在推断已应用。
+
+配套 `server/rollback-managed-service-rebind.py` 由原 APPLIED 回执定位精确备份，默认 check-only；仍要求三锁、当前配置 after-hash 和 stopped/无运行记录。显式应用会恢复旧配置及已停止生命周期记录，并保留新 runtime 和所有业务数据。若绑定后来被修改则拒绝回退。测试：`python3 -B tests/test_rollback_managed_service_rebind.py`。
