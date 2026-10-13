@@ -21,3 +21,9 @@ Desktop 可在 `desktop/` 中调用既有 electron-vite `build --outDir ABSOLUTE
 之后使用 `assemble-windows-dir.cjs` 的 `--stage/--output/--runtime/--evidence` 参数离线组装；任何现有输出目录都拒绝替换、移动或改名。使用 `verify-windows-dir.cjs` 核对 manifest、ASAR 和完整 Electron runtime，再调用 `build-installer.py` 的 native Linux NSIS 配方及 `make-portable.py`。全部输出写入本轮新交付目录。不要运行旧的固定路径 `run-windows-dir.py` 来覆盖历史构建。
 
 Linux 文件/安装器归档校验不代表 Windows 安装、卸载、当前窗口连接或真实运行通过。当前服务端接入由主发布流程单独记录；客户端离线产物不会替用户关闭、重连或更新 Windows 窗口。核心恢复 WIP 的已知失败与用户接受范围仍须跟随核心发布说明，不转写为新语义验收 PASS。
+
+## 已停止服务的维护工具
+
+`server/rebind-managed-services.py` 默认只检查；只有显式 `--apply` 才修改指定服务的非认证元数据。它要求配置/服务/后端三把独占锁、持久状态为 stopped、固定核心与构建清单对应，并按精确原字节保留私有回滚副本。认证文件只检查路径、权限和归属，绝不读取；不会 ensure、启动、停止或发送信号。活动服务应在后续有条件维护窗口处理，不得强制通过检查。
+
+离线测试运行 `python3 -B tests/test_rebind_managed_services.py`；只在系统临时目录创建并清理自己的合成夹具，不接触真实服务。生产实际应用与回滚位置只写本轮交付回执，不能从源码存在推断已应用。
