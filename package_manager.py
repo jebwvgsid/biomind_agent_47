@@ -1140,6 +1140,17 @@ class PackageManager:
                 derived_errors.append(str(exc))
         def apply(latest):
             previous = latest.setdefault("tools", {}).get(tool_name, {})
+            old_env = previous.get("env") or previous.get("env_name")
+            if old_env and old_env != env_name:
+                # The legacy global alias has one owner. Additional versions
+                # live in the existing environment record used by selection;
+                # keep that alias stable instead of overwriting or rejecting it.
+                entry = patch.get("source_executable") or (str(Path(exact_prefix) / 'bin' / tool_name) if exact_prefix else None)
+                self._environment_patch(latest, env_name, {
+                    "capabilities": [f"tool:{tool_name}"], "bound_tools": [tool_name],
+                    **({"entries": {tool_name: entry}} if entry else {}),
+                    **({"prefix": prefix} if prefix is not None else {})})
+                return
             merged = self._merge_record_fields(previous, patch)
             merged.setdefault("status", "registered")
             merged.setdefault("install_time", datetime.now().isoformat())

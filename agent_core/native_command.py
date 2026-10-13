@@ -121,7 +121,7 @@ async def execute_native_command(service, arguments, *, task_id, call_id, stage=
             mutate(service.data_path,task_id,lambda state: record_provenance_event(state,'attempt_state_changed',
                 {'attempt_id':attempt_id,'status':status,**details}))
 
-        base = {'execution_protocol_version':3,'execution_profile':'native','attempt_id':attempt_id,
+        base = {'execution_protocol_version':3,'execution_profile':'native','stage':stage,'attempt_id':attempt_id,
                 'action_id':action_id,'task_id':task_id,'step_id':'','arguments_hash':digest,'request_scope':scope,
                 'receipt_ref':str(receipt),'stdout_path':str(directory/'stdout.log'),'stderr_path':str(directory/'stderr.log'),
                 'cmd':display,'original_cmd':display,'argv':action['argv'],'cwd':str(cwd),'env':overlay,

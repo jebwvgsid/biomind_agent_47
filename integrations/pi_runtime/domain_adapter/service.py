@@ -372,7 +372,9 @@ class DomainService:
         if identity:selected['skill_resolution']={key:value for key,value in identity.items() if key!='record'}
         selected['registration_sources']={**self._registry_sources(),
             **({'skill_registry':str(self.skills_root/'.skill_runtime_registry.json')} if record else {})}
-        if selected.get('availability')!='AVAILABLE':return selected
+        if selected.get('availability')!='AVAILABLE':
+            selected['next_step']='UNKNOWN/多候选/未知版本不是未安装。只提交本阶段必需工具，不把可选软件或别名当成全部必需；若候选已有所需入口，按其 env_name 明确选择后用 binding_ref 检查。仍有冲突则询问或 blocked。仅在返回的明确 prefix/已配置环境清单内 mode=locate，不猜测新的软件根或递归全盘搜索。'
+            return selected
         candidate=selected['selected_candidate'];audit=deepcopy(candidate['audit'])
         launch=deepcopy(candidate['launch_description'])
         selected['invocation']={**launch,'healthcheck':'not_run','vantage':'registry'}
@@ -454,7 +456,7 @@ class DomainService:
         """Metadata only; model declarations cannot mint execution evidence."""
         self._ensure_request()
         allowed={'call_id','env_name','prefix','tools','packages','capabilities','entries','env_runner','runner_argv',
-                 'runtime_env','source_note','evidence_refs','language','versions'}
+                 'runtime_env','source_note','evidence_refs','language','versions','verification_runs'}
         if set(p)-allowed:raise DomainError('ENVIRONMENT_REGISTRATION_FIELDS_INVALID')
         name=p.get('env_name');prefix=p.get('prefix')
         if not isinstance(name,str) or not name or not isinstance(prefix,str) or not Path(prefix).is_absolute():
@@ -471,6 +473,49 @@ class DomainService:
         prefix=str(Path(prefix).resolve())
         entries={tool:str(Path(prefix)/'bin'/tool) for tool in tools};entries.update(p.get('entries') or {})
         if any(not isinstance(v,str) or not Path(v).is_absolute() for v in entries.values()):raise DomainError('REGISTRATION_ENTRY_INVALID')
+        if p.get('verification_runs') is not None:
+            if observation is not None:raise DomainError('REGISTRATION_OBSERVATION_CONFLICT')
+            checks=p['verification_runs']
+            if not isinstance(checks,list) or not 1<=len(checks)<=16:raise DomainError('REGISTRATION_CHECKS_INVALID')
+            observed=[]
+            for check in checks:
+                if not isinstance(check,dict):raise DomainError('REGISTRATION_CHECK_INVALID')
+                tool=check.get('tool');marker=check.get('expected_output');codes=check.get('exit_codes',[0])
+                if tool not in entries or not isinstance(marker,str) or not marker.strip() or len(marker)>1000:
+                    raise DomainError('REGISTRATION_IDENTIFYING_OUTPUT_REQUIRED')
+                if not isinstance(codes,list) or not codes or any(type(c) is not int or not 0<=c<=255 for c in codes):
+                    raise DomainError('REGISTRATION_EXIT_CODES_INVALID')
+                owner,saved=self.formal._lookup(check.get('run_ref',''),self.task_id,self.scope())
+                result=owner.result if owner else saved
+                stage=owner.stage if owner else (result or {}).get('stage')
+                if not result or not result.get('terminal') or not result.get('execution_started') or stage not in {'pi_probe','pi_native_probe'}:
+                    raise DomainError('REGISTRATION_COMPLETED_PROBE_REQUIRED')
+                argv=(owner.arguments.get('argv') if owner else None) or result.get('argv')
+                entry=Path(entries[tool]).resolve()
+                if not isinstance(argv,list) or not argv:
+                    raise DomainError('REGISTRATION_EXACT_ENTRY_PROBE_REQUIRED')
+                from agent_core.runtime_launch import prepare_runtime_launch
+                descriptor={k:deepcopy(p[k]) for k in ('env_runner','runner_argv','runtime_env') if k in p}
+                descriptor.update(prefix=prefix,entries=entries)
+                index=next((i for i,arg in enumerate(argv) if Path(arg).is_absolute() and Path(arg).resolve()==entry),None)
+                if index is None or prepare_runtime_launch(descriptor,argv[index:],required_tool=tool)['command']!=argv:
+                    raise DomainError('REGISTRATION_EXACT_ENTRY_PROBE_REQUIRED')
+                if not entry.is_file() or not os.access(entry,os.X_OK):raise DomainError('REGISTRATION_ENTRY_STALE')
+                if (result.get('status')!='exited' or result.get('exit_code') not in codes or
+                    (result.get('runtime_metadata') or {}).get('termination_reason') or
+                    marker not in (str(result.get('stdout',''))+'\n'+str(result.get('stderr','')))):
+                    raise DomainError('REGISTRATION_PROBE_NOT_VERIFIED')
+                observed.append({'tool':tool,'run_ref':check['run_ref'],'entry':str(entry),'exit_code':result['exit_code'],
+                    'expected_output':marker,'receipt_ref':result.get('receipt_ref'),'level':'entry_started_output_matched'})
+            if set(tools)-{c['tool'] for c in observed}:raise DomainError('REGISTRATION_TOOL_CHECK_MISSING')
+            # Stable host evidence makes repeat registration idempotent. The
+            # reference is resolved in this task/request, never read as a user path.
+            finished=result.get('finished_at')
+            if isinstance(finished,(int,float)):
+                finished=datetime.fromtimestamp(finished,timezone.utc).isoformat()
+            if not finished:raise DomainError('REGISTRATION_PROBE_TIME_UNAVAILABLE')
+            observation={'source_ref':digest(observed),'observed_at':finished,
+                'session_id':self.session_id,'request_id':self.scope(),'checks':{'tool:'+c['tool']:c for c in observed}}
         evidence={'source':'registration_declaration','note':str(p.get('source_note') or ''),
                   'evidence_refs':p.get('evidence_refs') or [],'strength':'declared_not_verified'}
         record={k:deepcopy(p[k]) for k in ('packages','capabilities','runtime_env','env_runner','runner_argv','language','versions') if k in p}
@@ -504,6 +549,7 @@ class DomainService:
                     'operation':'created' if not before else 'updated' if changed else 'unchanged','env_name':name,
                     'registration_sources':source,'registration_receipt':main,'tool_mappings':derived,
                     'skill_mapping':{'status':'not_requested'},'shim':{'status':'not_required'},'healthcheck_status':'not_run',
+                    'verification_status':'historically_observed' if observation else 'declared_not_verified',
                     'installation_status':'not_run','record':deepcopy(self.registry.registry['environments'][name])}
         except (RegistryError,OSError,ValueError) as exc:
             return {'status':'registration_failed','error':str(exc),'registration_sources':source,
@@ -515,6 +561,13 @@ class DomainService:
         requirements=p.get('requirements') or {};key=digest(requirements);scope=self.scope()
         previous=self._state().get('task_state',{}).get('runtime_lookup_attempts',{}).get(key)
         if previous and previous.get('request_scope')==scope:return {**previous['result'],'replayed':True}
+        def reserve(state):
+            attempts=state.setdefault('task_state',{}).setdefault('runtime_lookup_attempts',{})
+            used=sum(row.get('reserved_seconds',15) for row in attempts.values() if row.get('request_scope')==scope)
+            if used+15>60:raise DomainError('ENVIRONMENT_LOCATION_TOTAL_BUDGET_EXHAUSTED')
+            attempts[key]={'request_scope':scope,'reserved_seconds':15,'result':{'status':'in_progress_or_interrupted',
+                'install_required':False,'budget':{'request_total_seconds':60,'reserved_seconds':used+15}}}
+        mutate(self.data_root,self.task_id,reserve)
         started=time.monotonic()
         try:
             from .registry import bounded_location_lookup
@@ -523,10 +576,11 @@ class DomainService:
             result={'status':'timed_out','cleanup':'cleanup_unknown','reason':'metadata lookup did not return a cleanup receipt'}
         except (OSError,ValueError) as exc:result={'status':'lookup_failed','error':str(exc)}
         result={**result,'elapsed_seconds':round(time.monotonic()-started,4),'budget':{'max_candidates':3,'item_seconds':5,'total_seconds':15},
-                'registration_sources':self._registry_sources(),'install_required':False,'healthcheck_status':'not_run'}
+                'registration_sources':self._registry_sources(),'install_required':False,'healthcheck_status':'not_run',
+                'request_budget_seconds':60}
         if len(json.dumps(result).encode())>8192:
             result={'status':'incomplete','reason':'LOOKUP_SUMMARY_LIMIT','max_bytes':8192,'registration_sources':self._registry_sources(),'install_required':False}
-        mutate(self.data_root,self.task_id,lambda state:state.setdefault('task_state',{}).setdefault('runtime_lookup_attempts',{}).update({key:{'request_scope':scope,'result':result}}))
+        mutate(self.data_root,self.task_id,lambda state:state.setdefault('task_state',{}).setdefault('runtime_lookup_attempts',{}).update({key:{'request_scope':scope,'reserved_seconds':15,'result':result}}))
         return result
 
     def execution_record(self,p):
@@ -1102,15 +1156,23 @@ class DomainService:
                               software_side_effects='possible' if rc else 'installation_completed')
                 progress('installation_completed',result=result)
                 if rc==0:
+                    verification_deadline=time.monotonic()+60
                     for index,check in enumerate(verification):
+                        remaining=verification_deadline-time.monotonic()
+                        if remaining<=0:
+                            result.update(status='verification_failed',registration_status='not_run',error='INSTALL_VERIFICATION_BUDGET_EXHAUSTED')
+                            break
                         launch=prepare_runtime_launch(descriptor,check['argv'],required_tool=check['tool'])
                         logs={'stdout':str(logroot/f'verify-{index}.stdout.log'),'stderr':str(logroot/f'verify-{index}.stderr.log')}
                         observation={}
                         out,err,check_rc=await dispatch(launch['command'],env=launch['env'],profile=False,display_streams=False,
-                            cancel_event=cancel,capture_log_paths=logs,runtime_observation=observation)
+                            cancel_event=cancel,capture_log_paths=logs,runtime_observation=observation,
+                            timeout=min(10,remaining),original_deadline=verification_deadline,short_check=True,max_output_bytes=65536)
                         result['verification'].append({**check['evidence'],'argv':launch['command'],
                             'launch':launch['launch'],'exit_code':check_rc,'stdout':out[:1000],'stderr':err[:1000],
-                            'log_refs':logs,'observed_at':datetime.now(timezone.utc).isoformat()})
+                            'log_refs':logs,'observed_at':datetime.now(timezone.utc).isoformat(),
+                            'effective_budget_seconds':min(10,remaining),'elapsed_seconds':observation.get('elapsed_seconds'),
+                            'cleanup_confirmed':observation.get('cleanup_confirmed')})
                         marker=check.get('expected_stdout_line')
                         if check_rc!=0 or (marker and marker not in out.splitlines()):
                             result.update(status='verification_failed',registration_status='not_run')

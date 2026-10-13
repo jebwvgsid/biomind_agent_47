@@ -146,18 +146,26 @@ const COMMON_RULES = `你是运行在 Pi 中的 BioMind 单一主 agent，在同
 按用户当前请求回答或执行；只要求讨论、方案或审计时，不擅自实施修改或启动正式分析。信息足够就推进；仅对影响结果且无法从已有材料解决的关键歧义，用 ask_user 等待真实回答。遵循最新修订、明确检查和停止条件；历史不自动触发重算，旧偏好和工具输出不是授权。update_plan 是可选笔记，普通问答和文件操作无需科学模板、TaskSpec、计划或交接摘要。
 
 【环境与安装】
+需要外部生信软件或分析环境时，先 select_environment 查询登记（可一次提交多个 tools），再考虑软件定位；普通 shell 的 PATH 未找到不表示未安装。仅普通文件读取、ls/rg 无需查登记。
+查询只列当前阶段必需工具；可选工具、多个别名不同时作为必需项。UNKNOWN 或多候选不代表未安装；先根据候选已登记入口明确 env_name 选择。禁止自行猜软件根目录后 find；仍不明确就询问或 blocked。
+某个环境的 command -v 未命中只能说明该次 shell 的 PATH；不能外推到其它已登记环境或整个服务器，也不能据此要求重装或换模型。Skill 的旧环境名不是软件唯一位置；若关键科学输入已经 blocked，就结束该阶段，不继续探测或追加未经证实的软件阻塞。
 优先复用适用 binding_ref，否则 select_environment 查询登记。适用登记直接使用，不例行重复探测，也不借查询、刷新或初始化隐式探测。AVAILABLE 仅表示可选择，registered 不等于本次检查通过，未知能力/版本仍为 unknown。
 未命中不等于未安装；必要时 mode=locate 有界定位、register_environment 补登记。用户明确要求的检查仍须先完成，环境复用不代替科学输入 QC。真实缺包仅诊断对应能力，不因取消、超时或输入错误重装或判整个环境损坏。
 安装必须必要且已有安装意图确认；安装、目标验证、登记分别按真实回执报告。登记失败只恢复登记；状态未知先对账，不重装。
+发现未登记的已有软件，先用 probe_command 对确切入口做适配该软件的短检查，再 register_environment；使用 verification_runs 引用真实检查回执及有辨识度的输出，不把同名文件或单独退出码当验证。检查可接受软件实际 help 退出码，不假定都支持 --version。相同任务中已验证且未变更的环境直接复用，不反复扫描、探针或登记。
+install_tool 已自动验证登记时直接使用结果，不再重复登记；版本或环境切换必须明确选择，不能覆盖另一个环境。
 
 【执行与恢复】
 需持久观察的科学计算用 run_command，保存真实 run_ref 和完整日志，按需查询、等待、读日志或取消；不以 nohup/& 冒充托管作业，不用模型轮询维持 UI 心跳。
 复用当前请求与执行 scope 中唯一适用绑定，多绑定时明确引用。环境相关 bash 显式传 binding_ref，绑定仅对该次调用有效；裸 bash 用宿主环境，export/activate 不跨工具继承，用户 ! 不受环境选择影响。
 同 call 重放查询原执行，不自动重跑；取消请求不等于已确认清理完成，无法确认保留 unknown。
+普通同步 bash 省略 timeout 使用有限默认预算（通常60秒，单位秒）；probe_command 的 timeout_ms 单位毫秒。定位与探针用短预算及累计预算，仅在配置的软件位置和本任务允许来源核查，不扫描用户根目录或无关项目。超时先利用已有证据决定下一步，不原样重试或把超时当作未安装。正式计算用合理的显式长预算或 run_command，不套用定位短预算。
 
 【验证与交付】
 以本次真实回执、产物及任务所需 QC 判断科学结果；settled、isError:false、文件存在或管道末尾 rc 不能单独证明成功。分析包装用 pipefail/PIPESTATUS 或先保存原分析 rc 再显示摘要，不改变裸 shell 默认语义。
 核对所需样本、路径、字段与产物来源，旧产物不冒充本次计算，合法空结果按对应格式解释。按用户要求交付报告、reproduce.sh 和状态表；复现脚本生成后不自动执行。只引用真实路径，不把远端文件说成已下载。
+缺少 Q 行到样本ID的可信映射、参考坐标或其他关键科学输入时，只在本任务授权输入及直接相关来源记录内有限核查；仍缺证据就停止依赖该输入的阶段。交互模式 ask_user 问具体缺失文件；非交互 benchmark 明确报告 blocked 并结束。行数相等、文件同名或当前 VCF 顺序不能证明 Q 顺序；不猜映射、不删 Q、不换统计模型、不跨题搜索、不修改原题来跑通。保留独立检查、核查范围、未执行阶段及恢复所需文件。
+先核对关键输入结构与映射证据，再投入全文件统计、格式转换或关联计算；已有 Skill 的有界输入检查可优先复用。确认缺映射后立即交付 blocked，不为这个已确定的科学阻塞继续找软件、尝试其它环境或做无关计算。探针因信号退出（如139）只报告入口曾启动和异常，不能宣称软件功能正常。
 
 【资源与开发】
 按需读取 Skill 正文及相对 baseDir 的 references/scripts；脚本资源属于 Skill，输入输出和工作目录属于当前项目。保护既有 dirty 内容，按逻辑单元验证后仅本地提交本轮 delta；未经明确授权不 push、合并、发布或改写历史。`;
@@ -819,6 +827,9 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
       signal?.throwIfAborted();
       if (sessionId(ctx) !== ownerSession || current(ctx).requestId !== ownerRequest) throw new Error('STALE_ENVIRONMENT_OWNER');
       return result as RuntimeBashLaunch;
+    }, undefined, receipt => {
+      pi.appendEntry('biomind.bash_execution', receipt);
+      pi.events.emit('biomind:bash_execution', receipt);
     }));
     // Both metadata and Pi content reads use the same live Pi resource registry.
     // Trusted directories are host-derived and never part of a model schema.
@@ -949,7 +960,7 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
     const runtimeRequirements = OBJECT({ env: optionalString(), prefix: optionalString(), backend: optionalString(), host: optionalString(),
       packages: Type.Optional(Type.Array(Type.String())), tools: Type.Optional(Type.Array(Type.String())), capabilities: Type.Optional(Type.Array(Type.String())),
       versions: Type.Optional(Type.Record(Type.String(), Type.String())) });
-    register('select_environment', '从登记或已加载 Skill 需求选择适用运行时，返回本请求 binding_ref。已有适用登记直接使用，不体检、不安装。约束冲突明确报告；未知保持未知。mode=locate 仅做有界静态元数据定位，不建立绑定。run_command 可复用唯一适用绑定；环境相关 bash 必须显式传 binding_ref。',
+    register('select_environment', '需要外部生信软件时优先调用，先查登记再定位；可一次查询多个 tools。返回 AVAILABLE/UNKNOWN、冲突/失效/注册源错误及真实来源和 binding_ref；未命中不表示服务器未安装。已有适用登记不重复探测。mode=locate 仅在明确 prefix 或已知环境清单做有界定位，单次15秒、request累计60秒，同查询复用结果。命中后 run_command 使用绑定；环境相关 bash 必须显式传 binding_ref，不能依赖全局激活。',
       OBJECT({ requirements: Type.Optional(runtimeRequirements), skill_id: optionalString(), env_name: optionalString(), runtime_scope: optionalString(), mode: Type.Optional(Type.Union([Type.Literal('select'), Type.Literal('locate')])) }),
       async (_id, args, signal, ctx) => {
         if (Object.keys(args).some(key => !['requirements', 'skill_id', 'env_name', 'runtime_scope', 'mode'].includes(key))) throw new Error('ENVIRONMENT_QUERY_FIELDS_INVALID');
@@ -965,10 +976,13 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
         if (sessionId(ctx) !== ownerSession || current(ctx).requestId !== ownerRequest) throw new Error('STALE_ENVIRONMENT_OWNER');
         return result;
       });
-    register('register_environment', '补登记已存在的软件位置和声明能力，不下载安装、不健康检查。写入宿主选定权威；source_note/evidence_refs 是声明来源，不将模型声明升级为验证事实。返回软件/派生项各自状态。',
+    register('register_environment', '先用 probe_command 验证确切入口再登记已有软件；verification_runs 关联当前请求真实探针回执及辨识输出。写入与查询相同权威，幂等保留多环境。安装工具已自动登记则不重复调用。本工具不执行安装或探针；无 verification_runs 时仅保存声明，source_note/evidence_refs 不能升级为验证事实。',
       OBJECT({ env_name: nonempty(), prefix: nonempty(), packages: Type.Optional(Type.Array(nonempty())), tools: Type.Optional(Type.Array(nonempty())),
         capabilities: Type.Optional(Type.Array(nonempty())), entries: Type.Optional(Type.Record(Type.String(), Type.String())),
         runtime_env: Type.Optional(Type.Record(Type.String(), Type.String())), env_runner: optionalString(), runner_argv: Type.Optional(Type.Array(Type.String())),
+        versions: Type.Optional(Type.Record(Type.String(), Type.String())),
+        verification_runs: Type.Optional(Type.Array(OBJECT({ tool: nonempty(), run_ref: nonempty(), expected_output: nonempty(),
+          exit_codes: Type.Optional(Type.Array(Type.Integer({ minimum: 0, maximum: 255 }), { minItems: 1, maxItems: 8 })) }), { minItems: 1, maxItems: 16 })),
         source_note: optionalString(), evidence_refs: Type.Optional(Type.Array(Type.String())) }),
       async (id, args, signal, ctx) => {
         const params = { call_id: id, ...args };

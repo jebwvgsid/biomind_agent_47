@@ -56,7 +56,15 @@ def inspect_inputs(vcf, phenotype, q_matrix=None, *, gff3=None, header_mode="aut
             "prefix_sha256": hashlib.sha256(prefix).hexdigest(), "file_bytes": gff3.stat().st_size,
             "first_feature_columns": len(first.split("\t")) if first else None, "whole_file_validated": False}
     observation["blocked_operations"] = list(dict.fromkeys(observation["blocked_operations"]))
-    return observation
+    # Surface the scientific stop before potentially long sample-ID lists. The
+    # legacy status means the inspection ran; it is not permission to associate.
+    return {"decision": "blocked_need_user_evidence" if observation["blocked_operations"] else "input_identity_validated",
+        "next_action": ("STOP the dependent association stage. In noninteractive benchmark write blocked/report/reproduce and end; "
+                        "in interactive mode ask for the missing sample mapping/provenance. Do not infer Q order, "
+                        "drop Q, change model, or continue software discovery for this blocked stage."
+                        if observation["blocked_operations"] else
+                        "Input identity checks passed; continue the requested downstream checks using this explicit mapping."),
+        "blocked_operations": observation["blocked_operations"], "q_mapping": observation["q_mapping"], **observation}
 
 
 def main():
