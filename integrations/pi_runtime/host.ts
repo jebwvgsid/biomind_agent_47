@@ -256,7 +256,7 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
   session.agent.toolExecution = 'sequential';
   let detached = false; let active: Promise<void> | undefined;
   let exitCode = 0; let usageAccountingFailed = false; let profileBindingFailed = false; let backendReady = false;
-  let activeInputId: string | undefined; let outcome: string = 'unknown';
+  let activeInputId: string | undefined; let outcome: string = 'unknown'; let settledReceipt: Json = {};
   let controlBusy: 'reload' | 'compact' | undefined;
   const executionFacts: Json[] = [];
   const identity = { resourceOwnership:config.resourceOwnership, loaded_build: config.loadedBuild, build_id: process.env.BIOMIND_PI_BUILD_ID, python: { path: process.env.BIOMIND_PI_PYTHON, source: config.pythonSource }, execution_profile: config.executionProfile, profile_source: config.profileSource,
@@ -343,7 +343,7 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
       if (code === 'BIOMIND_USAGE_OBSERVER_FAILED') usageAccountingFailed = true;
     }
   });
-  events.on('biomind:settled', (raw: unknown) => { outcome = (raw as Json).outcome; write({ type: 'biomind_settled', data: raw }); });
+  events.on('biomind:settled', (raw: unknown) => { settledReceipt = raw as Json; outcome = settledReceipt.outcome; write({ type: 'biomind_settled', data: raw }); });
   session.subscribe(event => {
     if (event.type === 'message_start' && event.message.role === 'user') {
       if (promptUserPending) { if (promptAdmission) promptAdmission.status = 'consumed'; promptAdmission = undefined; promptUserPending = false; }
@@ -513,7 +513,7 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
         return;
       }
       activeInputId = String(frame.requestId ?? frame.taskId ?? frame.id ?? randomUUID());
-      const inputId = activeInputId; outcome = 'unknown'; executionFacts.splice(0);
+      const inputId = activeInputId; outcome = 'unknown'; settledReceipt = {}; executionFacts.splice(0);
       active = (async () => {
         try {
           await session.prompt(frame.text, { images: validated.images, preflightResult: success => {
@@ -521,7 +521,9 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
             else fail('PI_INPUT_NOT_ACCEPTED');
           } }); await session.waitForIdle();
           write({ type: 'result', ...sessionIdentity(), requestId: inputId, runtime_status: usageAccountingFailed || !backendReady ? 'error' : outcome,
-            model_conclusion: session.getLastAssistantText() ?? '', execution_facts: [...executionFacts], scientific_success: null,
+            model_conclusion: session.getLastAssistantText() ?? '', execution_facts: [...executionFacts], scientific_success: settledReceipt.scientificSuccess ?? null,
+            ...(settledReceipt.scientific_block ? { scientific_block: settledReceipt.scientific_block,
+              final_response: settledReceipt.final_response, model_outcome: settledReceipt.model_outcome } : {}),
             usage_scope: projectObservedUsage(session.sessionManager.getEntries()).scope, usage: projectObservedUsage(session.sessionManager.getEntries()), pi_entry_usage: session.getSessionStats() });
         } catch {
           if (admission?.status === 'pending') fail('PI_INPUT_NOT_ACCEPTED');

@@ -32,7 +32,7 @@ from memory.patch_validator import redact_secrets, sanitize_value
 from .registry import RegistryView, registry_path as resolve_registry_path
 from .discovery import list_directory
 
-HOST_METHODS = frozenset({'files.list','files.read_authorize','files.mutation_snapshot','files.mutation_replay','request.begin','request.cancel','approval.decide','settings.update','shutdown',
+HOST_METHODS = frozenset({'request.preflight','request.dispatch','files.list','files.read_authorize','files.mutation_snapshot','files.mutation_replay','request.begin','request.cancel','approval.decide','settings.update','shutdown',
                          'request.pause','request.resume','request.revise','request.status','exec.probe',
                          'memory.maintenance.prepare','memory.maintenance.apply','archive.append','archive.status',
                          'permissions.status','permissions.revoke','permissions.mode','environments.launch','environments.register_observed'})
@@ -76,6 +76,7 @@ class DomainService:
         self.files=WorkspaceFileService(self.commands)
         self._skills=None; self._wiki=None; self._core=None
         self._seen_sources={}; self._dispatch_lock=asyncio.Lock(); self._install_tasks={}
+        self._scientific_lock=asyncio.Lock()
         self._install_cancels={}
         self._closed=False
         from agent_core.execution_profile import profile_value, bind_host_profile
@@ -671,6 +672,9 @@ class DomainService:
 
     async def _exec_start(self,p,*,probe=False):
         self._ensure_request(); call_id=self._call_id(p)
+        from .scientific_inputs import admit
+        admission=await admit(self,'probe_command' if probe else 'run_command')
+        if admission['status']!='allowed':return admission
         original=deepcopy(p.get('arguments') or {})
         for field in ('approved','source','permit','human_required','host_token','access_projection','read_access','grants','mounts','_biomind_probe','profile','execution_profile','disable_sandbox','grant','session','session_id','roots','policy_revision','trusted_roots','_runtime_binding'):
             if field in original or field in p: raise DomainError('MODEL_AUTHORITY_FIELD_FORBIDDEN')
@@ -776,11 +780,22 @@ class DomainService:
             return mutate(self.data_root,self.task_id,update)
         if method=='request.status':
             task=self._state().get('task_state',{})
+            from .scientific_inputs import current, public
             return {'request_id':task.get('pi_request_id'),'paused':task.get('pi_pause'),
+                    'scientific_input': public(current(self)),
                     'execution_profile':self.execution_profile,'requires_new_request':bool(task.get('pi_profile_requires_new_request')),
                     'revision':task.get('pi_user_revision',1),'agent':'main',
                     'request_scope':self.scope(),'approval_mode':task.get('execution_permissions',{}).get('automation',{'mode':'manual'})}
         if method=='request.pause':return self._pause_request(p.get('reason') or 'host_pause')
+        if method=='request.preflight':
+            from .scientific_inputs import prepare
+            self._ensure_request()
+            if set(p)-{'user_text'} or not isinstance(p.get('user_text'),str):raise DomainError('SCIENTIFIC_PREFLIGHT_ARGUMENTS_INVALID')
+            return await prepare(self,p['user_text'])
+        if method=='request.dispatch':
+            from .scientific_inputs import admit
+            self._ensure_request()
+            return await admit(self,str(p.get('tool') or 'unknown'))
         if method in {'request.resume','request.revise'}:
             if not self._state().get('task_state',{}).get('pi_request_id'):raise DomainError('REQUEST_BEGIN_REQUIRED')
             def update(state):

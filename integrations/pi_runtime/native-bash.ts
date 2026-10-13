@@ -23,7 +23,8 @@ export function bashBudget(requested: number | undefined, configured = process.e
 
 export function runtimeBash(resolve: RuntimeBashResolver,
   shellOptions?: (ctx: ExtensionContext) => ShellOptions,
-  record?: (receipt: Record<string, unknown>) => void): ToolDefinition {
+  record?: (receipt: Record<string, unknown>) => void,
+  admit?: (ctx: ExtensionContext) => Promise<void>): ToolDefinition {
   const definition = createBashToolDefinition(process.cwd());
   return {
     ...definition,
@@ -32,6 +33,8 @@ export function runtimeBash(resolve: RuntimeBashResolver,
       timeout: Type.Optional(Type.Number({ minimum: 0.001, maximum: 2147483.647, description: 'Seconds; omitted = finite host default, normally 60. Set an explicit appropriate budget for longer work, or use run_command.' })),
       binding_ref: Type.Optional(Type.String({ minLength: 1, description: 'Current-request binding_ref returned by select_environment.' })) }),
     async execute(id, input, signal, update, ctx) {
+      await admit?.(ctx);
+      signal?.throwIfAborted();
       // Reuse Pi's setting parser and project-trust decision. The product does
       // not override these shell settings in memory; tests may supply the same
       // options directly. Creating the reader never writes settings.

@@ -8,7 +8,7 @@ import { installProductFooter } from './product-footer.js';
 
 export interface BioMindProductState {
   role?: 'Main' | 'Consult' | 'Generate';
-  status?: 'active' | 'settled' | 'aborted' | 'error' | 'paused';
+  status?: 'active' | 'settled' | 'aborted' | 'error' | 'paused' | 'blocked';
 }
 export type BioMindProductStateGetter = (ctx: ExtensionContext) => Readonly<BioMindProductState> | undefined;
 export interface BioMindBackendState {

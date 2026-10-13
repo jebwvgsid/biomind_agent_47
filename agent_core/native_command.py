@@ -38,7 +38,13 @@ async def execute_native_command(service, arguments, *, task_id, call_id, stage=
         task = state.get('task_state', {})
         if getattr(service, '_execution_profile', 'protected') != 'native' or task.get('pi_execution_profile', {}).get('profile') != 'native':
             raise ValueError('NATIVE_HOST_BINDING_REQUIRED')
-        if request_scope(state) != scope or not task.get('pi_request_id') or task.get('pi_pause') or current_finish(state):
+        gate = task.get('scientific_input') or {}
+        # Only the host's exact current inspection intent can gather replacement
+        # evidence while the previous scientific finish remains committed.
+        recheck = (stage == 'scientific_input_check' and gate.get('scope') == scope
+                   and gate.get('status') == 'checking' and gate.get('checking_call_id') == call_id
+                   and gate.get('checker_argv') == arguments.get('argv'))
+        if request_scope(state) != scope or not task.get('pi_request_id') or task.get('pi_pause') or (current_finish(state) and not recheck):
             raise ValueError('NATIVE_REQUEST_NOT_ACTIVE')
         if task.get('status') == 'cancelled' or cancel_event is not None and cancel_event.is_set():
             raise asyncio.CancelledError()
