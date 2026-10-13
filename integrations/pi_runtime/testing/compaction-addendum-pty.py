@@ -131,7 +131,8 @@ def main():
             kinds.add('history' if '<conversation>' in text else 'prefix')
             assert text.count('<biomind_compaction_addendum_v1>') == 1
             assert text.count(focus) == 1
-            assert 'BioMind 生信任务压缩增补 v1' in text
+            expected = (runtime / 'prompts/compaction-bioinformatics-v1.txt').read_text(encoding='utf-8').strip()
+            assert f'<biomind_compaction_addendum_v1>\n{expected}\n</biomind_compaction_addendum_v1>\n\n{focus}' in text
         assert kinds == {'history', 'prefix'}, kinds
         assert len(summaries) == 2, len(summaries)
         stored = [row for row in entries() if row.get('type') == 'compaction']
