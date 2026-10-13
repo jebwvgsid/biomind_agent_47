@@ -1,0 +1,37 @@
+{
+  "appId": "org.biomind.studio",
+  "productName": "BioMind Studio",
+  "asar": true,
+  "npmRebuild": false,
+  "electronVersion": "43.3.0",
+  "electronDist": "/public/home/liusiqi/03.\u6bd5\u8bbe/BioMind_Studio_S2_S3_Implementation_20261008/delivery_correction_20261008/assets/electron-43.3.0/runtime",
+  "directories": {
+    "output": "/public/home/liusiqi/03.\u6bd5\u8bbe/BioMind_Studio_Workbench_20261009/build/windows"
+  },
+  "files": [
+    "electron/**/*.cjs",
+    "electron/*.html",
+    "electron/*.js",
+    "electron/*.css",
+    "out/**/*",
+    "server/*",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "BUILD-IDENTITY.json",
+    "package.json",
+    "!**/*.test.cjs"
+  ],
+  "win": {
+    "target": [
+      {
+        "target": "dir",
+        "arch": [
+          "x64"
+        ]
+      }
+    ],
+    "signExecutable": false,
+    "executableName": "BioMind Studio"
+  },
+  "publish": null
+}

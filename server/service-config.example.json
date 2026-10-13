@@ -1,0 +1,38 @@
+{
+  "schema": "BioMindStudioServiceV1",
+  "serviceId": "biomind-studio",
+  "serverId": "biomind-REPLACE-WITH-INSTALLATION-ID",
+  "mode": "slurm",
+  "stateRoot": "/absolute/private/biomind-studio-service",
+  "cwd": "/absolute/BioMind_Studio_Workbench_20261009/backend/pi-studio",
+  "command": [
+    "/absolute/node",
+    "/absolute/BioMind_Studio_Workbench_20261009/server/next-service.mjs"
+  ],
+  "startupTimeoutSeconds": 180,
+  "environmentFile": "/absolute/private/biomind-studio-service/runtime-environment.json",
+  "environment": {
+    "BIOMIND_STUDIO_ROOT": "/absolute/BioMind_Studio_Workbench_20261009/backend/pi-studio",
+    "NODE_ENV": "production",
+    "PI_WEB_DIST_DIR": ".next-pkg",
+    "BIOMIND_LAUNCHER_PYTHON": "/absolute/existing/biomind/python",
+    "BIOMIND_ENTRYPOINT": "/absolute/BioMind_Studio_S2_S3_Implementation_20261008/candidate/Biomind_v1/bio_agents.py",
+    "BIOMIND_PIPE_LAUNCHER": "/absolute/BioMind_Studio_S2_S3_Implementation_20261008/candidate/Biomind_v1/integrations/pi_runtime/testing/posix-pipe-relay.py",
+    "BIOMIND_RUNTIME_CONFIG": "/absolute/existing/runtime-config.json",
+    "BIOMIND_PI_NODE": "/absolute/node",
+    "BIOMIND_PI_PYTHON": "/absolute/existing/biomind/python",
+    "BIOMIND_PROJECT_ROOTS_JSON": "[\"/absolute/authorized/Linux/project\"]",
+    "BIOMIND_DATA_ROOTS_JSON": "[\"/absolute/authorized/data\"]",
+    "PI_WEB_UPLOADS_DIR": "/absolute/authorized/data",
+    "BIOMIND_HISTORY_NODE": "/absolute/node",
+    "BIOMIND_HISTORY_QUERY_SCRIPT": "/absolute/BioMind_Studio_S2_S3_Implementation_20261008/candidate/Biomind_v1/integrations/pi_runtime/dist/history-query.js",
+    "BIOMIND_SESSION_ROOT": "/absolute/existing/native/session-root",
+    "BIOMIND_INSTRUCTIONS_QUERY_SCRIPT": "/absolute/BioMind_Studio_S2_S3_Implementation_20261008/candidate/Biomind_v1/integrations/pi_runtime/dist/instructions-query.js",
+    "BIOMIND_MAX_OWNERS": "8"
+  },
+  "slurm": {
+    "partition": "REPLACE_WITH_SUPPORTED_PARTITION",
+    "time": "08:00:00",
+    "cpus": 4
+  }
+}
