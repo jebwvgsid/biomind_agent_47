@@ -9,13 +9,13 @@
 - 服务生命周期：`server/`；打包配方：`packaging/`；构建/检查脚本与合成测试：`scripts/`、`tests/`。
 - BioMind Main、登记、bash、主提示词、压缩提示词和插件的权威源码仍在 `/public/home/liusiqi/03.毕设/BioMind-worktrees/unified-core-plugins-20261009`，使用独立核心 Git 数据库。本 Studio 仓库不替代核心仓库。
 
-保全批次依次保存后端及来源说明、客户端、服务与打包支持；批次间是保存顺序，不声称每个中间提交均已独立构建通过。最终提交、父提交、文件哈希及独立备份见 `/public/home/liusiqi/03.毕设/BioMind_Workspace_Preservation_20261013`。
+保全批次依次保存后端及来源说明、客户端、服务与打包支持；随后补存原清单遗漏的会话 API 路由。批次间是保存顺序，不声称每个中间提交均已独立构建通过。最终提交、父提交、文件哈希及独立备份见 `/public/home/liusiqi/03.毕设/BioMind_Workspace_Preservation_20261013`。
 
 ## 来源及历史范围
 
 客户端来自 `https://github.com/flowflic/Pi-Studio` 的 `0fbc8178b80af55bf043465ef36d5bfe8373463c`，本地上游仓库为 `/public/home/liusiqi/03.毕设/BioMind_Studio_Workbench_20261009/upstream/flowflic-pi-studio`。本轮直接读取该 Git 对象逐路径比较；73 份同字节、21 份已适配，另有本地新增文件。现有 `desktop/package.json` 为 `1.3.0-rc.20261009.1`，不能用上游干净提交代替本地适配。
 
-后端历史来源为 `https://github.com/AACS111/pi-studio` 的 `70a6a1a9763d26778fd6def702eeea6994739d56`，之后经历 BioMind RemoteAgent、S1/S2、Workbench 和统一核心适配。当前 package 版本 `1.1.0`，锁定依赖与客户端不同。来源证据为 2026-09-28 的 `BioMind_RemoteAgent_Candidate_20260928/studio_source/ARCHIVE_LOCK.json`，并以现存本地基线核对必要文件。原清单所指 ZIP 目前不存在；本轮没有重新下载，未将历史 archive 校验冒充当前校验。501 份后端文件中，421 份与历史 archive 清单相同、38 份不同，其余为本地新增。
+后端历史来源为 `https://github.com/AACS111/pi-studio` 的 `70a6a1a9763d26778fd6def702eeea6994739d56`，之后经历 BioMind RemoteAgent、S1/S2、Workbench 和统一核心适配。当前 package 版本 `1.1.0`，锁定依赖与客户端不同。来源证据为 2026-09-28 的 `BioMind_RemoteAgent_Candidate_20260928/studio_source/ARCHIVE_LOCK.json`，并以现存本地基线核对必要文件。原清单所指 ZIP 目前不存在；本轮没有重新下载，未将历史 archive 校验冒充当前校验。补齐 9 份路由后的 510 份后端文件中，425 份与历史 archive 清单相同、43 份不同，其余为本地新增。
 
 本仓库从当前经审查快照建立新历史，没有导入完整上游 Git 历史。源码扫描覆盖精确候选文件；真实凭据和用户数据目录不在扫描/复制范围。扫描发现的口令值均核对为合成测试、文案或示例；这不是对全磁盘、所有历史或未来新文件的无秘密保证。
 
@@ -51,7 +51,7 @@ SOFTWARE.
 
 ## 保存了源码，但尚未证明完整重建
 
-653 份旧候选不是提交白名单。`server/setup-preset.json` 是真实安装预设，保留原位，本轮不备份、不提交；其余 652 份源码、锁文件、构建配置、合成测试和资源进入三个保存批次，并加入本说明及 `.gitignore`。
+653 份旧候选不是提交白名单。`server/setup-preset.json` 是真实安装预设，保留原位，本轮不备份、不提交；其余 652 份源码、锁文件、构建配置、合成测试和资源进入前三个保存批次，并加入本说明及 `.gitignore`。收尾发现旧候选清单漏掉 `backend/pi-studio/app/api/sessions/` 的 9 份路由代码；它们是产品源码，不能按目录名误当真实会话数据。逐项核对来源及内容后，补入第四批保存，业务文件字节不改。最终为 661 份原有源码/资源及 2 份新增管理文件，共 663 份 tracked 文件。
 
 当前后端的 `pnpm-workspace.yaml` 和 `pnpm-lock.yaml` 引用两份不存在于本维护根的补丁：
 
