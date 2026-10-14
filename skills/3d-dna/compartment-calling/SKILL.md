@@ -10,7 +10,7 @@ description: 'Call A/B compartments from Hi-C, Micro-C, Pore-C, or other .cool/.
 
   '
 metadata:
-  version: 1.1.0
+  version: 1.1.1
 compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
 
@@ -190,7 +190,9 @@ that limitation explicitly.
 
 The wrapper writes `orientation_validation.tsv` for each sample when
 `--phasing-track` is supplied. Treat the run as failed if A bins do not have a
-higher mean phasing value than B bins.
+higher mean phasing value than B bins. Only valid A/B bins enter that comparison;
+the `NA` row is diagnostic only. If either A or B has no valid bins, report that
+direction validation could not be performed instead of claiming it passed.
 
 ## Outputs
 
@@ -214,9 +216,21 @@ Compartments/PC1_AB/40000/
 sample  chrom  start  end  score  compartment  resolution_bp
 ```
 
-Positive oriented PC1 is reported as `A`; negative oriented PC1 is reported as
-`B`. If a phasing track is not supplied or cannot orient the sign, report that
-A/B labels may be sign-flipped.
+Finite oriented PC1 values >= 0 are reported as `A`; finite values < 0 are
+reported as `B`. Missing or non-finite PC1 values (`NaN`, `+Inf`, `-Inf`) must be
+reported as the literal compartment label `NA`, never coerced to `A` or `B`.
+Keep those bins and their original coordinates and scores in `eigenvectors.tsv`,
+`ab_compartments.bed`, and `compartments_long.tsv`.
+
+`compartment_length_summary.tsv` counts `NA` bins and their lengths separately.
+Report invalid-bin counts; exclude `NA` from A/B proportions, direction checks,
+and A/B switching comparisons. An all-`NA` result has no callable A/B bins and
+must not be described as successful compartment identification. When reading
+these tables with pandas, preserve the literal `NA` label (for example, use
+`keep_default_na=False` and convert the numeric score column separately).
+
+If a phasing track is not supplied or cannot orient the sign, report that A/B
+labels may be sign-flipped.
 
 ## Related Skills
 

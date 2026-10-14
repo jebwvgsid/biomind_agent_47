@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import math
 import re
 import sys
 from pathlib import Path
@@ -121,6 +122,17 @@ def eigenvector_column(columns) -> str:
     raise SystemExit(f"[ERROR] cannot find first eigenvector column in: {list(columns)}")
 
 
+def classify_pc1(value) -> str:
+    """Keep missing/non-finite PC1 bins unassigned instead of calling them B."""
+    try:
+        score = float(value)
+    except (TypeError, ValueError):
+        return "NA"
+    if not math.isfinite(score):
+        return "NA"
+    return "A" if score >= 0 else "B"
+
+
 def validate_orientation_by_coordinate(eigvecs, phasing_track, sample: str, sample_out: Path) -> List[Dict[str, object]]:
     import pandas as pd
 
@@ -202,7 +214,7 @@ def call_sample(sample: str, matrix: str, resolution_bp: int, args: argparse.Nam
     eigvecs["sample"] = sample
     eigvecs["resolution_bp"] = resolution_bp
     eigvecs["score"] = eigvecs[pc1_col]
-    eigvecs["compartment"] = eigvecs["score"].apply(lambda value: "A" if float(value) >= 0 else "B")
+    eigvecs["compartment"] = eigvecs["score"].apply(classify_pc1)
 
     sample_out = Path(args.out_root) / str(resolution_bp) / sample
     sample_out.mkdir(parents=True, exist_ok=True)
