@@ -157,10 +157,41 @@ def replacement(entry, plan):
     module = root / 'agent_core/pi_plugin_guard.py'
     if b'legacy-adopted' not in module.read_bytes(): fail('REPLACEMENT_CORE_NOT_ADOPTION_AWARE')
     python, node = release['python']['path'], release['node']['path']
-    argv = [python, '-B', str(root / 'bio_agents.py')]
-    suffix = ['--pi-config', str(runtime_config), '--pi-node', node]
-    data = (f'#!{python}\nimport os, sys\nos.execv({python!r}, {argv!r} + sys.argv[1:] + {suffix!r})\n').encode()
-    files = [root / 'RELEASE.json', root / 'bio_agents.py', module, runtime_config]
+    model_record = absolute(target['modelRecord']) if target.get('modelRecord') else None
+    if model_record and (model_record.name.startswith('.') or model_record.suffix != '.json'
+                         or re.search('auth|secret|credential|api.key|^models$', model_record.stem, re.I)):
+        fail('NONSECRET_MODEL_RECORD_REQUIRED')
+    # Preserve the installed v1.2 dispatch semantics. The selected model record
+    # is mutable user configuration, so bind its path, not its changing contents.
+    data = (f"#!{python}\n" + f"RELEASE={str(root)!r}\nCONFIG={str(runtime_config)!r}\nMODEL={str(model_record) if model_record else None!r}\nEXPECTED={release['releaseId']!r}\n" + r'''from pathlib import Path
+import json, os, sys
+try:
+    root = Path(RELEASE)
+    receipt = json.loads((root / 'RELEASE.json').read_text())
+    manifest = json.loads((root / 'integrations/pi_runtime/dist/build-manifest.json').read_text())
+    if receipt['releaseId'] != EXPECTED or manifest['buildId'] != EXPECTED:
+        raise ValueError('release identity mismatch')
+    args = sys.argv[1:]
+    has = lambda flag: any(v == flag or v.startswith(flag + '=') for v in args)
+    logical = list(args)
+    if logical[:1] == ['--engine'] and len(logical) > 1: logical = logical[2:]
+    elif logical and logical[0].startswith('--engine='): logical = logical[1:]
+    first = logical[0] if logical else ''
+    package = first in {'plugins', 'install', 'remove', 'uninstall', 'list', 'config', 'update'}
+    integration = first in {'doctor', 'integrate'}
+    custom_config = has('--pi-config')
+    extra = []
+    if not integration and not custom_config: extra += ['--pi-config', CONFIG]
+    if not has('--pi-node'): extra += ['--pi-node', receipt['node']['path']]
+    if not integration and not package and not custom_config and MODEL and Path(MODEL).is_file() and not has('--pi-model-record') and not os.environ.get('BIOMIND_PI_MODEL_RECORD'):
+        extra += ['--pi-model-record', MODEL]
+    env = dict(os.environ, BIOMIND_PI_NODE=receipt['node']['path'], BIOMIND_PI_PYTHON=receipt['python']['path'])
+    os.execve(receipt['python']['path'], [receipt['python']['path'], '-B', str(root / 'bio_agents.py'), *args, *extra], env)
+except (OSError, ValueError, KeyError):
+    print('BioMind: fixed release or runtime configuration unavailable.', file=sys.stderr)
+    sys.exit(2)
+''').encode()
+    files = [root / 'RELEASE.json', root / 'integrations/pi_runtime/dist/build-manifest.json', root / 'bio_agents.py', module, runtime_config]
     return data, [{'path': str(p), 'sha256': sha(p.read_bytes())} for p in files]
 
 
