@@ -50,9 +50,9 @@ import { limitToolResult, projectReceipt } from "./biomind.js";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-// Defaults intentionally match pi's built-in truncation limits (imported from
-// pi-coding-agent, currently 2000 lines / 50KB), so installing the extension
-// changes nothing until the user configures different values.
+// BioMind distribution defaults. Explicit user/trusted-project settings win.
+const BIOMIND_MAX_LINES = 300;
+const BIOMIND_MAX_BYTES = 8192;
 const DEFAULT_TAIL_TOOLS = ["bash"];
 
 interface Limits {
@@ -87,7 +87,7 @@ interface TruncationDetails {
 }
 
 const fallbackConfig: RuntimeConfig = {
-	global: { maxLines: DEFAULT_MAX_LINES, maxBytes: DEFAULT_MAX_BYTES },
+	global: { maxLines: BIOMIND_MAX_LINES, maxBytes: BIOMIND_MAX_BYTES },
 	tools: new Map(),
 	tailTools: new Set(DEFAULT_TAIL_TOOLS),
 };
@@ -248,8 +248,8 @@ function loadRuntimeConfig(cwd: string, projectTrusted: boolean): RuntimeConfig 
 		: {};
 
 	const base: Limits = {
-		maxLines: DEFAULT_MAX_LINES,
-		maxBytes: DEFAULT_MAX_BYTES,
+		maxLines: BIOMIND_MAX_LINES,
+		maxBytes: BIOMIND_MAX_BYTES,
 	};
 	const afterGlobal = parseLimits(
 		{ maxLines: globalSettings.maxLines, maxBytes: globalSettings.maxBytes },

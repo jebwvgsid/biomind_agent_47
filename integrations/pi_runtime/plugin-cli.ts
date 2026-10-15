@@ -1,11 +1,13 @@
 /** Thin machine/terminal surface over pinned Pi native package/settings APIs. */
 import fs from 'node:fs';
+import os from 'node:os';
+import { packageInventory, outputLimitsConflict } from './plugin-inventory.js';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { DefaultPackageManager, SettingsManager, ProjectTrustStore, hasTrustRequiringProjectResources,
-  getAgentDir, type PackageSource } from '@earendil-works/pi-coding-agent';
+  getAgentDir, type ProgressEvent, type PackageSource } from '@earendil-works/pi-coding-agent';
 import { acquirePluginLease, inspectPluginScopes, type PluginScope } from './plugin-lease.js';
 
 type Request = { action: 'list' | 'check' | 'install' | 'remove' | 'update' | 'config' | 'trust' | 'repair';
@@ -22,10 +24,11 @@ function settingsFor(cwd: string, agentDir: string) {
   // that read-side mkdir before a fresh scope can acquire its admission gate.
   const saved = fs.existsSync(path.join(agentDir, 'trust.json')) ? new ProjectTrustStore(agentDir).get(cwd) : null;
   const defaultTrust = user.getDefaultProjectTrust();
-  const trusted = !hasTrustRequiringProjectResources(cwd) || (saved ?? defaultTrust === 'always');
+  const authorized = saved ?? defaultTrust === 'always';
+  const trusted = !hasTrustRequiringProjectResources(cwd) || authorized;
   const settings = SettingsManager.create(cwd, agentDir, { projectTrusted: trusted });
   if (user.drainErrors().length || settings.drainErrors().length) fail('PLUGIN_SETTINGS_INVALID');
-  return { settings, trust: { trusted, saved, default: defaultTrust } };
+  return { settings, trust: { trusted, authorized, saved, default: defaultTrust } };
 }
 function declarationSource(value: PackageSource) { return typeof value === 'string' ? value : value.source; }
 function revision(settings: SettingsManager) {
@@ -76,12 +79,16 @@ function installedMetadata(installedPath?: string) {
   }
   return { ...(version ? { installedVersion: version } : {}), ...(gitCommit ? { installedGitCommit: gitCommit } : {}) };
 }
-export async function managePlugins(raw: unknown, options: { agentDir?: string; cwd?: string; python: string }) {
+export async function managePlugins(raw: unknown, options: { agentDir?: string; cwd?: string; python: string; onProgress?: (event: any) => void }) {
   let request: Request | undefined;
   let context: any;
   let lease: ReturnType<typeof acquirePluginLease> | undefined;
   let changed = false, touched = false;
   let stage = 'validate';
+  let packageFiles = 'not_started', configuration = 'not_started';
+  const notify = (event: any) => options.onProgress?.(event);
+  const bindProgress = (manager: DefaultPackageManager) => manager.setProgressCallback((event: ProgressEvent) =>
+    notify({ type: event.type, action: event.action, source: event.source }));
   let affectedScopes: PluginScope[] = [];
   try {
     request = normalizeRequest(raw);
@@ -100,10 +107,15 @@ export async function managePlugins(raw: unknown, options: { agentDir?: string; 
     const plan = inspectPluginScopes({ cwd, agentDir, python: options.python });
     const scopeRoots = plan.resources.map(r => ({ scope: r.scope, root: r.root,
       legacyUnverified: plan.scopes.find(s => s.scope === r.scope)!.legacyUnverified, repairRequired: fs.existsSync(r.repair) }));
-    context = { agentDir, cwd, piVersion, releaseRoot, ...metadata(), scopeRoots, trust };
+    context = { agentDir, cwd, piVersion, releaseRoot, runtime, ...metadata(), scopeRoots, trust,
+      coreVersion: JSON.parse(fs.readFileSync(path.join(runtime, 'package.json'), 'utf8')).version,
+      hostname: os.hostname(), platform: process.platform, user: os.userInfo().username, uid: process.getuid?.(),
+      settingsPath: path.join(scope === 'user' ? agentDir : path.join(cwd, '.pi'), 'settings.json'),
+      settingsPaths: affectedScopes.map(s => path.join(s === 'user' ? agentDir : path.join(cwd, '.pi'), 'settings.json')) };
+    notify({ type: 'target', context, scope: request.action === 'update' ? affectedScopes.join(', ') : scope });
     if (request.action !== 'list') {
       stage = 'resource_lock';
-      if (['install','remove','config','repair'].includes(request.action) && scope === 'project' && !trust.trusted) fail('PROJECT_TRUST_REQUIRED');
+      if (['install','remove','config','repair'].includes(request.action) && scope === 'project' && !trust.authorized) fail('PROJECT_TRUST_REQUIRED');
       lease = acquirePluginLease({ cwd, agentDir, python: options.python, scopes: affectedScopes,
         mode: ['config','trust'].includes(request.action) ? 'settings' : 'exclusive', allowRepair: request.action === 'repair' });
       // All declarations/trust are re-read under admission/resource locks.
@@ -111,7 +123,19 @@ export async function managePlugins(raw: unknown, options: { agentDir?: string; 
       manager = new DefaultPackageManager({ cwd, agentDir, settingsManager: settings });
       if (request.expectedRevision && request.expectedRevision !== revision(settings)) fail('PLUGIN_SETTINGS_CHANGED');
       if (request.action === 'update' && trust.trusted && settings.getProjectSettings().packages?.length && !affectedScopes.includes('project')) fail('PLUGIN_TRUST_CHANGED');
-      if (['install','remove','config','repair'].includes(request.action) && scope === 'project' && !trust.trusted) fail('PROJECT_TRUST_REQUIRED');
+      if (['install','remove','config','repair'].includes(request.action) && scope === 'project' && !trust.authorized) fail('PROJECT_TRUST_REQUIRED');
+      bindProgress(manager);
+      if (request.action === 'install') {
+        const rows = packageInventory(manager, settings, cwd, agentDir);
+        const parsed = (manager as any).parseSource(request.source!);
+        let name = parsed.type === 'npm' ? parsed.name : undefined;
+        if (parsed.type === 'local') {
+          try { const file = path.join((manager as any).resolvePath(parsed.path), 'package.json');
+            if (fs.statSync(file).size <= 65536) name = JSON.parse(fs.readFileSync(file, 'utf8')).name; } catch { /* native install validates */ }
+        }
+        const other = name === 'biomind-pi-output-limits' ? 'pi-output-limits' : name === 'pi-output-limits' ? 'biomind-pi-output-limits' : undefined;
+        if (other && rows.some(r => r.packageName === other && r.resources.extensions.enabled > 0)) fail('OUTPUT_LIMITS_CONFLICT');
+      }
       if (request.action === 'trust') {
         new ProjectTrustStore(agentDir).set(cwd, request.trusted!);
         changed = true;
@@ -127,11 +151,15 @@ export async function managePlugins(raw: unknown, options: { agentDir?: string; 
         // that declaration source instead of inventing another source parser.
         const next = [...current]; next[index] = typeof request.declaration === 'string' ? nativeRow!.source
           : { ...request.declaration!, source: nativeRow!.source };
+        const preview = SettingsManager.inMemory(settings.getGlobalSettings(), { projectTrusted: trust.trusted });
+        if (trust.trusted) preview.setProjectPackages(settings.getProjectSettings().packages ?? []);
+        if (scope === 'user') preview.setPackages(next); else preview.setProjectPackages(next);
+        if (outputLimitsConflict(packageInventory(new DefaultPackageManager({ cwd, agentDir, settingsManager: preview }), preview, cwd, agentDir))) fail('OUTPUT_LIMITS_CONFLICT');
         changed = hash(current) !== hash(next);
         if (changed) { if (scope === 'user') settings.setPackages(next); else settings.setProjectPackages(next); }
       } else if (request.action !== 'check') {
         stage = 'package_mutation';
-        lease.markRepair(request.action); touched = true;
+        lease.markRepair(request.action); touched = true; packageFiles = 'outcome_unknown';
         if (request.action === 'repair') {
           const configured = scope === 'user' ? settings.getGlobalSettings().packages ?? [] : settings.getProjectSettings().packages ?? [];
           for (const entry of configured) await manager.install(declarationSource(entry), { local: scope === 'project' });
@@ -140,33 +168,47 @@ export async function managePlugins(raw: unknown, options: { agentDir?: string; 
         else if (request.action === 'install') await manager.installAndPersist(request.source!, { local: scope === 'project' });
         else if (request.action === 'remove') await manager.removeAndPersist(request.source!, { local: scope === 'project' });
         else if (request.action === 'update') await manager.update(request.source);
-        changed = true;
+        changed = true; packageFiles = 'completed';
       }
-      stage = 'settings_flush';
+      stage = 'settings_flush'; configuration = 'outcome_unknown'; notify({ type: 'stage', stage });
       await settings.flush();
       if (settings.drainErrors().length) fail('PLUGIN_SETTINGS_SAVE_FAILED');
-      stage = 'reconcile';
+      configuration = 'committed';
+      stage = 'reconcile'; notify({ type: 'stage', stage });
       ({ settings, trust } = settingsFor(cwd, agentDir));
       manager = new DefaultPackageManager({ cwd, agentDir, settingsManager: settings });
       // Reconciliation must not call resolve(), which can install unrelated missing packages.
       if (touched && ['install','repair'].includes(request.action) && !manager.getInstalledPath(request.source!, scope)) fail('PACKAGE_RECONCILE_FAILED');
+      if (touched && outputLimitsConflict(packageInventory(manager, settings, cwd, agentDir))) fail('OUTPUT_LIMITS_CONFLICT');
       if (touched) { lease.clearRepair(); touched = false; }
     }
-    const packages = manager.listConfiguredPackages().map(row => {
-      const declared = (row.scope === 'user' ? settings.getGlobalSettings().packages : settings.getProjectSettings().packages) ?? [];
-      const declaration = declared.find(p => declarationSource(p) === row.source)!;
-      return { ...row, ...installedMetadata(row.installedPath), declaration, configured: true, installed: !!row.installedPath,
-        discovered: 'unknown', workerLoaded: 'unknown', active: 'unknown', developmentSource: !row.source.startsWith('npm:') && row.installedPath === path.resolve(row.source) };
-    });
-    return { schema: 'BioMindPluginsV1', status: 'ok', code: 'OK', context: { ...context, trust }, revision: revision(settings), packages,
+    const packages = packageInventory(manager, settings, cwd, agentDir).map(row => ({
+      ...row, ...installedMetadata(row.installedPath), configured: true, installed: !!row.installedPath,
+      discovered: 'unknown', workerLoaded: 'unknown', active: 'unknown', functionVerified: 'unknown',
+      sessionObservation: { status: 'unknown', sessionId: null, observedAt: null },
+      developmentSource: row.sourceType === 'local' }));
+    return { schema: 'BioMindPluginsV1', status: 'ok', code: 'OK', action: request.action, requestedSource: request.source,
+      context: { ...context, trust }, revision: revision(settings), packages, packageFiles, configuration,
+      observedAt: new Date().toISOString(),
+      warnings: [...(!trust.trusted ? ['项目未信任：项目包与过滤未读取，未自动授权。'] : []),
+        ...(outputLimitsConflict(packages) ? ['OUTPUT_LIMITS_CONFLICT：原版和适配版均启用；先用原生 extensions: [] 禁用其中一个再启动会话。'] : [])],
+      activation: { status: 'not_requested', instruction: '同一后端、用户、runtime、agentDir 和项目下，新建会话进程会重新加载；已有会话仅在空闲时使用 /reload 或 Studio 后端 reload。本版本原生终端 /new 也会重建运行时；刷新网页不等于重载。以上需同一绑定；本次没有重载任何会话。' },
       affectedScopes, changed, reloadRequired: changed, repairRequired: false };
+
   } catch (error) {
     const rawCode = (error as any)?.code;
     const code = typeof rawCode === 'string' && /^[A-Z][A-Z0-9_]{0,80}$/.test(rawCode) ? rawCode
       : ((error as Error)?.message?.match(/^[A-Z][A-Z0-9_]{0,80}$/) ? (error as Error).message : 'PLUGIN_OPERATION_FAILED');
-    const blocked = ['LEGACY_OCCUPANCY_UNVERIFIED','RESOURCE_ADOPTION_RECOVERY_REQUIRED','PROJECT_TRUST_REQUIRED','PINNED_PI_SELF_UPDATE_REFUSED','PACKAGE_PREPARE_REQUIRED'].includes(code);
+    const blocked = ['LEGACY_OCCUPANCY_UNVERIFIED','RESOURCE_ADOPTION_RECOVERY_REQUIRED','PROJECT_TRUST_REQUIRED','PINNED_PI_SELF_UPDATE_REFUSED','PACKAGE_PREPARE_REQUIRED','OUTPUT_LIMITS_CONFLICT'].includes(code);
     return { schema: 'BioMindPluginsV1', status: touched || code === 'PACKAGE_REPAIR_REQUIRED' ? 'repair_required' : code === 'BUSY' ? 'BUSY' : blocked ? 'BLOCKED' : 'error',
-      code, stage, errorName: ['Error','TypeError','RangeError','SyntaxError'].includes((error as Error)?.name) ? (error as Error).name : 'Error',
+      code, stage, action: request?.action, requestedSource: request?.source, packageFiles, configuration,
+      guidance: code === 'LEGACY_OCCUPANCY_UNVERIFIED' ? `旧目录归属未确认：${context?.scopeRoots?.filter((r: any) => affectedScopes.includes(r.scope)).map((r: any) => r.root).join(', ')}。未修改包或配置；一次性接管请使用 scripts/plugin-maintenance.py audit，再按 scripts/plugin-maintenance.md 在获准维护窗口执行。未查询具体会话。`
+        : code === 'PROJECT_TRUST_REQUIRED' ? '项目包写入需要该项目的明确授权；请在既有项目授权入口确认 trust，或使用 plugins --json 的显式 trust 请求。本次未写入包或配置，也未自动授权。'
+        : code === 'BUSY' ? '目标资源目录存在共享读取者或独占写入者（未查询具体会话/PID）；本次未修改包或配置。等待相关任务完成并正常关闭相应会话进程，再重试。不要删锁或停止无关任务。'
+        : code === 'OUTPUT_LIMITS_CONFLICT' ? '原版与 BioMind 适配版会重复处理输出；用原生资源过滤显式禁用其中一个扩展。未静默替换或删除来源。'
+        : touched ? '包文件或安装脚本可能已产生部分变更；没有全量回滚。保留修复标记，检查日志后使用既有 plugins --json repair。'
+        : '未开始包写入；检查目标、信任和参数后重试。',
+      errorName: ['Error','TypeError','RangeError','SyntaxError'].includes((error as Error)?.name) ? (error as Error).name : 'Error',
       context, affectedScopes, changed, reloadRequired: changed || touched, repairRequired: touched || code === 'PACKAGE_REPAIR_REQUIRED' };
   } finally { lease?.close(); }
 }
@@ -175,7 +217,8 @@ async function main() {
   const raw = fs.readFileSync(0, 'utf8');
   if (Buffer.byteLength(raw) > 65536) fail('PLUGIN_REQUEST_TOO_LARGE');
   const input = JSON.parse(raw);
-  const result = await managePlugins(input.request, input.context);
+  const result = await managePlugins(input.request, { ...input.context, onProgress: process.env.BIOMIND_PLUGIN_PROGRESS_FD
+    ? (event: unknown) => fs.writeSync(Number(process.env.BIOMIND_PLUGIN_PROGRESS_FD), JSON.stringify(event) + '\n') : undefined });
   writeResult(result);
   if (result.status !== 'ok') process.exitCode = result.status === 'BUSY' ? 3 : 2;
 }

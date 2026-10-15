@@ -14,9 +14,15 @@
   "nodeVersion": "v22.22.0",
   "patch": "biomind.patch",
   "patchedFiles": {
-    "package.json": "832140bca7aa9c5ca57edfe1c6a8a9def753e893a64ec82258c4fc45d2757ed8",
-    "src/index.ts": "4a0a495b08a9c12b2c06f3935b2de2bec64c6a25659a9dacd2939073085ba416",
+    "package.json": "47ec5f85fd0f4c66ad2442e9a9a2735f96f867a8c92b34e32632d1d8cbaf2cbf",
+    "src/index.ts": "a7007885d485345cfccc74cb1e78470d354689b122eff301ada4aa5d08d73a25",
     "src/biomind.ts": "dd372b5ce2148ea5e5ecf009a97fd71c8f600929cfbf19d0a24077aecae22972"
   },
-  "patchSha256": "36547dd85cb6579d2b5aafaf577c429e8bb81d606d4473bbebb2942c2a07cfb2"
+  "patchSha256": "21594a222a7b9ff6cb6fb81598132613a969ece3d73373232f267bae11998405",
+  "distribution": {
+    "name": "biomind-pi-output-limits",
+    "version": "0.1.0-biomind.1",
+    "published": false,
+    "entry": "dist/output-limits-extension.ts"
+  }
 }

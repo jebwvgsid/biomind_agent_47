@@ -35,7 +35,9 @@ runtime_config = candidate / 'cli-runtime.json'
 runtime_config.write_text(json.dumps({**config, 'providerFixture': str(provider), 'sessionMode': 'persistent'}))
 command = [config['python'], '-B', str(root / 'bio_agents.py'), '--engine', 'pi', '--project-dir', str(project),
            '--pi-config', str(runtime_config), '--pi-node', args.node, '--prompt', 'Inspect only the fixed output fixture.']
-env = {'PATH': os.environ['PATH'], 'HOME': os.environ['HOME'], 'LANG': 'C.UTF-8', 'LC_ALL': 'C.UTF-8',
+(candidate / 'home').mkdir(exist_ok=True)
+ui_trace = evidence / 'cli-session-lifecycle.jsonl'; ui_trace.write_text('')
+env = {'PATH': str(Path(args.node).parent) + ':/usr/bin:/bin', 'HOME': str(candidate / 'home'), 'BIOMIND_PI_UI_TRACE': str(ui_trace), 'LANG': 'C.UTF-8', 'LC_ALL': 'C.UTF-8',
        'TERM': 'xterm-256color', 'PI_OFFLINE': '1', 'BIOMIND_DISABLE_DOTENV': '1', 'PYTHONDONTWRITEBYTECODE': '1',
        'BIOMIND_PI_NODE': args.node, 'BIOMIND_PI_PYTHON': config['python']}
 master, slave = pty.openpty()
@@ -63,13 +65,38 @@ try:
     # Wait for the native turn to settle before sending the ordinary quit command.
     for _ in range(10):
         pump()
+    for action in ['reload', 'new']:
+        lifecycle_start = len(raw)
+        os.write(master, ('/' + action + '\r').encode())
+        until = time.monotonic() + 60
+        while not any(json.loads(line).get('reason') == action for line in ui_trace.read_text().splitlines()):
+            pump()
+            if process.poll() is not None or time.monotonic() > until:
+                raise RuntimeError('native lifecycle did not complete: ' + action)
+        # session_start fires before the TUI finishes rebuilding its input widget.
+        # Wait for its actual ready message before typing, otherwise input is lost.
+        if action == 'reload':
+            until = time.monotonic() + 60
+            while b'Reloaded keybindings, extensions' not in raw[lifecycle_start:]:
+                pump()
+                if time.monotonic() > until: raise RuntimeError('TUI reload did not become ready')
+        else:
+            for _ in range(50): pump()
+        os.write(master, b'Inspect only the fixed output fixture.\r')
+        expected = 4 if action == 'reload' else 6
+        until = time.monotonic() + 60
+        while len(trace.read_text().splitlines()) < expected:
+            pump()
+            if process.poll() is not None or time.monotonic() > until:
+                raise RuntimeError('native lifecycle provider did not complete: ' + action)
+        for _ in range(10): pump()
     os.write(master, b'/quit\r')
     until = time.monotonic() + 20
     while process.poll() is None and time.monotonic() < until:
         pump()
     assert process.poll() == 0, 'native candidate did not quit cleanly'
     requests = [json.loads(row) for row in trace.read_text().splitlines()]
-    assert len(requests) == 2
+    assert len(requests) == 6
     for request in requests:
         encoded = json.dumps(request['context'], ensure_ascii=False)
         assert encoded.count('普通文本工具结果正文默认最多 300 行或 8192 字节') == 1
@@ -81,9 +108,9 @@ try:
     assert 'TAIL_CLI_MARKER' in text and 'MIDDLE_CLI_MARKER' not in text
     assert fixture.read_text() == body
     (evidence / 'cli-chain.json').write_text(json.dumps({'status': 'PASS', 'classification': 'REAL_NATIVE_CLI_PTY_MOCK_PROVIDER',
-        'command': command, 'exitCode': process.returncode, 'requestCount': len(requests), 'toolResultBytes': len(text.encode()),
+        'command': command, 'exitCode': process.returncode, 'requestCount': len(requests), 'lifecycle': ['startup', 'reload', 'new'], 'toolResultBytes': len(text.encode()),
         'toolResultCodePoints': len(text), 'project': str(project)}, ensure_ascii=False, indent=2) + '\n')
-    print('PASS: real native CLI/PTY, pinned plugin bundle, two actual mock-provider requests.')
+    print('PASS: real native CLI/PTY, pinned plugin bundle, reload + same-process new, six actual mock-provider requests.')
 finally:
     (evidence / 'cli-pty.log').write_bytes(raw)
     # Only this isolated child belongs to the test; never touch a service or other task.

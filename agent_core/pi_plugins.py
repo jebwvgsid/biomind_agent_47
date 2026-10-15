@@ -15,7 +15,8 @@ def parser():
     p = argparse.ArgumentParser(description='BioMind pinned Pi package management (server-side)')
     p.add_argument('command', choices=sorted(COMMANDS))
     p.add_argument('source', nargs='?')
-    p.add_argument('--json', action='store_true')
+    p.add_argument('--json', action='store_true', help='stdout 仅输出 BioMindPluginsV1 JSON；脚本必须显式指定')
+    p.add_argument('--verbose', action='store_true', help='显示脱敏子进程诊断（--json 时仅保存日志）')
     p.add_argument('--local', '-l', action='store_true')
     p.add_argument('--extensions', action='store_true')
     p.add_argument('--self', action='store_true')
@@ -88,7 +89,9 @@ def main(argv, *, runtime=None):
     from agent_core.pi_entry import RUNTIME, MINIMUM_NODE, PiEntryError, node_executable, node_version
     runtime = (runtime or RUNTIME).resolve()
     args = parser().parse_args(list(argv))
+    from agent_core.pi_plugin_output import emit, run_child
     child_started = False
+    log_path = None
     try:
         request = make_request(args)
         context = read_context(args)
@@ -110,10 +113,8 @@ def main(argv, *, runtime=None):
             environment['BIOMIND_PLUGIN_RESULT_FD'] = str(result_file.fileno())
             environment['BIOMIND_PI_PYTHON'] = context['python']
             child_started = True
-            process = subprocess.run([str(node), str(cli)],
-                input=json.dumps({'request': request, 'context': context}).encode(),
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                env=environment, pass_fds=(result_file.fileno(),), timeout=900)
+            returncode, log_path = run_child([str(node), str(cli)], {'request': request, 'context': context},
+                environment, result_file.fileno(), machine=args.json, verbose=args.verbose)
             result_file.seek(0)
             raw = result_file.read(1048577)
             if len(raw) > 1048576:
@@ -121,21 +122,24 @@ def main(argv, *, runtime=None):
             result = json.loads(raw)
             if result.get('schema') != 'BioMindPluginsV1':
                 raise ValueError('PLUGIN_RESULT_INVALID')
-            if result.get('status') == 'ok' and process.returncode != 0:
+            if result.get('status') == 'ok' and returncode != 0:
                 raise ValueError('PACKAGE_CLI_EXIT_OUTCOME_UNKNOWN')
-        print(json.dumps(result, ensure_ascii=False))
+        result['logFile'] = log_path
+        result['childExitCode'] = returncode
+        emit(result, args.json)
         return 0 if result.get('status') == 'ok' else 3 if result.get('status') == 'BUSY' else 2
-    except subprocess.TimeoutExpired:
+    except (subprocess.TimeoutExpired, KeyboardInterrupt) as error:
         mutation = isinstance(locals().get('request'), dict) and request.get('action') in ('install', 'remove', 'update', 'repair')
-        print(json.dumps({'schema': 'BioMindPluginsV1', 'status': 'repair_required' if mutation else 'error',
-                          'code': 'PACKAGE_CLI_TIMEOUT_OUTCOME_UNKNOWN' if mutation else 'PLUGIN_CLI_TIMEOUT',
+        emit({'schema': 'BioMindPluginsV1', 'status': 'repair_required' if mutation else 'error',
+                          'code': ('PACKAGE_CLI_CANCELLED_OUTCOME_UNKNOWN' if isinstance(error, KeyboardInterrupt) else 'PACKAGE_CLI_TIMEOUT_OUTCOME_UNKNOWN') if mutation else 'PLUGIN_CLI_CANCELLED_OR_TIMEOUT',
+                          'logFile': getattr(error, 'log_path', log_path), 'childState': 'own_process_group_terminated',
                           'stage': 'child_process', 'outcomeUnknown': mutation, 'repairRequired': mutation,
-                          'changed': False, 'reloadRequired': mutation}))
-        return 2
+                          'changed': False, 'reloadRequired': mutation}, args.json)
+        return 130 if isinstance(error, KeyboardInterrupt) else 2
     except (OSError, ValueError, PiEntryError, subprocess.SubprocessError) as error:
         code = str(error) if isinstance(error, ValueError) and str(error).replace('_', '').isupper() else 'PLUGIN_OPERATION_FAILED'
         uncertain = child_started and isinstance(locals().get('request'), dict) and request.get('action') in ('install', 'remove', 'update', 'repair')
-        print(json.dumps({'schema': 'BioMindPluginsV1', 'status': 'repair_required' if uncertain else 'BLOCKED' if code == 'PINNED_PI_SELF_UPDATE_REFUSED' else 'error',
+        emit({'schema': 'BioMindPluginsV1', 'status': 'repair_required' if uncertain else 'BLOCKED' if code == 'PINNED_PI_SELF_UPDATE_REFUSED' else 'error',
                           'code': 'PACKAGE_CLI_RESULT_OUTCOME_UNKNOWN' if uncertain else code,
-                          'outcomeUnknown': uncertain, 'changed': False, 'reloadRequired': uncertain, 'repairRequired': uncertain}))
+                          'outcomeUnknown': uncertain, 'changed': False, 'reloadRequired': uncertain, 'repairRequired': uncertain, 'logFile': getattr(error, 'log_path', log_path)}, args.json)
         return 2

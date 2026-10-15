@@ -1,27 +1,61 @@
 --- a/package.json
 +++ b/package.json
-@@ -26,7 +26,9 @@
+@@ -1,7 +1,7 @@
+ {
+-  "name": "pi-output-limits",
+-  "version": "0.1.0",
+-  "description": "Global, configurable caps on tool output size for the pi coding agent",
++  "name": "biomind-pi-output-limits",
++  "version": "0.1.0-biomind.1",
++  "description": "BioMind adaptation of pi-output-limits ff06cbc; requires BioMind output-limit core support",
+   "type": "module",
+   "license": "MIT",
+   "author": "Mikhail Korobov",
+@@ -12,7 +12,12 @@
+   "bugs": "https://github.com/kmike/pi-output-limits/issues",
+   "homepage": "https://github.com/kmike/pi-output-limits#readme",
+   "files": [
+-    "src"
++    "dist/output-limits-extension.ts",
++    "src",
++    "LICENSE",
++    "README.md",
++    "BIOMIND.md",
++    "upstream-lock.json"
+   ],
+   "engines": {
+     "node": ">=22.19"
+@@ -26,22 +31,12 @@
      "pi-package"
    ],
    "pi": {
 -    "extensions": ["./src/index.ts"]
+-  },
+-  "scripts": {
+-    "test": "vitest run",
+-    "test:watch": "vitest",
+-    "typecheck": "tsc --noEmit",
+-    "prepublishOnly": "npm run typecheck && npm test"
 +    "extensions": [
-+      "../../dist/output-limits-extension.ts"
++      "./dist/output-limits-extension.ts"
 +    ]
    },
-   "scripts": {
-     "test": "vitest run",
-@@ -42,6 +44,5 @@
-     "@types/node": "^22.10.0",
-     "typescript": "^5.7.0",
-     "vitest": "^3.0.0"
+   "peerDependencies": {
+-    "@earendil-works/pi-coding-agent": "*"
++    "@earendil-works/pi-coding-agent": "0.87.1"
+   },
+-  "devDependencies": {
+-    "@earendil-works/pi-coding-agent": "^0.84.2",
+-    "@types/node": "^22.10.0",
+-    "typescript": "^5.7.0",
+-    "vitest": "^3.0.0"
 -  },
 -  "license": "MIT"
-+  }
++  "private": true
  }
 --- a/src/index.ts
 +++ b/src/index.ts
-@@ -46,9 +46,8 @@
+@@ -46,14 +46,13 @@
  	truncateHead,
  	truncateTail,
  } from "@earendil-works/pi-coding-agent";
@@ -32,7 +66,35 @@
 +import { readFileSync } from "node:fs";
  import { join } from "node:path";
  
- // Defaults intentionally match pi's built-in truncation limits (imported from
+-// Defaults intentionally match pi's built-in truncation limits (imported from
+-// pi-coding-agent, currently 2000 lines / 50KB), so installing the extension
+-// changes nothing until the user configures different values.
++// BioMind distribution defaults. Explicit user/trusted-project settings win.
++const BIOMIND_MAX_LINES = 300;
++const BIOMIND_MAX_BYTES = 8192;
+ const DEFAULT_TAIL_TOOLS = ["bash"];
+ 
+ interface Limits {
+@@ -88,7 +87,7 @@
+ }
+ 
+ const fallbackConfig: RuntimeConfig = {
+-	global: { maxLines: DEFAULT_MAX_LINES, maxBytes: DEFAULT_MAX_BYTES },
++	global: { maxLines: BIOMIND_MAX_LINES, maxBytes: BIOMIND_MAX_BYTES },
+ 	tools: new Map(),
+ 	tailTools: new Set(DEFAULT_TAIL_TOOLS),
+ };
+@@ -249,8 +248,8 @@
+ 		: {};
+ 
+ 	const base: Limits = {
+-		maxLines: DEFAULT_MAX_LINES,
+-		maxBytes: DEFAULT_MAX_BYTES,
++		maxLines: BIOMIND_MAX_LINES,
++		maxBytes: BIOMIND_MAX_BYTES,
+ 	};
+ 	const afterGlobal = parseLimits(
+ 		{ maxLines: globalSettings.maxLines, maxBytes: globalSettings.maxBytes },
 @@ -282,42 +281,12 @@
  	return { global: global_, tools, tailTools };
  }

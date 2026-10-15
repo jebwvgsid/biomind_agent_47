@@ -23,7 +23,7 @@ class PluginEntryTests(unittest.TestCase):
     def test_self_update_forms_rejected_before_config_or_runtime_reads(self):
         for argv in (['update'], ['update', '--self'], ['update', '--all'], ['update', 'pi'], ['update', 'self'], ['plugins', '--json', '--self']):
             with self.subTest(argv=argv), patch.object(pi_plugins, 'read_context', side_effect=AssertionError('config read')), contextlib.redirect_stdout(io.StringIO()) as output:
-                self.assertEqual(pi_plugins.main(argv), 2)
+                self.assertEqual(pi_plugins.main([*argv, '--json']), 2)
                 self.assertEqual(json.loads(output.getvalue())['code'], 'PINNED_PI_SELF_UPDATE_REFUSED')
 
     def test_update_local_is_not_misrepresented_as_native_scope_option(self):
@@ -46,9 +46,10 @@ class PluginEntryTests(unittest.TestCase):
             package.mkdir(parents=True)
             (package / 'package.json').write_text(json.dumps({'version': '0.87.1'}))
             node = runtime / 'fake-node'; node.write_text(''); node.chmod(0o700)
-            responses = [subprocess.CompletedProcess([], 0, stdout='v22.22.0\n'), subprocess.TimeoutExpired(['node'], 900)]
-            with patch.object(pi_plugins.subprocess, 'run', side_effect=responses), contextlib.redirect_stdout(io.StringIO()) as output:
-                self.assertEqual(pi_plugins.main(['install', './synthetic', '--pi-node', str(node)], runtime=runtime), 2)
+            responses = subprocess.CompletedProcess([], 0, stdout='v22.22.0\n')
+            child = patch('agent_core.pi_plugin_output.run_child', side_effect=subprocess.TimeoutExpired(['node'], 900))
+            with child, patch.object(pi_plugins.subprocess, 'run', return_value=responses), contextlib.redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(pi_plugins.main(['install', './synthetic', '--json', '--pi-node', str(node)], runtime=runtime), 2)
             value = json.loads(output.getvalue())
             self.assertEqual(value['status'], 'repair_required')
             self.assertEqual(value['code'], 'PACKAGE_CLI_TIMEOUT_OUTCOME_UNKNOWN')
@@ -63,13 +64,45 @@ class PluginEntryTests(unittest.TestCase):
             package.mkdir(parents=True)
             (package / 'package.json').write_text(json.dumps({'version': '0.87.1'}))
             node = runtime / 'fake-node'; node.write_text(''); node.chmod(0o700)
-            responses = [subprocess.CompletedProcess([], 0, stdout='v22.22.0\n'), subprocess.CompletedProcess([], 0)]
-            with patch.object(pi_plugins.subprocess, 'run', side_effect=responses), contextlib.redirect_stdout(io.StringIO()) as output:
-                self.assertEqual(pi_plugins.main(['install', './synthetic', '--pi-node', str(node)], runtime=runtime), 2)
+            responses = subprocess.CompletedProcess([], 0, stdout='v22.22.0\n')
+            child = patch('agent_core.pi_plugin_output.run_child', return_value=(0, '/tmp/synthetic.log'))
+            with child, patch.object(pi_plugins.subprocess, 'run', return_value=responses), contextlib.redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(pi_plugins.main(['install', './synthetic', '--json', '--pi-node', str(node)], runtime=runtime), 2)
             value = json.loads(output.getvalue())
             self.assertEqual(value['status'], 'repair_required')
             self.assertEqual(value['code'], 'PACKAGE_CLI_RESULT_OUTCOME_UNKNOWN')
             self.assertTrue(value['outcomeUnknown'])
+
+class PluginOutputTests(unittest.TestCase):
+    def test_machine_progress_is_separate_and_logs_are_bounded_and_redacted(self):
+        from agent_core.pi_plugin_output import run_child
+        code = '''import json,os,sys
+json.load(sys.stdin)
+print("https://user:synthetic_password@example.org/repo?token=synthetic_token", flush=True)
+print("Authorization: Bearer synthetic_header", flush=True)
+print(json.dumps({'token': 'synthetic_json_token'}), flush=True)
+print("x"*30000, flush=True)
+os.write(int(os.environ['BIOMIND_PLUGIN_PROGRESS_FD']), b'{"type":"start","action":"install","source":"fixture"}\\n')
+os.write(int(os.environ['BIOMIND_PLUGIN_RESULT_FD']), b'{"schema":"BioMindPluginsV1","status":"ok"}\\n')
+'''
+        with tempfile.TemporaryFile() as receipt, contextlib.redirect_stdout(io.StringIO()) as out:
+            env = dict(os.environ, BIOMIND_PLUGIN_RESULT_FD=str(receipt.fileno()))
+            rc, log = run_child([sys.executable, '-c', code], {}, env, receipt.fileno(), machine=True)
+            self.assertEqual(rc, 0); self.assertEqual(out.getvalue(), '')
+            receipt.seek(0); self.assertEqual(json.load(receipt)['status'], 'ok')
+        content = Path(log).read_text()
+        self.assertNotIn('synthetic_json_token', content); self.assertNotIn('synthetic_header', content); self.assertNotIn('synthetic_password', content); self.assertNotIn('synthetic_token', content)
+        self.assertIn('overlong diagnostic line omitted', content)
+        self.assertLess(Path(log).stat().st_size, 1024*1024)
+        Path(log).unlink()
+
+    def test_timeout_terminates_only_owned_child_group_and_keeps_diagnostic(self):
+        from agent_core.pi_plugin_output import run_child
+        with tempfile.TemporaryFile() as receipt:
+            with self.assertRaises(subprocess.TimeoutExpired) as error:
+                run_child([sys.executable, '-c', 'import time; time.sleep(60)'], {}, dict(os.environ), receipt.fileno(), machine=True, timeout=.2)
+        log = Path(error.exception.log_path)
+        self.assertIn('own process group terminated', log.read_text()); log.unlink()
 
 
 if __name__ == '__main__':

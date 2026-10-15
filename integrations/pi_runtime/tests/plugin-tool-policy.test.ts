@@ -5,7 +5,7 @@ import path from 'node:path';
 import {tmpdir} from 'node:os';
 import {Type} from 'typebox';
 import {SessionManager,type ExtensionAPI} from '@earendil-works/pi-coding-agent';
-import {createHarness,text} from './extension-harness.js';
+import {createHarness,text,call} from './extension-harness.js';
 import {createStudioControls} from '../studio-controls.js';
 import {StudioResourceSelection} from '../studio-resources.js';
 
@@ -67,4 +67,12 @@ test('only the required BioMind extension is marked core in original resource sn
   const rows=selection.snapshot({getSkills:()=>({skills:[],diagnostics:[]}),getExtensions:()=>({extensions:[{path:'/synthetic/core.js'},{path:'/synthetic/plugin.js'}]})});
   assert.deepEqual(rows.coreExtensions,[{path:'/synthetic/core.js',core:true,canDisable:false}]);
   assert.equal(rows.extensions[1].core,false);assert.equal(rows.extensions[1].canDisable,true);
+});
+
+test('native Main executes a registered plugin tool and sends its result to the provider',async()=>{
+  const h=await createHarness({executionProfile:'native',pluginFactories:plugins,script:[call('plugin-call','fixture_echo'),text('done')]});
+  try{await h.prompt('Use the fixture tool once.');assert.equal(h.requests.length,2);
+    const result=h.requests[1].messages.find((m:any)=>m.role==='toolResult'&&m.toolName==='fixture_echo') as any;
+    assert(result);assert.equal(result.content[0].text,'fixture');assert.equal(result.isError,false);
+  }finally{await h.close();}
 });
