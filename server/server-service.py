@@ -2,10 +2,11 @@
 """Persistent service discovery/startup for the existing BioMind Next backend.
 
 The desktop calls ensure once, then discover while queued/preparing. No command
-here cancels a job or shuts down a service. Only the configured operator command
+here cancels a job. Explicit stop uses authenticated native idle shutdown. Only the configured operator command
 runs; this module never creates sessions, model agents, memory or project state.
 """
 import argparse
+import base64
 import contextlib
 import fcntl
 import getpass
@@ -22,6 +23,7 @@ import subprocess
 import sys
 import time
 import urllib.request
+import urllib.error
 import uuid
 
 SCHEMA = 'BioMindStudioServiceV1'
@@ -176,7 +178,8 @@ def ticks(pid):
 
 def process_alive(record):
     try:
-        return record.get('host') == socket.gethostname() and ticks(record['pid']) == record.get('startTicks')
+        info = Path('/proc/' + str(record['pid']) + '/stat').read_text().rsplit(')', 1)[1].split()
+        return record.get('host') == socket.gethostname() and info[0] != 'Z' and info[19] == record.get('startTicks')
     except (OSError, KeyError, ValueError, ProcessLookupError):
         return False
 
@@ -248,6 +251,8 @@ def inspect(config, record):
         if time.time() - record.get('heartbeatAt', 0) > 15:
             return public(config, record, status='starting', code='HEALTH_CONFIRMATION_PENDING', **observed)
         return public(config, record, **observed)
+    if record.get('host') and record['host'] != socket.gethostname():
+        return public(config, record, status='unknown', code='RUN_ON_SERVICE_HOST_REQUIRED')
     if not process_alive(record):
         if record.get('status') == 'launching' and time.time() - record.get('startedAt', 0) < 30:
             return public(config, record, status='starting')
@@ -360,7 +365,49 @@ def health(config, instance):
     require(value.get('schema') == 'BioMindStudioHealthV1' and value.get('instanceId') == instance
             and value.get('serverId') == config['serverId'] and value.get('profile') == 'biomind'
             and value.get('status') == 'ready', 'HEALTH_IDENTITY_MISMATCH')
-    return endpoint
+    return {**endpoint, 'idleStopProtocol': value.get('idleStopProtocol')}
+
+
+def stop(config, instance, timeout=45):
+    """Ask this exact backend to drain idle owners; never signal or forge state."""
+    require(instance and re.fullmatch(r'[a-f0-9]{32}', instance), 'EXPLICIT_INSTANCE_REQUIRED')
+    with locked(config):
+        record = read_record(config)
+        require(record and record.get('instanceId') == instance, 'SERVICE_INSTANCE_REPLACED')
+        require(record.get('binding') == config['binding'], 'ACTIVE_CONFIG_BINDING_CHANGED')
+        require(record.get('host') == socket.gethostname(), 'RUN_ON_SERVICE_HOST_REQUIRED')
+        require(process_alive(record), 'SERVICE_PROCESS_IDENTITY_UNCONFIRMED')
+        endpoint = health(config, instance)
+        require(endpoint and endpoint.get('idleStopProtocol') == 1, 'IDLE_STOP_PROTOCOL_UNAVAILABLE')
+        password = environment(config, instance).get('PI_WEB_PASSWORD')
+        require(isinstance(password, str) and password, 'SERVICE_AUTH_REQUIRED')
+    # The holder needs service.lock while the backend drains. Do not hold it
+    # across the HTTP request or while waiting for its genuine stopped record.
+    request = urllib.request.Request('http://127.0.0.1:' + str(endpoint['port']) + '/_biomind_studio/stop-idle',
+        data=b'', method='POST', headers={'Authorization': 'Basic ' + base64.b64encode(('pi:' + password).encode()).decode(),
+                                       'X-BioMind-Instance': instance})
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, *args, **kwargs):
+            raise Refused('SERVICE_STOP_REDIRECT_REFUSED')
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
+    try:
+        with opener.open(request, timeout=timeout) as response:
+            raw = response.read(65537)
+            require(response.status == 200 and len(raw) <= 65536, 'SERVICE_STOP_UNCONFIRMED')
+            value = json.loads(raw)
+    except urllib.error.HTTPError as error:
+        raise Refused('SERVICE_BUSY' if error.code == 409 else 'SERVICE_STOP_AUTH_OR_PROTOCOL_REJECTED') from None
+    require(value.get('schema') == 'BioMindIdleStopV1' and value.get('serverId') == config['serverId']
+            and value.get('instanceId') == instance and value.get('status') == 'stopping', 'SERVICE_STOP_IDENTITY_MISMATCH')
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        with locked(config):
+            current = read_record(config)
+            require(current and current.get('instanceId') == instance, 'SERVICE_INSTANCE_REPLACED')
+            if current.get('status') == 'stopped' and not process_alive(current) and not backend_lease_held(config):
+                return public(config, current, status='stopped', signalsSent=False, nativeIdleShutdown=True)
+        time.sleep(.1)
+    raise Refused('SERVICE_STOP_UNCONFIRMED')
 
 
 def run(config, instance):
@@ -436,7 +483,7 @@ def run(config, instance):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=('ensure', 'discover', 'run'))
+    parser.add_argument('action', choices=('ensure', 'discover', 'run', 'stop'))
     parser.add_argument('--config', required=True)
     parser.add_argument('--instance')
     args = parser.parse_args()
@@ -444,7 +491,7 @@ def main():
         config = load(args.config)
         if args.action == 'run':
             return run(config, args.instance)
-        result = ensure(config) if args.action == 'ensure' else discover(config)
+        result = stop(config, args.instance) if args.action == 'stop' else ensure(config) if args.action == 'ensure' else discover(config)
         print(json.dumps(result, ensure_ascii=False), flush=True)
         return 0
     except Refused as error:

@@ -5,6 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
+import { timingSafeEqual } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { performance } from 'node:perf_hooks';
@@ -37,6 +38,7 @@ export async function runService(overrides = {}) {
   const studioRoot = env.BIOMIND_STUDIO_ROOT, endpointFile = env.BIOMIND_SERVICE_ENDPOINT_FILE;
   const instanceId = env.BIOMIND_SERVICE_INSTANCE_ID, serverId = env.BIOMIND_SERVER_ID;
   let server, app, handler, prepared = false, quiescing = false, cancelProbe, attempts = 0;
+  const dispatches = new Set();
   const log = value => { try { output(JSON.stringify(value) + '\n'); } catch {} };
   const remaining = () => Math.max(0, deadline - now());
   const within = (operation, ms, code) => {
@@ -111,14 +113,58 @@ export async function runService(overrides = {}) {
       if (request.url === '/_biomind_studio/health') {
         response.writeHead(prepared && !quiescing ? 200 : 503, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
         response.end(JSON.stringify({ schema: 'BioMindStudioHealthV1', instanceId, serverId,
-          status: prepared && !quiescing ? 'ready' : 'starting', profile: 'biomind', ownerStatus: 'not_checked' }));
+          status: prepared && !quiescing ? 'ready' : 'starting', profile: 'biomind', ownerStatus: 'not_checked', idleStopProtocol: 1 }));
+        return;
+      }
+      if (request.url === '/_biomind_studio/stop-idle') {
+        const expected = Buffer.from('Basic ' + Buffer.from('pi:' + env.PI_WEB_PASSWORD).toString('base64'));
+        const supplied = Buffer.from(request.headers?.authorization ?? '');
+        if (request.method !== 'POST' || supplied.length !== expected.length || !timingSafeEqual(supplied, expected)
+            || request.headers?.['x-biomind-instance'] !== instanceId) {
+          response.writeHead(403); response.end(); return;
+        }
+        if (!prepared || quiescing || globalThis.__bioMindPackageMutation) {
+          response.writeHead(409); response.end(JSON.stringify({ code: 'SERVICE_BUSY' })); return;
+        }
+        // Reuse the existing package admission gate and native idle receipts.
+        // Closing HTTP admission first covers requests already waiting on I/O.
+        quiescing = true; globalThis.__bioMindPackageMutation = true;
+        void (async () => {
+          let owners = [], shutdownStarted = false;
+          try {
+            await within(() => Promise.all([...dispatches]), 5000, 'SERVICE_REQUESTS_BUSY');
+            if (globalThis.__piStartLocks?.size || globalThis.__piStartingSessionCwds?.size) throw failure('SERVICE_BUSY');
+            owners = [...(globalThis.__piSessions?.values() ?? [])].filter(owner => owner.isAlive?.() !== false);
+            for (const owner of owners) {
+              if (typeof owner.preparePackageShutdown !== 'function' || typeof owner.shutdownForPackages !== 'function')
+                throw failure('SERVICE_OWNER_UNSUPPORTED');
+              await owner.preparePackageShutdown();
+            }
+            shutdownStarted = true;
+            await Promise.all(owners.map(owner => owner.shutdownForPackages()));
+            prepared = false;
+            response.writeHead(200, { 'Content-Type': 'application/json' });
+            await new Promise(resolve => response.end(JSON.stringify({ schema: 'BioMindIdleStopV1', serverId, instanceId, status: 'stopping', owners: owners.length }), resolve));
+            await closeRuntime(); exit(0);
+          } catch {
+            let resumed = !shutdownStarted;
+            if (resumed) {
+              const cancelled = await Promise.allSettled(owners.map(owner => owner.cancelPackageShutdown?.()));
+              resumed = cancelled.every(result => result.status === 'fulfilled');
+            }
+            if (resumed) { quiescing = false; globalThis.__bioMindPackageMutation = false; }
+            response.writeHead(409, { 'Content-Type': 'application/json' });
+            response.end(JSON.stringify({ code: resumed ? 'SERVICE_BUSY' : 'SERVICE_STOP_UNCONFIRMED' }));
+          }
+        })();
         return;
       }
       if (!handler || quiescing) { response.writeHead(503); response.end('BioMind service is preparing or stopping'); return; }
-      Promise.resolve().then(() => handler(request, response)).catch(() => {
+      const dispatch = Promise.resolve().then(() => handler(request, response)).catch(() => {
         if (!response.headersSent) response.writeHead(500);
         response.end();
-      });
+      }).finally(() => dispatches.delete(dispatch));
+      dispatches.add(dispatch);
     });
     await startupStep(() => new Promise((resolve, reject) => {
       server.once('error', () => reject(failure('NEXT_INITIALIZATION_FAILED')));

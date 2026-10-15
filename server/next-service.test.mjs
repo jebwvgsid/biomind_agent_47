@@ -68,7 +68,7 @@ function fixture(options = {}) {
           if (options.prepareHangs) return new Promise(() => {});
           return Promise.resolve();
         },
-        getRequestHandler() { calls.handlers++; return () => {}; },
+        getRequestHandler() { calls.handlers++; return options.handler ?? (() => {}); },
         close() { calls.close++; return options.closeHangs ? new Promise(() => {}) : Promise.resolve(); },
       });
     },
@@ -87,7 +87,12 @@ function fixture(options = {}) {
     assert(settled, 'startup must settle under bounded time');
     return running;
   }
-  return { running, finish, advanceNext, health, calls, requests, logs, files, exits, signals,
+  const invoke = (request) => {
+    let status, body;
+    handler(request, { writeHead(code) { status = code; }, end(value, done) { body = value ? JSON.parse(value) : null; done?.(); } });
+    return () => ({ status, body });
+  };
+  return { running, finish, advanceNext, health, invoke, calls, requests, logs, files, exits, signals,
     elapsed: () => time, result: () => result };
 }
 function noSecrets(f) {
@@ -166,4 +171,48 @@ test('invalid startup configuration exits with a fixed code before loading Next 
   const f = fixture({ env: { ...env, BIOMIND_STUDIO_ROOT: 'relative' } });
   assert.equal((await f.finish()).code, 'BIOMIND_SERVICE_CONFIGURATION_REQUIRED');
   assert.deepEqual(f.exits, [1]); assert.equal(f.calls.prepare, 0); assert.equal(f.requests.length, 0); noSecrets(f);
+});
+
+const stopRequest = { url: '/_biomind_studio/stop-idle', method: 'POST', headers: {
+  authorization: 'Basic ' + Buffer.from('pi:' + secret).toString('base64'), 'x-biomind-instance': env.BIOMIND_SERVICE_INSTANCE_ID } };
+const resetOwners = () => { delete globalThis.__piSessions; delete globalThis.__piStartLocks; delete globalThis.__piStartingSessionCwds; delete globalThis.__bioMindPackageMutation; };
+test('idle stop authenticates exact instance and cannot be triggered by GET or wrong credentials', async () => {
+  resetOwners(); const f = fixture(); await f.finish();
+  for (const request of [{ ...stopRequest, method: 'GET' }, { ...stopRequest, headers: {} },
+    { ...stopRequest, headers: { ...stopRequest.headers, 'x-biomind-instance': 'wrong' } }]) {
+    const result = f.invoke(request); await flush(); assert.equal(result().status, 403);
+  }
+  assert.equal(f.health().status, 200); assert.deepEqual(f.exits, []); noSecrets(f);
+});
+test('idle stop refuses a busy owner, cancels prepared owners and never shuts down a task', async () => {
+  resetOwners(); const events = [];
+  globalThis.__piSessions = new Map([[1, { preparePackageShutdown: async () => events.push('prepare1'), cancelPackageShutdown: async () => events.push('resume1'), shutdownForPackages: async () => events.push('stop1') }],
+    [2, { preparePackageShutdown: async () => { throw Error('busy'); }, cancelPackageShutdown: async () => events.push('resume2'), shutdownForPackages: async () => events.push('stop2') }]]);
+  const f = fixture(); await f.finish(); const result = f.invoke(stopRequest); await flush();
+  assert.equal(result().status, 409); assert.equal(result().body.code, 'SERVICE_BUSY');
+  assert.deepEqual(events, ['prepare1', 'resume1', 'resume2']); assert.equal(f.health().status, 200);
+  assert.equal(globalThis.__bioMindPackageMutation, false); assert.deepEqual(f.exits, []); resetOwners();
+});
+test('idle stop gates admission, waits inflight creation and requires native owner exit', async () => {
+  resetOwners(); const events = []; let finishRequest;
+  const f = fixture({ handler: () => new Promise(resolve => { finishRequest = resolve; }) }); await f.finish();
+  f.invoke({ url: '/api/agent/new' }); await flush();
+  const result = f.invoke(stopRequest); await flush(); assert.equal(result().status, undefined);
+  assert.equal(f.health().status, 503); assert.equal(globalThis.__bioMindPackageMutation, true);
+  globalThis.__piSessions = new Map([[1, { preparePackageShutdown: async () => events.push('prepare'), shutdownForPackages: async () => events.push('exit') }]]);
+  finishRequest(); await flush();
+  assert.equal(result().status, 200); assert.deepEqual(events, ['prepare', 'exit']); assert.deepEqual(f.exits, [0]); resetOwners();
+});
+test('start locks and concurrent package mutation refuse idle stop', async () => {
+  for (const property of ['__piStartLocks', '__piStartingSessionCwds', '__bioMindPackageMutation']) {
+    resetOwners(); globalThis[property] = property === '__bioMindPackageMutation' ? true : new Map([[1, 1]]);
+    const f = fixture(); await f.finish(); const result = f.invoke(stopRequest); await flush();
+    assert.equal(result().status, 409); assert.deepEqual(f.exits, []); resetOwners();
+  }
+});
+test('unconfirmed owner exit stays closed without forced exit or fabricated success', async () => {
+  resetOwners(); globalThis.__piSessions = new Map([[1, { preparePackageShutdown: async () => {}, shutdownForPackages: async () => { throw Error('exit unknown'); } }]]);
+  const f = fixture(); await f.finish(); const result = f.invoke(stopRequest); await flush();
+  assert.equal(result().status, 409); assert.equal(result().body.code, 'SERVICE_STOP_UNCONFIRMED');
+  assert.equal(f.health().status, 503); assert.deepEqual(f.exits, []); resetOwners();
 });
