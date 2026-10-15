@@ -1,0 +1,22 @@
+{
+  "root": "/public/home/liusiqi/03.毕设/BioMind-worktrees/unified-core-plugins-20261009",
+  "branch": "prompt/common-rules-20261015",
+  "head": "be14a93bc85232daee9df1d5b60e013e1755a509",
+  "status": " M skills/epigenomics/methylation/aporec-porec-contact/SKILL.md\n M skills/epigenomics/methylation/aporec-porec-contact/agents/openai.yaml\n M skills/epigenomics/methylation/aporec-porec-contact/references/dependencies.md\n?? evidence/\n?? skills/epigenomics/methylation/aporec-porec-contact/references/hic-fastq-to-pairs.md\n?? skills/epigenomics/methylation/aporec-porec-contact/references/pairs-to-cool.md\n?? skills/epigenomics/methylation/aporec-porec-contact/references/porec-to-pairs.md\n?? skills/epigenomics/methylation/aporec-porec-contact/scripts/\n",
+  "preexisting": {
+    "evidence/plugin-cancellation.json": "f3a34449e9c39b89b39aaea14e581e450f22bdf192f18bc0a635d62a921b9c39",
+    "evidence/plugin-cancellation.log": "ec82b65a44401bf8456013cf9826bbdc9422c7612246d7f60760a37922f97de0",
+    "evidence/plugin-entry-tests.txt": "e9dbc1a31936475165af55356b566005547a03914ab93e4739e4aa9949799201",
+    "evidence/plugin-filesystem-flock.json": "cdcc5dbeadc7ef6abf5af71fe5273f8d386aabacb39be4f07df41a58b41b2b88",
+    "evidence/plugin-guard-tests.txt": "0c8cd66d94ef666e75f12571101c142660f4d6a44676b7ecc6ce30569b692fcc",
+    "evidence/plugin-management-tests.tap": "041cdd1fb6c6c4438279ca7a9b902e6c3ca8aea466aa8206b0528e5c0ba7c826",
+    "skills/epigenomics/methylation/aporec-porec-contact/references/hic-fastq-to-pairs.md": "dabceef9c190862d2d4da72111648c5809eb87697e6c25d1a62d107f0cfb4aa1",
+    "skills/epigenomics/methylation/aporec-porec-contact/references/pairs-to-cool.md": "43bed5dc9bbc10fe42584556059eb686d56dd9f8a4537b4cdfc1c27eacdc30b3",
+    "skills/epigenomics/methylation/aporec-porec-contact/references/porec-to-pairs.md": "cb94f98d2b2e12c43fc3b3f53efdb04d2575d5512fa7f718c508989aff0a44ea",
+    "skills/epigenomics/methylation/aporec-porec-contact/scripts/inspect_cool.py": "5ff5b41e77ec65bc82727fa6e5d0ebd0d0aaf4485f96efe30c9f2e060fae8e0c",
+    "skills/epigenomics/methylation/aporec-porec-contact/SKILL.md": "e4db3bb4bcfdac250367856673fd0d7a4e2d239d2aeadece99265b195a12e10f",
+    "skills/epigenomics/methylation/aporec-porec-contact/agents/openai.yaml": "a4c9e06b72dbffa10b00d820e89b545b890ce5b585e445a91a83d2a080d1fa13",
+    "skills/epigenomics/methylation/aporec-porec-contact/references/dependencies.md": "ac443fb7869c2c5d62486e92b5ac16c13c11b09cf7aabba12da2353b9830a5d5"
+  },
+  "index": ""
+}

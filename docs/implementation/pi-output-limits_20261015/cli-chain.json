@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "classification": "REAL_NATIVE_CLI_PTY_MOCK_PROVIDER",
+  "command": [
+    "/public/home/liusiqi/anaconda3/envs/biomind/bin/python3.12",
+    "-B",
+    "/public/home/liusiqi/03.毕设/BioMind-worktrees/unified-core-plugins-20261009/bio_agents.py",
+    "--engine",
+    "pi",
+    "--project-dir",
+    "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/plugin-candidates/output-limits-20261015/cli-project",
+    "--pi-config",
+    "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/plugin-candidates/output-limits-20261015/cli-runtime.json",
+    "--pi-node",
+    "/public/home/liusiqi/.local/bin/node",
+    "--prompt",
+    "Inspect only the fixed output fixture."
+  ],
+  "exitCode": 0,
+  "requestCount": 2,
+  "toolResultBytes": 8794,
+  "toolResultCodePoints": 6486,
+  "project": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/plugin-candidates/output-limits-20261015/cli-project"
+}

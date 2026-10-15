@@ -1,0 +1,82 @@
+TAP version 13
+# Subtest: T01 patched configuration uses getAgentDir and trusted project precedence; stable single note
+ok 1 - T01 patched configuration uses getAgentDir and trusted project precedence; stable single note
+  ---
+  duration_ms: 5.135244
+  type: 'test'
+  ...
+# Subtest: T02 exact byte/line boundaries, small return identity
+ok 2 - T02 exact byte/line boundaries, small return identity
+  ---
+  duration_ms: 3.661657
+  type: 'test'
+  ...
+# Subtest: T03 T04 real bash at 20KiB/native threshold/100KiB; omitted source reachable
+ok 3 - T03 T04 real bash at 20KiB/native threshold/100KiB; omitted source reachable
+  ---
+  duration_ms: 138.923108
+  type: 'test'
+  ...
+# Subtest: T05 T06 real read: UTF8, non-one offset, missing final newline, native footer and long line
+ok 4 - T05 T06 real read: UTF8, non-one offset, missing final newline, native footer and long line
+  ---
+  duration_ms: 28.293007
+  type: 'test'
+  ...
+# Subtest: T07 text blocks share one budget, image position/content and each source preserved
+ok 5 - T07 text blocks share one budget, image position/content and each source preserved
+  ---
+  duration_ms: 0.989603
+  type: 'test'
+  ...
+# Subtest: T08 actual nonzero, timeout, cancellation; native error-only source and runtime status survive
+ok 6 - T08 actual nonzero, timeout, cancellation; native error-only source and runtime status survive
+  ---
+  duration_ms: 817.195011
+  type: 'test'
+  ...
+# Subtest: T09 structured fields preserve JSON, state, binding and source; pages are not recut
+ok 7 - T09 structured fields preserve JSON, state, binding and source; pages are not recut
+  ---
+  duration_ms: 3.592439
+  type: 'test'
+  ...
+# Subtest: T11 user quotation and actual native write/edit are unchanged
+ok 8 - T11 user quotation and actual native write/edit are unchanged
+  ---
+  duration_ms: 9.624765
+  type: 'test'
+  ...
+# Subtest: T12 native grep truncation warning and honest saved-return scope
+ok 9 - T12 native grep truncation warning and honest saved-return scope
+  ---
+  duration_ms: 78.248409
+  type: 'test'
+  ...
+# Subtest: T13 private exclusive spill files, unique concurrent calls, failure and stale original source
+ok 10 - T13 private exclusive spill files, unique concurrent calls, failure and stale original source
+  ---
+  duration_ms: 5.745495
+  type: 'test'
+  ...
+# Subtest: T14 real Pi provider request assembly, source recovery, second prompt, disabled rollback
+ok 11 - T14 real Pi provider request assembly, source recovery, second prompt, disabled rollback
+  ---
+  duration_ms: 112.748426
+  type: 'test'
+  ...
+# Subtest: T09 T11 actual BioMind formatter: structured JSON and long user answer reach provider intact
+ok 12 - T09 T11 actual BioMind formatter: structured JSON and long user answer reach provider intact
+  ---
+  duration_ms: 28.189315
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 17698.360744

@@ -1,0 +1,318 @@
+/**
+ * pi-output-limits — global, configurable caps on tool output size.
+ *
+ * Pi's built-in tools truncate their own output at 2000 lines / 50KB, and those
+ * limits are hardcoded. This extension sits on the `tool_result` event (which can
+ * modify results) and re-truncates every tool's output — built-in or extension —
+ * down to your own lower limits, before the result reaches the model's context.
+ *
+ * Design notes:
+ * - bash (and anything in `tailTools`) keeps the END of the output, like pi's
+ *   built-in bash truncation. Everything else keeps the beginning.
+ * - When this extension truncates output that the built-in tool did not, the
+ *   full text is saved to a temp file and the footer points at it, so the model
+ *   can always recover the rest. (Pi itself only writes bash temp files when
+ *   its own 50KB limit trips.) `read` results are the exception: the source
+ *   file already holds the full text, so their footer points back at it with
+ *   the next offset instead of writing a redundant temp copy.
+ * - For bash results, `details.truncation` / `details.fullOutputPath` are patched
+ *   so the TUI shows the real numbers and strips the footer from display, exactly
+ *   as it does for native truncation.
+ * - A one-line note is appended to the system prompt via `before_agent_start`
+ *   when limits are lowered, so the model knows the real caps (tool descriptions
+ *   still quote pi's built-in limits, which are higher). Limits set ABOVE pi's
+ *   built-ins can't raise built-in tool caps — the user is warned about that at
+ *   session start instead of it costing system-prompt tokens. (They remain
+ *   effective for third-party tools, which have no built-in caps.)
+ *
+ * Config (global `~/.pi/agent/settings.json`, or project `.pi/settings.json`
+ * when the project is trusted; project values win):
+ *
+ *   "outputLimits": {
+ *     "maxLines": 500,
+ *     "maxBytes": 16384,
+ *     "tools": { "bash": { "maxLines": 300, "maxBytes": 8192 } },
+ *     "tailTools": ["bash"]
+ *   }
+ */
+
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import {
+	CONFIG_DIR_NAME,
+	DEFAULT_MAX_BYTES,
+	DEFAULT_MAX_LINES,
+	formatSize,
+	getAgentDir,
+	truncateHead,
+	truncateTail,
+} from "@earendil-works/pi-coding-agent";
+import { limitToolResult, projectReceipt } from "./biomind.js";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+// Defaults intentionally match pi's built-in truncation limits (imported from
+// pi-coding-agent, currently 2000 lines / 50KB), so installing the extension
+// changes nothing until the user configures different values.
+const DEFAULT_TAIL_TOOLS = ["bash"];
+
+interface Limits {
+	maxLines: number;
+	maxBytes: number;
+}
+
+interface OutputLimitsSettings {
+	maxLines?: unknown;
+	maxBytes?: unknown;
+	tools?: unknown;
+	tailTools?: unknown;
+}
+
+interface RuntimeConfig {
+	global: Limits;
+	tools: Map<string, Partial<Limits>>;
+	tailTools: Set<string>;
+}
+
+interface TruncationDetails {
+	truncation?: {
+		truncated: boolean;
+		truncatedBy?: string | null;
+		outputLines?: number;
+		totalLines?: number;
+		totalBytes?: number;
+		maxLines?: number;
+		maxBytes?: number;
+	};
+	fullOutputPath?: string;
+}
+
+const fallbackConfig: RuntimeConfig = {
+	global: { maxLines: DEFAULT_MAX_LINES, maxBytes: DEFAULT_MAX_BYTES },
+	tools: new Map(),
+	tailTools: new Set(DEFAULT_TAIL_TOOLS),
+};
+
+/** True when the config changes anything the model should know about. */
+function needsSystemPromptNote(config: RuntimeConfig): boolean {
+	if (
+		config.global.maxLines < DEFAULT_MAX_LINES ||
+		config.global.maxBytes < DEFAULT_MAX_BYTES
+	)
+		return true;
+	for (const limits of config.tools.values()) {
+		if (
+			(limits.maxLines ?? DEFAULT_MAX_LINES) < DEFAULT_MAX_LINES ||
+			(limits.maxBytes ?? DEFAULT_MAX_BYTES) < DEFAULT_MAX_BYTES
+		)
+			return true;
+	}
+	return (
+		config.tailTools.size !== DEFAULT_TAIL_TOOLS.length ||
+		!DEFAULT_TAIL_TOOLS.every((t) => config.tailTools.has(t))
+	);
+}
+
+/** pi's built-in tools; limits above pi's caps are ineffective for these. */
+const BUILTIN_TOOLS = new Set(["bash", "edit", "find", "grep", "ls", "read", "write"]);
+
+/**
+ * Limits above pi's built-ins can never raise the caps of built-in tools —
+ * those discard output beyond their own limits before this extension sees the
+ * result. Collect such settings for a user-facing warning. Overrides for tools
+ * we don't recognize are left alone: third-party tools have no built-in caps,
+ * so higher limits are legitimate there.
+ */
+function collectIneffectiveLimits(config: RuntimeConfig): string[] {
+	const ineffective: string[] = [];
+	if (config.global.maxLines > DEFAULT_MAX_LINES)
+		ineffective.push(`maxLines=${config.global.maxLines}`);
+	if (config.global.maxBytes > DEFAULT_MAX_BYTES)
+		ineffective.push(`maxBytes=${config.global.maxBytes}`);
+	for (const [tool, limits] of config.tools) {
+		if (!BUILTIN_TOOLS.has(tool)) continue;
+		if ((limits.maxLines ?? 0) > DEFAULT_MAX_LINES)
+			ineffective.push(`tools.${tool}.maxLines=${limits.maxLines}`);
+		if ((limits.maxBytes ?? 0) > DEFAULT_MAX_BYTES)
+			ineffective.push(`tools.${tool}.maxBytes=${limits.maxBytes}`);
+	}
+	return ineffective;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function positiveInteger(
+	value: unknown,
+	fallback: number,
+	name: string,
+): number {
+	if (value === undefined) return fallback;
+	if (!Number.isSafeInteger(value) || (value as number) < 1) {
+		throw new Error(`${name} must be a positive integer`);
+	}
+	return value as number;
+}
+
+function readSettingsFile(path: string): Record<string, unknown> {
+	let raw: string;
+	try {
+		raw = readFileSync(path, "utf-8");
+	} catch (error) {
+		if (isRecord(error) && error.code === "ENOENT") return {};
+		throw error;
+	}
+	const parsed: unknown = JSON.parse(raw);
+	if (!isRecord(parsed)) {
+		throw new Error(`Pi settings at ${path} must contain a JSON object`);
+	}
+	return parsed;
+}
+
+function getOutputLimitsSettings(
+	settings: Record<string, unknown>,
+	path: string,
+): OutputLimitsSettings {
+	const section = settings.outputLimits;
+	if (section === undefined) return {};
+	if (!isRecord(section)) {
+		throw new Error(`outputLimits in ${path} must be a JSON object`);
+	}
+	const supported = new Set(["maxLines", "maxBytes", "tools", "tailTools"]);
+	for (const key of Object.keys(section)) {
+		if (!supported.has(key)) {
+			throw new Error(
+				`Unsupported outputLimits setting "${key}" in ${path}; supported settings are ${[...supported].join(", ")}`,
+			);
+		}
+	}
+	return section;
+}
+
+function parseLimits(
+	value: unknown,
+	fallback: Limits,
+	name: string,
+): Limits {
+	if (value === undefined) return fallback;
+	if (!isRecord(value)) throw new Error(`${name} must be a JSON object`);
+	return {
+		maxLines: positiveInteger(value.maxLines, fallback.maxLines, `${name}.maxLines`),
+		maxBytes: positiveInteger(value.maxBytes, fallback.maxBytes, `${name}.maxBytes`),
+	};
+}
+
+function parseToolOverrides(
+	value: unknown,
+	name: string,
+): Map<string, Partial<Limits>> {
+	const result = new Map<string, Partial<Limits>>();
+	if (value === undefined) return result;
+	if (!isRecord(value)) throw new Error(`${name} must be a JSON object`);
+	for (const [tool, limits] of Object.entries(value)) {
+		if (!isRecord(limits)) {
+			throw new Error(`${name}.${tool} must be a JSON object`);
+		}
+		result.set(tool, {
+			maxLines:
+				limits.maxLines === undefined
+					? undefined
+					: positiveInteger(limits.maxLines, 0, `${name}.${tool}.maxLines`),
+			maxBytes:
+				limits.maxBytes === undefined
+					? undefined
+					: positiveInteger(limits.maxBytes, 0, `${name}.${tool}.maxBytes`),
+		});
+	}
+	return result;
+}
+
+function parseTailTools(value: unknown, name: string): Set<string> {
+	if (value === undefined) return new Set();
+	if (!Array.isArray(value) || value.some((v) => typeof v !== "string")) {
+		throw new Error(`${name} must be an array of tool names`);
+	}
+	return new Set(value as string[]);
+}
+
+function loadRuntimeConfig(cwd: string, projectTrusted: boolean): RuntimeConfig {
+	const globalPath = join(getAgentDir(), "settings.json");
+	const projectPath = join(cwd, CONFIG_DIR_NAME, "settings.json");
+
+	const globalSettings = getOutputLimitsSettings(
+		readSettingsFile(globalPath),
+		globalPath,
+	);
+	const projectSettings = projectTrusted
+		? getOutputLimitsSettings(readSettingsFile(projectPath), projectPath)
+		: {};
+
+	const base: Limits = {
+		maxLines: DEFAULT_MAX_LINES,
+		maxBytes: DEFAULT_MAX_BYTES,
+	};
+	const afterGlobal = parseLimits(
+		{ maxLines: globalSettings.maxLines, maxBytes: globalSettings.maxBytes },
+		base,
+		"outputLimits",
+	);
+	// Drop undefined keys so project settings don't erase global values.
+	const projectLimits: Record<string, unknown> = {};
+	if (projectSettings.maxLines !== undefined)
+		projectLimits.maxLines = projectSettings.maxLines;
+	if (projectSettings.maxBytes !== undefined)
+		projectLimits.maxBytes = projectSettings.maxBytes;
+	const global_ = parseLimits(projectLimits, afterGlobal, "outputLimits");
+
+	const tools = parseToolOverrides(globalSettings.tools, "outputLimits.tools");
+	for (const [tool, limits] of parseToolOverrides(
+		projectSettings.tools,
+		"outputLimits.tools",
+	)) {
+		tools.set(tool, { ...tools.get(tool), ...limits });
+	}
+
+	const tailTools = new Set(DEFAULT_TAIL_TOOLS);
+	for (const t of parseTailTools(globalSettings.tailTools, "outputLimits.tailTools"))
+		tailTools.add(t);
+	for (const t of parseTailTools(projectSettings.tailTools, "outputLimits.tailTools"))
+		tailTools.add(t);
+
+	return { global: global_, tools, tailTools };
+}
+
+export default function piOutputLimits(pi: ExtensionAPI): void {
+	let config: RuntimeConfig = fallbackConfig;
+
+	pi.on("session_start", (_event, ctx) => {
+		config = loadRuntimeConfig(ctx.cwd, ctx.isProjectTrusted());
+		pi.events.emit("biomind:output-limits", { limits: config.global, projectReceipt: (value: unknown, name: string, cwd: string) => projectReceipt(value, name, cwd, config.global) });
+		const ineffective = collectIneffectiveLimits(config);
+		if (ineffective.length > 0) {
+			ctx.ui.notify(
+				`pi-output-limits: ${ineffective.join(", ")} exceed pi's built-in caps ` +
+					`(${DEFAULT_MAX_LINES} lines / ${formatSize(DEFAULT_MAX_BYTES)}); built-in tools still ` +
+					`truncate at their own limits, so these values only affect extension-registered tools.`,
+				"warning",
+			);
+		}
+	});
+
+	// Tool descriptions still quote pi's built-in 2000-line/50KB limits; tell the
+	// model the real caps once, in the system prompt, instead of re-registering
+	// every tool just to patch its description. Only when limits are actually
+	// lowered — a no-op config isn't worth system-prompt tokens.
+	pi.on("before_agent_start", (event) => {
+		if (!needsSystemPromptNote(config)) return;
+
+		// Built-in tools cap at pi's own limits no matter what is configured;
+		// never promise the model more than that.
+		const maxLines = Math.min(config.global.maxLines, DEFAULT_MAX_LINES);
+		const maxBytes = Math.min(config.global.maxBytes, DEFAULT_MAX_BYTES);
+		// Pi 0.87.1's public section contribution preserves all native/BioMind sections.
+		event.systemPromptOptions.sections ??= {};
+		event.systemPromptOptions.sections["pi-output-limits"] = `普通文本工具结果正文默认最多 ${maxLines} 行或 ${maxBytes} 字节；命令输出保留末尾，其余保留开头。结构化结果使用自身分页或字段级限制；具体截断位置与续读方式见返回提示。`;
+	});
+
+	pi.on("tool_result", (event, ctx) => limitToolResult(event, config, ctx.cwd));
+}

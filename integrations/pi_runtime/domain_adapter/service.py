@@ -31,8 +31,9 @@ from memory.wiki_memory import WikiMemoryManager
 from memory.patch_validator import redact_secrets, sanitize_value
 from .registry import RegistryView, registry_path as resolve_registry_path
 from .discovery import list_directory
+from .output_page import page_text
 
-HOST_METHODS = frozenset({'request.preflight','request.dispatch','files.list','files.read_authorize','files.mutation_snapshot','files.mutation_replay','request.begin','request.cancel','approval.decide','settings.update','shutdown',
+HOST_METHODS = frozenset({'output.configure','request.preflight','request.dispatch','files.list','files.read_authorize','files.mutation_snapshot','files.mutation_replay','request.begin','request.cancel','approval.decide','settings.update','shutdown',
                          'request.pause','request.resume','request.revise','request.status','exec.probe',
                          'memory.maintenance.prepare','memory.maintenance.apply','archive.append','archive.status',
                          'permissions.status','permissions.revoke','permissions.mode','environments.launch','environments.register_observed'})
@@ -73,6 +74,7 @@ class DomainService:
         self.commands.install_dir=self.install_root
         self.commands.runtime_registry=self.registry
         self.formal=FormalCommandObserver(self.commands)
+        self.output_limits=None
         self.files=WorkspaceFileService(self.commands)
         self._skills=None; self._wiki=None; self._core=None
         self._seen_sources={}; self._dispatch_lock=asyncio.Lock(); self._install_tasks={}
@@ -164,9 +166,9 @@ class DomainService:
     @staticmethod
     def _run_view(result):
         # Logs and full execution environment stay with the Python receipt.
-        keys={'status','terminal','execution_started','run_ref','attempt_id','action_id','task_id',
+        keys={'request_executed','status','terminal','execution_started','run_ref','attempt_id','action_id','task_id',
               'exit_code','returncode','stdout','stderr','stdout_delta','stderr_delta','next_cursor',
-              'delta_byte_ranges','unread_log_bytes','log_refs','receipt_ref','error','detail','replayed',
+              'delta_byte_ranges','unread_log_bytes','log_refs','log_errors','receipt_ref','error','detail','replayed',
               'cleanup_confirmed','cleanup_reason','owner_available','process_alive','activity',
               'elapsed_seconds','output_idle_seconds','original_deadline_at','remaining_seconds',
               'scientific_validation','cancel_requested','stop_requested','task_cancelled','instruction',
@@ -644,7 +646,7 @@ class DomainService:
         # serialized JSON can consume escapes and corrupt command records.
         shown=json.dumps(sanitize_value(json.loads(body)),ensure_ascii=False) if kind=='command' else redact_secrets(body)
         if offset>len(shown):raise DomainError('RUN_RECORD_OFFSET_OUT_OF_RANGE')
-        end=min(len(shown),offset+limit)
+        end=offset+len(page_text(shown[offset:offset+limit],self.output_limits))
         return {**metadata,'content':shown[offset:end],'offset':offset,'next_offset':end if end<len(shown) else None,
                 'total_chars':len(shown),'truncated':end<len(shown),'redacted':shown!=body}
 
@@ -737,6 +739,14 @@ class DomainService:
             if active_identity!=current:raise DomainError('STALE_ACTIVE_REQUEST')
         # Transport correlation is supplied by the host, never part of action hashes.
         p={k:v for k,v in p.items() if k!='active_request_id'}
+        if method=='output.configure':
+            limits=p.get('limits')
+            if limits is not None and (not isinstance(limits,dict) or set(limits)!={'maxBytes','maxLines'} or
+                    any(type(v) is not int or v<1 for v in limits.values())):
+                raise DomainError('OUTPUT_PAGE_LIMITS_INVALID')
+            self.output_limits=limits
+            self.commands.output_page_limits=limits
+            return {'status':'configured','limits':limits}
         if method=='hello':
             return {'protocol':'biomind-domain-v1','session_id':self.session_id,'task_id':self.task_id,
                     'execution_profile':self.execution_profile,
@@ -896,7 +906,13 @@ class DomainService:
             args={k:p[k] for k in ('run_ref','after_cursor','max_wait_ms') if k in p}
             if method!='exec.wait': args['max_wait_ms']=0
             result=self._run_view(await self.formal.wait_command(args,task_id=self.task_id,request_scope=self.scope()))
-            if method=='exec.status' and p.get('record') is not None:result['execution_record']=self.execution_record(p)
+            if method=='exec.status' and p.get('record') is not None:
+                result['execution_record']=self.execution_record(p)
+                if self.output_limits:
+                    # This is a record page, not a log page. Retain log_refs for the
+                    # log reader without returning an undisplayed log cursor.
+                    for key in ('stdout','stderr','stdout_delta','stderr_delta','next_cursor','delta_byte_ranges','unread_log_bytes'):
+                        result.pop(key,None)
             return result
         if method=='exec.cancel':
             if str(p.get('run_ref','')).startswith('install:'):
@@ -1006,11 +1022,12 @@ class DomainService:
             if not row or (ref in w.excluded_sources(scope) and not p.get('historical')): return {'status':'unavailable','source_ref':ref}
             body=redact_secrets(row.get('content',''))
             offset=max(0,int(p.get('offset') or 0));limit=min(24000,max(1,int(p.get('max_chars') or 6000)))
+            page=page_text(body[offset:offset+limit],self.output_limits);end=offset+len(page)
             excluded=w.excluded_sources(scope)
-            return {**{k:v for k,v in row.items() if k not in {'content','text'}},'status':'read','content':body[offset:offset+limit],
+            return {**{k:v for k,v in row.items() if k not in {'content','text'}},'status':'read','content':page,
                     'record_status':row.get('record_status') or row.get('status') or 'unknown',
                     'record_sources':[redact_secrets(source) for source in (row.get('sources') or []) if isinstance(source,str) and source not in excluded],
-                    'sources':self._sources([row],scope),'scope':scope,'has_more':offset+limit<len(body),'next_offset':offset+limit}
+                    'sources':self._sources([row],scope),'scope':scope,'has_more':end<len(body),'next_offset':end}
         if self.memory_mode=='disabled': return {'status':'disabled'}
         call_id=self._call_id(p);payload={'kind':'memory_write','arguments':deepcopy(p),'scope':scope,'human_required':True}
         row=self._permission('memory:'+call_id,payload);permit,result=self._claim_or_result(row,call_id)

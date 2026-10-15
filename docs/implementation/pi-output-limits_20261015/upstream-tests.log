@@ -1,0 +1,12 @@
+
+ RUN  v3.2.7 /tmp/biomind-output-limits-upstream-20261015
+
+ ✓ test/tool-result.test.ts (14 tests) 24ms
+ ✓ test/config.test.ts (19 tests) 30ms
+ ✓ test/system-prompt.test.ts (7 tests) 8ms
+
+ Test Files  3 passed (3)
+      Tests  40 passed (40)
+   Start at  12:15:49
+   Duration  39.13s (transform 132ms, setup 0ms, collect 38.16s, tests 61ms, environment 0ms, prepare 175ms)
+

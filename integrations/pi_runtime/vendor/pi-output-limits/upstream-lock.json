@@ -1,0 +1,22 @@
+{
+  "repository": "https://github.com/kmike/pi-output-limits",
+  "commit": "ff06cbc30135c82f2a89a6ff1b420d6759693acd",
+  "version": "0.1.0",
+  "archiveSha256": "ef240e01fd9ae29318f80baa25147501dba9e72cf6c9d211cf10c901c96ad1d8",
+  "baselineFiles": {
+    "package.json": "feabfeba7b1dc3c850b20f78c3af6c332a43c5cecb1f2aa63fbfb5e5a0115c2b",
+    "README.md": "850d7b48fd1ecceeeabd11a3de1331d2f25911dd4675fa89bcc0edeb18d89b8f",
+    "LICENSE": "76337eb27f6f5ced4a9cbfb33f88cbc4605809762e7c4e9f5c060fb4f0281528",
+    "src/index.ts": "7dbc364d6ecf315b626d74fdba014c0c350670bc66955df718eaab595484e5b9",
+    "package-lock.json": "44a128dd16160b184898990650a16a9abc952f903c147fec30b4d4ec70682645"
+  },
+  "piVersion": "0.87.1",
+  "nodeVersion": "v22.22.0",
+  "patch": "biomind.patch",
+  "patchedFiles": {
+    "package.json": "832140bca7aa9c5ca57edfe1c6a8a9def753e893a64ec82258c4fc45d2757ed8",
+    "src/index.ts": "4a0a495b08a9c12b2c06f3935b2de2bec64c6a25659a9dacd2939073085ba416",
+    "src/biomind.ts": "dd372b5ce2148ea5e5ecf009a97fd71c8f600929cfbf19d0a24077aecae22972"
+  },
+  "patchSha256": "36547dd85cb6579d2b5aafaf577c429e8bb81d606d4473bbebb2942c2a07cfb2"
+}

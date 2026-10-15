@@ -1,0 +1,7 @@
+Executing <Task pending name='Task-2' coro=<BaselinePages.test_rollback_pages() running at <string>:9> wait_for=<Future pending cb=[Task.task_wakeup()] created at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:448> cb=[_run_until_complete_cb() at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:181] created at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/runners.py:100> took 0.428 seconds
+Executing <Task pending name='formal-observer-attempt-bd40354baad6cd1dc6957724' coro=<FormalCommandObserver._drive_formal() running at /tmp/biomind-output-limits-rollback-20261015/agent_core/formal_command_observation.py:237> wait_for=<Future pending cb=[Task.task_wakeup()] created at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/base_events.py:448> cb=[_wait.<locals>._on_completion() at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/tasks.py:534] created at /public/home/liusiqi/anaconda3/envs/biomind/lib/python3.12/asyncio/tasks.py:420> took 0.173 seconds
+.
+----------------------------------------------------------------------
+Ran 1 test in 0.720s
+
+OK

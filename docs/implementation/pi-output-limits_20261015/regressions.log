@@ -1,0 +1,74 @@
+TAP version 13
+# Subtest: omitted timeout reaches Pi, kills owned child tree; explicit long and cancellation retain semantics
+ok 1 - omitted timeout reaches Pi, kills owned child tree; explicit long and cancellation retain semantics
+  ---
+  duration_ms: 2236.372659
+  type: 'test'
+  ...
+# {"tool_call_id":"pids-host","budget":{"requested_seconds":null,"effective_seconds":0.4,"source":"host_default","unit":"seconds"},"cwd":"/tmp/biomind-bash-budget-RthAgu","binding_ref":null,"environment_source":"host","backend":"pi_local_bash","started_at":"2026-10-15T04:31:12.429Z","status":"timed_out","backend_timeout_seconds":0.4,"environment_prefix":"/public/home/liusiqi/anaconda3","termination":"pi_process_tree_kill_and_shell_wait_completed","elapsed_ms":438,"pids":[39,40],"child_cleanup_verified":true}
+# {"tool_call_id":"pids-fixture-binding","budget":{"requested_seconds":null,"effective_seconds":0.4,"source":"host_default","unit":"seconds"},"cwd":"/tmp/biomind-bash-budget-RthAgu","binding_ref":"fixture-binding","environment_source":"registered_binding","backend":"pi_local_bash","started_at":"2026-10-15T04:31:12.971Z","status":"timed_out","runtime_launch":{"prefix":"/tmp/biomind-bash-budget-RthAgu"},"backend_timeout_seconds":0.4,"environment_prefix":"/tmp/biomind-bash-budget-RthAgu","termination":"pi_process_tree_kill_and_shell_wait_completed","elapsed_ms":405,"pids":[41,42],"child_cleanup_verified":true}
+# {"tool_call_id":"long","budget":{"requested_seconds":3,"effective_seconds":3,"source":"explicit","unit":"seconds"},"cwd":"/tmp/biomind-bash-budget-RthAgu","binding_ref":null,"environment_source":"host","backend":"pi_local_bash","started_at":"2026-10-15T04:31:13.490Z","status":"exited","backend_timeout_seconds":3,"environment_prefix":"/public/home/liusiqi/anaconda3","exit_code":0,"elapsed_ms":810}
+# {"tool_call_id":"cancel","budget":{"requested_seconds":10,"effective_seconds":10,"source":"explicit","unit":"seconds"},"cwd":"/tmp/biomind-bash-budget-RthAgu","binding_ref":null,"environment_source":"host","backend":"pi_local_bash","started_at":"2026-10-15T04:31:14.300Z","status":"cancelled","backend_timeout_seconds":10,"environment_prefix":"/public/home/liusiqi/anaconda3","termination":"pi_process_tree_kill_and_shell_wait_completed","elapsed_ms":256,"pids":[45,46],"child_cleanup_verified":true}
+# Subtest: E01 E02 E10 E17 N08 native binding reaches real executables; parallel calls and new requests stay isolated
+ok 2 - E01 E02 E10 E17 N08 native binding reaches real executables; parallel calls and new requests stay isolated
+  ---
+  duration_ms: 8936.978999
+  type: 'test'
+  ...
+# Subtest: native bash thin adapter preserves custom shell/prefix, raw pipeline semantics, streaming and timeout
+ok 3 - native bash thin adapter preserves custom shell/prefix, raw pipeline semantics, streaming and timeout
+  ---
+  duration_ms: 72.898475
+  type: 'test'
+  ...
+# Subtest: E02 E04 I01 N12 independent sessions read the same supplemental registration without executing checks
+ok 4 - E02 E04 I01 N12 independent sessions read the same supplemental registration without executing checks
+  ---
+  duration_ms: 3890.262047
+  type: 'test'
+  ...
+# Subtest: BioMind tool headings expose actual execution receipts without claiming scientific success
+ok 5 - BioMind tool headings expose actual execution receipts without claiming scientific success
+  ---
+  duration_ms: 0.414842
+  type: 'test'
+  ...
+# Subtest: BioMind details toggle expands only the display copy of a full log receipt
+ok 6 - BioMind details toggle expands only the display copy of a full log receipt
+  ---
+  duration_ms: 14.192072
+  type: 'test'
+  ...
+# Subtest: failed tools display the error content even when details is empty or contains unrelated metadata
+ok 7 - failed tools display the error content even when details is empty or contains unrelated metadata
+  ---
+  duration_ms: 0.777445
+  type: 'test'
+  ...
+# Subtest: bounded display keeps one bounded width cache as Unicode logs grow and resize repeatedly
+ok 8 - bounded display keeps one bounded width cache as Unicode logs grow and resize repeatedly
+  ---
+  duration_ms: 36.842898
+  type: 'test'
+  ...
+# Subtest: display sanitizes terminal control bytes and log duplication does not change facts or input
+ok 9 - display sanitizes terminal control bytes and log duplication does not change facts or input
+  ---
+  duration_ms: 0.3996
+  type: 'test'
+  ...
+# Subtest: same production extension registers bounded renderers and keeps the complete Python page in model content
+ok 10 - same production extension registers bounded renderers and keeps the complete Python page in model content
+  ---
+  duration_ms: 22.246268
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 29021.246166

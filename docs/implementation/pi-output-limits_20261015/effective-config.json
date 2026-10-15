@@ -1,0 +1,36 @@
+{
+  "candidateRoot": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/plugin-candidates/output-limits-20261015",
+  "agentDir": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/plugin-candidates/output-limits-20261015/agent",
+  "settingsPath": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/plugin-candidates/output-limits-20261015/agent/settings.json",
+  "globalSettings": {
+    "packages": [
+      "../../../../BioMind-worktrees/unified-core-plugins-20261009/integrations/pi_runtime/vendor/pi-output-limits"
+    ],
+    "lastChangelogVersion": "0.87.1",
+    "outputLimits": {
+      "maxLines": 300,
+      "maxBytes": 8192,
+      "tailTools": [
+        "bash",
+        "powershell"
+      ]
+    }
+  },
+  "projectSettings": {
+    "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/plugin-candidates/output-limits-20261015/project": null,
+    "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/plugin-candidates/output-limits-20261015/cli-project": null
+  },
+  "effectiveOutputLimits": {
+    "maxLines": 300,
+    "maxBytes": 8192,
+    "tailTools": [
+      "bash",
+      "powershell"
+    ]
+  },
+  "projectTrust": "native trusted because no trust-requiring project resources; no trust decision changed",
+  "trustFileExists": false,
+  "executionProfile": "native",
+  "packageEntry": "integrations/pi_runtime/dist/output-limits-extension.ts",
+  "verification": "studio-chain.json get_resources entry count=1, provider request note=300/8192, formatter metrics within budget"
+}

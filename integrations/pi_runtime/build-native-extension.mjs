@@ -8,6 +8,7 @@ await build({
   absWorkingDir: runtime,
   entryPoints: {
     'biomind-extension': 'dist/extensions/biomind.js',
+    'output-limits-extension': 'dist/vendor/pi-output-limits/src/index.js',
     // Synthetic CLI tests must not reintroduce the duplicate SDK themselves.
     'native-fixture': 'dist/testing/native-fixture.js',
   },

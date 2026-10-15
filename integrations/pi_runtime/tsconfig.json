@@ -6,6 +6,6 @@
     "declaration": false, "sourceMap": true,
     "noEmitOnError": true, "types": ["node"]
   },
-  "include": ["*.ts", "extensions/**/*.ts", "testing/**/*.ts", "tests/**/*.ts"],
+  "include": ["*.ts", "extensions/**/*.ts", "vendor/pi-output-limits/src/**/*.ts", "testing/**/*.ts", "tests/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

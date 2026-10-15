@@ -1,0 +1,23 @@
+{
+  "serviceId": "biomind-studio",
+  "serverId": "biomind-c8b9c760c4064a40bdae3a717785e2b3",
+  "mode": "local",
+  "stateRoot": "/public/home/liusiqi/03.毕设/BioMind_Studio_Workbench_20261009/deployment/private/state",
+  "cwd": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/studio/backend/pi-studio",
+  "launchEnvironment": {
+    "BIOMIND_STUDIO_ROOT": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/studio/backend/pi-studio",
+    "BIOMIND_LAUNCHER_PYTHON": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python3.12",
+    "BIOMIND_ENTRYPOINT": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/releases/biomind-30d724698f8f77ad/bio_agents.py",
+    "BIOMIND_RUNTIME_CONFIG": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/v1.2.0/workbench-runtime.json",
+    "BIOMIND_PI_NODE": "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.runtime/node/bin/node"
+  },
+  "files": {
+    "/public/home/liusiqi/03.毕设/BioMind_Studio_Workbench_20261009/deployment/private/service.json": "4e931bdcc1a01881eb9382f8eddae9d70100d7db4dc10a481ed366468332faf4",
+    "/public/home/liusiqi/03.毕设/BioMind/bin/biomind": "a55a8cf4cf99c28a7e627113979f797b6b57e1976bd47f01aea7d1c8ca8cc528",
+    "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/v1.2.0/cli-runtime.json": "a00f9bd2b817677b86a3c82a189c8c59a34e8cfc3df8778a738a667f5b4cf767",
+    "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/v1.2.0/workbench-runtime.json": "eed1d3846ef332da68c7618835694f458d2c705dd0896693e829fe9699834d54",
+    "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.biomind/pi-agent/settings.json": "6202ff209e1fc46b9b0f1b8e4a06f6ac6c63ed49d3ddc5b433327a6082f3f643"
+  },
+  "systemctl": "NOT_AVAILABLE: user bus unavailable, including host read-only retry",
+  "liveService": "NOT_PROBED; saved service metadata is not a live-process assertion"
+}

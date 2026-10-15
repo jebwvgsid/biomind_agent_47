@@ -55,6 +55,7 @@ export class FakeDomain implements DomainConnection {
     this.active++; this.maxActive = Math.max(this.maxActive, this.active);
     try {
       if (this.receipts.has(method)) { const receipt = this.receipts.get(method); return typeof receipt === 'function' ? await receipt(params, options) : clone(receipt); }
+      if (method === 'output.configure') return { status: 'configured' };
       if (method === 'request.status') return {request_id:this.requestId};
       if (method === 'request.preflight') return {status:'not_applicable'};
       if (method === 'request.dispatch') return {status:'allowed'};

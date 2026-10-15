@@ -1,0 +1,7 @@
+{
+  "outputLimits": {
+    "maxLines": 300,
+    "maxBytes": 8192,
+    "tailTools": ["bash", "powershell"]
+  }
+}

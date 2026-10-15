@@ -374,6 +374,7 @@ f. 用户要求停止。
 停止后，不自动恢复原失败循环。
 收到有效的新输入、环境修复，或用户明确追加的重试授权后，先复核历史与预算，再从合理检查点恢复。
 不能把追加一次尝试理解为重新获得无限重试权限。`;
+const OUTPUT_LIMIT_RULES = `大文件或长工具输出按需检索、分段读取或在计算端统计筛选，避免无关内容进入上下文；完整输出留在文件或现有作业记录，保留真实退出状态。截断后按返回路径、范围或游标续读，不为查看输出重跑分析，不用预览片段代替全量统计或必要核验。`;
 const PROTECTED_RULES = `当前 execution:protected。文件读取、写入及命令继续经过原权限账本与执行保护，不能因工具可见或环境 prefix 已解析而视为目录已授权。项目外路径通过原工具申请缺失范围，已有授权可复用；用 request_path_access 汇总真实输入/输出范围，不能用 ask_user 重复代替宿主审批，拒绝后不能换工具、call id 或别名绕过。
 read_paths 声明实际文件或小范围子树；只读快照限制及链接拒绝按回执处理，不能把 Conda 根加入分析输入。已选环境使用原只读运行时挂载。external cwd 不隐含可写，也不改变项目、session、request 或资源归属。probe_command 仅用于必要检查，保持只读、网络隔离和有界预算。
 受控命令中的 ls/find 只说明当前挂载视图，不能断言宿主未安装。保护前置阻塞先解释原 reason，必要时读取 receipt_ref，不用 echo/ls、删除 read_paths 或裸 shell 绕过；修复后使用新 call 重新授权和 claim。execution_started 只证明包装进程已启动，不能替代业务成功。write_paths 不授予权限或覆盖输入保护；OUTPUT_CONTRACT_CONFLICT 应修订任务要求。`;
@@ -854,8 +855,12 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
         pi.events.emit('biomind:job_result', { id: request.id, status: 'ok', sessionId: sessionId(activeContext), result });
       } catch (error) { pi.events.emit('biomind:job_result', { id: request.id, status: 'error', code: 'JOB_REQUEST_FAILED', message: String(error) }); }
     });
-    const reply = (value: unknown, extra: Record<string, unknown> = {}) => {
-      const projected = projectToolReceipt(value);
+    // The installed output plugin contributes a formatter, never tool schemas or execution inputs.
+    let outputProjection: { limits: { maxBytes: number; maxLines: number }; projectReceipt: (value: unknown, name: string, cwd: string) => unknown } | undefined;
+    pi.events.on('biomind:output-limits', raw => { outputProjection = raw as typeof outputProjection; });
+    const reply = (value: unknown, extra: Record<string, unknown> = {}, name?: string, ctx?: ExtensionContext) => {
+      const publicReceipt = projectToolReceipt(value);
+      const projected = outputProjection && name && ctx ? outputProjection.projectReceipt(publicReceipt, name, ctx.cwd) : publicReceipt;
       const object = asObject(projected);
       const execution_facts = Object.fromEntries(['run_ref', 'status', 'exit_code', 'log_path', 'log_cursor', 'next_cursor', 'request_scope', 'call_id',
         'returncode', 'terminal', 'log_refs', 'receipt_ref', 'cancel_requested', 'stop_requested', 'task_cancelled', 'approval', 'approval_id',
@@ -1026,7 +1031,7 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
       prepareArguments?: ToolDefinition['prepareArguments']) {
       pi.registerTool({ name, label: name, description, parameters, prepareArguments, executionMode: 'sequential',
         ...toolRenderers(name),
-        async execute(id, args, signal, _update, ctx) { return reply(await execute(id, asObject(args), signal, ctx)); },
+        async execute(id, args, signal, _update, ctx) { return reply(await execute(id, asObject(args), signal, ctx), {}, name, ctx); },
       } as ToolDefinition);
     }
     if (native) pi.registerTool(runtimeBash(async (input, signal, ctx) => {
@@ -1427,6 +1432,7 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
       if (!readySessions.has(sessionId(ctx))) { ctx.abort(); throw new Error('BACKEND_NOT_READY'); }
       event.systemPromptOptions.contextFiles = filterNativeContextFiles(event.systemPromptOptions.contextFiles, ctx.cwd, getAgentDir());
       if (state(ctx)?.status !== 'active') { ctx.abort(); throw new Error('REQUEST_NOT_ACTIVE'); }
+      await client(ctx).hostCall('output.configure', { limits: outputProjection?.limits ?? null });
       preparedInputRequestId = undefined; initialUserPending = true;
       setActiveTools(MAIN_TOOLS);
       event.systemPromptOptions.selectedTools = mainTools();
@@ -1531,7 +1537,7 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
           ? { prompt: value.maintenance.prompt, sources: value.maintenance.sources, instruction: '用户任务已答复。这是一次受限记忆维护；仅可提交有当前公开证据支持的patch或空operations，不运行新分析、不新增任务。' } : undefined };
       const messages = currentNativeProjectContext(event.messages).map(message => message.role === 'system' && message.sections?.['biomind-current']
         ? { ...message, sections: Object.fromEntries(Object.entries(message.sections).filter(([key]) => key !== 'biomind-current')) } : message);
-      const rules = (value?.maintenance?.outboxId ? MAINTENANCE_RULES : `${COMMON_RULES}\n${native ? NATIVE_RULES : PROTECTED_RULES}`)
+      const rules = (value?.maintenance?.outboxId ? MAINTENANCE_RULES : `${COMMON_RULES}\n${OUTPUT_LIMIT_RULES}\n${native ? NATIVE_RULES : PROTECTED_RULES}`)
         + (scientificBlock ? '\n宿主已完成可信输入检查和本轮报告落盘；当前科学阶段 blocked。不要调用任何工具或另找执行入口；直接说明缺少的映射证据和下列报告路径并结束。可信回执：\n'
           + JSON.stringify({ reason_code: scientificBlock.reason_code, scope: scientificBlock.scope,
             checker: scientificBlock.checker, receipt_ref: scientificBlock.receipt_ref,

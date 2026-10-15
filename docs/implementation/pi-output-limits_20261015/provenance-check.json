@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "upstreamCommit": "ff06cbc30135c82f2a89a6ff1b420d6759693acd",
+  "patchReproduced": true,
+  "preexistingFilesUnchanged": 13,
+  "productionFilesUnchanged": 5,
+  "onlySpecifiedMainPromptRuleAdded": true,
+  "otherRuleStringsUnchanged": [
+    "COMMON_RULES",
+    "MAINTENANCE_RULES",
+    "PROTECTED_RULES"
+  ]
+}

@@ -399,7 +399,9 @@ class InspectionOwnerMixin:
         limit = owner.arguments.get('max_output_chars', 12000)
         if type(limit) is not int or not 256 <= limit <= 64000:
             limit = 12000
-        deltas, remaining, ranges = {}, {}, {}
+        deltas, remaining, ranges, log_errors = {}, {}, {}, {}
+        page_limits = getattr(self, 'output_page_limits', None)
+        budget = dict(page_limits) if page_limits else None
         for name in ('stdout', 'stderr'):
             path = owner.directory / (name + '.log')
             try:
@@ -413,6 +415,29 @@ class InspectionOwnerMixin:
                 text = decoder.decode(raw, final=bool(owner.result and owner.result.get('terminal') and offsets[name] + len(raw) >= size))
                 buffered = len(decoder.getstate()[0])
                 consumed = len(raw) - buffered
+                if budget is not None:
+                    from integrations.pi_runtime.domain_adapter.output_page import page_text
+                    preview = page_text(text, budget)
+                    if preview != text:
+                        # Map decoded prefix back to source bytes. Replacement characters
+                        # may represent invalid input bytes, so UTF-8 re-encoding is unsafe.
+                        scan = codecs.getincrementaldecoder('utf-8')(errors='replace')
+                        consumed = 0
+                        produced = ''
+                        for byte in raw:
+                            part = scan.decode(bytes([byte]), final=False)
+                            if len(produced) + len(part) > len(preview):
+                                break
+                            consumed += 1
+                            produced += part
+                            if len(produced) == len(preview):
+                                consumed -= len(scan.getstate()[0])
+                                break
+                        if not preview:
+                            consumed = 0
+                    text = preview
+                    budget['maxBytes'] -= len(text.encode('utf-8'))
+                    budget['maxLines'] -= len(text.split('\n')) - int(text.endswith('\n')) if text else 0
                 ranges[name] = [offsets[name], offsets[name] + consumed]
                 offsets[name] += consumed
                 deltas[name], remaining[name] = text, max(0, size - offsets[name])
@@ -420,6 +445,9 @@ class InspectionOwnerMixin:
                 if offsets[name]:
                     raise ValueError('INSPECTION_CURSOR_LOG_MISSING')
                 deltas[name], remaining[name], ranges[name] = '', 0, [0, 0]
+                if page_limits and owner.result and owner.result.get('execution_started'):
+                    log_errors[name] = 'INSPECTION_CURSOR_LOG_MISSING'
+                    remaining[name] = None
             except OSError as exc:
                 deltas[name], remaining[name], ranges[name] = '', None, [offsets[name], offsets[name]]
                 owner.metrics.setdefault('snapshot_storage_errors', {})[name] = str(exc)
@@ -434,6 +462,8 @@ class InspectionOwnerMixin:
             owner.sequence += 1
             owner.observation_signature = signature
         result = dict(owner.result or {})
+        if log_errors:
+            result['log_errors'] = log_errors
         result.setdefault('stdout', '')
         result.setdefault('stderr', '')
         result.update(tool='exec_command', observation_only=True, run_ref=owner.run_ref,

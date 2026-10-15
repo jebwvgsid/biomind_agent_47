@@ -1,0 +1,806 @@
+{
+  "fixtureRoot": "/tmp/biomind-output-limits-tests-fVGlxQ",
+  "metrics": [
+    {
+      "tool": "bash",
+      "inputBytes": 8191,
+      "bodyBytes": 8191,
+      "bodyLines": 1,
+      "finalBytes": 8191,
+      "finalCodePoints": 8191,
+      "textBlocks": 1,
+      "truncated": false,
+      "sources": [],
+      "isError": false
+    },
+    {
+      "tool": "ls",
+      "inputBytes": 8191,
+      "bodyBytes": 8191,
+      "bodyLines": 1,
+      "finalBytes": 8191,
+      "finalCodePoints": 8191,
+      "textBlocks": 1,
+      "truncated": false,
+      "sources": [],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 8192,
+      "bodyBytes": 8192,
+      "bodyLines": 1,
+      "finalBytes": 8192,
+      "finalCodePoints": 8192,
+      "textBlocks": 1,
+      "truncated": false,
+      "sources": [],
+      "isError": false
+    },
+    {
+      "tool": "ls",
+      "inputBytes": 8192,
+      "bodyBytes": 8192,
+      "bodyLines": 1,
+      "finalBytes": 8192,
+      "finalCodePoints": 8192,
+      "textBlocks": 1,
+      "truncated": false,
+      "sources": [],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 8193,
+      "bodyBytes": 8192,
+      "bodyLines": 1,
+      "finalBytes": 8390,
+      "finalCodePoints": 8390,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/.pi-output-limits-b4yqeG/output.log",
+          "scope": "this tool return",
+          "available": true
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "ls",
+      "inputBytes": 8193,
+      "bodyBytes": 0,
+      "bodyLines": 0,
+      "finalBytes": 317,
+      "finalCodePoints": 317,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/.pi-output-limits-i9PIUQ/output.log",
+          "scope": "this tool return",
+          "available": true
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 1195,
+      "bodyBytes": 1195,
+      "bodyLines": 299,
+      "finalBytes": 1195,
+      "finalCodePoints": 1195,
+      "textBlocks": 1,
+      "truncated": false,
+      "sources": [],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 1196,
+      "bodyBytes": 1196,
+      "bodyLines": 299,
+      "finalBytes": 1196,
+      "finalCodePoints": 1196,
+      "textBlocks": 1,
+      "truncated": false,
+      "sources": [],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 1199,
+      "bodyBytes": 1199,
+      "bodyLines": 300,
+      "finalBytes": 1199,
+      "finalCodePoints": 1199,
+      "textBlocks": 1,
+      "truncated": false,
+      "sources": [],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 1200,
+      "bodyBytes": 1200,
+      "bodyLines": 300,
+      "finalBytes": 1200,
+      "finalCodePoints": 1200,
+      "textBlocks": 1,
+      "truncated": false,
+      "sources": [],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 1203,
+      "bodyBytes": 1199,
+      "bodyLines": 300,
+      "finalBytes": 1399,
+      "finalCodePoints": 1399,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/.pi-output-limits-f2siim/output.log",
+          "scope": "this tool return",
+          "available": true
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 1204,
+      "bodyBytes": 1199,
+      "bodyLines": 300,
+      "finalBytes": 1399,
+      "finalCodePoints": 1399,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/.pi-output-limits-XT98X6/output.log",
+          "scope": "this tool return",
+          "available": true
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 20078,
+      "bodyBytes": 8140,
+      "bodyLines": 83,
+      "finalBytes": 8799,
+      "finalCodePoints": 8799,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/.pi-output-limits-8XP7Ze/output.log",
+          "scope": "this tool return",
+          "available": true
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 50471,
+      "bodyBytes": 8140,
+      "bodyLines": 83,
+      "finalBytes": 8797,
+      "finalCodePoints": 8797,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/.pi-output-limits-ttBsNm/output.log",
+          "scope": "this tool return",
+          "available": true
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 51232,
+      "bodyBytes": 8140,
+      "bodyLines": 83,
+      "finalBytes": 8757,
+      "finalCodePoints": 8757,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/pi-bash-a705b05682210400.log",
+          "scope": "native full output",
+          "available": true
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 51238,
+      "bodyBytes": 8141,
+      "bodyLines": 83,
+      "finalBytes": 8758,
+      "finalCodePoints": 8758,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/pi-bash-2bfe32796b7d0a73.log",
+          "scope": "native full output",
+          "available": true
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "read",
+      "inputBytes": 51116,
+      "bodyBytes": 8190,
+      "bodyLines": 50,
+      "finalBytes": 8548,
+      "finalCodePoints": 3198,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/unicode.txt",
+          "cwd": "/tmp/biomind-output-limits-tests-fVGlxQ",
+          "scope": "successful read source argument",
+          "available": "read-succeeded"
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "read",
+      "inputBytes": 51142,
+      "bodyBytes": 8035,
+      "bodyLines": 49,
+      "finalBytes": 8395,
+      "finalCodePoints": 3152,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/unicode.txt",
+          "cwd": "/tmp/biomind-output-limits-tests-fVGlxQ",
+          "scope": "successful read source argument",
+          "available": "read-succeeded"
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "read",
+      "inputBytes": 8465,
+      "bodyBytes": 8133,
+      "bodyLines": 49,
+      "finalBytes": 8395,
+      "finalCodePoints": 3152,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/unicode.txt",
+          "cwd": "/tmp/biomind-output-limits-tests-fVGlxQ",
+          "scope": "successful read source argument",
+          "available": "read-succeeded"
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "read",
+      "inputBytes": 21004,
+      "bodyBytes": 0,
+      "bodyLines": 0,
+      "finalBytes": 420,
+      "finalCodePoints": 420,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/long-line.txt",
+          "cwd": "/tmp/biomind-output-limits-tests-fVGlxQ",
+          "scope": "successful read source argument",
+          "available": "read-succeeded"
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "read",
+      "inputBytes": 133,
+      "bodyBytes": 133,
+      "bodyLines": 1,
+      "finalBytes": 133,
+      "finalCodePoints": 133,
+      "textBlocks": 1,
+      "truncated": false,
+      "sources": [],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 18000,
+      "bodyBytes": 8192,
+      "bodyLines": 2,
+      "finalBytes": 8507,
+      "finalCodePoints": 8507,
+      "textBlocks": 3,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 3,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/.pi-output-limits-93jHyV/output.log",
+          "scope": "this tool return",
+          "available": true
+        },
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/.pi-output-limits-gCyYdG/output.log",
+          "scope": "this tool return",
+          "available": true
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 51726,
+      "bodyBytes": 8142,
+      "bodyLines": 83,
+      "finalBytes": 8786,
+      "finalCodePoints": 8786,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/pi-bash-ca886cddcb5d5ed2.log",
+          "scope": "native full output",
+          "available": true
+        }
+      ],
+      "isError": true
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 51794,
+      "bodyBytes": 8142,
+      "bodyLines": 83,
+      "finalBytes": 8854,
+      "finalCodePoints": 8854,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/pi-bash-c9c02fc174f5942c.log",
+          "scope": "native full output",
+          "available": true
+        }
+      ],
+      "isError": true
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 51768,
+      "bodyBytes": 8142,
+      "bodyLines": 83,
+      "finalBytes": 8828,
+      "finalCodePoints": 8828,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/pi-bash-e0a41b79c5540c02.log",
+          "scope": "native full output",
+          "available": true
+        }
+      ],
+      "isError": true
+    },
+    {
+      "tool": "grep",
+      "inputBytes": 51224,
+      "bodyBytes": 7970,
+      "bodyLines": 15,
+      "finalBytes": 8670,
+      "finalCodePoints": 8670,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/.pi-output-limits-mnS58F/output.log",
+          "scope": "upstream already-truncated tool return; original total unknown",
+          "available": true
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "rg",
+      "inputBytes": 21047,
+      "bodyBytes": 0,
+      "bodyLines": 0,
+      "finalBytes": 365,
+      "finalCodePoints": 365,
+      "textBlocks": 2,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/.pi-output-limits-RWbnsm/output.log",
+          "scope": "this tool return",
+          "available": true
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 20000,
+      "bodyBytes": 8192,
+      "bodyLines": 1,
+      "finalBytes": 8390,
+      "finalCodePoints": 8390,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/.pi-output-limits-3Gbsay/output.log",
+          "scope": "this tool return",
+          "available": true
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 20000,
+      "bodyBytes": 8192,
+      "bodyLines": 1,
+      "finalBytes": 8390,
+      "finalCodePoints": 8390,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/.pi-output-limits-0Jzzja/output.log",
+          "scope": "this tool return",
+          "available": true
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 20000,
+      "bodyBytes": 8192,
+      "bodyLines": 1,
+      "finalBytes": 8390,
+      "finalCodePoints": 8390,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/.pi-output-limits-QZluGC/output.log",
+          "scope": "this tool return",
+          "available": true
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 20000,
+      "bodyBytes": 8192,
+      "bodyLines": 1,
+      "finalBytes": 8390,
+      "finalCodePoints": 8390,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/.pi-output-limits-ZYFnkS/output.log",
+          "scope": "this tool return",
+          "available": true
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 20000,
+      "bodyBytes": 8192,
+      "bodyLines": 1,
+      "finalBytes": 8390,
+      "finalCodePoints": 8390,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/.pi-output-limits-JimfeE/output.log",
+          "scope": "this tool return",
+          "available": true
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 20000,
+      "bodyBytes": 8192,
+      "bodyLines": 1,
+      "finalBytes": 8390,
+      "finalCodePoints": 8390,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/.pi-output-limits-b2fTbd/output.log",
+          "scope": "this tool return",
+          "available": true
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 20000,
+      "bodyBytes": 8192,
+      "bodyLines": 1,
+      "finalBytes": 8390,
+      "finalCodePoints": 8390,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/.pi-output-limits-FJ4IG0/output.log",
+          "scope": "this tool return",
+          "available": true
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 20000,
+      "bodyBytes": 8192,
+      "bodyLines": 1,
+      "finalBytes": 8390,
+      "finalCodePoints": 8390,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/.pi-output-limits-e7urHE/output.log",
+          "scope": "this tool return",
+          "available": true
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 20000,
+      "bodyBytes": 8192,
+      "bodyLines": 1,
+      "finalBytes": 8390,
+      "finalCodePoints": 8390,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/.pi-output-limits-ujU4Xb/output.log",
+          "scope": "this tool return",
+          "available": true
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 20000,
+      "bodyBytes": 8192,
+      "bodyLines": 1,
+      "finalBytes": 8390,
+      "finalCodePoints": 8390,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/.pi-output-limits-x4W3iF/output.log",
+          "scope": "this tool return",
+          "available": true
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 20000,
+      "bodyBytes": 8192,
+      "bodyLines": 1,
+      "finalBytes": 8390,
+      "finalCodePoints": 8390,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/.pi-output-limits-tuX2eu/output.log",
+          "scope": "this tool return",
+          "available": true
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 20000,
+      "bodyBytes": 8192,
+      "bodyLines": 1,
+      "finalBytes": 8390,
+      "finalCodePoints": 8390,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/.pi-output-limits-Utwg6Q/output.log",
+          "scope": "this tool return",
+          "available": true
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 20000,
+      "bodyBytes": 8192,
+      "bodyLines": 1,
+      "finalBytes": 8390,
+      "finalCodePoints": 8390,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/.pi-output-limits-5KTHuW/output.log",
+          "scope": "this tool return",
+          "available": true
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 20000,
+      "bodyBytes": 8192,
+      "bodyLines": 1,
+      "finalBytes": 8390,
+      "finalCodePoints": 8390,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/.pi-output-limits-7Zeb5Y/output.log",
+          "scope": "this tool return",
+          "available": true
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 20000,
+      "bodyBytes": 8192,
+      "bodyLines": 1,
+      "finalBytes": 8390,
+      "finalCodePoints": 8390,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/.pi-output-limits-AgF0Pz/output.log",
+          "scope": "this tool return",
+          "available": true
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 20000,
+      "bodyBytes": 8192,
+      "bodyLines": 1,
+      "finalBytes": 8390,
+      "finalCodePoints": 8390,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/.pi-output-limits-iBIdxV/output.log",
+          "scope": "this tool return",
+          "available": true
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 20000,
+      "bodyBytes": 8192,
+      "bodyLines": 1,
+      "finalBytes": 8382,
+      "finalCodePoints": 8382,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "scope": "this tool return",
+          "available": false
+        }
+      ],
+      "isError": false
+    },
+    {
+      "tool": "bash",
+      "inputBytes": 20098,
+      "bodyBytes": 8192,
+      "bodyLines": 1,
+      "finalBytes": 8521,
+      "finalCodePoints": 8521,
+      "textBlocks": 1,
+      "truncated": true,
+      "sources": [
+        {
+          "block": 1,
+          "path": "/tmp/biomind-output-limits-tests-fVGlxQ/.pi-output-limits-ebHdXs/output.log",
+          "scope": "upstream already-truncated tool return; original total unknown",
+          "available": true
+        }
+      ],
+      "isError": true
+    }
+  ]
+}
