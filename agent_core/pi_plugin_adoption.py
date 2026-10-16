@@ -24,6 +24,7 @@ import sys
 import time
 import uuid
 from agent_core import pi_plugin_guard as guard
+from agent_core import pi_system_helpers as system_helpers
 
 SCHEMA = 'BioMindPluginAdoptionV1'
 
@@ -140,10 +141,70 @@ def fence_bytes(transaction_id):
             'import json, sys\nprint(json.dumps({"status":"maintenance","code":"BIOMIND_MAINTENANCE_WINDOW"}), flush=True)\nsys.exit(75)\n').encode()
 
 
+def service_manager_replacement(entry, target):
+    """Keep the existing connection's manager path, pinned to one service release."""
+    if set(target) != {'kind', 'serviceRoot', 'python'} or Path(entry.get('path', '')).name != 'server-service.py':
+        fail('INVALID_SERVICE_MANAGER_REPLACEMENT')
+    root = absolute(target['serviceRoot'])
+    python = absolute(target['python'])
+    if (root.name != 'server' or not re.fullmatch(r'[0-9a-f]{40}', root.parent.name)
+            or not python.is_file() or not os.access(python, os.X_OK) or re.search(r'\s', str(python))):
+        fail('INVALID_SERVICE_RELEASE_LOCATION')
+    manifest_path = root.parent / 'SERVICE-RELEASE.json'
+    if manifest_path.is_symlink() or not manifest_path.is_file() or manifest_path.stat().st_size > 1048576:
+        fail('SERVICE_RELEASE_MANIFEST_REQUIRED')
+    manifest_data = manifest_path.read_bytes()
+    manifest = json.loads(manifest_data)
+    if (not isinstance(manifest, dict) or manifest.get('status') != 'PASS' or manifest.get('sourceCommit') != root.parent.name
+            or manifest.get('root') != str(root)):
+        fail('SERVICE_RELEASE_IDENTITY_MISMATCH')
+    rows = manifest.get('files')
+    if not isinstance(rows, list) or not rows or len(rows) > 128:
+        fail('INVALID_SERVICE_RELEASE_FILES')
+    bindings = [{'path': str(manifest_path), 'sha256': sha(manifest_data)}]
+    names = set()
+    for row in rows:
+        if (not isinstance(row, dict) or set(row) != {'path', 'sha256'}
+                or not isinstance(row['path'], str) or not re.fullmatch(r'[A-Za-z0-9_-]+\.(?:py|mjs)', row['path'])
+                or row['path'] in names or not re.fullmatch(r'[0-9a-f]{64}', row.get('sha256', ''))):
+            fail('INVALID_SERVICE_RELEASE_FILES')
+        names.add(row['path'])
+        path = root / row['path']
+        if (path.is_symlink() or not path.is_file() or path.stat().st_size > 1048576
+                or sha(path.read_bytes()) != row['sha256']):
+            fail('SERVICE_RELEASE_FILE_CHANGED')
+        bindings.append({'path': str(path), 'sha256': row['sha256']})
+    required = {'server-service.py', 'next-service.mjs', 'configure-service.py', 'preflight.py',
+                'rebind-managed-services.py', 'rollback-managed-service-rebind.py', 'legacy_idle_stop.py'}
+    if not required <= names:
+        fail('SERVICE_RELEASE_REQUIRED_FILE_MISSING')
+    # Unlisted executable modules could otherwise enter Python's import path.
+    if {p.name for p in root.iterdir() if p.name != '__pycache__'} != names:
+        fail('SERVICE_RELEASE_UNLISTED_FILE')
+    data = (f'#!{python}\nROOT={str(root)!r}\nPYTHON={str(python)!r}\nFILES={sorted(names)!r}\nBINDINGS={bindings!r}\n' + r'''from pathlib import Path
+import hashlib, os, sys
+try:
+    if {p.name for p in Path(ROOT).iterdir() if p.name != '__pycache__'} != set(FILES):
+        raise ValueError('service release inventory changed')
+    for binding in BINDINGS:
+        path = Path(binding['path'])
+        if path.is_symlink() or not path.is_file() or path.stat().st_size > 1048576 or hashlib.sha256(path.read_bytes()).hexdigest() != binding['sha256']:
+            raise ValueError('service release identity mismatch')
+    os.execve(PYTHON, [PYTHON, '-B', str(Path(ROOT) / 'server-service.py'), *sys.argv[1:]], dict(os.environ))
+except (OSError, ValueError, KeyError):
+    print('BioMind: fixed service release unavailable or changed.', file=sys.stderr)
+    sys.exit(2)
+''').encode()
+    return data, bindings
+
+
 def replacement(entry, plan):
-    """Optional fixed-core CLI redirect. Old server manager stays fenced."""
+    """Optional fixed CLI or service redirect, verified by the same transaction."""
     target = entry.get('replacement')
     if target is None: return None, []
+    kind = target.get('kind', 'cli')
+    if kind == 'service-manager': return service_manager_replacement(entry, target)
+    if kind != 'cli': fail('INVALID_ENTRY_REPLACEMENT_KIND')
     root = absolute(target['release'])
     runtime_config = absolute(target['runtimeConfig'])
     if runtime_config.name.startswith('.') or runtime_config.suffix != '.json' or re.search('auth|secret|credential|api.key|models', runtime_config.name, re.I):
@@ -245,6 +306,7 @@ def fence(plan):
                 entries.append({'path': entry['path'], 'original': original,
                     'closed': base64.b64encode(closed).decode(), 'closedSha256': sha(closed),
                     'replacement': base64.b64encode(target).decode() if target else None,
+                    'replacementKind': entry.get('replacement', {}).get('kind', 'cli') if target else None,
                     'acceptedSha256': [sha(closed)] + ([sha(target)] if target else []), 'bindings': bindings})
             value = {'schema': SCHEMA, 'id': identifier, 'state': 'fencing', 'planSha256': plan['_sha256'],
                      'roots': [s['root'] for s in guard.plan(plan)['scopes']], 'entries': entries, 'createdAt': time.time()}
@@ -324,6 +386,7 @@ def audit_local(plan, require_host_namespace=True):
     report = {'schema': SCHEMA, 'host': host, 'uid': os.getuid(), 'at': time.time(),
               'planSha256': plan['_sha256'], 'status': 'BLOCKED', 'signalsSent': False,
               'bootId': None, 'reviewedUnrelatedProcesses': [],
+              'reviewedSystemHelpers': [], 'systemHelperReviewFailures': [],
               'checks': {k: 'NOT_RUN' for k in ('hostNamespace', 'processes', 'writers', 'scheduler')},
               'legacyProcesses': [], 'unreviewedProcesses': [], 'unreadablePids': [], 'unreadableProcesses': [],
               'processEvidence': [], 'exitedDuringScan': [],
@@ -355,6 +418,11 @@ def _audit_local(plan, report, require_host_namespace):
     blockers, unknown, unreadable = report['legacyProcesses'], report['unreviewedProcesses'], report['unreadablePids']
     identities = {}
     allowed = declared.get('reviewedUnrelatedProcesses', [])
+    helper_reviews = declared.get('reviewedSystemHelpers', [])
+    if (not isinstance(helper_reviews, list) or len(helper_reviews) > 64
+            or any(not isinstance(row, dict) or type(row.get('pid')) is not int for row in helper_reviews)
+            or len({row['pid'] for row in helper_reviews}) != len(helper_reviews)):
+        fail('SYSTEM_HELPER_REVIEW_INVALID')
     for directory in Path('/proc').iterdir():
         if not directory.name.isdecimal(): continue
         pid = int(directory.name)
@@ -370,11 +438,19 @@ def _audit_local(plan, report, require_host_namespace):
             field = 'cmdline'
             cmd = (directory / 'cmdline').read_bytes()
             identity.update(process_hint(cmd))
+            references = [('argv', part.decode(errors='replace')) for part in cmd.split(b'\0')[1:]]
+            command_refs = reference_evidence(references, code_roots, resource_roots)
+            if any(row['pid'] == pid for row in helper_reviews) and any(ref['kind'] == 'resource' for ref in command_refs):
+                # Positive resource evidence wins before any opaque-field path.
+                row = {**identity, 'bootId': report['bootId'], 'references': command_refs, 'reason': 'resource-reference'}
+                blockers.append(row)
+                report['processEvidence'].append({**row, 'resourceAssociation': 'resource'})
+                continue
             field = 'cwd'
             cwd = os.readlink(directory / 'cwd')
             field = 'exe'
             exe = os.readlink(directory / 'exe')
-            references = [('cwd', cwd)] + [('argv', part.decode(errors='replace')) for part in cmd.split(b'\0')[1:]]
+            references.append(('cwd', cwd))
             field = 'fd-directory'
             for fd in (directory / 'fd').iterdir():
                 field = 'fd-link'
@@ -418,6 +494,37 @@ def _audit_local(plan, report, require_host_namespace):
             if isinstance(error, FileNotFoundError) and not directory.exists():
                 report['exitedDuringScan'].append({**identity, 'field': field, 'reason': 'PROCESS_EXITED_DURING_SCAN'})
                 continue
+            # A narrow alternate identity proof for specific, operator-reviewed
+            # non-dumpable OS helpers. Never retry the denied cwd, exempt a
+            # descendant, or turn generic EACCES into resource clearance.
+            review = next((row for row in helper_reviews if row['pid'] == pid), None)
+            if field == 'cwd' and isinstance(error, PermissionError) and review is not None:
+                try:
+                    proof = system_helpers.reviewed_snapshot(review, host, os.getuid())
+                    if (proof['bootId'] != report['bootId'] or proof['process']['startTicks'] != ticks
+                            or proof['process']['commandSha256'] != sha(cmd)):
+                        raise system_helpers.HelperReviewError('SYSTEM_HELPER_REVIEW_IDENTITY_MISMATCH')
+                    available, denied = system_helpers.visible_references(pid)
+                    refs = reference_evidence([*references, *available], code_roots, resource_roots)
+                    latest, _ = system_helpers.process(Path('/proc'), pid)
+                    if latest != proof['process']:
+                        raise system_helpers.HelperReviewError('SYSTEM_HELPER_IDENTITY_CHANGED')
+                    row = {**identity, 'bootId': proof['bootId'], 'role': proof['role'],
+                           'identitySha256': review['identitySha256'], 'references': refs,
+                           'unreadableResourceFields': denied, 'unreadableResourcesRead': False,
+                           'reviewScope': 'THIS_EXACT_SYSTEM_HELPER_ONLY',
+                           'operatorEvidence': review['operatorEvidence']}
+                    if any(ref['kind'] == 'resource' for ref in refs):
+                        blockers.append({**row, 'reason': 'resource-reference'})
+                        report['processEvidence'].append({**row, 'resourceAssociation': 'resource'})
+                    else:
+                        report['reviewedSystemHelpers'].append(row)
+                        report['processEvidence'].append({**row, 'resourceAssociation': 'reviewed-system-helper'})
+                    continue
+                except (OSError, ValueError, KeyError, TypeError, IndexError, subprocess.SubprocessError) as review_error:
+                    report['systemHelperReviewFailures'].append({'pid': pid,
+                        'code': str(review_error) if isinstance(review_error, system_helpers.HelperReviewError)
+                                else 'SYSTEM_HELPER_REVIEW_UNAVAILABLE'})
             unreadable.append(pid)
             reason = ('PERMISSION_DENIED' if isinstance(error, PermissionError) else
                       'PROCESS_FIELD_UNAVAILABLE' if isinstance(error, FileNotFoundError) else
@@ -674,8 +781,29 @@ def rollback(plan):
     with state_lock(plan) as state, all_leases(plan) as resources:
         value = transaction(plan, state)
         verify_fences(value, closed=False)
-        if value['state'] == 'rolled-back': return {'status': 'rolled-back', 'changed': False}
-        if value['state'] not in ('fenced', 'pending', 'committed'): fail('ADOPTION_STATE_REQUIRES_RECOVERY')
+        if value['state'] not in ('fenced', 'pending', 'committed', 'rolled-back'): fail('ADOPTION_STATE_REQUIRES_RECOVERY')
+        # Close every accepted entry before withdrawing its admission markers.
+        # Validate the complete saved fence set before the first entry write.
+        closed_entries = []
+        for entry in value['entries']:
+            try: closed = base64.b64decode(entry['closed'], validate=True)
+            except (ValueError, TypeError): fail('ADOPTION_FENCE_RECORD_INVALID')
+            if (len(closed) > 65536 or sha(closed) != entry['closedSha256']
+                    or entry['closedSha256'] not in entry['acceptedSha256']):
+                fail('ADOPTION_FENCE_RECORD_INVALID')
+            closed_entries.append((entry, closed))
+        refenced = False
+        for entry, closed in closed_entries:
+            p = Path(entry['path'])
+            if p.is_symlink() or not p.is_file(): fail('ADOPTION_ENTRY_CHANGED')
+            current_sha = sha(p.read_bytes())
+            if current_sha not in entry['acceptedSha256']: fail('ADOPTION_ENTRY_CHANGED')
+            if current_sha != entry['closedSha256']:
+                atomic_bytes(p, closed, 0o700)
+                refenced = True
+        verify_fences(value)
+        if value['state'] == 'rolled-back':
+            return {'status': 'rolled-back', 'changed': refenced, 'entriesRemainFenced': True}
         for row in resources['scopes']:
             if value['state'] == 'fenced': continue
             p = Path(row['marker']); previous = value.get('previousMarkers', {}).get(str(p))
@@ -699,7 +827,9 @@ def entries_action(plan, activate=False):
             for entry in value['entries']:
                 if entry['replacement']:
                     atomic_bytes(entry['path'], base64.b64decode(entry['replacement']), 0o700)
-            return {'status': 'activated', 'oldServersRemainFenced': True}
+            managers = [entry['path'] for entry in value['entries'] if entry.get('replacementKind') == 'service-manager']
+            return {'status': 'activated', 'oldServersRemainFenced': not bool(managers),
+                    'serviceManagerRedirects': managers}
         if value['state'] not in ('fencing', 'fenced', 'rolled-back'): fail('ROLLBACK_ADOPTION_BEFORE_RESTORING_OLD_ENTRIES')
         for entry in value['entries']:
             p = Path(entry['path'])
