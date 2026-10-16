@@ -50,6 +50,7 @@ def maintenance_fence(core_root, plan_file, service):
         # stop must consume an existing receipt, never create a maintenance state.
         service.private(plan['stateDir'], True)
         service.private(Path(plan['stateDir']) / 'transaction.json')
+        service.private(Path(plan['stateDir']) / 'operation.lock')
         with adoption.state_lock(plan) as state:
             transaction = adoption.transaction(plan, state)
             service.require(transaction.get('state') == 'fenced', 'MAINTENANCE_FENCE_REQUIRED')
@@ -167,7 +168,7 @@ def stop_legacy_idle(config, instance, core_root, plan_file, *, clients_quiescen
     with maintenance_fence(core_root, plan_file, service) as (transaction, verify_fences):
         fds = []
         try:
-            with service.locked(config):
+            with service.locked(config, create=False):
                 record = service.read_record(config)
                 service.require(record and record.get('instanceId') == instance, 'SERVICE_INSTANCE_REPLACED')
                 service.require(record.get('binding') == config['binding'], 'ACTIVE_CONFIG_BINDING_CHANGED')
@@ -176,7 +177,7 @@ def stop_legacy_idle(config, instance, core_root, plan_file, *, clients_quiescen
                                 and service.process_alive(record), 'SERVICE_PROCESS_IDENTITY_UNCONFIRMED')
                 endpoint = service.health(config, instance)
                 service.require(endpoint and endpoint.get('idleStopProtocol') is None, 'USE_NATIVE_IDLE_STOP')
-                service.require(service.backend_lease_held(config), 'LEGACY_BACKEND_LEASE_UNCONFIRMED')
+                service.require(service.backend_lease_held(config, create=False), 'LEGACY_BACKEND_LEASE_UNCONFIRMED')
                 first = ownerless_pair(config, record, transaction, service)
                 authenticated_idle(config, instance, endpoint, service)
                 second = ownerless_pair(config, record, transaction, service)
@@ -193,13 +194,13 @@ def stop_legacy_idle(config, instance, core_root, plan_file, *, clients_quiescen
             # The old holder must acquire service.lock to write its own receipt.
             deadline = time.monotonic() + timeout
             while time.monotonic() < deadline:
-                with service.locked(config):
+                with service.locked(config, create=False):
                     current = service.read_record(config)
                     service.require(current and current.get('instanceId') == instance
                                     and current.get('binding') == config['binding'], 'SERVICE_INSTANCE_REPLACED')
                     if current.get('status') == 'stopped' and all(pidfd_exited(fd) for fd in fds):
                         service.require(current.get('exitCode') == 0, 'LEGACY_GRACEFUL_EXIT_FAILED')
-                        service.require(not service.backend_lease_held(config), 'LEGACY_BACKEND_LEASE_UNCONFIRMED')
+                        service.require(not service.backend_lease_held(config, create=False), 'LEGACY_BACKEND_LEASE_UNCONFIRMED')
                         return service.public(config, current, status='stopped', signalsSent=True,
                             signal='SIGTERM', signalCount=1, legacyOperatorShutdown=True, nativeIdleShutdown=False,
                             ownerlessProcessTree=True, atomicIdleAdmission=False, operatorWindowRequired=True,

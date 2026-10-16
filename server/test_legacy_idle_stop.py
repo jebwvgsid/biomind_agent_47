@@ -38,6 +38,8 @@ class LegacyStopTests(unittest.TestCase):
                         command=[sys.executable, str(self.root / 'bootstrap.py')])
         self.config_file.write_text(json.dumps(self.raw))
         self.config = service.load(self.config_file)
+        with service.locked(self.config):
+            pass
         self.instance = 'a' * 32
         self.record = dict(schema=service.SCHEMA, serviceId=self.config['serviceId'],
             serverId=self.config['serverId'], instanceId=self.instance, host=socket.gethostname(),
@@ -96,6 +98,29 @@ class LegacyStopTests(unittest.TestCase):
         self.config['mode'] = 'slurm'
         with self.assertRaisesRegex(service.Refused, 'LEGACY_LOCAL_SERVICE_REQUIRED'):
             self.invoke()
+
+    def test_legacy_existing_only_open_never_creates_missing_state_or_locks(self):
+        missing = self.root / 'must-not-create-state'
+        self.config_file.write_text(json.dumps({**self.raw, 'stateRoot': str(missing)}))
+        with self.assertRaises(FileNotFoundError):
+            service.load(self.config_file, create_state=False)
+        self.assertFalse(missing.exists())
+        lock = Path(self.config['stateRoot']) / 'service.lock'
+        lock.unlink()
+        with self.assertRaises(FileNotFoundError):
+            with service.locked(self.config, create=False):
+                self.fail('Missing service lock cannot be recreated')
+        self.assertFalse(lock.exists())
+        backend = Path(self.config['stateRoot']) / 'backend.lock'
+        with self.assertRaises(FileNotFoundError):
+            service.backend_lease_held(self.config, create=False)
+        self.assertFalse(backend.exists())
+        with self.isolated_checks() as sent:
+            with self.assertRaisesRegex(service.Refused, 'LEGACY_STOP_EVIDENCE_OR_OUTCOME_UNCONFIRMED'):
+                self.invoke()
+            sent.assert_not_called()
+        self.assertFalse(lock.exists())
+        self.assertEqual(service.read_record(self.config), self.record)
 
     def test_wrong_instance_binding_host_and_state_never_signal(self):
         cases = [('instanceId', 'b' * 32, 'SERVICE_INSTANCE_REPLACED'),
@@ -208,6 +233,8 @@ class LegacyStopTests(unittest.TestCase):
         receipt = state / 'transaction.json'
         receipt.write_text('{}')
         receipt.chmod(0o600)
+        operation_lock = state / 'operation.lock'
+        operation_lock.touch(mode=0o600)
         plan = dict(maintenanceApproved=True, entryInventoryConfirmed=True, hostInventoryConfirmed=True,
                     hosts=[{'name': socket.gethostname()}], stateDir=str(state))
         transaction = {'id': 'fenced-id', 'state': 'fenced'}
@@ -239,6 +266,13 @@ class LegacyStopTests(unittest.TestCase):
             with self.assertRaisesRegex(service.Refused, 'MAINTENANCE_FENCE_UNVERIFIED'):
                 with legacy.maintenance_fence(str(core), '/private/plan.json', service):
                     self.fail('Changed fence must not authorize legacy stop')
+            operation_lock.unlink()
+            lock_calls = adoption.state_lock.call_count
+            with self.assertRaisesRegex(service.Refused, 'MAINTENANCE_FENCE_UNVERIFIED'):
+                with legacy.maintenance_fence(str(core), '/private/plan.json', service):
+                    self.fail('Missing operation lock cannot be recreated')
+            self.assertEqual(adoption.state_lock.call_count, lock_calls)
+            self.assertFalse(operation_lock.exists())
 
     def test_host_process_includes_children_started_by_nonmain_thread(self):
         script = self.root / 'thread-child.py'

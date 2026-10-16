@@ -73,7 +73,7 @@ def atomic(path, value):
         temporary.unlink(missing_ok=True)
 
 
-def load(path):
+def load(path, *, create_state=True):
     path = absolute(str(path))
     config = json.loads(path.read_text())
     require(config.get('schema') == SCHEMA and config.get('mode') in ('local', 'slurm'), 'INVALID_SERVICE_CONFIG')
@@ -82,9 +82,11 @@ def load(path):
     config['configPath'] = str(path)
     config['stateRoot'] = str(absolute(config.get('stateRoot'), exists=False))
     state = Path(config['stateRoot'])
-    state.mkdir(mode=0o700, parents=True, exist_ok=True)
+    if create_state:
+        state.mkdir(mode=0o700, parents=True, exist_ok=True)
     private(state, True)
-    (state / 'logs').mkdir(mode=0o700, exist_ok=True)
+    if create_state:
+        (state / 'logs').mkdir(mode=0o700, exist_ok=True)
     private(state / 'logs', True)
     config['cwd'] = str(absolute(config.get('cwd', str(HERE))))
     require(Path(config['cwd']).is_dir(), 'INVALID_WORKING_DIRECTORY')
@@ -118,11 +120,14 @@ def load(path):
 
 
 @contextlib.contextmanager
-def locked(config):
+def locked(config, *, create=True):
     path = Path(config['stateRoot']) / 'service.lock'
-    fd = os.open(path, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
+    fd = os.open(path, os.O_RDWR | (os.O_CREAT if create else 0) | os.O_NOFOLLOW, 0o600)
     try:
         private(path)
+        if not create:
+            opened, current = os.fstat(fd), path.lstat()
+            require((opened.st_dev, opened.st_ino) == (current.st_dev, current.st_ino), 'SERVICE_LOCK_IDENTITY_CHANGED')
         # Bounded command latency even if a different caller is submitting.
         deadline = time.monotonic() + 25
         while True:
@@ -149,12 +154,15 @@ def read_record(config):
     return record
 
 
-def backend_lease(config):
+def backend_lease(config, *, create=True):
     """Held by both the supervisor and child, including after supervisor loss."""
     path = Path(config['stateRoot']) / 'backend.lock'
-    fd = os.open(path, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
+    fd = os.open(path, os.O_RDWR | (os.O_CREAT if create else 0) | os.O_NOFOLLOW, 0o600)
     try:
         private(path)
+        if not create:
+            opened, current = os.fstat(fd), path.lstat()
+            require((opened.st_dev, opened.st_ino) == (current.st_dev, current.st_ino), 'BACKEND_LOCK_IDENTITY_CHANGED')
         fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
         return fd
     except BaseException:
@@ -162,9 +170,9 @@ def backend_lease(config):
         raise
 
 
-def backend_lease_held(config):
+def backend_lease_held(config, *, create=True):
     try:
-        fd = backend_lease(config)
+        fd = backend_lease(config, create=create)
     except BlockingIOError:
         return True
     os.close(fd)
@@ -497,7 +505,7 @@ def main():
                         help='Operator confirms all target scientific tasks have ended')
     args = parser.parse_args()
     try:
-        config = load(args.config)
+        config = load(args.config, create_state=args.action != 'stop-legacy-idle')
         if args.action == 'run':
             return run(config, args.instance)
         if args.action == 'stop-legacy-idle':
