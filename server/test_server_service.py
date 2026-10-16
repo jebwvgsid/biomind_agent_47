@@ -3,6 +3,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import socket
 import subprocess
 import sys
 import tempfile
@@ -239,8 +240,10 @@ class LifecycleTests(unittest.TestCase):
     def test_lost_holder_with_surviving_backend_never_starts_replacement(self):
         self.value['mode']='local'
         self.save_config()
+        # A lost local holder exercises the backend lease. A foreign-host
+        # record must instead stop at RUN_ON_SERVICE_HOST_REQUIRED.
         row=dict(schema=service.SCHEMA,serviceId=self.config['serviceId'],serverId=self.config['serverId'],
-            binding=self.config['binding'],instanceId='f'*32,status='ready',host='departed-host',pid=1,startTicks='unknown')
+            binding=self.config['binding'],instanceId='f'*32,status='ready',host=socket.gethostname(),pid=1,startTicks='unknown')
         service.write_record(self.config,row)
         fd=service.backend_lease(self.config)
         try:

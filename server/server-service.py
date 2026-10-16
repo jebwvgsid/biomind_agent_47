@@ -4,6 +4,9 @@
 The desktop calls ensure once, then discover while queued/preparing. No command
 here cancels a job. Explicit stop uses authenticated native idle shutdown. Only the configured operator command
 runs; this module never creates sessions, model agents, memory or project state.
+The explicit stop-legacy-idle migration command uses the reviewed old holder's
+normal operator SIGTERM only under a fenced, confirmed ownerless maintenance
+window. It is never an automatic fallback from native idle stop.
 """
 import argparse
 import base64
@@ -483,15 +486,31 @@ def run(config, instance):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=('ensure', 'discover', 'run', 'stop'))
+    parser.add_argument('action', choices=('ensure', 'discover', 'run', 'stop', 'stop-legacy-idle'))
     parser.add_argument('--config', required=True)
     parser.add_argument('--instance')
+    parser.add_argument('--maintenance-core')
+    parser.add_argument('--maintenance-plan')
+    parser.add_argument('--clients-quiescent', action='store_true',
+                        help='Operator confirms every known target client sends no new requests during maintenance')
+    parser.add_argument('--idle-confirmed', action='store_true',
+                        help='Operator confirms all target scientific tasks have ended')
     args = parser.parse_args()
     try:
         config = load(args.config)
         if args.action == 'run':
             return run(config, args.instance)
-        result = stop(config, args.instance) if args.action == 'stop' else ensure(config) if args.action == 'ensure' else discover(config)
+        if args.action == 'stop-legacy-idle':
+            from types import SimpleNamespace
+            from legacy_idle_stop import stop_legacy_idle
+            require(args.maintenance_core and args.maintenance_plan, 'MAINTENANCE_RECEIPT_REQUIRED')
+            result = stop_legacy_idle(config, args.instance, args.maintenance_core, args.maintenance_plan,
+                clients_quiescent=args.clients_quiescent, idle_confirmed=args.idle_confirmed,
+                service=SimpleNamespace(**globals()))
+        else:
+            require(not any((args.maintenance_core, args.maintenance_plan, args.clients_quiescent, args.idle_confirmed)),
+                    'LEGACY_OPTIONS_REQUIRE_EXPLICIT_COMMAND')
+            result = stop(config, args.instance) if args.action == 'stop' else ensure(config) if args.action == 'ensure' else discover(config)
         print(json.dumps(result, ensure_ascii=False), flush=True)
         return 0
     except Refused as error:

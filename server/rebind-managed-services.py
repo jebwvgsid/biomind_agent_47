@@ -58,6 +58,11 @@ BACKEND_FILES = (
     '.next-pkg/server/app/api/agent/[id]/route.js',
     '.next-pkg/server/app/api/agent/[id]/events/route.js',
 )
+SERVICE_FILES = (
+    'server-service.py', 'next-service.mjs', 'configure-service.py',
+    'preflight.py', 'rebind-managed-services.py', 'rollback-managed-service-rebind.py',
+    'legacy_idle_stop.py',
+)
 SECRET_KEY = re.compile(r'(?i)(password|secret|token|credential|authorization|api[_-]?key)')
 
 
@@ -166,6 +171,38 @@ def validate_release(root):
     return root, release, manifest, executables, checked
 
 
+def validate_service_root(root):
+    """Select an explicitly frozen service bundle, never rewrite live scripts."""
+    root = absolute(root, directory=True)
+    release = snapshot(root.parent / 'SERVICE-RELEASE.json')
+    value = release['value']
+    commit = value.get('sourceCommit')
+    require(value.get('status') == 'PASS' and isinstance(commit, str)
+            and re.fullmatch('[0-9a-f]{40}', commit)
+            and root.name == 'server' and root.parent.name == commit
+            and value.get('root') == str(root), 'FIXED_SERVICE_RELEASE_REQUIRED')
+    rows = value.get('files')
+    require(isinstance(rows, list) and len(rows) == len(SERVICE_FILES)
+            and all(isinstance(row, dict) and set(row) == {'path', 'sha256'}
+                    and row.get('path') in SERVICE_FILES
+                    and isinstance(row.get('sha256'), str)
+                    and re.fullmatch('[0-9a-f]{64}', row['sha256']) for row in rows)
+            and {row['path'] for row in rows} == set(SERVICE_FILES), 'SERVICE_RELEASE_FILES_INVALID')
+    snapshots = [release]
+    for row in rows:
+        p = absolute(root / row['path'], regular=True)
+        before = p.stat()
+        require(before.st_size <= 2 * 1024 * 1024, 'SERVICE_FILE_TOO_LARGE')
+        raw = p.read_bytes()
+        after = p.stat()
+        identity = (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns)
+        require(identity == (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns),
+                'CONCURRENT_FILE_CHANGE')
+        require(digest(raw) == row['sha256'], 'SERVICE_RELEASE_HASH_MISMATCH')
+        snapshots.append({'path': p, 'raw': raw, 'identity': identity, 'sha256': row['sha256']})
+    return root, release, snapshots
+
+
 def fresh_output(path):
     p = absolute(path, exists=False)
     absolute(p.parent, directory=True)
@@ -251,9 +288,15 @@ def prepare(args):
     launcher = absolute(cmd[1], regular=True)
     require(launcher.name == 'next-service.mjs', 'MANAGED_LAUNCHER_REQUIRED')
     absolute(launcher.parent / 'server-service.py', regular=True)
+    service_release, service_snapshots = None, []
+    if getattr(args, 'service_root', None) is not None:
+        service_root, service_release, service_snapshots = validate_service_root(args.service_root)
+        launcher = service_root / 'next-service.mjs'
     output = fresh_output(args.runtime_output)
     receipt = fresh_output(args.receipt)
     protected = [agent, sessions, root, backend, state]
+    if service_release:
+        protected.append(service_release['path'].parent)
     for p in [output, receipt]:
         require(not any(p.is_relative_to(q) for q in protected), 'OUTPUT_IN_PROTECTED_ROOT')
         require(p not in [config['path'], runtime['path'], credentials], 'OUTPUT_PATH_OVERLAP')
@@ -276,7 +319,8 @@ def prepare(args):
             'release': release, 'manifest': manifest, 'state': state, 'credentials': credentials,
             'runtime_output': output, 'receipt': receipt, 'new_config': n,
             'new_runtime': new_runtime, 'root': root, 'backend': backend,
-            'checked_entries': checked}
+            'checked_entries': checked, 'service_release': service_release,
+            'service_snapshots': service_snapshots}
 
 
 def execute(args):
@@ -297,6 +341,8 @@ def execute(args):
                 raise Refused('SERVICE_ACTIVE_CONFIGURATION_LOCKED') from None
         for key in ['config', 'runtime', 'lifecycle', 'release', 'manifest']:
             unchanged(plan[key])
+        for snap in plan['service_snapshots']:
+            unchanged(snap)
         require(plan['lifecycle']['value']['status'] == 'stopped', 'SERVICE_NOT_STOPPED')
         require(not os.path.lexists(plan['runtime_output']) and not os.path.lexists(plan['receipt']), 'OUTPUT_ALREADY_EXISTS')
         result = {
@@ -318,6 +364,16 @@ def execute(args):
             'entryHashesChecked': plan['checked_entries'],
             'nextAction': 'Explicit managed ensure only after this APPLIED receipt; then verify new instance and child loaded_build. No restart was performed.',
         }
+        if plan['service_release']:
+            result['serviceRelease'] = {
+                'root': str(Path(plan['new_config']['command'][1]).parent),
+                'sourceCommit': plan['service_release']['value']['sourceCommit'],
+                'manifestPath': str(plan['service_release']['path']),
+                'manifestSha256': plan['service_release']['sha256'],
+                'files': plan['service_release']['value']['files'],
+                'launcherBefore': plan['config']['value']['command'][1],
+                'launcherAfter': plan['new_config']['command'][1],
+            }
         if args.apply:
             stamp = datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ') + '-' + uuid.uuid4().hex[:12]
             backup = plan['config']['path'].parent / ('rebind-backup-' + stamp)
@@ -327,6 +383,8 @@ def execute(args):
             fsync_dir(backup)
             for key in ['config', 'runtime', 'lifecycle', 'release', 'manifest']:
                 unchanged(plan[key])
+            for snap in plan['service_snapshots']:
+                unchanged(snap)
             atomic_create(plan['runtime_output'], encoded(plan['new_runtime']))
             fsync_dir(plan['runtime_output'].parent)
             # Publishing config and retiring its verified stopped record are both
@@ -353,6 +411,8 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     for option in ['service-config', 'release', 'backend-root', 'runtime-output', 'receipt']:
         parser.add_argument('--' + option, required=True, type=Path)
+    parser.add_argument('--service-root', type=Path,
+                        help='Explicit fixed commit/server directory with its SERVICE-RELEASE.json; preserve current launcher if omitted')
     parser.add_argument('--apply', action='store_true')
     args = parser.parse_args(argv)
     try:
