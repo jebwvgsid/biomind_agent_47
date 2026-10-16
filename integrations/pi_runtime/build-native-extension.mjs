@@ -34,3 +34,17 @@ const { mkdir, readFile, writeFile } = await import('node:fs/promises');
 await mkdir(path.join(runtime, 'vendor/pi-output-limits/dist'), { recursive: true });
 await writeFile(path.join(runtime, 'vendor/pi-output-limits/dist/output-limits-extension.ts'),
   (await readFile(path.join(runtime, 'dist/output-limits-extension.ts'), 'utf8')).replace(/^\/\/# sourceMappingURL=.*$/m, ''));
+
+// Avoid cold-loading the SDK module graph from shared storage for each history
+// GET. Bundle public imports from the same pinned dependencies; retain native
+// parsing and read-only writer inspection.
+await build({
+  absWorkingDir: runtime,
+  entryPoints: ['history-query.ts'],
+  outfile: 'dist/history-query.js',
+  bundle: true,
+  platform: 'node',
+  format: 'esm',
+  target: 'node22',
+  banner: { js: 'import { createRequire as _historyRequire } from "node:module"; const require = _historyRequire(import.meta.url);' },
+});

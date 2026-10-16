@@ -14,7 +14,7 @@
 - 审核 `entryInventoryConfirmed`、`hostInventoryConfirmed`、`maintenanceApproved`，只有实际确认才设 true。程序不会替用户自动确认未知入口/主机。
 - `scheduler: slurm` 会拒绝任何该用户的在途作业，保守地要求一次空闲维护窗口；不硬编码作业号/计算节点。非调度环境才使用 `none`。
 - 非登录 SSH 环境没有 Slurm PATH 时，在计划中设置 `schedulerExecutable` 为本集群经核实的 squeue 绝对路径。各宿主执行同一只读查询；路径缺失/不可执行与查询失败分别报告，不静默改用另一命令或跳过 Slurm。不需要在代码写死集群路径或 source 用户 shell 启动文件。
-- 未分类 Python/Node 进程须人工确认无关，再将审计输出的完整 PID/startTicks/executable/commandSha256 条目填入对应 host 的 `reviewedUnrelatedProcesses`。已识别的 BioMind、服务器或资源引用不能豁免。进程重启后身份改变须重新检查。
+- 代码路径、解释器及 BioMind 命令标记仅表示关联待核实，不能直接认定占用目标资源。人工通过真实入口、运行配置/agentDir、项目和共享锁边界确认无关后，才可将完整 PID/startTicks/executable/commandSha256/bootId 身份条目纳入对应 host 的 reviewedUnrelatedProcesses；工具不会自动生成或批准豁免。实际目标资源引用（含 maps/environment）、不可读字段和身份变化始终阻塞，精确复核也不能覆盖。无直接引用不等于无关或空闲。重启、换命令或宿主重启后必须重新复核。
 - 审核完成后冻结计划。事务开始后改计划会被拒绝；不要编辑事务 JSON。确需改范围时先恢复旧入口，使用新的 stateDir 和新的计划。
 - `stateDir` 独立私有目录，存放入口备份和事务记录，不是插件注册库。不要删除它；已接管 worker 会验证它。
 
@@ -69,3 +69,5 @@ SSH 失败分别报告主机密钥未信任/已改变、认证、解析、超时
 
 用户明确允许停止旧会话后，可以使用独立的 reviewed-stop 工具结束它们；不必
 等待它们空闲。该授权不改变主机清单、资源接管和正式入口切换的审核状态。
+
+历史清单不自动证明某节点使用目标资源；应以目标入口、writer 声明、调度分配和真实资源绑定核定范围。缺少关联证据时保持范围 UNKNOWN，不自动删主机或请求无限重试。旧 worker 未加入 flock 协议时，空的新锁仍不是排他证明。

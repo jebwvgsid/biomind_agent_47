@@ -305,11 +305,25 @@ def reference_evidence(references, code_roots, resource_roots):
     return [{'source': source, 'kind': kind, 'root': root} for source, kind, root in sorted(result)]
 
 
+
+def classify_process(row, references, biomind_marker, reviewed):
+    """Resource evidence wins. Code/name hints require exact identity review."""
+    if any(ref['kind'] == 'resource' for ref in references):
+        return 'resource'
+    # Review is host-local and boot-bound. Unreadable fields never reach here.
+    if row in reviewed:
+        return 'reviewed-unrelated'
+    if references or biomind_marker or Path(row['executable']).name.startswith(('python', 'node', 'bun', 'deno')):
+        return 'unresolved'
+    return 'no-reference'
+
+
 def audit_local(plan, require_host_namespace=True):
     """Read process/owner metadata only; never print argv, environ or history."""
     host = socket.gethostname()
     report = {'schema': SCHEMA, 'host': host, 'uid': os.getuid(), 'at': time.time(),
               'planSha256': plan['_sha256'], 'status': 'BLOCKED', 'signalsSent': False,
+              'bootId': None, 'reviewedUnrelatedProcesses': [],
               'checks': {k: 'NOT_RUN' for k in ('hostNamespace', 'processes', 'writers', 'scheduler')},
               'legacyProcesses': [], 'unreviewedProcesses': [], 'unreadablePids': [], 'unreadableProcesses': [],
               'processEvidence': [], 'exitedDuringScan': [],
@@ -333,6 +347,7 @@ def _audit_local(plan, report, require_host_namespace):
         fail('ADOPTION_HOST_PID_NAMESPACE_REQUIRED')
     report['checks']['hostNamespace'] = 'PASS' if require_host_namespace else 'TEST_BYPASS'
     report['stage'] = 'processes'
+    report['bootId'] = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
     resources = guard.plan(plan)
     code_roots = [str(p) for p in plan['legacyCodeRoots']]
     resource_roots = [s['root'] for s in resources['scopes'] + resources['resources']]
@@ -365,17 +380,40 @@ def _audit_local(plan, report, require_host_namespace):
                 field = 'fd-link'
                 try: references.append(('fd', os.readlink(fd)))
                 except FileNotFoundError: pass
+            # Retain only matched resource roots, never raw environment/maps.
+            field = 'maps'
+            with (directory / 'maps').open() as stream:
+                for line in stream:
+                    parts = line.split(None, 5)
+                    if len(parts) == 6: references.append(('maps', parts[5].strip().removesuffix(' (deleted)')))
+            field = 'environ'
+            with (directory / 'environ').open('rb') as stream:
+                environment = stream.read(2097153)
+            if len(environment) > 2097152: raise ValueError()
+            for item in environment.split(b'\0'):
+                key, sep, value = item.partition(b'=')
+                if sep: references.append(('environment', value.decode(errors='replace')))
+            environment = None
             refs = reference_evidence(references, code_roots, resource_roots)
-            related = bool(refs)
             pi_process = any(word in cmd for word in (b'bio_agents.py', b'python_service.py', b'pi-coding-agent', b'/dist/host.js', b'/host.ts', b'next-service.mjs', b'server-service.py'))
-            row = {'pid': pid, 'startTicks': ticks, 'executable': exe, 'commandSha256': sha(cmd)}
-            if related or pi_process:
-                blockers.append({**row, 'reason': 'legacy-or-resource-reference'})
-            elif Path(exe).name.startswith(('python', 'node', 'bun', 'deno')) and row not in allowed:
+            row = {'pid': pid, 'startTicks': ticks, 'executable': exe, 'commandSha256': sha(cmd),
+                   'bootId': report['bootId']}
+            field = 'identity-recheck'
+            current = (directory / 'stat').read_text().rsplit(')', 1)[1].split()
+            if (current[19] != ticks or sha((directory / 'cmdline').read_bytes()) != row['commandSha256']
+                    or os.readlink(directory / 'exe') != exe):
+                raise ValueError()
+            association = classify_process(row, refs, pi_process, allowed)
+            if association == 'resource':
+                blockers.append({**row, 'reason': 'resource-reference'})
+            elif association == 'unresolved':
                 unknown.append(row)
-            if related or pi_process or (Path(exe).name.startswith(('python', 'node', 'bun', 'deno')) and row not in allowed):
+            elif association == 'reviewed-unrelated':
+                report['reviewedUnrelatedProcesses'].append(row)
+            if association != 'no-reference':
                 report['processEvidence'].append({**row, 'ppid': int(info[1]),
-                    **process_hint(cmd, cwd, exe), 'references': refs, 'bioMindCommandMarker': pi_process})
+                    **process_hint(cmd, cwd, exe), 'references': refs, 'bioMindCommandMarker': pi_process,
+                    'resourceAssociation': association})
         except (OSError, ValueError, IndexError) as error:
             if isinstance(error, FileNotFoundError) and not directory.exists():
                 report['exitedDuringScan'].append({**identity, 'field': field, 'reason': 'PROCESS_EXITED_DURING_SCAN'})

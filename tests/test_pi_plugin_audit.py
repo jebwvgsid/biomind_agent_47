@@ -36,6 +36,16 @@ class AuditTests(unittest.TestCase):
             'maintenanceApproved': True, 'hostInventoryConfirmed': True, 'entryInventoryConfirmed': True,
         }
         self.load()
+        # Audit only this test runner's direct fixture children. Tests must not
+        # inspect unrelated user processes or depend on host-wide visibility.
+        original_iterdir = Path.iterdir
+        def fixture_processes(path):
+            if path != Path('/proc'): return original_iterdir(path)
+            children = Path(f'/proc/self/task/{os.getpid()}/children').read_text().split()
+            return iter(Path('/proc') / pid for pid in children)
+        process_view = patch.object(Path, 'iterdir', fixture_processes)
+        process_view.start()
+        self.addCleanup(process_view.stop)
 
     def load(self):
         adoption.save(self.file, self.raw)
@@ -168,7 +178,7 @@ class AuditTests(unittest.TestCase):
             self.assertEqual(report['status'], 'BLOCKED')
             self.assertEqual(report['checks']['scheduler'], 'BLOCKED')
             self.assertIsNone(report['activeSlurmJobs'])
-            self.assertIn(process.pid, [r['pid'] for r in report['legacyProcesses']])
+            self.assertIn(process.pid, [r['pid'] for r in report['unreviewedProcesses']])
             self.assertIsNone(process.poll())
         finally:
             process.communicate('\n', timeout=10)
@@ -347,10 +357,73 @@ class AuditTests(unittest.TestCase):
             row = next(r for r in report['processEvidence'] if r['pid']==process.pid)
             self.assertEqual(row['roleHint'],'shell')
             self.assertIn({'source':'cwd','kind':'code','root':str(self.root/'legacy')},row['references'])
-            self.assertIn(process.pid,[r['pid'] for r in report['legacyProcesses']])
+            self.assertIn(process.pid,[r['pid'] for r in report['unreviewedProcesses']])
             self.assertNotEqual(report['status'],'clear')
             self.assertIsNone(process.poll())
         finally: process.communicate(b'\n',timeout=10)
+
+
+    def test_code_only_and_independent_service_markers_require_boot_bound_review(self):
+        row = {'pid': 123, 'startTicks': '456', 'executable': '/shared/node',
+               'commandSha256': 'a' * 64, 'bootId': 'boot-one'}
+        code = [{'source': 'argv', 'kind': 'code', 'root': '/shared'}]
+        for marker in (False, True):
+            self.assertEqual(adoption.classify_process(row, code, marker, []), 'unresolved')
+            self.assertEqual(adoption.classify_process(row, code, marker, [dict(row)]), 'reviewed-unrelated')
+        for key, value in [('pid', 124), ('startTicks', '457'), ('bootId', 'boot-two'),
+                           ('commandSha256', 'b' * 64), ('executable', '/other/node')]:
+            self.assertEqual(adoption.classify_process(row, code, True, [{**row, key: value}]), 'unresolved')
+        old_review = {k: v for k, v in row.items() if k != 'bootId'}
+        self.assertEqual(adoption.classify_process(row, code, True, [old_review]), 'unresolved')
+
+    def test_actual_resource_reference_never_accepts_unrelated_review(self):
+        row = {'pid': 123, 'startTicks': '456', 'executable': '/shared/node',
+               'commandSha256': 'a' * 64, 'bootId': 'boot-one'}
+        for source in ('cwd', 'argv', 'fd', 'maps', 'environment'):
+            refs = [{'source': source, 'kind': 'resource', 'root': '/target/agent'}]
+            self.assertEqual(adoption.classify_process(row, refs, False, [dict(row)]), 'resource')
+
+    def test_environment_only_resource_reference_is_not_lost_or_leaked(self):
+        worker = self.root / 'worker.py'
+        worker.write_text('import sys\nprint("ready", flush=True)\nsys.stdin.readline()\n')
+        env = dict(os.environ, PI_CODING_AGENT_DIR=str(self.root/'agent'),
+                   AUDIT_PRIVATE_VALUE='DO_NOT_EXPORT_SECRET')
+        process = subprocess.Popen([sys.executable, '-B', str(worker)], stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE, text=True, env=env)
+        try:
+            self.assertEqual(process.stdout.readline().strip(), 'ready')
+            report = adoption.audit_local(self.plan, require_host_namespace=False)
+            row = next(r for r in report['processEvidence'] if r['pid'] == process.pid)
+            self.assertEqual(row['resourceAssociation'], 'resource')
+            self.assertIn({'source':'environment','kind':'resource','root':str(self.root/'agent')},row['references'])
+            self.assertNotIn('DO_NOT_EXPORT_SECRET', json.dumps(report))
+            self.assertIsNone(process.poll())
+        finally: process.communicate('\n',timeout=10)
+
+
+    def test_identity_change_during_probe_is_blocked_before_review(self):
+        worker = self.root / 'worker.py'
+        worker.write_text('import sys\nprint("ready", flush=True)\nsys.stdin.readline()\n')
+        process = subprocess.Popen([sys.executable, '-B', str(worker)], stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE, text=True)
+        original = Path.read_bytes
+        reads = 0
+        def changed(path):
+            nonlocal reads
+            data = original(path)
+            if str(path) == f'/proc/{process.pid}/cmdline':
+                reads += 1
+                if reads == 2: return data + b'identity-changed\0'
+            return data
+        try:
+            self.assertEqual(process.stdout.readline().strip(), 'ready')
+            with patch.object(Path, 'read_bytes', changed):
+                report = adoption.audit_local(self.plan, require_host_namespace=False)
+            detail = next(r for r in report['unreadableProcesses'] if r['pid'] == process.pid)
+            self.assertEqual(detail['field'], 'identity-recheck')
+            self.assertEqual(report['status'], 'BLOCKED')
+            self.assertIsNone(process.poll())
+        finally: process.communicate('\n',timeout=10)
 
 
 if __name__ == '__main__': unittest.main()

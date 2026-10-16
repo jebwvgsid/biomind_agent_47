@@ -43,7 +43,7 @@ test('history helper bounds native results to 1000 with explicit truncation',asy
 test('history helper CLI emits one real metadata batch on Node child descriptors and stable errors',async()=>{
  const f=await setup();const s=create(f.projects,f.sessions,'CLI_PREVIEW');const script=fileURLToPath(new URL('../history-query.js',import.meta.url));
  const env={PATH:'/usr/bin:/bin',HOME:f.root,LC_ALL:'C.UTF-8',PI_OFFLINE:'1'};
- const result=await run(process.execPath,[script,'--session-root',f.sessions,'--project-roots-json',JSON.stringify([f.projects])],{env});
+ const result=await run(process.execPath,[script,'--session-root',f.sessions,'--project-roots-json',JSON.stringify([f.projects])],{env,timeout:10000});
  assert.equal(result.stderr,'');const value=JSON.parse(result.stdout);assert.equal(value.sessions[0].id,s.getSessionId());
  await assert.rejects(run(process.execPath,[script,'--session-root',f.sessions,'--project-roots-json','{}'],{env}), (e:any)=>e.code===1&&e.stdout===''&&JSON.parse(e.stderr).code==='HISTORY_INVALID_SCOPE');
 });

@@ -77,8 +77,12 @@ class AdoptionTests(unittest.TestCase):
             self.assertEqual(process.stdout.readline().strip(), 'ready')
             before = self.content()
             adoption.fence(self.plan)
-            report = adoption.audit_local(self.plan, require_host_namespace=False)
-            self.assertIn(process.pid, [p['pid'] for p in report['legacyProcesses']])
+            original_iterdir = Path.iterdir
+            def fixture_processes(path):
+                return iter([Path('/proc') / str(process.pid)]) if path == Path('/proc') else original_iterdir(path)
+            with patch.object(Path, 'iterdir', fixture_processes):
+                report = adoption.audit_local(self.plan, require_host_namespace=False)
+            self.assertIn(process.pid, [p['pid'] for p in report['unreviewedProcesses']])
             with self.assertRaisesRegex(guard.GuardError, 'LEGACY_OCCUPANCY_BUSY'):
                 adoption.adopt(self.plan, collect=lambda _: [report])
             self.assertIsNone(process.poll())
