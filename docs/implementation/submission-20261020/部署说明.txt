@@ -14,7 +14,7 @@
 3. Studio 当前实例 db54df82409d439b93fc4560d274f0cd 已就绪；真实原生插件接口报告同一新 agentDir、pi-web-access 0.38.0 和原核心构建。7 项共享目录检查全部通过；未做 Windows UI 操作或 Studio owner 模型请求。
 4. 正式 CLI 原生插件管理 check 返回 OK，旧接管问题不再阻断新默认目录；4 项迁移拒绝路径测试通过。
 
-GitHub：已通过本人浏览器设备授权登录 jebwvgsid，已配置 Git 凭据助手；本机 gh 位于 /public/home/liusiqi/.local/bin/gh。认证状态可用 gh auth status 查看，不要使用 gh auth token 向聊天输出令牌。认证配置文件为当前用户私有（0600），不在仓库内。分支 release/submission-20261020 的最终远端状态见 ../GIT.json。
+GitHub：已通过本人浏览器设备授权登录 jebwvgsid，已配置 Git 凭据助手；本机 gh 位于 /public/home/liusiqi/.local/bin/gh。认证状态可用 gh auth status 查看，不要使用 gh auth token 向聊天输出令牌。认证配置文件为当前用户私有（0600），不在仓库内。分支 release/submission-20261020 的最终远端状态见 /public/home/liusiqi/03.毕设/BioMind_Production_20261020/GIT.json。
 
 回退：
 CLI 使用 /public/home/liusiqi/03.毕设/BioMind_Production_20261020/scripts/switch_shared_cli.py --rollback（Python 环境同当前部署），先核对哈希再恢复两份精确备份。
@@ -25,3 +25,6 @@ Studio 先使用现有 server-service.py stop 进行原生空闲关闭，再用�
 本机完整证据：/public/home/liusiqi/03.毕设/BioMind_Production_20261020/shared-plugin
 
 此前核心、四题输入部署详情见 部署说明_共享插件更新前.txt；其中未安装/未认证状态已被本补充取代。
+
+GitHub 已验证：https://github.com/jebwvgsid/biomind_agent_47/tree/release/submission-20261020
+已发布功能提交：2eaf18d29b8692198d20eb46b76568177234766d（2026-10-20T08:10:21.427262+00:00）。本回执随后单独提交；最终回执提交和远端复核见 /public/home/liusiqi/03.毕设/BioMind_Production_20261020/GIT.json。

@@ -67,8 +67,17 @@
   "old_cotton_session": "Idle after result; preserved, not terminated",
   "slurm_jobs": "Preserved. User clarified the observed jobs are not the current BioMind jobs.",
   "git_remote_push": {
-    "status": "IN_PROGRESS",
-    "authentication": "GitHub CLI device authorization completed as jebwvgsid"
+    "status": "VERIFIED_BEFORE_RECEIPT_COMMIT",
+    "verified_at": "2026-10-20T08:10:21.427262+00:00",
+    "repository": "https://github.com/jebwvgsid/biomind_agent_47",
+    "branch": "release/submission-20261020",
+    "verified_commit": "2eaf18d29b8692198d20eb46b76568177234766d",
+    "first_published_commit": "1f834cb2fd6bdd9a3f6e3b7b5ecbb24de3c19e26",
+    "authentication_login": "jebwvgsid",
+    "authentication_method": "GitHub CLI browser device authorization",
+    "credential_file_mode": "0600",
+    "credentials_committed": false,
+    "note": "This receipt is committed afterwards; final local GIT.json records the receipt commit and its remote verification."
   },
   "rollback": {
     "cli_command": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python /public/home/liusiqi/03.毕设/BioMind_Production_20261020/scripts/deploy_cli.py --rollback",
