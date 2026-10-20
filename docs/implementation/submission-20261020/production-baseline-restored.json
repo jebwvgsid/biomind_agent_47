@@ -11,5 +11,10 @@
     "integrations/pi_runtime/tests/extension-harness.ts",
     "integrations/pi_runtime/tests/prompt-execution.test.ts",
     "integrations/pi_runtime/tests/test_request_execution.py"
+  ],
+  "removed_already_absent_in_production": [
+    "integrations/pi_runtime/domain_adapter/scientific_inputs.py",
+    "integrations/pi_runtime/tests/scientific-stop.test.ts",
+    "integrations/pi_runtime/tests/test_scientific_stop.py"
   ]
 }
