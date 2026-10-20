@@ -479,9 +479,6 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
     const savedInstructions = new Set<string>();
     const savedGlobalInstructions = new Set<string>();
     let lastOutcome: 'completed' | 'aborted' | 'error' = 'completed';
-    let scientificBlock: Record<string, any> | undefined;
-    let scientificDeadline: ReturnType<typeof setTimeout> | undefined;
-    const clearScientificDeadline = () => { clearTimeout(scientificDeadline); scientificDeadline = undefined; };
     // Delivery bookkeeping only; messages and stable entry identities stay in Pi.
     // The original archive writer owns deduplication and actual persistence.
     const archiveSubmitted = new Set<string>();
@@ -1043,9 +1040,6 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
     }, undefined, receipt => {
       pi.appendEntry('biomind.bash_execution', receipt);
       pi.events.emit('biomind:bash_execution', receipt);
-    }, async ctx => {
-      const admission = asObject(await client(ctx).hostCall('request.dispatch', { tool: 'bash' }, { requestId: current(ctx).requestId }));
-      if (admission.status !== 'allowed') throw new Error('SCIENTIFIC_STAGE_BLOCKED: ' + JSON.stringify(admission));
     }));
     // Both metadata and Pi content reads use the same live Pi resource registry.
     // Trusted directories are host-derived and never part of a model schema.
@@ -1428,7 +1422,6 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
       }
     });
     pi.on('before_agent_start', async (event, ctx) => {
-      clearScientificDeadline(); scientificBlock = undefined;
       if (!readySessions.has(sessionId(ctx))) { ctx.abort(); throw new Error('BACKEND_NOT_READY'); }
       event.systemPromptOptions.contextFiles = filterNativeContextFiles(event.systemPromptOptions.contextFiles, ctx.cwd, getAgentDir());
       if (state(ctx)?.status !== 'active') { ctx.abort(); throw new Error('REQUEST_NOT_ACTIVE'); }
@@ -1455,7 +1448,6 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
       // identities are actual SessionManager entry IDs, never guessed offsets.
       await archiveTurn(ctx);
       lastOutcome = event.outcome;
-      if (scientificBlock) { if (event.toolResults.length) { lastOutcome = 'aborted'; ctx.abort(); } return; }
       const value = state(ctx);
       if (value?.status === 'active' && (ctx.signal?.aborted || event.outcome === 'aborted')) {
         await pause(ctx, 'user_aborted'); return;
@@ -1489,19 +1481,6 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
         await client(ctx).hostCall('request.begin', { request_id: value.requestId, role: 'main',
           ...(value.boundary ? { boundary_id: value.boundary.id } : {}), user_revision: value.revision ?? 1 }, { signal: ctx.signal });
         if (value.boundary && !value.boundary.activated) publish(ctx, { ...value, boundary: { ...value.boundary, activated: true } });
-        const inspected = asObject(await client(ctx).hostCall('request.preflight', {
-          user_text: (value.userBasis ?? []).map(item => item.text).join('\n'),
-        }, { requestId: value.requestId }));
-        if (inspected.status === 'blocked') {
-          scientificBlock = inspected;
-          // Reports and owned-job cleanup are already committed. Permit one
-          // model answer, with a bounded settle window, never another tool loop.
-          if (!scientificDeadline) scientificDeadline = setTimeout(() => { lastOutcome = 'aborted'; ctx.abort(); },
-            Math.max(1, 30_000 - (Date.now() - Number(inspected.accepted_at) * 1000)));
-          pi.events.emit('biomind:scientific_block', inspected);
-        } else if (!['validated', 'not_applicable'].includes(inspected.status)) {
-          throw new Error('SCIENTIFIC_PREFLIGHT_UNAVAILABLE');
-        }
         ctx.ui.setStatus('biomind', `${value.role} · ${value.status}`);
         pi.events.emit('biomind:state', { ...value, sessionId: sessionId(ctx) });
       } catch (error) { ctx.abort(); pi.events.emit('biomind:diagnostic', { code: 'STAGE_BOUNDARY_INCOMPLETE', message: String(error) }); return { messages: [] }; }
@@ -1537,12 +1516,7 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
           ? { prompt: value.maintenance.prompt, sources: value.maintenance.sources, instruction: '用户任务已答复。这是一次受限记忆维护；仅可提交有当前公开证据支持的patch或空operations，不运行新分析、不新增任务。' } : undefined };
       const messages = currentNativeProjectContext(event.messages).map(message => message.role === 'system' && message.sections?.['biomind-current']
         ? { ...message, sections: Object.fromEntries(Object.entries(message.sections).filter(([key]) => key !== 'biomind-current')) } : message);
-      const rules = (value?.maintenance?.outboxId ? MAINTENANCE_RULES : `${COMMON_RULES}\n${OUTPUT_LIMIT_RULES}\n${native ? NATIVE_RULES : PROTECTED_RULES}`)
-        + (scientificBlock ? '\n宿主已完成可信输入检查和本轮报告落盘；当前科学阶段 blocked。不要调用任何工具或另找执行入口；直接说明缺少的映射证据和下列报告路径并结束。可信回执：\n'
-          + JSON.stringify({ reason_code: scientificBlock.reason_code, scope: scientificBlock.scope,
-            checker: scientificBlock.checker, receipt_ref: scientificBlock.receipt_ref,
-            blocked_operations: scientificBlock.blocked_operations, artifacts: scientificBlock.artifacts,
-            delivery_status: scientificBlock.delivery_status }) : '');
+      const rules = value?.maintenance?.outboxId ? MAINTENANCE_RULES : `${COMMON_RULES}\n${OUTPUT_LIMIT_RULES}\n${native ? NATIVE_RULES : PROTECTED_RULES}`;
       messages.push({ role: 'system', content: '', sections: { 'biomind-current': `${rules}\n当前有效状态与偏好：\n${JSON.stringify({ ...currentContext, execution_profile: profile, ...(native ? { approval_mode: 'not_applicable', authorization_refs: [] } : {}) })}` }, timestamp: Date.now() });
       const sections=messages.filter(message=>message.role==='system').map(message=>({content:message.content,sections:message.sections}));
       const projection=JSON.stringify(sections);
@@ -1559,7 +1533,6 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
       return { customInstructions: await loadCompactionInstructions(event.customInstructions) };
     });
     pi.on('agent_before_settle', async (event, ctx) => {
-      if (scientificBlock) return;
       if (isCanaryMode()) return;
       const value = state(ctx);
       if (!value || value.status !== 'active' || value.maintenance?.consumed || event.outcome !== 'completed' || ctx.signal?.aborted) return;
@@ -1587,15 +1560,7 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
       }
     });
     pi.on('agent_settled', (_event, ctx) => {
-      clearScientificDeadline();
       const value = state(ctx); if (!value) return;
-      if (scientificBlock) {
-        publish(ctx, { ...value, status: 'blocked' });
-        pi.events.emit('biomind:settled', { requestId: value.requestId, sessionId: sessionId(ctx), role: value.role,
-          outcome: 'blocked', model_outcome: lastOutcome, scientificSuccess: false,
-          scientific_block: scientificBlock, final_response: scientificBlock.final_response });
-        return;
-      }
       if (value.status === 'paused') {
         // The permission/request remains paused, but the host still needs the
         // terminal model-loop observation to report an aborted turn truthfully.
@@ -1609,13 +1574,6 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
     pi.on('tool_call', async (event, ctx) => {
       if (!readySessions.has(sessionId(ctx))) return { block: true, reason: 'BioMind backend is unavailable', terminate: true };
       const value = state(ctx);
-      try {
-        const admission = asObject(await client(ctx).hostCall('request.dispatch', { tool: event.toolName }, { requestId: value?.requestId }));
-        if (admission.status !== 'allowed') {
-          scientificBlock = asObject(admission.scientific_block);
-          return { block: true, reason: 'SCIENTIFIC_STAGE_BLOCKED: ' + scientificBlock.reason_code, terminate: true };
-        }
-      } catch (error) { return { block: true, reason: 'Scientific admission unavailable: ' + String(error), terminate: true }; }
       if(!value?.maintenance?.outboxId && !mainTools().includes(event.toolName))
         return {block:true,reason:'Tool is not selected for the current BioMind session',terminate:true};
       if (native && (NATIVE_TOOLS as readonly string[]).includes(event.toolName) || native && event.toolName === 'file_stat') {
@@ -1673,7 +1631,6 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
       await refreshApprovalStatus(ctx);
     });
     pi.on('session_shutdown', async (event, ctx) => {
-      clearScientificDeadline();
       welcomeEpoch++;
       backendEpoch++;
       unobserveBackend(sessionId(ctx));

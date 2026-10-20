@@ -57,8 +57,6 @@ export class FakeDomain implements DomainConnection {
       if (this.receipts.has(method)) { const receipt = this.receipts.get(method); return typeof receipt === 'function' ? await receipt(params, options) : clone(receipt); }
       if (method === 'output.configure') return { status: 'configured' };
       if (method === 'request.status') return {request_id:this.requestId};
-      if (method === 'request.preflight') return {status:'not_applicable'};
-      if (method === 'request.dispatch') return {status:'allowed'};
       if (method === 'permissions.status') return {approval_mode:{mode:'manual'},grants:[]};
       if (['request.pause', 'request.resume', 'request.revise'].includes(method)) return { status: method === 'request.pause' ? 'paused' : 'ready' };
       if (method === 'request.begin') { this.requestId=String(params.request_id); return { status: 'begun', ...params }; }

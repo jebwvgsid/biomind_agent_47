@@ -64,7 +64,7 @@ export const DOMAIN_TRANSPORT_LIMITS = Object.freeze({ frameBytes: MAX_FRAME_BYT
   reservedControlBytes: 1024 * 1024 });
 const CONTROL_METHODS = new Set(['hello', 'request.cancel', 'request.pause', 'request.resume', 'request.revise', 'request.status', 'permissions.mode', 'shutdown', 'approval.decide', 'exec.cancel',
   'exec.status', 'session.lifecycle', 'archive.status', 'permissions.status', 'permissions.revoke']);
-const HOST_METHODS = new Set(['output.configure', 'request.preflight', 'request.dispatch', 'environments.launch', 'environments.register_observed', 'files.list', 'files.read_authorize', 'files.mutation_snapshot', 'files.mutation_replay', 'request.begin', 'request.cancel', 'request.pause', 'request.resume', 'request.revise', 'request.status', 'permissions.mode', 'exec.probe', 'shutdown', 'approval.decide', 'settings.update',
+const HOST_METHODS = new Set(['output.configure', 'environments.launch', 'environments.register_observed', 'files.list', 'files.read_authorize', 'files.mutation_snapshot', 'files.mutation_replay', 'request.begin', 'request.cancel', 'request.pause', 'request.resume', 'request.revise', 'request.status', 'permissions.mode', 'exec.probe', 'shutdown', 'approval.decide', 'settings.update',
   'memory.maintenance.prepare', 'memory.maintenance.apply', 'archive.append', 'archive.status', 'permissions.status', 'permissions.revoke']);
 interface Pending { method: string; resolve(value: unknown): void; reject(error: Error): void; cleanup(): void }
 

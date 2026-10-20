@@ -522,8 +522,6 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
           } }); await session.waitForIdle();
           write({ type: 'result', ...sessionIdentity(), requestId: inputId, runtime_status: usageAccountingFailed || !backendReady ? 'error' : outcome,
             model_conclusion: session.getLastAssistantText() ?? '', execution_facts: [...executionFacts], scientific_success: settledReceipt.scientificSuccess ?? null,
-            ...(settledReceipt.scientific_block ? { scientific_block: settledReceipt.scientific_block,
-              final_response: settledReceipt.final_response, model_outcome: settledReceipt.model_outcome } : {}),
             usage_scope: projectObservedUsage(session.sessionManager.getEntries()).scope, usage: projectObservedUsage(session.sessionManager.getEntries()), pi_entry_usage: session.getSessionStats() });
         } catch {
           if (admission?.status === 'pending') fail('PI_INPUT_NOT_ACCEPTED');
