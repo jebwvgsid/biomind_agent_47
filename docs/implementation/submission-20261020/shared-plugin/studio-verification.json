@@ -1,0 +1,306 @@
+{
+  "status": "PASS",
+  "checks": {
+    "serviceReady": true,
+    "serverId": true,
+    "agentDir": true,
+    "packagePresent": true,
+    "historyRootPreserved": true,
+    "runtimeAgentDir": true,
+    "sameCore": true
+  },
+  "discovery": {
+    "schema": "BioMindStudioServiceV1",
+    "serviceId": "biomind-studio",
+    "serverId": "biomind-c8b9c760c4064a40bdae3a717785e2b3",
+    "status": "ready",
+    "serviceMode": "local",
+    "transport": "direct",
+    "user": "liusiqi",
+    "automaticReplay": false,
+    "desktopDetach": true,
+    "instanceId": "db54df82409d439b93fc4560d274f0cd",
+    "jobName": "bm-biomind-studio-db54df82409d",
+    "host": "ln02",
+    "port": 35731,
+    "startedAt": 1792482623.6188467,
+    "heartbeatAt": 1792482803.8259661,
+    "remoteAddress": "127.0.0.1",
+    "tunnelMode": "ssh-to-service-host"
+  },
+  "context": {
+    "agentDir": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020",
+    "cwd": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict",
+    "piVersion": "0.87.1",
+    "releaseRoot": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-d0cf979998965759",
+    "runtime": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-d0cf979998965759/integrations/pi_runtime",
+    "buildId": "d0cf9799989657590c3ca3dc2d4fc49b5568a82d8aeae548d67ff1e1b412c5c7",
+    "sourceFingerprint": "c852814724bc961ce10e733f45856a37c15c933e5ea14340b71f7a422976e22a",
+    "releaseId": "d0cf9799989657590c3ca3dc2d4fc49b5568a82d8aeae548d67ff1e1b412c5c7",
+    "sourceCommit": "6321f6e6ccc389ccff6f7bc045aafaa51c46ffb6",
+    "scopeRoots": [
+      {
+        "scope": "user",
+        "root": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/git",
+        "legacyUnverified": false,
+        "repairRequired": false
+      },
+      {
+        "scope": "user",
+        "root": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/npm",
+        "legacyUnverified": false,
+        "repairRequired": false
+      },
+      {
+        "scope": "user",
+        "root": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/tmp/extensions",
+        "legacyUnverified": false,
+        "repairRequired": false
+      },
+      {
+        "scope": "project",
+        "root": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/.pi/git",
+        "legacyUnverified": false,
+        "repairRequired": false
+      },
+      {
+        "scope": "project",
+        "root": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/.pi/npm",
+        "legacyUnverified": false,
+        "repairRequired": false
+      }
+    ],
+    "trust": {
+      "trusted": true,
+      "authorized": false,
+      "saved": null,
+      "default": "ask"
+    },
+    "coreVersion": "1.2.0",
+    "hostname": "ln02",
+    "platform": "linux",
+    "user": "liusiqi",
+    "uid": 33068,
+    "settingsPath": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/settings.json",
+    "settingsPaths": [
+      "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/settings.json"
+    ]
+  },
+  "packages": [
+    {
+      "source": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/delivery/plugins/biomind-pi-output-limits/0.1.0-biomind.1/sha256-93d9bfc1bdd6c526cd96e1477b5610b55f306db1251c9729e03fe07d3c141f38/package",
+      "scope": "user",
+      "filtered": false,
+      "installedPath": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/delivery/plugins/biomind-pi-output-limits/0.1.0-biomind.1/sha256-93d9bfc1bdd6c526cd96e1477b5610b55f306db1251c9729e03fe07d3c141f38/package",
+      "packageName": "biomind-pi-output-limits",
+      "sourceType": "local",
+      "declaration": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/delivery/plugins/biomind-pi-output-limits/0.1.0-biomind.1/sha256-93d9bfc1bdd6c526cd96e1477b5610b55f306db1251c9729e03fe07d3c141f38/package",
+      "resources": {
+        "extensions": {
+          "total": 1,
+          "enabled": 1
+        },
+        "skills": {
+          "total": 0,
+          "enabled": 0
+        },
+        "prompts": {
+          "total": 0,
+          "enabled": 0
+        },
+        "themes": {
+          "total": 0,
+          "enabled": 0
+        }
+      },
+      "settingsPath": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/settings.json",
+      "enablement": "enabled",
+      "installedVersion": "0.1.0-biomind.1",
+      "configured": true,
+      "installed": true,
+      "discovered": "unknown",
+      "workerLoaded": "unknown",
+      "active": "unknown",
+      "functionVerified": "unknown",
+      "sessionObservation": {
+        "status": "unknown",
+        "sessionId": null,
+        "observedAt": null
+      },
+      "developmentSource": true
+    },
+    {
+      "source": "../../plugin-candidates/pi-web-access-20261010/check-20261010T025658571044Z/agent/npm/node_modules/pi-web-access",
+      "scope": "user",
+      "filtered": false,
+      "installedPath": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/plugin-candidates/pi-web-access-20261010/check-20261010T025658571044Z/agent/npm/node_modules/pi-web-access",
+      "packageName": "pi-web-access",
+      "sourceType": "local",
+      "declaration": "../../plugin-candidates/pi-web-access-20261010/check-20261010T025658571044Z/agent/npm/node_modules/pi-web-access",
+      "resources": {
+        "extensions": {
+          "total": 1,
+          "enabled": 1
+        },
+        "skills": {
+          "total": 0,
+          "enabled": 0
+        },
+        "prompts": {
+          "total": 0,
+          "enabled": 0
+        },
+        "themes": {
+          "total": 0,
+          "enabled": 0
+        }
+      },
+      "settingsPath": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/settings.json",
+      "enablement": "enabled",
+      "installedVersion": "0.38.0",
+      "configured": true,
+      "installed": true,
+      "discovered": "unknown",
+      "workerLoaded": "unknown",
+      "active": "unknown",
+      "functionVerified": "unknown",
+      "sessionObservation": {
+        "status": "unknown",
+        "sessionId": null,
+        "observedAt": null
+      },
+      "developmentSource": true
+    }
+  ],
+  "profile": {
+    "profile": "biomind",
+    "serverId": "biomind-c8b9c760c4064a40bdae3a717785e2b3",
+    "protocolVersion": 1,
+    "allowedProjects": [
+      "/public/home/liusiqi/03.毕设/benchmarks"
+    ],
+    "capabilities": {
+      "getState": true,
+      "images": true,
+      "imageInputEnabled": false,
+      "modelCapabilitySource": "owner_ready",
+      "packages": {
+        "supported": true,
+        "available": true,
+        "scope": [
+          "user",
+          "project"
+        ],
+        "protocol": "BioMindPluginsV1",
+        "runtimeVersion": "0.87.1"
+      },
+      "newSession": true,
+      "reconnectOwnedSession": true,
+      "historyReadOnly": true,
+      "historyAvailable": true,
+      "automaticReplay": false,
+      "clearQueue": false,
+      "getModels": {
+        "supported": true,
+        "available": false,
+        "reason": "OWNER_NOT_LOADED",
+        "scope": "session"
+      },
+      "setModel": {
+        "supported": true,
+        "available": false,
+        "reason": "OWNER_NOT_LOADED",
+        "scope": "session"
+      },
+      "setThinking": {
+        "supported": true,
+        "available": false,
+        "reason": "OWNER_NOT_LOADED",
+        "scope": "session"
+      },
+      "getTools": {
+        "supported": true,
+        "available": false,
+        "reason": "OWNER_NOT_LOADED",
+        "scope": "session"
+      },
+      "setTools": {
+        "supported": true,
+        "available": false,
+        "reason": "OWNER_NOT_LOADED",
+        "scope": "session"
+      },
+      "getCommands": {
+        "supported": true,
+        "available": false,
+        "reason": "OWNER_NOT_LOADED",
+        "scope": "session"
+      },
+      "instructions": {
+        "supported": true,
+        "available": false,
+        "reason": "OWNER_NOT_LOADED",
+        "scope": "session"
+      },
+      "promptSnapshot": {
+        "supported": true,
+        "available": false,
+        "reason": "OWNER_NOT_LOADED",
+        "scope": "session"
+      },
+      "resources": {
+        "supported": true,
+        "available": false,
+        "reason": "OWNER_NOT_LOADED",
+        "scope": "session"
+      },
+      "setSkill": {
+        "supported": true,
+        "available": false,
+        "reason": "OWNER_NOT_LOADED",
+        "scope": "session"
+      },
+      "autoCompaction": {
+        "supported": true,
+        "available": false,
+        "reason": "OWNER_NOT_LOADED",
+        "scope": "session"
+      },
+      "memorySettings": {
+        "supported": true,
+        "available": false,
+        "reason": "OWNER_NOT_LOADED",
+        "scope": "session"
+      },
+      "planTools": false,
+      "team": false,
+      "bash": false,
+      "autoName": false,
+      "historyExport": false,
+      "reload": true,
+      "compact": true,
+      "settings": [
+        "history_enabled",
+        "memory_mode"
+      ],
+      "jobs": true,
+      "desktopDetach": true,
+      "transparentProcessRecovery": false
+    }
+  },
+  "health": {
+    "schema": "BioMindStudioHealthV1",
+    "instanceId": "db54df82409d439b93fc4560d274f0cd",
+    "serverId": "biomind-c8b9c760c4064a40bdae3a717785e2b3",
+    "status": "ready",
+    "profile": "biomind",
+    "ownerStatus": "not_checked",
+    "idleStopProtocol": 1
+  },
+  "running": {
+    "runningSessionIds": []
+  },
+  "credentialContentsLogged": false,
+  "requestMode": "read-only",
+  "ownerMainExecution": false
+}

@@ -1,0 +1,27 @@
+{
+  "status": "DEPLOYED",
+  "newAgentDir": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020",
+  "sessionRoot": "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.biomind/pi-agent/sessions",
+  "discovery": {
+    "schema": "BioMindStudioServiceV1",
+    "serviceId": "biomind-studio",
+    "serverId": "biomind-c8b9c760c4064a40bdae3a717785e2b3",
+    "status": "ready",
+    "serviceMode": "local",
+    "transport": "direct",
+    "user": "liusiqi",
+    "automaticReplay": false,
+    "desktopDetach": true,
+    "instanceId": "db54df82409d439b93fc4560d274f0cd",
+    "jobName": "bm-biomind-studio-db54df82409d",
+    "host": "ln02",
+    "port": 35731,
+    "startedAt": 1792482623.6188467,
+    "heartbeatAt": 1792482658.0194628,
+    "remoteAddress": "127.0.0.1",
+    "tunnelMode": "ssh-to-service-host"
+  },
+  "nativeIdleShutdown": true,
+  "signalsSent": false,
+  "slurmJobsModified": false
+}

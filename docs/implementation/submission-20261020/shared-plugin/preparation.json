@@ -1,0 +1,97 @@
+{
+  "status": "PREPARED_SHARED",
+  "core": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-d0cf979998965759",
+  "agentDir": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020",
+  "project": "/public/home/liusiqi/03.毕设/BioMind_Production_20261020/shared-plugin/bootstrap-project",
+  "package": "pi-web-access@0.38.0",
+  "package_source": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/plugin-candidates/pi-web-access-20261010/check-20261010T025658571044Z/agent/npm/node_modules/pi-web-access",
+  "package_dist_sha256": "66e5c91481b884b41a0a1dd8b253a19451fdb22fd661801ba4f39c2230dc0527",
+  "settings_source_sha256": "6dce44afe88d69674961fcc1c8b3b902bb797068e0422fb901e07f65cbc49a85",
+  "credential_copy": true,
+  "model_or_network_acceptance": "NOT_RUN",
+  "command": [
+    "/public/home/liusiqi/anaconda3/envs/biomind/bin/python3.12",
+    "-B",
+    "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-d0cf979998965759/bio_agents.py",
+    "install",
+    "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/plugin-candidates/pi-web-access-20261010/check-20261010T025658571044Z/agent/npm/node_modules/pi-web-access",
+    "--json",
+    "--pi-config",
+    "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/resource-bootstrap.runtime.json",
+    "--project-dir",
+    "/public/home/liusiqi/03.毕设/BioMind_Production_20261020/shared-plugin/bootstrap-project",
+    "--pi-node",
+    "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.runtime/node/bin/node"
+  ],
+  "oldAgentDir": "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.biomind/pi-agent",
+  "newAgentDir": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020",
+  "sessionRoot": "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.biomind/pi-agent/sessions",
+  "legacyScopeModified": false,
+  "oldProcessesStopped": false,
+  "slurmJobsModified": false,
+  "copied": [
+    {
+      "name": "auth.json",
+      "private": true,
+      "byte_equal": true
+    },
+    {
+      "name": "models-store.json",
+      "private": true,
+      "byte_equal": true
+    },
+    {
+      "name": "extensions/orca-agent-status.ts",
+      "sha256": "3ecd762dd9f651573104408f04bd34211611eda9c340b6b73965feae64fd85bc"
+    },
+    {
+      "name": "bin/fd",
+      "sha256": "e79642a479d2816c887047476bbe6ad229465f30de031033574dee2a095e0037"
+    },
+    {
+      "name": "bin/rg",
+      "sha256": "e62198eb19b136b88c330af83647b5a962cb99b6b1f066758568f12de1974849"
+    }
+  ],
+  "guard": {
+    "schema": "BioMindResourceGuardV1",
+    "agentDir": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020",
+    "cwd": "/public/home/liusiqi/03.毕设/BioMind_Production_20261020/shared-plugin/bootstrap-project",
+    "scopes": [
+      {
+        "root": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020",
+        "lock": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/.biomind-resource-locks/4b9976c391ddfacb02d8c46eac43b0c7e05d51e804fa65064b6c780563825215.lock",
+        "gate": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/.biomind-resource-locks/4b9976c391ddfacb02d8c46eac43b0c7e05d51e804fa65064b6c780563825215.gate",
+        "repair": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/.biomind-resource-locks/4b9976c391ddfacb02d8c46eac43b0c7e05d51e804fa65064b6c780563825215.repair.json",
+        "scope": "user",
+        "marker": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/.biomind-resource-guard.json",
+        "legacyUnverified": false,
+        "fresh": false,
+        "adoptionPending": false
+      }
+    ],
+    "resources": [
+      {
+        "root": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/git",
+        "lock": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/.biomind-resource-locks/d6156d3594e1ae4d6c884868f5ed002eeb36701ff8522e462d9d96dfa1ed7837.lock",
+        "gate": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/.biomind-resource-locks/d6156d3594e1ae4d6c884868f5ed002eeb36701ff8522e462d9d96dfa1ed7837.gate",
+        "repair": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/.biomind-resource-locks/d6156d3594e1ae4d6c884868f5ed002eeb36701ff8522e462d9d96dfa1ed7837.repair.json",
+        "scope": "user"
+      },
+      {
+        "root": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/npm",
+        "lock": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/.biomind-resource-locks/fc2a271dd0cd05b7cd5749a37ea1b1f6d57cba4a16dbf628a611bd82d76d94e3.lock",
+        "gate": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/.biomind-resource-locks/fc2a271dd0cd05b7cd5749a37ea1b1f6d57cba4a16dbf628a611bd82d76d94e3.gate",
+        "repair": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/.biomind-resource-locks/fc2a271dd0cd05b7cd5749a37ea1b1f6d57cba4a16dbf628a611bd82d76d94e3.repair.json",
+        "scope": "user"
+      },
+      {
+        "root": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/tmp/extensions",
+        "lock": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/tmp/.biomind-resource-locks/0ae1affd1e31c24959e928a6827f48b08b8421394a7d02f8c8b6160126c7661f.lock",
+        "gate": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/tmp/.biomind-resource-locks/0ae1affd1e31c24959e928a6827f48b08b8421394a7d02f8c8b6160126c7661f.gate",
+        "repair": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/tmp/.biomind-resource-locks/0ae1affd1e31c24959e928a6827f48b08b8421394a7d02f8c8b6160126c7661f.repair.json",
+        "scope": "user"
+      }
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+共享联网插件与 GitHub 认证补充交付（2026-10-20）
+
+全局插件已部署到正式 CLI 和 Studio 共用的新目录：
+/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020
+原目录 /public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.biomind/pi-agent 保留；并未删除旧锁、伪造接管回执、关闭棉花会话或取消 Slurm 作业。
+
+之前未能更新有两个原因：旧资源接管回执仍绑定旧启动器，而正式入口已升级，导致写入校验失效；旧维护审计还保守地把账户下其他 Slurm 作业纳入占用。这次通过原生 guard 初始化全新共享目录，并用原生插件安装器安装已审核的 pi-web-access 0.38.0，再原子切换正式 CLI 与通过 native idle-stop 正常切换空闲 Studio。
+
+原有 output-limits 插件、扩展、模型配置、compaction 等设置保留。auth.json 与 models-store.json 仅在本机同一用户的私有目录中复制（0600），未进入 Git、日志或聊天。新目录的 sessions 链接到原 sessions 根目录，保留 Pi 的按项目分目录布局；原会话正文、分析结果与评分未改动。
+
+验收：
+1. 正式 CLI 默认配置加载 fetch_content、web_search、get_search_content。
+2. 一次真实模型请求执行三次小型联网调用：NCBI ESearch JSON 与 EFetch XML 均 HTTP 200，正文 ID/PMID 均为 19304878；Exa web_search 返回对应 PubMed 页面，本次未出现此前的 429。
+3. Studio 当前实例 db54df82409d439b93fc4560d274f0cd 已就绪；真实原生插件接口报告同一新 agentDir、pi-web-access 0.38.0 和原核心构建。7 项共享目录检查全部通过；未做 Windows UI 操作或 Studio owner 模型请求。
+4. 正式 CLI 原生插件管理 check 返回 OK，旧接管问题不再阻断新默认目录；4 项迁移拒绝路径测试通过。
+
+GitHub：已通过本人浏览器设备授权登录 jebwvgsid，已配置 Git 凭据助手；本机 gh 位于 /public/home/liusiqi/.local/bin/gh。认证状态可用 gh auth status 查看，不要使用 gh auth token 向聊天输出令牌。认证配置文件为当前用户私有（0600），不在仓库内。分支 release/submission-20261020 的最终远端状态见 ../GIT.json。
+
+回退：
+CLI 使用 /public/home/liusiqi/03.毕设/BioMind_Production_20261020/scripts/switch_shared_cli.py --rollback（Python 环境同当前部署），先核对哈希再恢复两份精确备份。
+Studio 先使用现有 server-service.py stop 进行原生空闲关闭，再用原 rollback-managed-service-rebind.py --receipt /public/home/liusiqi/03.毕设/BioMind_Production_20261020/shared-plugin/studio-rebind.json --output-receipt <新的绝对路径> --apply，最后 ensure。新旧资源与会话均保留。若还需回到更早核心，先回退这次共享目录切换，再使用此前核心部署回执，避免覆盖新的入口。
+
+核心构建 d0cf979998965759 未重编译；此次新增代码仅为部署维护脚本及证据，四题输入和运行结果保持上一轮状态。
+验收摘要：/public/home/liusiqi/03.毕设/BioMind_Production_20261020/shared-plugin/ACCEPTANCE.json
+本机完整证据：/public/home/liusiqi/03.毕设/BioMind_Production_20261020/shared-plugin

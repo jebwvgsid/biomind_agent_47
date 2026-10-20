@@ -1,0 +1,35 @@
+生产部署与 Git 交付（2026-10-20）
+
+已完成：两个正式 CLI 入口与现有 Studio 服务均切换到 d0cf979998965759；四道原题的新输入和可配置训练入口保持生效，另建立绑定同一核心的独立联网测试入口。原始资料、旧数据目录、历史题面备份、运行结果与评分均保留。
+
+发布分支：release/submission-20261020
+工作树：/public/home/liusiqi/03.毕设/BioMind-worktrees/submission-production-20261020
+冻结构建的源码提交：6321f6e6ccc389ccff6f7bc045aafaa51c46ffb6
+核心目录：/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-d0cf979998965759
+后续仅补充回执的 Git 提交不会改变该构建身份。
+
+CLI：/public/home/liusiqi/.local/bin/biomind 与 /public/home/liusiqi/03.毕设/BioMind/bin/biomind
+Studio：biomind-c8b9c760c4064a40bdae3a717785e2b3，实例 eeec4ea2234841c7884d7f75cacaedc5；已通过原生 idle-stop 正常停止空闲服务并重新启动，无用户分析任务被终止。实际连接的构建、提交、入口、Pi版本与agentDir九项检查全部通过。未做 Windows 客户端实机操作或真实模型请求。
+四题入口：/public/home/liusiqi/03.毕设/BioMind_Production_20261020/benchmark-harness/biomind-entry.py
+调用方式：上述入口 --project-dir <原题目录> --pi-mode json
+四题清单：/public/home/liusiqi/03.毕设/BioMind_Production_20261020/benchmark-harness/manifest.json
+此入口按原题目录绑定本次独立资源、原题题面和 input_manifest 的 SHA256。没有复制认证文件；仅在子进程环境中使用既有、已确认官方 DeepSeek 端点的密钥（显式环境变量优先），不写入日志或 Git。
+
+验证：784个源码文件、256个构建产物和25916个依赖条目通过完整校验；7项相关Main/执行测试通过；191项四题输入及原生验证复核通过；141份Git快照文件逐字节一致，7份外部原始资产重新核对校验和；实际CLI启动及四题入口加载通过。四题入口均加载fetch_content、web_search与get_search_content。411份历史输出的元数据保留检查通过。此次没有重跑正式整题分析或评分；此前的五折原生训练与其他科学验证详见输入修订报告。
+
+发布组合：以实际生产f755为基线，保留生产已有服务管理与资源接管能力；仅纳入本轮24项程序/技能差异及1项Main测试文案修正，排除候选中12项其他既有工作区差异。首次整理遗漏了生产已删除的3份科学预检查源码/测试，编译发现后已按生产清单删除；依赖路径检查拒绝了外部符号链接，已物化为发布内依赖。两次失败日志保留。共享文件系统的依赖读取采用8路有限并发，校验内容与原发布验证器相同，并逐项比对生产依赖清单。
+
+尚未应用：共享agentDir的全局pi-web-access安装和web-search.json。原因是旧接管凭据仍绑定更早启动器，现有维护机制拒绝写入；维护检查还包含空闲棉花会话、无法直接读取的系统辅助进程及用户已说明无关的Slurm作业。没有通过删锁、伪造接管凭据或停止作业绕过。四题独立入口已安装同一固定插件；此项不代表所有CLI/Studio项目都已增加联网插件。此前默认Exa搜索曾返回429，不能将工具加载通过当成所有搜索请求可用。
+
+旧进程说明：PID889042/889043/919298来自10月19日启动的棉花Hi-C会话，状态IDLE_AFTER_RESULT，最近结果记录在10月20日11:46。它不是当前运行中的分析，已保留。Studio后台服务也不等于正在跑分析，其空闲实例已更新。未停止、取消或修改任何Slurm作业。
+
+Git远端：origin仍为原GitHub仓库；本次新分支已本地提交。HTTPS没有可用登录凭据，SSH也没有现成的GitHub主机信任记录，因此没有推送远端，没有修改认证或关闭主机验证。认证配置好后可执行：git -C '/public/home/liusiqi/03.毕设/BioMind-worktrees/submission-production-20261020' push -u origin release/submission-20261020。
+
+回退：CLI可运行 /public/home/liusiqi/03.毕设/BioMind_Production_20261020/scripts/deploy_cli.py --rollback（使用脚本指定的Python）。它先核对当前入口，恢复两份精确备份；原f755发布树和配置保留。Studio回退需先通过原生空闲关闭，再用现有rollback-managed-service-rebind.py及 /public/home/liusiqi/03.毕设/BioMind_Production_20261020/studio-rebind.json 恢复绑定，然后ensure；不要在活动实例上直接覆盖配置。
+
+部署总回执：/public/home/liusiqi/03.毕设/BioMind_Production_20261020/DEPLOYMENT.json
+实际验证证据：/public/home/liusiqi/03.毕设/BioMind_Production_20261020/evidence
+原始输入修订与科学验证：/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/交付与验收说明.txt（该报告记录部署前阶段，当前生产状态以本部署回执为准）。
+
+最终本地提交：1f834cb2fd6bdd9a3f6e3b7b5ecbb24de3c19e26
+发布分支工作树干净；Git回执：/public/home/liusiqi/03.毕设/BioMind_Production_20261020/GIT.json

@@ -1,0 +1,68 @@
+{
+  "status": "PASS",
+  "at_utc": "2026-10-20T07:56:29.457226+00:00",
+  "sharedAgentDir": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020",
+  "legacyAgentDir": "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.biomind/pi-agent",
+  "sessionRoot": "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.biomind/pi-agent/sessions",
+  "nativeManagementCheck": "OK",
+  "cliDefaultRuntime": true,
+  "cliModelRequests": 1,
+  "networkCalls": [
+    {
+      "url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=19304878%5Buid%5D&retmode=json&retmax=1",
+      "status": 200,
+      "mimeType": "application/json",
+      "bodySha256": "f5633c07c141f946ff3bce4a0e94e5fffebef7adf0ac94bbe359fb15d9af472d",
+      "bodyBytes": 181,
+      "idlist": [
+        "19304878"
+      ]
+    },
+    {
+      "url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=19304878&retmode=xml",
+      "status": 200,
+      "mimeType": "text/xml",
+      "bodySha256": "eabb91aa5f8c7d80d148aa5f59e8e2d3e211d6c6d182494af7cc3a212cb2cdf6",
+      "bodyBytes": 10951,
+      "PMIDs": [
+        "19304878"
+      ]
+    },
+    {
+      "query": "NCBI PubMed 19304878",
+      "provider": "exa",
+      "resultUrls": [
+        "https://pubmed.ncbi.nlm.nih.gov/19304878/"
+      ],
+      "error": null
+    }
+  ],
+  "studioChecks": {
+    "serviceReady": true,
+    "serverId": true,
+    "agentDir": true,
+    "packagePresent": true,
+    "historyRootPreserved": true,
+    "runtimeAgentDir": true,
+    "sameCore": true
+  },
+  "studioOwnerMainExecution": false,
+  "studioInstanceId": "db54df82409d439b93fc4560d274f0cd",
+  "originalSettingsPreserved": true,
+  "settingsOtherThanPackagesPreserved": true,
+  "authAndModelStorePrivateLocalCopy": true,
+  "credentialsInGit": false,
+  "oldCottonProcessStopped": false,
+  "slurmJobsModified": false,
+  "historyLayoutPreserved": true,
+  "guardRefusalTestsPassed": 4,
+  "plugin": {
+    "name": "pi-web-access",
+    "version": "0.38.0",
+    "distSha256": "66e5c91481b884b41a0a1dd8b253a19451fdb22fd661801ba4f39c2230dc0527"
+  },
+  "limits": [
+    "Studio service/package checks performed; no Windows UI or Studio owner model request.",
+    "Three successful requests demonstrate this acceptance only, not future provider quota guarantees."
+  ]
+}

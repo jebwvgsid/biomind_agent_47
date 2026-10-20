@@ -1,0 +1,102 @@
+--- "/public/home/liusiqi/03.\346\257\225\350\256\276/BioMind_Unified_Core_20261009/delivery/service/plugin-lifecycle/59f269bcd8027d40b8685feffd14a656176d5817/server/rebind-managed-services.py"	2026-10-16 16:38:47.000000000 +0800
++++ "/public/home/liusiqi/03.\346\257\225\350\256\276/BioMind_Production_20261020/scripts/rebind-shared-agent.py"	2026-10-20 15:50:04.000000000 +0800
+@@ -12,6 +12,7 @@
+ import datetime
+ import fcntl
+ import hashlib
++import importlib.util
+ import json
+ import os
+ from pathlib import Path
+@@ -251,6 +252,23 @@
+         os.close(fd)
+ 
+ 
++def shared_agent(root, current_agent, sessions, candidate):
++    new_agent = absolute(candidate, directory=True, private=True)
++    require(new_agent != current_agent, 'NEW_AGENT_SCOPE_REQUIRED')
++    spec = importlib.util.spec_from_file_location('shared_rebind_guard', root / 'agent_core/pi_plugin_guard.py')
++    guard = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(guard)
++    resource_plan = guard.prepare({'agentDir': str(new_agent), 'cwd': str(new_agent.parent), 'scopes': ['user']})
++    require(all(not r['legacyUnverified'] and not r['adoptionPending'] and not r['fresh']
++                for r in resource_plan['scopes']), 'GUARDED_AGENT_REQUIRED')
++    require((new_agent / 'sessions').is_symlink() and
++            (new_agent / 'sessions').resolve(strict=True) == sessions,
++            'SESSION_LAYOUT_CHANGE_REFUSED')
++    for name in ('settings.json', 'web-search.json'):
++        absolute(new_agent / name, regular=True)
++    return new_agent, guard, resource_plan
++
++
+ def prepare(args):
+     config = snapshot(args.service_config, private=True)
+     c = config['value']
+@@ -278,6 +296,9 @@
+                 if runtime['value'].get('sessionDir') else absolute(agent / 'sessions', directory=True))
+     require(absolute(env.get('BIOMIND_SESSION_ROOT'), directory=True) == sessions, 'SESSION_ROOT_MISMATCH')
+     root, release, manifest, exe, checked = validate_release(args.release)
++    # A fresh guarded resource scope can replace a stale legacy scope without
++    # mutating that scope, its adoption receipt, sessions or live readers.
++    new_agent, guard, resource_plan = shared_agent(root, agent, sessions, args.new_agent_dir)
+     backend = absolute(args.backend_root, directory=True)
+     for name in BACKEND_FILES:
+         absolute(backend / name, regular=True)
+@@ -305,6 +326,7 @@
+     n = copy.deepcopy(c)
+     new_runtime = copy.deepcopy(runtime['value'])
+     new_runtime.update(installRoot=str(root), python=exe['python'])
++    new_runtime['agentDir'] = str(new_agent)
+     rt = root / 'integrations/pi_runtime'
+     n.update(cwd=str(backend), command=[exe['node'], str(launcher)])
+     n['environment'].update({
+@@ -314,19 +336,31 @@
+         'BIOMIND_INSTRUCTIONS_QUERY_SCRIPT': str(rt / 'dist/instructions-query.js'),
+         'BIOMIND_PI_NODE': exe['node'], 'BIOMIND_HISTORY_NODE': exe['node'],
+         'BIOMIND_PI_PYTHON': exe['python'], 'BIOMIND_LAUNCHER_PYTHON': exe['python'],
++        'PI_CODING_AGENT_DIR': str(new_agent),
+     })
+     return {'config': config, 'runtime': runtime, 'lifecycle': lifecycle,
+             'release': release, 'manifest': manifest, 'state': state, 'credentials': credentials,
+             'runtime_output': output, 'receipt': receipt, 'new_config': n,
+             'new_runtime': new_runtime, 'root': root, 'backend': backend,
+             'checked_entries': checked, 'service_release': service_release,
+-            'service_snapshots': service_snapshots}
++            'service_snapshots': service_snapshots, 'resource_plan': resource_plan,
++            'new_agent': new_agent, 'old_agent': agent, 'guard': guard}
+ 
+ 
+ def execute(args):
+     plan = prepare(args)
+     fds = []
+     try:
++        # Hold the new scope's admission gate and scope lease across publication.
++        # The old scope and its unrelated processes are never modified.
++        for key in ('gate', 'lock'):
++            row = plan['resource_plan']['scopes'][0]
++            fd = os.open(row[key], os.O_RDWR | os.O_NOFOLLOW)
++            fds.append(fd)
++            plan['guard'].lock_fds({'files': [{'fd': fd, 'path': row[key], 'mode': 'shared'}]})
++        check = plan['guard'].plan({'agentDir': str(plan['new_agent']), 'cwd': str(plan['new_agent'].parent), 'scopes': ['user']})
++        require(all(not r['legacyUnverified'] and not r['adoptionPending'] for r in check['scopes']),
++                'GUARDED_AGENT_REQUIRED')
+         for p in [plan['config']['path'].parent / 'configure.lock',
+                   plan['state'] / 'service.lock', plan['state'] / 'backend.lock']:
+             absolute(p, regular=True, private=True)
+@@ -362,6 +396,8 @@
+             'runtimeBeforeSha256': plan['runtime']['sha256'],
+             'runtimeAfterSha256': digest(encoded(plan['new_runtime'])),
+             'entryHashesChecked': plan['checked_entries'],
++            'oldAgentDir': str(plan['old_agent']), 'newAgentDir': str(plan['new_agent']),
++            'legacyScopeModified': False,
+             'nextAction': 'Explicit managed ensure only after this APPLIED receipt; then verify new instance and child loaded_build. No restart was performed.',
+         }
+         if plan['service_release']:
+@@ -413,6 +449,7 @@
+         parser.add_argument('--' + option, required=True, type=Path)
+     parser.add_argument('--service-root', type=Path,
+                         help='Explicit fixed commit/server directory with its SERVICE-RELEASE.json; preserve current launcher if omitted')
++    parser.add_argument('--new-agent-dir', required=True, type=Path)
+     parser.add_argument('--apply', action='store_true')
+     args = parser.parse_args(argv)
+     try:
