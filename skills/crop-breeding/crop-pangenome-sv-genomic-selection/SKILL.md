@@ -51,12 +51,16 @@ Read `references/install-and-data.md` before installing pangenome/SV tools, down
 - `gff3`: annotation for candidate gene mapping.
 - `trait_direction.tsv`: optional high/low desired direction per trait.
 
+## Task Scope And Shared Checks
+
+Read `../_shared/gp-audit-and-data-validation.md` sections A–C for task evidence, matrix identity and observation checks. Apply the checks relevant to the requested analysis; complete a requested readiness audit even when a later training stage lacks inputs or resources. Keep design declarations, actual execution and stage-specific blockers separate.
+
 ## Workflow
 
-1. Harmonize sample IDs and allele encoding across SNP, SV, and PAV matrices.
-2. Run QC separately for SNPs, indels, SVs, and PAVs; report call rate, MAF, missingness, and variant class counts.
+1. Apply the shared matrix/ID checks before harmonizing SNP, SV and PAV sample labels, feature identities, allele encoding and reference coordinates. Preserve a source-position ledger and order for each feature class.
+2. Identify PAV ID fields, annotation rows and metadata columns from verified schema/content; do not infer metadata-column counts from annotation-row counts. Select feature columns by verified positions or unique internal keys mapped to those positions, never by ambiguous repeated names. Reconcile raw, excluded and retained source columns. Report class-appropriate call rate, allele/presence frequency, missingness and counts; distinguish recorded 0, recorded 1 and unknown/missing values until the source establishes their biological meaning.
 3. Estimate trait heritability or variance contribution by feature class when the required model/tooling is available.
-4. Train SNP-only, SV-only, PAV-only, and combined genomic prediction models using the same train/tune/test split.
+4. With compatible observed training phenotypes, compare available SNP-only, SV-only, PAV-only and combined models on the same eligible samples and evaluation split; disclose coverage differences. Missing matched phenotypes block affected de novo supervised training/evaluation while format/QC continues. Preserve unlabeled targets for prediction with a valid trained model when requested.
 5. Build polygenic scores or GEBV-like predictions and compare test performance by trait.
 6. For multi-trait selection, standardize predicted values, apply trait directions and weights, and output a selection index.
 7. Map high-impact SVs to overlapping or nearby genes and annotate candidate gene consequences.
@@ -78,7 +82,7 @@ Use the upstream GrapePan resources for grapevine reproduction or a species-spec
 
 ## Rules
 
-- Do not merge SNP and SV data until each class has independent QC summaries.
+- Do not merge SNP and SV data until each class has an independent QC summary. Repeated PAV display labels do not prove duplicate features: preserve distinct source positions and values, and do not deduplicate by name. Internal technical keys are not gene/locus identifiers; ambiguous labels, invalid annotation coordinates or uncertain presence/absence semantics limit biological interpretation until a verified schema or mapping is available. Do not manufacture biological IDs or rebuild/replace the input by default.
 - Report whether SVs add predictive value beyond SNPs using the same folds, not separate splits.
 - Avoid human clinical risk terminology; use crop breeding terms such as predicted trait, genomic value, and selection index.
 - Treat LDpred2/polygenic-score methods as optional; if LD estimation is unreliable, prefer cross-validated GEBV-style prediction.

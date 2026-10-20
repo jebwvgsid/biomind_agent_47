@@ -1,0 +1,2 @@
+case_id	input_revision	input_status	analysis_requirement	verification_scope
+BM-REMAIN-DB-004__strict	20261020-fullanalysis	ready_verified	all_stages_must_run	live GEO search/summary, SRA+PubMed link/fetch, Ensembl

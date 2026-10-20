@@ -1,0 +1,14 @@
+{
+  "source_url": "https://zenodo.org/record/16576184/files/PopSV.zip",
+  "archive_member": "PopSV/all_chr.paragraph-SV.350.minmaf0.05_maxmissing0.6.bi.vcf.gz",
+  "range_receipt": "sv-range.json",
+  "old_sha256": "607ff6a88cbee64cde4c216598cd7e1b70a3fc81dcdf66d00e722b2d0db99a4b",
+  "old_records": 500,
+  "old_samples": 350,
+  "sample_header_exact": true,
+  "source_records_inspected": 500,
+  "exact_full_record_matches": 500,
+  "different_values_same_variant": 0,
+  "unmatched": 0,
+  "status": "PASS"
+}

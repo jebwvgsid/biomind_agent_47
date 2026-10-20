@@ -1,0 +1,3 @@
+relative_path	bytes	sha256	role
+data/database/DATA_SCHEMA.txt	337	b44878b2b0d8892af26eff9c37159e1961b25313837d9fb3c1862c4776a98abe	formal_input_or_source_document
+data/database/query_input.json	698	847c97bd10bc627fe462c8d285ef53499caac3f65b3635e431498528a83abff9	formal_input_or_source_document

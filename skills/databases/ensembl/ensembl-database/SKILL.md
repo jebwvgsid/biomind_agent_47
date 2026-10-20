@@ -19,9 +19,13 @@ compatibility: 需要本技能 references/dependencies.md 列明的现有软件�
 [dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
 本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
+## 联网与结构化结果核验
+
+首次联网前读取 [公共数据库联网与结构化结果核验](../../references/network-and-structured-retrieval.md)，同一会话已读且未变时复用。先确认当前可用的官方 API 或插件路径，再按下列领域工作流执行；复用当前工具 schema 已提供的原始响应模式；搜索摘要和未完整回收的正文不能替代结构化记录。
+
 # Ensembl Database Query
 
-Use this skill to query public Ensembl genome resources through REST calls. Prefer direct HTTP requests with `requests` for transparent, reproducible queries; use `ensembl_rest` only when the environment already provides it or the user explicitly prefers that client.
+Use this skill to query public Ensembl genome resources through REST calls. Prefer a verified transport that preserves the official response and exact endpoint. Existing `requests` calls remain suitable; use `ensembl_rest` only when already available or explicitly preferred. If this direct path fails, assess an already configured plugin path only if it can preserve the required raw format; a search summary is not REST JSON.
 
 ## Scope
 
@@ -56,9 +60,12 @@ server = "https://rest.ensembl.org"
 headers = {"Content-Type": "application/json", "Accept": "application/json"}
 
 def ensembl_get(endpoint):
-    response = requests.get(server + endpoint, headers=headers, timeout=60)
+    response = requests.get(server + endpoint, headers=headers, timeout=(10, 30))
     response.raise_for_status()
-    return response.json()
+    payload = response.json()
+    if isinstance(payload, dict) and payload.get("error"):
+        raise RuntimeError("Ensembl returned an error payload")
+    return payload
 
 gene = ensembl_get("/lookup/symbol/homo_sapiens/BRCA2?expand=1")
 print(gene["id"], gene["seq_region_name"], gene["start"], gene["end"])
@@ -72,11 +79,15 @@ Use these endpoint families as the first choices:
 - Sequences: `/sequence/id/{id}?type=genomic`, `/sequence/id/{id}?type=cdna`, `/sequence/id/{id}?type=protein`, `/sequence/region/{species}/{region}`
 - Variants: `/variation/{species}/{variant_id}`, `/overlap/region/{species}/{region}?feature=variation`
 - VEP: `/vep/{species}/id/{variant_id}`, `/vep/{species}/region/{region}/{allele}`, POST `/vep/{species}/id`
-- Comparative genomics: `/homology/id/{id}`, `/homology/symbol/{species}/{symbol}`, `/genetree/id/{id}`
+- Comparative genomics: `/homology/id/{species}/{id}`, `/homology/symbol/{species}/{symbol}`, `/genetree/id/{id}`. For current homology-by-ID requests include species; validate archive-specific routes against that server rather than reusing an obsolete path.
 - Region annotation: `/overlap/region/{species}/{region}?feature=gene;feature=transcript;feature=exon;feature=cds;feature=regulatory;feature=variation`
 - Assembly mapping: `/map/{species}/{source_assembly}/{region}/{target_assembly}`
 
 For plant, fungal, protist, metazoa, or pan-taxonomic comparative queries, add the appropriate `compara` parameter when needed, for example `compara=plants`, `compara=fungi`, `compara=metazoa`, or `compara=pan_homology`.
+
+## Transport and Format Validation
+
+The requests timeout tuple in the example controls connection/read waits, not the total wall-clock operation; use the existing execution runner's total deadline as described in the shared reference. Explicitly request and verify JSON for metadata or FASTA/text for sequences. HTTP 200 with an HTML/YAML presentation is not the requested JSON. For metadata-only homology results, use documented sequence=none and format=condensed where they retain all required fields; request full fields only when needed. Do not dump returned sequences into the model context.
 
 ## Output Guidance
 
@@ -99,6 +110,7 @@ For plant, fungal, protist, metazoa, or pan-taxonomic comparative queries, add t
 ## Official References
 
 - Ensembl REST endpoint index: `https://rest.ensembl.org/`
+- Current homology-by-ID endpoint: `https://rest.ensembl.org/documentation/info/homology_species_gene_id`
 - Species metadata endpoint: `https://rest.ensembl.org/documentation/info/species`
 - Current Ensembl REST API examples: `https://rest.ensembl.org/documentation/info/lookup`
 - GRCh37 REST service: `https://grch37.rest.ensembl.org/`

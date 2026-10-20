@@ -50,13 +50,17 @@ Read `references/install-and-data.md` before installing CERIS-JGRA, preparing en
 - `growth_stage_window.tsv`: crop stage, start/end date or thermal-time window, and candidate variables.
 - `target_environment.tsv`: optional new-environment profile for prediction.
 
+## Task Scope And Shared Checks
+
+Read `../_shared/gp-audit-and-data-validation.md` sections A–C for task evidence, matrix identity and observation checks. Apply the checks relevant to the requested analysis; complete a requested readiness audit even when a later training stage lacks inputs or resources. Keep design declarations, actual execution and stage-specific blockers separate.
+
 ## Workflow
 
-1. Validate environment IDs, sample IDs, trait definitions, and replicate structure.
+1. Apply the shared matrix/ID checks and distinguish genotype, environment, phenotype-observation and weather-record keys. Record raw observation counts separately from sample × environment cell counts. When replicate semantics are missing, retain original observations and report the uncertainty; do not default to deduplication or averaging.
 2. Define candidate environmental indices as environment parameter plus crop growth window.
-3. Search for indices that explain phenotype variation and are estimable for target environments.
-4. Fit a reaction norm per genotype: phenotype as intercept plus slope times environmental index.
-5. Treat intercept and slope as derived traits for GWAS and genomic prediction.
+3. Fix the evaluation boundary before index/window selection. For each outer fold, use only its permitted training phenotypes for selection and any inner tuning; verify that the chosen index is computable in the target environments with compatible variables, units and windows.
+4. Fit a reaction norm per genotype using only permitted training observations: phenotype as intercept plus slope times environmental index, with justified replicate/block or aggregation treatment. Record the observations and distinct environments actually used; check independent index values and parameter estimability.
+5. Treat intercept and slope as derived traits for GWAS and genomic prediction; derive training targets within the evaluation boundary and exclude held-out phenotypes from their construction.
 6. Predict intercept and slope for unobserved genotypes, then combine them with target environmental index values.
 7. Rank stable genotypes by predicted mean, slope magnitude, and trait direction.
 
@@ -77,9 +81,9 @@ Use the upstream CERIS-JGRA repository for exact execution. Do not substitute Bi
 ## Rules
 
 - Do not assume the same environmental index works for all traits; search and report per trait.
-- Check that target-environment indices are within or near the training range; extrapolation must be flagged.
+- For every outer fold, calculate the environmental-index range from that fold’s training environments and compare its held-out/target values with that range. Record outside-range values and extrapolation flags per fold; a full-data range cannot verify holdout interpolation.
 - Keep intercept and slope interpretation separate: intercept is baseline performance, slope is environmental sensitivity.
-- Use environment- or year-held-out validation to test new-environment prediction, not only random row-wise CV.
+- Use environment- or year-held-out validation for new-environment prediction, genotype holdout for new genotypes, and both when required. For known genotypes in missing environments, state which historical observations are allowed. A parsing/axis error is not evidence that the user omitted an ID mapping.
 
 ## Related Skills
 

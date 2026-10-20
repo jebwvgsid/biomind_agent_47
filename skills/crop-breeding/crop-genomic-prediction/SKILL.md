@@ -26,6 +26,10 @@ Use this skill only as the genomic selection gatekeeper. It decides whether a
 real crop GS task is ready to execute and which professional downstream skill
 should be loaded.
 
+## Task Scope And Shared Checks
+
+Read `../_shared/gp-audit-and-data-validation.md` sections A–C for task evidence, matrix identity and observation checks. Apply the checks relevant to the requested analysis; complete a requested readiness audit even when a later training stage lacks inputs or resources. Keep design declarations, actual execution and stage-specific blockers separate.
+
 ## Responsibilities
 
 1. Identify the biological task: prediction for selection, marker-effect
@@ -33,11 +37,14 @@ should be loaded.
    candidate discovery.
 2. Check required data: species/ploidy, sample IDs, phenotype definition,
    genotype format, marker coding, covariates, trial design, family/year/location
-   structure, and target population.
-3. Choose the validation design before any model fitting or feature selection:
-   independent K-fold, held-out family, held-out location/year, held-out
-   environment, or external validation population.
-4. Route to one concrete operation skill:
+   structure, and target population. Apply the shared schema/axis and observation
+   checks; report missing semantics by the stage they affect.
+3. Define the prediction target and validation design before fitting
+   preprocessing, model parameters or feature selection: independent K-fold,
+   held-out family, location/year, environment, or external population as
+   appropriate. Outer CV does not require an additional external test set unless
+   the task or claimed generalization requires one.
+4. Honor a specified method; when a route is undecided, select one concrete operation skill:
    - `crop-breeding/crop-gs-rrblup-gblup` for standard RR-BLUP/GBLUP.
    - `crop-breeding/crop-gs-bglr-bayesian` for Bayesian whole-genome regression.
    - `crop-breeding/crop-gs-sommer-multikernel-gxe` for multi-kernel, GxE,
@@ -58,14 +65,16 @@ should be loaded.
 
 ## Hard Boundaries
 
-- Do not run analysis from this guide.
+- Do not fit models from this guide. Read-only input/design audits and documented routing are within its scope; use the selected operation skill for formal model execution.
 - Do not invent a model from natural-language reasoning.
 - Do not use self-written sklearn/base-R substitutes for formal GS.
 - Do not include local validation data in this skill.
 - Do not let full-data GWAS, feature filtering, imputation, normalization, or
   scaling leak information into validation folds.
-- Do not use random row-wise CV when family, environment, location, year, trial
-  block, or breeding population creates dependence.
+- Match the held-out unit to the prediction target and relevant dependence:
+  new genotype, new environment, both, or missing observations of known genotypes.
+  Keep prohibited groups outside training; state which historical observations
+  are allowed rather than treating every repeated genotype across folds as leakage.
 
 ## Handoff
 
@@ -77,4 +86,5 @@ When routing, produce these fields for the downstream skill:
 - phenotype/covariate files
 - validation split and grouping column
 - required package route and citation expectation
-- missing data or design blockers
+- missing data or design blockers, with affected stages
+- audit scope, evidence states, observed execution status and unresolved provenance

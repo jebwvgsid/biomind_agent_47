@@ -1,0 +1,2 @@
+window_id	start_day	end_day	variable	min_day_coverage
+calendar_doy_150_230	150	230	Temperature_C	0.8

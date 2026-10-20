@@ -1,0 +1,1 @@
+本轮原题题面与训练入口的可审查差异。四个题面 patch 对比 backup 中原版；gp_waiter_training_entrypoint.patch 对比上游硬编码训练驱动与本题实际采用的新入口。新的三模型入口不修改共享上游源模块；GP 保留原生操作拓扑但改变尺寸超参数。本轮没有部署 BioMind 生产版本，也没有运行正式评分。输入的逐文件校验和、来源与输出版本见上级 manifest.json 和各题 input_manifest.json。

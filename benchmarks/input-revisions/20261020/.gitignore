@@ -1,0 +1,9 @@
+# Materialized links to shared raw assets are local only.
+/inputs/gxe/environment_timeseries.tsv
+/inputs/gxe/genotype_matrix.tsv
+/inputs/gxe/growth_stage_window.tsv
+/inputs/gxe/phenotype_multi_environment.tsv
+/inputs/gwas/Real_snp.vcf.gz
+/inputs/gwas/Real_trait.C16_0.table
+/inputs/gwas/Real.gff3
+__pycache__/

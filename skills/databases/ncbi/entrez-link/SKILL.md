@@ -19,6 +19,10 @@ compatibility: 需要本技能 references/dependencies.md 列明的现有软件�
 [dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
 本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
+## 联网与结构化结果核验
+
+首次联网前读取 [公共数据库联网与结构化结果核验](../../references/network-and-structured-retrieval.md)，同一会话已读且未变时复用。先确认当前可用的官方 API 或插件路径，再按下列领域工作流执行；复用当前工具 schema 已提供的原始响应模式；搜索摘要和未完整回收的正文不能替代结构化记录。
+
 # NCBI Entrez Link
 
 Use this skill when the main task is navigation between NCBI databases rather than keyword discovery or record download. ELink starts from known Entrez UIDs in a source database and returns linked UIDs, related records, link availability, History-server handles, or external LinkOut URLs.
@@ -56,7 +60,7 @@ Link names can change or be database-specific. If the linkname is uncertain, fir
 
 ## Core Workflow
 
-1. Confirm that input values are Entrez UIDs for the source database. Convert accessions or keywords with `ncbi-entrez-search` first when needed.
+1. Confirm that input values are Entrez UIDs for the source database. Convert accessions or keywords with `entrez-search` first when needed.
 2. Choose the source database with `dbfrom` and the destination database with `db`.
 3. If the exact link type matters, choose a `linkname`; otherwise start with only `dbfrom` and `db` to discover all links between the databases.
 4. Choose the ELink command:
@@ -66,17 +70,18 @@ Link names can change or be database-specific. If the linkname is uncertain, fir
    - `acheck`: list available link types for the input UIDs.
    - `ncheck`: check whether same-database links exist.
    - `lcheck`, `llinks`, `llinkslib`, `prlinks`: inspect external LinkOut availability or URLs.
-5. Parse results by input UID. Preserve one-to-many mappings; do not collapse linked records without reporting counts.
-6. If final record content is needed, pass linked UIDs or History-server handles to `ncbi-entrez-fetch`.
+5. Parse every returned LinkSet and applicable LinkSetDb by explicit source UID and link type. Preserve one-to-many relationships and source identities. With Bio.Entrez.elink, pass multiple source UIDs as a Python list when per-source mappings are required; a comma-delimited id string merges source sets. Do not assign merged targets back to every source or infer mapping from return order.
+6. If final record content is needed, pass linked UIDs or History-server handles to `entrez-fetch`.
 
 ## Minimal Python Patterns
 
 Link one Gene UID to RefSeq proteins:
 
 ```python
+import os
 from Bio import Entrez
 
-Entrez.email = "your.email@example.com"
+Entrez.email = os.environ.get("NCBI_EMAIL") or Entrez.email  # Use a real configured contact; never invent one.
 with Entrez.elink(
     dbfrom="gene",
     db="protein",
@@ -96,22 +101,32 @@ for linkset in records:
 Inspect available links for a source UID:
 
 ```python
+import os
 from Bio import Entrez
 
-Entrez.email = "your.email@example.com"
+Entrez.email = os.environ.get("NCBI_EMAIL") or Entrez.email  # Use a real configured contact; never invent one.
 with Entrez.elink(dbfrom="gene", id="672", cmd="acheck") as handle:
     records = Entrez.read(handle)
 
-for link_info in records[0].get("LinkInfo", []):
-    print(link_info.get("DbTo"), link_info.get("LinkName"), link_info.get("MenuTag"))
+for linkset in records:
+    if linkset.get("ERROR"):
+        raise RuntimeError(str(linkset["ERROR"]))
+    checks = linkset["IdCheckList"]
+    if checks.get("ERROR"):
+        raise RuntimeError(str(checks["ERROR"]))
+    for id_linkset in checks.get("IdLinkSet", []):
+        source_id = str(id_linkset["Id"])
+        for link_info in id_linkset.get("LinkInfo", []):
+            print(source_id, link_info["DbTo"], link_info["LinkName"], link_info.get("MenuTag", ""))
 ```
 
 Store linked results on the History server:
 
 ```python
+import os
 from Bio import Entrez
 
-Entrez.email = "your.email@example.com"
+Entrez.email = os.environ.get("NCBI_EMAIL") or Entrez.email  # Use a real configured contact; never invent one.
 with Entrez.elink(
     dbfrom="gene",
     db="pubmed",
@@ -122,14 +137,25 @@ with Entrez.elink(
     records = Entrez.read(handle)
 
 for linkset in records:
+    if linkset.get("ERROR"):
+        raise RuntimeError(str(linkset["ERROR"]))
     for linkset_db_history in linkset.get("LinkSetDbHistory", []):
-        print(linkset_db_history["DbTo"], linkset_db_history["QueryKey"], linkset_db_history["WebEnv"])
+        if linkset_db_history.get("DbTo") != "pubmed" or linkset_db_history.get("LinkName") != "gene_pubmed":
+            continue
+        if linkset_db_history.get("ERROR"):
+            raise RuntimeError(str(linkset_db_history["ERROR"]))
+        if "QueryKey" not in linkset_db_history:
+            print(linkset["IdList"], "History result has no QueryKey:", linkset_db_history.get("Info", "inspect response"))
+            continue
+        if not linkset.get("WebEnv"):
+            raise RuntimeError("History response lacks LinkSet-level WebEnv")
+        print(linkset["IdList"], linkset_db_history["DbTo"], linkset_db_history["QueryKey"], linkset["WebEnv"])
 ```
 
 ## Input Handling
 
 - Accept Entrez UIDs as the safest input.
-- If the user provides accessions such as `GSE`, `SRR`, `PRJNA`, `NM_`, `NP_`, or assembly accessions, first resolve them to UIDs with `ncbi-entrez-search`.
+- If the user provides accessions such as `GSE`, `SRR`, `PRJNA`, `NM_`, `NP_`, or assembly accessions, first resolve them to UIDs with `entrez-search`.
 - If the user provides PMIDs, use them directly with `dbfrom="pubmed"`.
 - If the user provides many IDs, use batches and preserve source-to-linked correspondence. Avoid mixing unrelated source databases in one ELink call.
 - Set `Entrez.email`; set `Entrez.api_key` only if the user has provided one through the environment or approved configuration.
@@ -139,9 +165,10 @@ for linkset in records:
 - `IdList` contains the source UID or UIDs.
 - `LinkSetDb` contains immediate linked UIDs grouped by link type.
 - `LinkName` identifies the relationship type; report it when present.
-- `LinkSetDbHistory` contains `WebEnv` and `QueryKey` from `neighbor_history`.
-- Empty `LinkSetDb` usually means no link exists for that UID/linkname, not necessarily that the source record is invalid.
-- Multiple `LinkSetDb` blocks can appear when no specific `linkname` is provided.
+- For `neighbor_history`, each `LinkSetDbHistory` holds the target database/link type and a `QueryKey` or diagnostic `Info`; `WebEnv` belongs to its enclosing `LinkSet`. Retain source UIDs with each history set and check `ERROR` instead of fabricating missing handles.
+- For `acheck`, detailed links are under `LinkSet -> IdCheckList -> IdLinkSet -> LinkInfo`; `IdLinkSet/Id` identifies the source. An `IdCheckList` can also contain direct `Id` entries; do not mistake an assumed root-level LinkInfo lookup for evidence that no links exist.
+- An empty `LinkSetDb` from a validated response means no link was returned by that request. Check API error fields, source UID resolution and the selected link type first; absence of this link does not prove the study has no raw data or publication.
+- Multiple `LinkSetDb` blocks can appear when no specific `linkname` is provided; inspect all relevant blocks, not just index 0. Record requested source IDs, returned source IDs and unresolved sources independently.
 
 ## Report Back
 
@@ -153,7 +180,7 @@ For each link operation, report:
 - linked IDs grouped by link type
 - History-server `WebEnv`/`QueryKey` when generated
 - unresolved, invalid, or unlinked input IDs
-- recommended next step, usually `ncbi-entrez-fetch`, `ncbi-geo-data`, or another targeted database skill
+- recommended next step, usually `entrez-fetch`, `geo-data`, or another targeted database skill
 
 ## Practical Notes
 

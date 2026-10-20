@@ -1,0 +1,20 @@
+{
+  "revision": "20261020-fullanalysis",
+  "organism": "Homo sapiens",
+  "geo_query": "Homo sapiens[Organism] AND PBMC AND interferon AND single cell",
+  "db": "gds",
+  "retmax": 20,
+  "retstart": 0,
+  "sort": "relevance",
+  "sra_fetch_limit_per_geo_uid": 20,
+  "pubmed_fetch_limit_per_geo_uid": 5,
+  "gene_stable_id": "ENSG00000142166",
+  "gene_symbol": "IFNAR1",
+  "species": "homo_sapiens",
+  "ensembl_endpoint": "https://rest.ensembl.org/lookup/id/ENSG00000142166?expand=0;content-type=application/json",
+  "assembly_policy": "record actual live response; do not hardcode coordinates",
+  "request_interval_seconds": 0.4,
+  "timeout_seconds": 30,
+  "max_retries": 2,
+  "fastq_download": false
+}

@@ -1,0 +1,46 @@
+from pathlib import Path
+import gzip,json,subprocess,csv,shutil,hashlib
+import numpy as np
+C=Path(__file__).resolve().parent
+W=C/'gwas_work';W.mkdir(exist_ok=True)
+O=C.parents[2]/'02.测试26.9/00.共享数据/supplements_v2_20261012/gwas';O.mkdir(exist_ok=True)
+src=C.parents[2]/'01.测试/04.重测序/Part6.GWAS/data/Real_snp.vcf.gz'
+thin=W/'spaced.vcf.gz';last={};n=0;total=0
+if not thin.exists():
+    with gzip.open(src,'rt') as f,gzip.open(thin,'wt') as out:
+        for line in f:
+            if line.startswith('#'):out.write(line);continue
+            total+=1;r=line.split('\t',5);chrom,pos,vid,ref,alt=r[:5];pos=int(pos)
+            if ref not in 'ACGT' or alt not in 'ACGT':continue
+            if pos-last.get(chrom,-100000)<100000:continue
+            last[chrom]=pos;out.write(line);n+=1
+    (W/'spacing.json').write_text(json.dumps({'source':str(src),'records_scanned':total,'records_retained':n,'spacing_bp':100000,'selection':'first biallelic SNP at least 100 kb after preceding retained SNP per chromosome; genotype QC follows'},indent=2))
+plink=C.parents[1]/'dependency_plan/proposed-envs/bio_gwas_cli/bin/plink'
+commands=[]
+def run(args,name,cwd=None):
+    commands.append(args)
+    (W/'reproduce_commands.json').write_text(json.dumps(commands,indent=2))
+    with (W/(name+'.log')).open('w') as f:subprocess.run(args,cwd=cwd,check=True,stdout=f,stderr=subprocess.STDOUT,timeout=1800)
+run([str(plink),'--vcf',str(thin),'--double-id','--allow-extra-chr','--maf','0.05','--geno','0.1','--make-bed','--threads','2','--memory','256','--out',str(W/'spaced')],'plink')
+# Fresh BIM chromosome recoding for ADMIXTURE only; sample identities are unmodified.
+bim=[x.split() for x in (W/'spaced.bim').read_text().splitlines()];chroms=list(dict.fromkeys(x[0] for x in bim));codes={x:str(i+1) for i,x in enumerate(chroms)}
+with (O/'chromosome_codes.tsv').open('w') as f:
+    w=csv.writer(f,delimiter='\t');w.writerow(['original_chromosome','admixture_code']);w.writerows(codes.items())
+(W/'spaced.bim.original').write_text((W/'spaced.bim').read_text())
+for r in bim:r[0]=codes[r[0]]
+(W/'spaced.bim').write_text('\n'.join('\t'.join(x) for x in bim)+'\n')
+run([str(C/'tools/admixture_linux-1.4.0/admixture'),'--seed=20261012','-j2',str(W/'spaced.bed'),'3'],'admixture',str(W))
+q=np.loadtxt(W/'spaced.3.Q');fam=[x.split() for x in (W/'spaced.fam').read_text().splitlines()]
+assert q.shape==(215,3) and len(fam)==215 and np.allclose(q.sum(axis=1),1,atol=2e-5) and q.min()>=0
+with gzip.open(src,'rt') as f:
+    for l in f:
+        if l.startswith('#CHROM'):vcfids=l.rstrip().split('\t')[9:];break
+assert [x[1] for x in fam]==vcfids
+shutil.copy2(W/'spaced.3.Q',O/'Real_snp.regenerated.3.Q')
+shutil.copy2(W/'spaced.fam',O/'Real_snp.regenerated.fam')
+with (O/'Q_sample_map.tsv').open('w') as f:
+    w=csv.writer(f,delimiter='\t');w.writerow(['Q_row_1based','FID','IID']);w.writerows([i+1,*r[:2]] for i,r in enumerate(fam))
+with (O/'Q_with_sample_ids.tsv').open('w') as f:
+    w=csv.writer(f,delimiter='\t');w.writerow(['sample_id','Q1','Q2','Q3']);w.writerows([r[1],*v] for r,v in zip(fam,q))
+receipt={'method':'ADMIXTURE 1.4.0, K=3, seed=20261012, genotype-derived; old unmapped Q is not relabeled or reused','samples':215,'markers':len(bim),'spacing':json.loads((W/'spacing.json').read_text()),'qc':'MAF>=0.05; SNP missing fraction<=0.10; physical spacing 100kb (not an assertion of full LD independence)','sample_order_validation':'fresh PLINK FAM equals source VCF header exactly','software':str(C/'tools/admixture_linux-1.4.0/admixture'),'scope':'small-marker population structure covariate for functional benchmark; K fixed by revised benchmark design, not inferred optimal','q_sha256':hashlib.sha256((O/'Real_snp.regenerated.3.Q').read_bytes()).hexdigest()}
+(O/'provenance.json').write_text(json.dumps(receipt,ensure_ascii=False,indent=2));print(json.dumps(receipt,ensure_ascii=False),flush=True)

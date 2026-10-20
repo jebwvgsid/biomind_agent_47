@@ -5,7 +5,7 @@ description: Prepare resequencing VCF, phenotype, Q matrix, PCA covariates, and 
   transposed files, sort phenotypes to genotype sample order, encode qualitative traits, prepare TASSEL files, or
   validate sample and chromosome compatibility.
 metadata:
-  version: 1.1.0
+  version: 1.1.1
 compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
 
@@ -54,12 +54,13 @@ Optional:
 | `MARKER_TYPE` | `snp`; use `indel` or `sv` for relaxed defaults |
 | `MAF` | SNP `0.05`, InDel/SV `0.01` |
 | `GENO` | SNP `0.1`, InDel/SV `0.5` |
-| `Q_MATRIX` | ADMIXTURE or structure covariates |
+| `Q_MATRIX` | ADMIXTURE or structure covariates; required when the task specifies Q |
+| `Q_COLUMNS` | exact covariate columns specified by the model; set before sorting |
 | `N_PCS` | `3` when PCA is requested |
 | `RECODE_MAP` | required for categorical traits |
 | `IMPUTE` | off unless requested or justified by missingness |
 
-Preflight is a separate, bounded input-check phase. Read
+Perform a bounded input-identity check for the current preparation step. Read
 `references/input-identity.md` before choosing columns or interpreting Q order.
 The standard-library helper can publish `gwas_input_structure` without a
 scientific environment binding or durable report file:
@@ -107,18 +108,30 @@ python "${SKILL_DIR}/scripts/sort_phenotype.py" \
 ```
 
 For Q/PCA covariates with an explicit sample column, use the helper below. For
-an unlabeled numeric matrix, first obtain a real explicit row assignment, then
-use `--q-row-map` and numeric column indexes as documented in
-`references/input-identity.md`. Equal counts and a sample-list path do not
-establish correspondence. Until resolved, stop Q-dependent preparation and
-association; the initial inspection remains a valid result.
+an unlabeled numeric matrix, obtain source-backed assignments for every data row
+of the exact current Q file, then use `--q-row-map` and numeric column indexes
+as documented in `references/input-identity.md`. Matching counts, an unrelated
+sample list, or a few example rows do not establish full correspondence. Check
+only task-provided inputs and their declared provenance; a supplement must be
+shown to apply to this Q version before use. If unresolved, record
+`blocked_covariate_mapping`, stop Q-dependent preparation and association, and
+complete only task-authorized input QC that does not depend on Q. State the
+full-row evidence needed to resume; do not add unrelated environment searches,
+drop Q, or substitute new PCA/Q estimates.
+
+The helper always adds an EMMAX intercept column. Preserve the original Q and
+select the model's declared columns. If the task specifies intercept + Q1/Q2
+for a three-component Q, set `Q_COLUMNS=Q1,Q2`; do not add Q3 or ask again.
+Record the chosen columns and design rank. All three row-sum-one Q components
+plus an intercept are linearly dependent. The helper does not check rank or
+choose columns automatically; see the reference for this distinction.
 
 ```bash
 python "${SKILL_DIR}/scripts/sort_phenotype.py" \
   --tfam "${OUTDIR}/01.prep/markers.tfam" \
-  --phenotype qmatrix.tsv \
+  --phenotype "${Q_MATRIX}" \
   --input-kind q_covariates \
-  --trait Q1,Q2,Q3 \
+  --trait "${Q_COLUMNS}" \
   --out-tassel "${OUTDIR}/01.prep/qmatrix.tassel.txt" \
   --out-emmax-covar "${OUTDIR}/01.prep/qmatrix.emmax.txt" \
   --tassel-covariate true
@@ -147,8 +160,11 @@ awk 'END{print NR}' "${OUTDIR}/01.prep/markers.tfam"
 awk 'END{print NR}' "${OUTDIR}/01.prep/trait.emmax.txt"
 ```
 
-Phenotype IDs must match genotype IIDs. Wrong order is explicitly reported and
-reordered only when identities match. Missing rows fail by default; only an
+Preserve the genotype's FID/IID pairs and exact ID strings. The bundled helper
+matches by globally unique IID and carries FID into its output; it is not a
+general composite-key join. If different families share an IID, stop this helper
+and use an explicitly implemented, validated FID/IID adapter. Wrong order is
+reported and reordered only after identities are established. Missing rows fail by default; only an
 explicit `--allow-missing true` phenotype policy can emit missing values, and an
 all-missing trait always fails. Extra/duplicate IDs, ambiguous columns and
 numeric Q without identity are rejected before output creation. No-header input
@@ -158,9 +174,9 @@ requires numeric trait indexes (for example `--header absent --trait 2`).
 
 | Problem | Meaning | Fix |
 |---|---|---|
-| sample IDs unmatched | genotype/phenotype not aligned | normalize IDs or create a sample map |
+| sample IDs unmatched | genotype/phenotype not aligned | preserve original IDs; require a source-backed one-to-one map, and report unmatched IDs before reordering |
 | categorical trait has text values | association tools need numeric phenotype | require explicit recoding map |
-| PLINK duplicate marker IDs | marker names not stable | use `--set-missing-var-ids @:#` or documented marker IDs |
+| PLINK duplicate marker IDs | marker names are not unique | audit duplicates and use a documented unique marker-ID mapping; `--set-missing-var-ids @:#` only fills missing IDs |
 | Q matrix lacks sample column | row-to-sample mapping is unknown | obtain explicit row assignments or verifiable generating provenance, validate file versions and IDs; never paste a guessed order |
 | imputation requested blindly | may alter marker distribution | run only when requested or justified |
 

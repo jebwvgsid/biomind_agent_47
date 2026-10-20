@@ -55,14 +55,18 @@ Read `references/install-and-data.md` before installing DNNGP environments, down
 - `feature_annotation.tsv`: optional feature-to-gene/metabolite annotation.
 - `covariates.tsv`: optional population structure, family, batch, year, or environment covariates.
 
+## Task Scope And Shared Checks
+
+Read `../_shared/gp-audit-and-data-validation.md` sections A–C for task evidence, matrix identity and observation checks. Apply the checks relevant to the requested analysis; complete a requested readiness audit even when a later training stage lacks inputs or resources. Keep design declarations, actual execution and stage-specific blockers separate.
+
 ## Workflow
 
-1. Align sample IDs across all matrices and output an inclusion/exclusion audit table.
-2. Normalize each omics block independently; record imputation and scaling method.
-3. Split train/tune/test or cross-validation folds before feature selection.
+1. Apply the shared matrix/ID checks to every omics block; output inclusion/exclusion and feature-accounting tables, preserving unlabeled prediction targets separately.
+2. Define the prediction target and train/tune/test or outer/inner CV members before fitting data-dependent preprocessing or selecting features.
+3. Within each permitted training partition, fit imputation, scaling and feature selection for each omics block; apply the fitted transforms to validation/test/prediction data and record the methods.
 4. Run baseline models first: ElasticNet, XGBoost, LightGBM, SVR, GBLUP/rrBLUP where genotype features are present.
 5. Train the DNNGP-style neural network with batch normalization, ReLU activation, dropout, early stopping, and tuned batch size.
-6. Compare SNP-only, each single omics block, and fused multi-omics models using the same folds.
+6. Compare SNP-only, single-omics and fused models on the same eligible evaluation members and outer folds; disclose coverage differences. For late fusion, fit the fusion model using training-only information/inner OOF predictions and evaluate it on the outer holdout. Matching fold labels alone neither prove leakage nor establish independence.
 7. Export feature importance from tree baselines, permutation importance, or SHAP-style methods; label DNN attributions as exploratory unless validated.
 
 ## Formal Execution

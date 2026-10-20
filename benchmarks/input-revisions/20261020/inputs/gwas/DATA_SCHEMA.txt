@@ -1,0 +1,2 @@
+修订版 20261020-fullanalysis。正式性状为 phenotype.tsv（sample_id/C16_0），由原无表头教学文件原值转换。VCF、GFF 未改动。新版 Q 的215行身份绑定 Q_row_map.json/Q_sample_map.tsv 和源 FAM；不能继续使用旧无身份 Real_snp.3.Q。covariates.FID_IID_intercept_Q1_Q2.tsv 无表头、五列，按 TFAM ID 重排。K 必须由本次过滤 TPED 计算；本机 emmax-kin 实测输出 aBN.kinf。emmax-intel64 的 .ps 为 marker/beta/SE/p 四列。原教学参考组装 accession/性状单位未提供，题面保留来源限制。
+正式 VCF 染色体转换使用 vcf_to_plink_chromosome.tsv：Chr01..Chr14 对应 PLINK 1..14；旧 chromosome_codes.tsv 是 ADMIXTURE 历史输入的 1..13 编码来源记录，不作为本次完整 VCF 的映射表。

@@ -1,0 +1,107 @@
+{
+  "case_id": "BM-REMAIN-CROP-ADVGP-010__strict",
+  "input_revision": "20261020-fullanalysis",
+  "purpose": "actual_analysis",
+  "original_question_backed_up_at": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/backup/02",
+  "output_directory": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/output_inputfix_20261020",
+  "files": [
+    {
+      "relative_path": "data/multiomics/DATA_SCHEMA.txt",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/DATA_SCHEMA.txt",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/multiomics/DATA_SCHEMA.txt",
+      "bytes": 763,
+      "sha256": "2c39e6dd8f56d4a866a6690cb96ba9b2200c45ce5198aa52089bb358c85a88e9",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/multiomics/cv_fold_design.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/cv_fold_design.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/multiomics/cv_fold_design.tsv",
+      "bytes": 461,
+      "sha256": "3ef1fd9b82761ab544b5ee59ed8a5913dcf3e7a4e1b8ca136a4125b1867f7741",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/multiomics/expression_matrix.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/expression_matrix.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/multiomics/expression_matrix.tsv",
+      "bytes": 12937,
+      "sha256": "147cc096d1027f7d8ba978464eb1c3767dfc6f99f9e7058a71cf057c01f4eea4",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/multiomics/genotype_matrix.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/genotype_matrix.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/multiomics/genotype_matrix.tsv",
+      "bytes": 4226,
+      "sha256": "fbbfdd291414a146bd547d93b4e2b2acb5c40de10453dd639bdf31674202ac20",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/multiomics/gwas_weight_fold_design.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/gwas_weight_fold_design.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/multiomics/gwas_weight_fold_design.tsv",
+      "bytes": 540,
+      "sha256": "473f0dd8011133ce7b3e42bce01e29a0d3579a556f159ad7b320fbdf650034c6",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/multiomics/metabolite_matrix.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/metabolite_matrix.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/multiomics/metabolite_matrix.tsv",
+      "bytes": 5337,
+      "sha256": "e8b89304d47ba1e4f008b586c34d6e0c582399110a97162c63fcfa212a5925c4",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/multiomics/model_config.json",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/model_config.json",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/multiomics/model_config.json",
+      "bytes": 1976,
+      "sha256": "e3562cbd7ff0e3c27d5ceaceb5232fdd64e01588f75fed3759bd06641f2163f1",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/multiomics/omics_metadata.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/omics_metadata.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/multiomics/omics_metadata.tsv",
+      "bytes": 3087,
+      "sha256": "f70511a6f6bb91a13608b1fa1e7d31f555d0cf1617714da82250fe4394726ee6",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/multiomics/outer_fold_membership.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/outer_fold_membership.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/multiomics/outer_fold_membership.tsv",
+      "bytes": 2643,
+      "sha256": "0a864f30d9c7cc8ef4efe8ac95e20bf072c40d47420d0e85348c4b5b4bf70531",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/multiomics/phenotype.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/phenotype.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/multiomics/phenotype.tsv",
+      "bytes": 556,
+      "sha256": "d24448ad5907b9069d6a91f4727641a34c7d43ef3c5b461d3a1675dcd3029f0c",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/multiomics/provenance.json",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/provenance.json",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/multiomics/provenance.json",
+      "bytes": 1505,
+      "sha256": "13169eeff41b4f178a3b4a6193c1efed6d8bd4853fea0a8a4d1a8af55cc4426b",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "analysis_support/train_multiomics.py",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/analysis_support/train_multiomics.py",
+      "resolved_source": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/analysis_support/train_multiomics.py",
+      "bytes": 7026,
+      "sha256": "aec3212fd960c73215bbab7f47dbce1ce5e3804e7af42010b64e019c66596593",
+      "role": "native_model_entrypoint"
+    }
+  ],
+  "hidden_truth_excluded": true,
+  "historical_scores_reused": false
+}

@@ -1,0 +1,15 @@
+{
+  "base_commit": "827f40167eba3493cb50652e1107025da0ed91ba",
+  "production_build": "f7559c01a1eadc13459555a7fdd70c8e7b6ef74d9629ca56dcb74a6bb92d1f82",
+  "files": [
+    "agent_core/native_command.py",
+    "integrations/pi_runtime/domain-client.ts",
+    "integrations/pi_runtime/domain_adapter/service.py",
+    "integrations/pi_runtime/extensions/biomind.ts",
+    "integrations/pi_runtime/host.ts",
+    "integrations/pi_runtime/native-bash.ts",
+    "integrations/pi_runtime/tests/extension-harness.ts",
+    "integrations/pi_runtime/tests/prompt-execution.test.ts",
+    "integrations/pi_runtime/tests/test_request_execution.py"
+  ]
+}

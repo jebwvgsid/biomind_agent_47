@@ -39,20 +39,20 @@ function checkAssembly(context: TranscriptContext, profile: Profile, maintenance
   if (maintenance) {
     assert(fixed.includes('当前阶段：记忆维护'));
     assert(fixed.includes('不继续或启动分析任务'));
-    assert(!fixed.includes('单一主 agent'));
+    assert(!fixed.includes('BioMind'));
     assert(!fixed.includes('当前 execution:'));
     assert(!fixed.includes('binding_ref'));
     assert.deepEqual(tools, ['maintenance_submit']);
     return { fixed, state, common: undefined, tools };
   }
   assert(merged.sections.skills.includes(SKILL_DESCRIPTION), 'native Skill metadata is retained');
-  assert(fixed.includes('单一主 agent'));
+  assert(fixed.includes('BioMind'));
   const marker = `\n当前 execution:${profile}`;
   const modeIndex = fixed.indexOf(marker);
   assert(modeIndex > 0);
   const common = fixed.slice(0, modeIndex);
   assert(!common.includes('当前阶段：记忆维护'));
-  assert(/安装[^\n]*确认/.test(common), 'installation confirmation remains a COMMON rule in both profiles');
+  assert(/安装[^\n]*(确认|授权)/.test(common), 'installation confirmation remains a COMMON rule in both profiles');
   assert(common.includes('binding_ref') && common.includes('环境'), 'environment binding remains a COMMON rule in both profiles');
   assert(common.includes('bash'), 'per-call shell environment guidance remains shared');
   assert(!fixed.includes(`当前 execution:${profile === 'native' ? 'protected' : 'native'}`), 'mode rules are mutually exclusive');

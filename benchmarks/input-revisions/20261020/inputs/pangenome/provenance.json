@@ -1,0 +1,48 @@
+{
+  "epav": {
+    "source_url": "https://zenodo.org/record/4994698/files/maize_503genotypes_raw_expression_values_FPKM.txt",
+    "source_sha256": "aba7c8af550e5dd20648b3f3bfea9f1ab64e06a0d381ae8690da3489f2d91a19",
+    "source_md5": "c81d34d50e46574785fa0112a3286f3b",
+    "source_doi": "10.5061/dryad.r73c5",
+    "paper_doi": "10.1105/tpc.113.119982",
+    "source_records": 48136,
+    "recovered_original_features": 2000,
+    "samples_in_corrected_matrix": 503,
+    "ambiguous_raw_sample_headers": {
+      "CM174": [
+        99,
+        360
+      ]
+    },
+    "ambiguous_sample_policy": "source-column technical IDs, both excluded from measured phenotype joins",
+    "matched_measured_phenotypes": 380,
+    "threshold": "FPKM >= 1, missing remains NA",
+    "feature_identity": "all 2000 old shifted binary vectors uniquely matched to source full records, including source metadata, at >=1 threshold",
+    "type": "expression presence; NOT genomic gene presence/absence; NOT published confidence-interval definition",
+    "selection": "original 2000 selected positions recovered, selection process unknown; not claimed phenotype-blind original feature sampling",
+    "phenotype": "S6 Last Juvenile Leaf; 2010/2011 field observations summarized by authors; exact ID with S1 accession only",
+    "phenotype_sha256": "e7ae41ebe55e04476c8e123fe66fd129b3bf9951d5b1cb51f39127d2625a873d"
+  },
+  "sv": {
+    "source_url": "https://zenodo.org/record/16576184/files/PopSV.zip",
+    "archive_member": "PopSV/all_chr.paragraph-SV.350.minmaf0.05_maxmissing0.6.bi.vcf.gz",
+    "range_receipt": "sv-range.json",
+    "old_sha256": "607ff6a88cbee64cde4c216598cd7e1b70a3fc81dcdf66d00e722b2d0db99a4b",
+    "old_records": 500,
+    "old_samples": 350,
+    "sample_header_exact": true,
+    "source_records_inspected": 500,
+    "exact_full_record_matches": 500,
+    "different_values_same_variant": 0,
+    "unmatched": 0,
+    "status": "PASS",
+    "matched_phenotypes": 28,
+    "phenotype_source": "same-paper Supplementary Table S1, Seedling SR (%) column N; Genotype column A; genetic origin P",
+    "phenotype_sha256": "e3292329f789a3a19e6285883aa1e417f34d0e661dc5163b0798bea56d6c453e",
+    "phenotype_doi": "10.1038/s41588-025-02378-w",
+    "vcf_reference": "B73v5, source VCF contig lengths retained"
+  },
+  "validation_scope": "5-fold prediction within each original cohort; no cross-cohort concatenation; not breeding efficacy or unbiased feature selection performance proof",
+  "active_revision": "20261020-fullanalysis",
+  "revision_notes": "修订版 20261020-fullanalysis。旧矩阵解析错位，不能继续按旧样本列名配对。全部2000旧技术位置在公开原始FPKM按>=1二值化后唯一匹配，真实gene_id和源行见epav_features.tsv。重新解析508字段记录末尾的空字段，与507列表头对齐，恢复503源样本列；同名CM174两列仅用来源列技术ID区别，两者都不参与表型配对。NA保持NA。380个材料通过同研究Hirsch2014 S1与S6唯一精确匹配，目标末片幼叶位置。此矩阵是表达存在，不是DNA PAV。原特征选取历史未完全恢复，不能作无偏预测效果证明。SV原350样本/500记录已与Yang2025 PopSV逐字匹配；28个材料匹配同研究S1 Seedling SR%。两群体独立五折rrBLUP，不跨群拼接。来源证明与参考版本见provenance，正式表型来源只用列明表格。"
+}

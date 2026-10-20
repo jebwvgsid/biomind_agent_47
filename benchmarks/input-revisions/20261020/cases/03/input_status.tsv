@@ -1,0 +1,2 @@
+case_id	input_revision	input_status	analysis_requirement	verification_scope
+BM-REMAIN-CROP-GXE-PAN-012__strict	20261020-fullanalysis	ready_verified	all_stages_must_run	GxE 2 validation targets; 380 epav +28 SV phenotype pairing; native rrBLUP CV

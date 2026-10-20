@@ -1,4 +1,4 @@
-# Input identity and row alignment (v1.1.0)
+# Input identity and row alignment (v1.1.1)
 
 `inspect_inputs.py` reads at most 4 MiB of decoded VCF header, stopping at
 `#CHROM`; small tables are limited to 16 MiB each. Its source identity covers the
@@ -31,9 +31,12 @@ in a table without a header. Numeric sample IDs require an explicit sample
 column when the table is otherwise wholly numeric.
 
 Duplicate/empty IDs, duplicate headers, ragged rows and invalid column choices
-fail with a JSON code and diagnostic fields. TFAM `IID` is the target identity;
-`FID` is not a fallback for a missing IID. Known unique IDs in a different order
-are explicitly reported as `reorder_required` and sorted into TFAM order.
+fail with a JSON code and diagnostic fields. The current helper uses globally unique
+TFAM `IID` as its key and preserves FID in output; `FID` is not a fallback for a
+missing IID. It cannot disambiguate the same IID in different families. Such
+data require an explicitly implemented, validated FID/IID adapter; do not strip
+families or invent unsupported helper options. Known unique IDs in a different
+order are explicitly reported as `reorder_required` and sorted into TFAM order.
 Missing/extra IDs fail before output creation. Missing phenotype rows may be
 encoded as `NA` only under an explicit `--allow-missing true` policy. A trait
 that would be entirely missing always fails. Q covariates require full sample
@@ -41,8 +44,8 @@ coverage and finite numeric values; they cannot use this missing-row escape.
 
 ## Q correspondence
 
-A pure numeric matrix has no inferred ID column. Counts such as 215 VCF samples
-and 215 Q rows establish count agreement, not row correspondence. The initial
+A pure numeric matrix has no inferred ID column. Equal genotype-sample and Q-row
+counts establish count agreement, not row correspondence. The initial
 inspection may finish with `q_mapping.status=unknown` and
 `blocked_operations=[q_covariate_preparation, association_using_q]`. It must
 not make a Q-dependent artifact or claim scientific completion. The sorter
@@ -53,8 +56,14 @@ explicit scientific decision and approval process.
 A labeled Q table may provide actual IDs. Merely selecting `--sample-column 1`
 in a wholly numeric table without a header does not establish Q correspondence;
 that case still requires the explicit version-locked map below. Otherwise obtain explicit row-to-
-sample assignments or independently verifiable generating provenance. For the
-local helper the supplied assignments have the following strict JSON shape:
+sample assignments or independently verifiable generating provenance covering
+every data row of the exact current Q file. A few example rows are insufficient
+to resume. Check the task's current input declaration and the supplied evidence;
+do not reuse a supplement for a different Q version or generate a replacement Q
+merely to satisfy the identity check. Once the provided evidence is exhausted,
+record the missing full-row basis and stop dependent work without unrelated
+environment or filesystem searches. For the local helper, the supplied
+assignments have the following strict JSON shape:
 
 ```json
 {
@@ -79,11 +88,21 @@ consistency of supplied assignments, not independent biological provenance.
 A map file path or an existing sample list alone does not satisfy this format.
 Never manufacture assignments for the current task merely to pass validation.
 
-For an unlabeled numeric Q with an established mapping:
+For an unlabeled numeric Q with an established mapping, set
+`Q_COLUMN_INDEXES` to the model's declared 1-based numeric columns. The sorter
+always writes `FID IID 1` before those columns; it does not test design rank.
+If the task specifies intercept + Q1/Q2 for a three-component Q, use
+`Q_COLUMN_INDEXES=1,2`, preserve all original Q columns separately, and record
+the resulting design rank. Do not include all row-sum-one Q components with an
+intercept, silently drop additional covariates, or replace Q with PCA. For a
+different task, follow its declared parameterization and resolve any rank
+conflict before association. Retain sample-order evidence for kinship too;
+reorder a labeled K on both axes, and require generating-order evidence for
+an unlabeled K rather than relying on its dimensions.
 
 ```bash
 python "${SKILL_DIR}/scripts/sort_phenotype.py" --tfam target.tfam --phenotype Q.tsv \
-  --header absent --input-kind q_covariates --trait 1,2,3 \
+  --header absent --input-kind q_covariates --trait "${Q_COLUMN_INDEXES}" \
   --q-row-map supplied-row-map.json --out-emmax-covar covariates.emmax.txt
 ```
 

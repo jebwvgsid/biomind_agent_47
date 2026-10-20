@@ -1,0 +1,44 @@
+[
+  {
+    "path": "inputs/gxe/environment_timeseries.tsv",
+    "workspace_path": "benchmarks/02.测试26.9/00.共享数据/fixtures_public/g2f_maize_gxe/environment_timeseries.tsv",
+    "bytes": 27778670,
+    "sha256": "ae278b77ca1256649f4406646f738e00a3d9e84261d06e87b7f6e9de9ca1e044"
+  },
+  {
+    "path": "inputs/gxe/genotype_matrix.tsv",
+    "workspace_path": "benchmarks/02.测试26.9/00.共享数据/fixtures_public/g2f_maize_gxe/genotype_matrix.tsv",
+    "bytes": 55059,
+    "sha256": "c6e4a5665702c9bd884f827eb2d935750c4bd497500e3d749b1aab6d7f107022"
+  },
+  {
+    "path": "inputs/gxe/growth_stage_window.tsv",
+    "workspace_path": "benchmarks/02.测试26.9/00.共享数据/fixtures_public/g2f_maize_gxe/growth_stage_window.tsv",
+    "bytes": 81,
+    "sha256": "13672ec50115bdd191b5d6ace84ce38beb583add2c3e91a11b287bd4b77ffb04"
+  },
+  {
+    "path": "inputs/gxe/phenotype_multi_environment.tsv",
+    "workspace_path": "benchmarks/02.测试26.9/00.共享数据/fixtures_public/g2f_maize_gxe/phenotype_multi_environment.tsv",
+    "bytes": 46225,
+    "sha256": "34df647b675bca2b861754732c1c36c1c985e58923d71a67fadce2cec5dc6dce"
+  },
+  {
+    "path": "inputs/gwas/Real_snp.vcf.gz",
+    "workspace_path": "benchmarks/02.测试26.9/00.共享数据/教学数据/04.重测序/Part6.GWAS/data/Real_snp.vcf.gz",
+    "bytes": 759180760,
+    "sha256": "0f9745d9e931a353ee61a55c577dbb8eb5196263b4bacb0e79e7a9450ee76ccc"
+  },
+  {
+    "path": "inputs/gwas/Real_trait.C16_0.table",
+    "workspace_path": "benchmarks/02.测试26.9/00.共享数据/教学数据/04.重测序/Part6.GWAS/data/Real_trait.C16_0.table",
+    "bytes": 2795,
+    "sha256": "3cc8469f7663251953f369cbdc135c3eba928c55971dc9fbe79520379d0a190d"
+  },
+  {
+    "path": "inputs/gwas/Real.gff3",
+    "workspace_path": "benchmarks/02.测试26.9/00.共享数据/教学数据/04.重测序/Part6.GWAS/data/Real.gff3",
+    "bytes": 44435360,
+    "sha256": "fcc57258b0b06ab2fbbde564f799774fbf87e450274fabf799c1e65a2d4276c2"
+  }
+]

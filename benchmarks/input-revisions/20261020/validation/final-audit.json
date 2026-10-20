@@ -1,0 +1,968 @@
+{
+  "status": "PASS",
+  "checks": [
+    {
+      "check": "BM-REMAIN-GWAS-008__strict: prompt hash",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "BM-REMAIN-GWAS-008__strict: runnable prompt contract",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "BM-REMAIN-GWAS-008__strict: backup data tree",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "BM-REMAIN-GWAS-008__strict: input manifest hash",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/DATA_SCHEMA.txt",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/DATA_SCHEMA.txt",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/Q_row_map.json",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/Q_row_map.json",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/Q_sample_map.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/Q_sample_map.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/Q_with_sample_ids.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/Q_with_sample_ids.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/Real.gff3",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/Real.gff3",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/Real_snp.regenerated.3.Q",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/Real_snp.regenerated.3.Q",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/Real_snp.regenerated.fam",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/Real_snp.regenerated.fam",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/Real_snp.vcf.gz",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/Real_snp.vcf.gz",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/Real_trait.C16_0.table",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/Real_trait.C16_0.table",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/chromosome_codes.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/chromosome_codes.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/covariates.FID_IID_intercept_Q1_Q2.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/covariates.FID_IID_intercept_Q1_Q2.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/formal_samples.fam",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/formal_samples.fam",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/formal_samples.log",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/formal_samples.log",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/formal_samples.nosex",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/formal_samples.nosex",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/formal_samples.tfam",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/formal_samples.tfam",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/phenotype.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/phenotype.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/provenance.json",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/provenance.json",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/sources/admixture.log",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/sources/admixture.log",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/sources/plink.log",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/sources/plink.log",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/sources/prepare_gwas.py.txt",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/sources/prepare_gwas.py.txt",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/sources/provenance_20261012.json",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/sources/provenance_20261012.json",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/sources/reproduce_commands.json",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/sources/reproduce_commands.json",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/sources/spacing.json",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/sources/spacing.json",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/vcf_to_plink_chromosome.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/04.重测序与变异分析/10.BM-REMAIN-GWAS-008__strict/data/gwas/vcf_to_plink_chromosome.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "BM-REMAIN-CROP-ADVGP-010__strict: prompt hash",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "BM-REMAIN-CROP-ADVGP-010__strict: runnable prompt contract",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "BM-REMAIN-CROP-ADVGP-010__strict: backup data tree",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "BM-REMAIN-CROP-ADVGP-010__strict: input manifest hash",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/DATA_SCHEMA.txt",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/DATA_SCHEMA.txt",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/cv_fold_design.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/cv_fold_design.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/expression_matrix.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/expression_matrix.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/genotype_matrix.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/genotype_matrix.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/gwas_weight_fold_design.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/gwas_weight_fold_design.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/metabolite_matrix.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/metabolite_matrix.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/model_config.json",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/model_config.json",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/omics_metadata.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/omics_metadata.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/outer_fold_membership.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/outer_fold_membership.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/phenotype.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/phenotype.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/provenance.json",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/multiomics/provenance.json",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/analysis_support/train_multiomics.py",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/analysis_support/train_multiomics.py",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "BM-REMAIN-CROP-GXE-PAN-012__strict: prompt hash",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "BM-REMAIN-CROP-GXE-PAN-012__strict: runnable prompt contract",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "BM-REMAIN-CROP-GXE-PAN-012__strict: backup data tree",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "BM-REMAIN-CROP-GXE-PAN-012__strict: input manifest hash",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/DATA_SCHEMA.txt",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/DATA_SCHEMA.txt",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/analysis_window.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/analysis_window.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/environment_timeseries.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/environment_timeseries.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/genotype_matrix.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/genotype_matrix.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/growth_stage_window.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/growth_stage_window.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/observation_identity.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/observation_identity.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/phenotype_multi_environment.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/phenotype_multi_environment.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/provenance.json",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/provenance.json",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/source_field_metadata.csv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/source_field_metadata.csv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/source_plot_records.csv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/source_plot_records.csv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/source_weather_readMe.txt",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/source_weather_readMe.txt",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/source_weather_records.csv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/source_weather_records.csv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/weather_daily.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/weather_daily.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/weather_source_map.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/weather_source_map.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/window_coverage.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/window_coverage.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/DATA_SCHEMA.txt",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/DATA_SCHEMA.txt",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/epav_cv_folds.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/epav_cv_folds.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/epav_excluded_samples.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/epav_excluded_samples.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/epav_features.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/epav_features.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/epav_matrix.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/epav_matrix.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/epav_phenotype.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/epav_phenotype.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/epav_sample_map.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/epav_sample_map.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/old_column_shift.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/old_column_shift.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/provenance.json",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/provenance.json",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/sources/Yang2025_S1.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/sources/Yang2025_S1.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/sources/tpc119982SupplementalDS1.xlsx",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/sources/tpc119982SupplementalDS1.xlsx",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/sources/tpc119982SupplementalDS6.xlsx",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/sources/tpc119982SupplementalDS6.xlsx",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/sv_cv_folds.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/sv_cv_folds.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/sv_excluded_samples.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/sv_excluded_samples.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/sv_genotype_matrix.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/sv_genotype_matrix.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/sv_matched.vcf",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/sv_matched.vcf",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/sv_phenotype.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/sv_phenotype.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/sv_sample_map.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/sv_sample_map.tsv",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "BM-REMAIN-DB-004__strict: prompt hash",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "BM-REMAIN-DB-004__strict: runnable prompt contract",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "BM-REMAIN-DB-004__strict: backup data tree",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "BM-REMAIN-DB-004__strict: input manifest hash",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/03.序列检索与数据库/04.BM-REMAIN-DB-004__strict/data/database/DATA_SCHEMA.txt",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/03.序列检索与数据库/04.BM-REMAIN-DB-004__strict/data/database/DATA_SCHEMA.txt",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input exists /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/03.序列检索与数据库/04.BM-REMAIN-DB-004__strict/data/database/query_input.json",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "input sha /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/03.序列检索与数据库/04.BM-REMAIN-DB-004__strict/data/database/query_input.json",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "all historical output metadata preserved",
+      "status": "PASS",
+      "detail": {
+        "n": 411,
+        "changed": []
+      }
+    },
+    {
+      "check": "gp_waiter native training result",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "gp_waiter OOF complete",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "gp_waiter fold 1 partition",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "gp_waiter fold 2 partition",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "gp_waiter fold 3 partition",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "gp_waiter fold 4 partition",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "gp_waiter fold 5 partition",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "cropformer native training result",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "cropformer OOF complete",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "cropformer fold 1 partition",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "cropformer fold 2 partition",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "cropformer fold 3 partition",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "cropformer fold 4 partition",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "cropformer fold 5 partition",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "dnngp native training result",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "dnngp OOF complete",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "dnngp fold 1 partition",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "dnngp fold 2 partition",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "dnngp fold 3 partition",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "dnngp fold 4 partition",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "dnngp fold 5 partition",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "GxE native verification",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "PAV source recovery",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "SV full source row matching",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "epav rrBLUP CV",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "sv rrBLUP CV",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "GWAS bounded native pipeline",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "database live endpoints",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "full VCF integrity and coordinate scan",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "GWAS real LD and annotation compatibility",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "R plot manhattan_subset.png",
+      "status": "PASS",
+      "detail": null
+    },
+    {
+      "check": "R plot qq_subset.png",
+      "status": "PASS",
+      "detail": null
+    }
+  ],
+  "n_checks": 191,
+  "unique_input_files": 71,
+  "historical_outputs_preserved": 411,
+  "formal_agent_benchmark_scored": false,
+  "production_changed_this_revision": false
+}

@@ -1,0 +1,2 @@
+case_id	input_revision	input_status	analysis_requirement	verification_scope
+BM-REMAIN-CROP-ADVGP-010__strict	20261020-fullanalysis	ready_verified	all_stages_must_run	all 3 native models, 5 folds, 24 OOF each

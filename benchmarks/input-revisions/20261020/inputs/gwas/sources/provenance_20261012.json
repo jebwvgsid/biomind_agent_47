@@ -1,0 +1,17 @@
+{
+  "method": "ADMIXTURE 1.4.0, K=3, seed=20261012, genotype-derived; old unmapped Q is not relabeled or reused",
+  "samples": 215,
+  "markers": 10404,
+  "spacing": {
+    "source": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part6.GWAS/data/Real_snp.vcf.gz",
+    "records_scanned": 1306470,
+    "records_retained": 13771,
+    "spacing_bp": 100000,
+    "selection": "first biallelic SNP at least 100 kb after preceding retained SNP per chromosome; genotype QC follows"
+  },
+  "qc": "MAF>=0.05; SNP missing fraction<=0.10; physical spacing 100kb (not an assertion of full LD independence)",
+  "sample_order_validation": "fresh PLINK FAM equals source VCF header exactly",
+  "software": "/public/home/liusiqi/03.毕设/benchmarks/biomind_autotest_20261011_preflight/data_supplement_research_20261012/completion_v2/tools/admixture_linux-1.4.0/admixture",
+  "scope": "small-marker population structure covariate for functional benchmark; K fixed by revised benchmark design, not inferred optimal",
+  "q_sha256": "f81760e90e4a6de9ed0b4ec9b75279c2d3712afbd897faa0735b6d0192de7508"
+}

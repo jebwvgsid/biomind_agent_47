@@ -1,0 +1,868 @@
+{
+  "schema_version": 1,
+  "q_sha256": "f81760e90e4a6de9ed0b4ec9b75279c2d3712afbd897faa0735b6d0192de7508",
+  "tfam_sha256": "b0f47659f020a183cd5270c9bb962bb4966f6fb40c0dcc619e89b8278f3bf3c9",
+  "basis": "2026-10-20 核查 sources/prepare_gwas.py.txt、reproduce_commands.json、plink.log、admixture.log；生成目录 spaced.3.Q/FAM 与本补件逐字节一致；生成源 VCF 与本正式 VCF 全文件 SHA256 相同。正式样本 TFAM 来自本次 PLINK 对完整正式 VCF 样本表头和首条完整记录的 --make-just-fam（只提取样本身份；正式 TPED 尚未生成，日志另附）；非旧 Q 身份恢复。",
+  "rows": [
+    {
+      "q_row": 1,
+      "sample_id": "GA0001"
+    },
+    {
+      "q_row": 2,
+      "sample_id": "GA0002"
+    },
+    {
+      "q_row": 3,
+      "sample_id": "GA0003"
+    },
+    {
+      "q_row": 4,
+      "sample_id": "GA0004"
+    },
+    {
+      "q_row": 5,
+      "sample_id": "GA0005"
+    },
+    {
+      "q_row": 6,
+      "sample_id": "GA0006"
+    },
+    {
+      "q_row": 7,
+      "sample_id": "GA0007"
+    },
+    {
+      "q_row": 8,
+      "sample_id": "GA0008"
+    },
+    {
+      "q_row": 9,
+      "sample_id": "GA0009"
+    },
+    {
+      "q_row": 10,
+      "sample_id": "GA0010"
+    },
+    {
+      "q_row": 11,
+      "sample_id": "GA0011"
+    },
+    {
+      "q_row": 12,
+      "sample_id": "GA0012"
+    },
+    {
+      "q_row": 13,
+      "sample_id": "GA0013"
+    },
+    {
+      "q_row": 14,
+      "sample_id": "GA0014"
+    },
+    {
+      "q_row": 15,
+      "sample_id": "GA0015"
+    },
+    {
+      "q_row": 16,
+      "sample_id": "GA0016"
+    },
+    {
+      "q_row": 17,
+      "sample_id": "GA0017"
+    },
+    {
+      "q_row": 18,
+      "sample_id": "GA0018"
+    },
+    {
+      "q_row": 19,
+      "sample_id": "GA0019"
+    },
+    {
+      "q_row": 20,
+      "sample_id": "GA0020"
+    },
+    {
+      "q_row": 21,
+      "sample_id": "GA0021"
+    },
+    {
+      "q_row": 22,
+      "sample_id": "GA0022"
+    },
+    {
+      "q_row": 23,
+      "sample_id": "GA0023"
+    },
+    {
+      "q_row": 24,
+      "sample_id": "GA0024"
+    },
+    {
+      "q_row": 25,
+      "sample_id": "GA0025"
+    },
+    {
+      "q_row": 26,
+      "sample_id": "GA0026"
+    },
+    {
+      "q_row": 27,
+      "sample_id": "GA0027"
+    },
+    {
+      "q_row": 28,
+      "sample_id": "GA0028"
+    },
+    {
+      "q_row": 29,
+      "sample_id": "GA0029"
+    },
+    {
+      "q_row": 30,
+      "sample_id": "GA0030"
+    },
+    {
+      "q_row": 31,
+      "sample_id": "GA0031"
+    },
+    {
+      "q_row": 32,
+      "sample_id": "GA0032"
+    },
+    {
+      "q_row": 33,
+      "sample_id": "GA0033"
+    },
+    {
+      "q_row": 34,
+      "sample_id": "GA0034"
+    },
+    {
+      "q_row": 35,
+      "sample_id": "GA0035"
+    },
+    {
+      "q_row": 36,
+      "sample_id": "GA0036"
+    },
+    {
+      "q_row": 37,
+      "sample_id": "GA0037"
+    },
+    {
+      "q_row": 38,
+      "sample_id": "GA0038"
+    },
+    {
+      "q_row": 39,
+      "sample_id": "GA0039"
+    },
+    {
+      "q_row": 40,
+      "sample_id": "GA0040"
+    },
+    {
+      "q_row": 41,
+      "sample_id": "GA0041"
+    },
+    {
+      "q_row": 42,
+      "sample_id": "GA0042"
+    },
+    {
+      "q_row": 43,
+      "sample_id": "GA0043"
+    },
+    {
+      "q_row": 44,
+      "sample_id": "GA0044"
+    },
+    {
+      "q_row": 45,
+      "sample_id": "GA0045"
+    },
+    {
+      "q_row": 46,
+      "sample_id": "GA0046"
+    },
+    {
+      "q_row": 47,
+      "sample_id": "GA0047"
+    },
+    {
+      "q_row": 48,
+      "sample_id": "GA0048"
+    },
+    {
+      "q_row": 49,
+      "sample_id": "GA0049"
+    },
+    {
+      "q_row": 50,
+      "sample_id": "GA0050"
+    },
+    {
+      "q_row": 51,
+      "sample_id": "GA0051"
+    },
+    {
+      "q_row": 52,
+      "sample_id": "GA0052"
+    },
+    {
+      "q_row": 53,
+      "sample_id": "GA0053"
+    },
+    {
+      "q_row": 54,
+      "sample_id": "GA0054"
+    },
+    {
+      "q_row": 55,
+      "sample_id": "GA0055"
+    },
+    {
+      "q_row": 56,
+      "sample_id": "GA0056"
+    },
+    {
+      "q_row": 57,
+      "sample_id": "GA0057"
+    },
+    {
+      "q_row": 58,
+      "sample_id": "GA0058"
+    },
+    {
+      "q_row": 59,
+      "sample_id": "GA0059"
+    },
+    {
+      "q_row": 60,
+      "sample_id": "GA0060"
+    },
+    {
+      "q_row": 61,
+      "sample_id": "GA0061"
+    },
+    {
+      "q_row": 62,
+      "sample_id": "GA0062"
+    },
+    {
+      "q_row": 63,
+      "sample_id": "GA0063"
+    },
+    {
+      "q_row": 64,
+      "sample_id": "GA0064"
+    },
+    {
+      "q_row": 65,
+      "sample_id": "GA0065"
+    },
+    {
+      "q_row": 66,
+      "sample_id": "GA0066"
+    },
+    {
+      "q_row": 67,
+      "sample_id": "GA0067"
+    },
+    {
+      "q_row": 68,
+      "sample_id": "GA0068"
+    },
+    {
+      "q_row": 69,
+      "sample_id": "GA0069"
+    },
+    {
+      "q_row": 70,
+      "sample_id": "GA0070"
+    },
+    {
+      "q_row": 71,
+      "sample_id": "GA0071"
+    },
+    {
+      "q_row": 72,
+      "sample_id": "GA0072"
+    },
+    {
+      "q_row": 73,
+      "sample_id": "GA0073"
+    },
+    {
+      "q_row": 74,
+      "sample_id": "GA0074"
+    },
+    {
+      "q_row": 75,
+      "sample_id": "GA0075"
+    },
+    {
+      "q_row": 76,
+      "sample_id": "GA0076"
+    },
+    {
+      "q_row": 77,
+      "sample_id": "GA0077"
+    },
+    {
+      "q_row": 78,
+      "sample_id": "GA0078"
+    },
+    {
+      "q_row": 79,
+      "sample_id": "GA0079"
+    },
+    {
+      "q_row": 80,
+      "sample_id": "GA0080"
+    },
+    {
+      "q_row": 81,
+      "sample_id": "GA0081"
+    },
+    {
+      "q_row": 82,
+      "sample_id": "GA0082"
+    },
+    {
+      "q_row": 83,
+      "sample_id": "GA0083"
+    },
+    {
+      "q_row": 84,
+      "sample_id": "GA0084"
+    },
+    {
+      "q_row": 85,
+      "sample_id": "GA0085"
+    },
+    {
+      "q_row": 86,
+      "sample_id": "GA0086"
+    },
+    {
+      "q_row": 87,
+      "sample_id": "GA0087"
+    },
+    {
+      "q_row": 88,
+      "sample_id": "GA0088"
+    },
+    {
+      "q_row": 89,
+      "sample_id": "GA0089"
+    },
+    {
+      "q_row": 90,
+      "sample_id": "GA0090"
+    },
+    {
+      "q_row": 91,
+      "sample_id": "GA0091"
+    },
+    {
+      "q_row": 92,
+      "sample_id": "GA0092"
+    },
+    {
+      "q_row": 93,
+      "sample_id": "GA0093"
+    },
+    {
+      "q_row": 94,
+      "sample_id": "GA0094"
+    },
+    {
+      "q_row": 95,
+      "sample_id": "GA0095"
+    },
+    {
+      "q_row": 96,
+      "sample_id": "GA0096"
+    },
+    {
+      "q_row": 97,
+      "sample_id": "GA0097"
+    },
+    {
+      "q_row": 98,
+      "sample_id": "GA0098"
+    },
+    {
+      "q_row": 99,
+      "sample_id": "GA0099"
+    },
+    {
+      "q_row": 100,
+      "sample_id": "GA0100"
+    },
+    {
+      "q_row": 101,
+      "sample_id": "GA0101"
+    },
+    {
+      "q_row": 102,
+      "sample_id": "GA0102"
+    },
+    {
+      "q_row": 103,
+      "sample_id": "GA0103"
+    },
+    {
+      "q_row": 104,
+      "sample_id": "GA0104"
+    },
+    {
+      "q_row": 105,
+      "sample_id": "GA0105"
+    },
+    {
+      "q_row": 106,
+      "sample_id": "GA0106"
+    },
+    {
+      "q_row": 107,
+      "sample_id": "GA0107"
+    },
+    {
+      "q_row": 108,
+      "sample_id": "GA0108"
+    },
+    {
+      "q_row": 109,
+      "sample_id": "GA0109"
+    },
+    {
+      "q_row": 110,
+      "sample_id": "GA0110"
+    },
+    {
+      "q_row": 111,
+      "sample_id": "GA0111"
+    },
+    {
+      "q_row": 112,
+      "sample_id": "GA0112"
+    },
+    {
+      "q_row": 113,
+      "sample_id": "GA0113"
+    },
+    {
+      "q_row": 114,
+      "sample_id": "GA0114"
+    },
+    {
+      "q_row": 115,
+      "sample_id": "GA0115"
+    },
+    {
+      "q_row": 116,
+      "sample_id": "GA0116"
+    },
+    {
+      "q_row": 117,
+      "sample_id": "GA0117"
+    },
+    {
+      "q_row": 118,
+      "sample_id": "GA0118"
+    },
+    {
+      "q_row": 119,
+      "sample_id": "GA0119"
+    },
+    {
+      "q_row": 120,
+      "sample_id": "GA0120"
+    },
+    {
+      "q_row": 121,
+      "sample_id": "GA0121"
+    },
+    {
+      "q_row": 122,
+      "sample_id": "GA0122"
+    },
+    {
+      "q_row": 123,
+      "sample_id": "GA0123"
+    },
+    {
+      "q_row": 124,
+      "sample_id": "GA0124"
+    },
+    {
+      "q_row": 125,
+      "sample_id": "GA0125"
+    },
+    {
+      "q_row": 126,
+      "sample_id": "GA0126"
+    },
+    {
+      "q_row": 127,
+      "sample_id": "GA0127"
+    },
+    {
+      "q_row": 128,
+      "sample_id": "GA0128"
+    },
+    {
+      "q_row": 129,
+      "sample_id": "GA0129"
+    },
+    {
+      "q_row": 130,
+      "sample_id": "GA0130"
+    },
+    {
+      "q_row": 131,
+      "sample_id": "GA0131"
+    },
+    {
+      "q_row": 132,
+      "sample_id": "GA0132"
+    },
+    {
+      "q_row": 133,
+      "sample_id": "GA0133"
+    },
+    {
+      "q_row": 134,
+      "sample_id": "GA0134"
+    },
+    {
+      "q_row": 135,
+      "sample_id": "GA0135"
+    },
+    {
+      "q_row": 136,
+      "sample_id": "GA0136"
+    },
+    {
+      "q_row": 137,
+      "sample_id": "GA0137"
+    },
+    {
+      "q_row": 138,
+      "sample_id": "GA0138"
+    },
+    {
+      "q_row": 139,
+      "sample_id": "GA0139"
+    },
+    {
+      "q_row": 140,
+      "sample_id": "GA0140"
+    },
+    {
+      "q_row": 141,
+      "sample_id": "GA0141"
+    },
+    {
+      "q_row": 142,
+      "sample_id": "GA0142"
+    },
+    {
+      "q_row": 143,
+      "sample_id": "GA0143"
+    },
+    {
+      "q_row": 144,
+      "sample_id": "GA0144"
+    },
+    {
+      "q_row": 145,
+      "sample_id": "GA0145"
+    },
+    {
+      "q_row": 146,
+      "sample_id": "GA0146"
+    },
+    {
+      "q_row": 147,
+      "sample_id": "GA0147"
+    },
+    {
+      "q_row": 148,
+      "sample_id": "GA0148"
+    },
+    {
+      "q_row": 149,
+      "sample_id": "GA0149"
+    },
+    {
+      "q_row": 150,
+      "sample_id": "GA0150"
+    },
+    {
+      "q_row": 151,
+      "sample_id": "GA0151"
+    },
+    {
+      "q_row": 152,
+      "sample_id": "GA0152"
+    },
+    {
+      "q_row": 153,
+      "sample_id": "GA0153"
+    },
+    {
+      "q_row": 154,
+      "sample_id": "GA0154"
+    },
+    {
+      "q_row": 155,
+      "sample_id": "GA0155"
+    },
+    {
+      "q_row": 156,
+      "sample_id": "GA0156"
+    },
+    {
+      "q_row": 157,
+      "sample_id": "GA0157"
+    },
+    {
+      "q_row": 158,
+      "sample_id": "GA0158"
+    },
+    {
+      "q_row": 159,
+      "sample_id": "GA0159"
+    },
+    {
+      "q_row": 160,
+      "sample_id": "GA0160"
+    },
+    {
+      "q_row": 161,
+      "sample_id": "GA0161"
+    },
+    {
+      "q_row": 162,
+      "sample_id": "GA0162"
+    },
+    {
+      "q_row": 163,
+      "sample_id": "GA0163"
+    },
+    {
+      "q_row": 164,
+      "sample_id": "GA0164"
+    },
+    {
+      "q_row": 165,
+      "sample_id": "GA0165"
+    },
+    {
+      "q_row": 166,
+      "sample_id": "GA0166"
+    },
+    {
+      "q_row": 167,
+      "sample_id": "GA0167"
+    },
+    {
+      "q_row": 168,
+      "sample_id": "GA0168"
+    },
+    {
+      "q_row": 169,
+      "sample_id": "GA0169"
+    },
+    {
+      "q_row": 170,
+      "sample_id": "GA0170"
+    },
+    {
+      "q_row": 171,
+      "sample_id": "GA0171"
+    },
+    {
+      "q_row": 172,
+      "sample_id": "GA0172"
+    },
+    {
+      "q_row": 173,
+      "sample_id": "GA0173"
+    },
+    {
+      "q_row": 174,
+      "sample_id": "GA0174"
+    },
+    {
+      "q_row": 175,
+      "sample_id": "GA0175"
+    },
+    {
+      "q_row": 176,
+      "sample_id": "GA0176"
+    },
+    {
+      "q_row": 177,
+      "sample_id": "GA0177"
+    },
+    {
+      "q_row": 178,
+      "sample_id": "GA0178"
+    },
+    {
+      "q_row": 179,
+      "sample_id": "GA0179"
+    },
+    {
+      "q_row": 180,
+      "sample_id": "GA0180"
+    },
+    {
+      "q_row": 181,
+      "sample_id": "GA0181"
+    },
+    {
+      "q_row": 182,
+      "sample_id": "GA0182"
+    },
+    {
+      "q_row": 183,
+      "sample_id": "GA0183"
+    },
+    {
+      "q_row": 184,
+      "sample_id": "GA0184"
+    },
+    {
+      "q_row": 185,
+      "sample_id": "GA0185"
+    },
+    {
+      "q_row": 186,
+      "sample_id": "GA0186"
+    },
+    {
+      "q_row": 187,
+      "sample_id": "GA0187"
+    },
+    {
+      "q_row": 188,
+      "sample_id": "GA0188"
+    },
+    {
+      "q_row": 189,
+      "sample_id": "GA0189"
+    },
+    {
+      "q_row": 190,
+      "sample_id": "GA0190"
+    },
+    {
+      "q_row": 191,
+      "sample_id": "GA0191"
+    },
+    {
+      "q_row": 192,
+      "sample_id": "GA0192"
+    },
+    {
+      "q_row": 193,
+      "sample_id": "GA0193"
+    },
+    {
+      "q_row": 194,
+      "sample_id": "GA0194"
+    },
+    {
+      "q_row": 195,
+      "sample_id": "GA0195"
+    },
+    {
+      "q_row": 196,
+      "sample_id": "GA0196"
+    },
+    {
+      "q_row": 197,
+      "sample_id": "GA0197"
+    },
+    {
+      "q_row": 198,
+      "sample_id": "GA0198"
+    },
+    {
+      "q_row": 199,
+      "sample_id": "GA0199"
+    },
+    {
+      "q_row": 200,
+      "sample_id": "GA0200"
+    },
+    {
+      "q_row": 201,
+      "sample_id": "GA0201"
+    },
+    {
+      "q_row": 202,
+      "sample_id": "GA0202"
+    },
+    {
+      "q_row": 203,
+      "sample_id": "GA0203"
+    },
+    {
+      "q_row": 204,
+      "sample_id": "GA0204"
+    },
+    {
+      "q_row": 205,
+      "sample_id": "GA0205"
+    },
+    {
+      "q_row": 206,
+      "sample_id": "GA0206"
+    },
+    {
+      "q_row": 207,
+      "sample_id": "GA0207"
+    },
+    {
+      "q_row": 208,
+      "sample_id": "GA0208"
+    },
+    {
+      "q_row": 209,
+      "sample_id": "GA0209"
+    },
+    {
+      "q_row": 210,
+      "sample_id": "GA0210"
+    },
+    {
+      "q_row": 211,
+      "sample_id": "GA0211"
+    },
+    {
+      "q_row": 212,
+      "sample_id": "GA0212"
+    },
+    {
+      "q_row": 213,
+      "sample_id": "GA0213"
+    },
+    {
+      "q_row": 214,
+      "sample_id": "GA0214"
+    },
+    {
+      "q_row": 215,
+      "sample_id": "GA0215"
+    }
+  ]
+}

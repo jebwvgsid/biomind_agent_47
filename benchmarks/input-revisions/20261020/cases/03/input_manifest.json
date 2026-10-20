@@ -1,0 +1,275 @@
+{
+  "case_id": "BM-REMAIN-CROP-GXE-PAN-012__strict",
+  "input_revision": "20261020-fullanalysis",
+  "purpose": "actual_analysis",
+  "original_question_backed_up_at": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/backup/03",
+  "output_directory": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/output_inputfix_20261020",
+  "files": [
+    {
+      "relative_path": "data/gxe/DATA_SCHEMA.txt",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/DATA_SCHEMA.txt",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/gxe/DATA_SCHEMA.txt",
+      "bytes": 858,
+      "sha256": "dba86dd7c4a19e3892073dd7eb3f40b06e19cfe847865485f1e85f02192017d5",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/gxe/analysis_window.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/analysis_window.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/gxe/analysis_window.tsv",
+      "bytes": 101,
+      "sha256": "16b64314c905b4d5610fbf83af40703144ac3740cc3af9d844fdfb7298009b32",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/gxe/environment_timeseries.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/environment_timeseries.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/00.共享数据/fixtures_public/g2f_maize_gxe/environment_timeseries.tsv",
+      "bytes": 27778670,
+      "sha256": "ae278b77ca1256649f4406646f738e00a3d9e84261d06e87b7f6e9de9ca1e044",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/gxe/genotype_matrix.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/genotype_matrix.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/00.共享数据/fixtures_public/g2f_maize_gxe/genotype_matrix.tsv",
+      "bytes": 55059,
+      "sha256": "c6e4a5665702c9bd884f827eb2d935750c4bd497500e3d749b1aab6d7f107022",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/gxe/growth_stage_window.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/growth_stage_window.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/00.共享数据/fixtures_public/g2f_maize_gxe/growth_stage_window.tsv",
+      "bytes": 81,
+      "sha256": "13672ec50115bdd191b5d6ace84ce38beb583add2c3e91a11b287bd4b77ffb04",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/gxe/observation_identity.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/observation_identity.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/gxe/observation_identity.tsv",
+      "bytes": 73773,
+      "sha256": "0b72e7939a1c4b88f5120a365397ca8f2d0d8f975d5f491e22d918aa0db02204",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/gxe/phenotype_multi_environment.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/phenotype_multi_environment.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/00.共享数据/fixtures_public/g2f_maize_gxe/phenotype_multi_environment.tsv",
+      "bytes": 46225,
+      "sha256": "34df647b675bca2b861754732c1c36c1c985e58923d71a67fadce2cec5dc6dce",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/gxe/provenance.json",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/provenance.json",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/gxe/provenance.json",
+      "bytes": 3713,
+      "sha256": "0d21bb9f6efd8e60fede6c3cb1887f00ff658785307e9518a3f90a3b85908e97",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/gxe/source_field_metadata.csv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/source_field_metadata.csv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/gxe/source_field_metadata.csv",
+      "bytes": 13940,
+      "sha256": "0fb4aca2d7ec809b0c98dc1c9fde0b019bc3bdc90c26102ba7ad02d2ece35355",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/gxe/source_plot_records.csv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/source_plot_records.csv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/gxe/source_plot_records.csv",
+      "bytes": 179845,
+      "sha256": "4aed4b0cd95270f386984fc9d7f0cda6586e78c9cf63ddea78416d15c082f22b",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/gxe/source_weather_readMe.txt",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/source_weather_readMe.txt",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/gxe/source_weather_readMe.txt",
+      "bytes": 1159,
+      "sha256": "4b4374a54c18c652a413ea88210c6500871dc25ab2f38fd4b8e14c154325b8f0",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/gxe/source_weather_records.csv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/source_weather_records.csv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/gxe/source_weather_records.csv",
+      "bytes": 18368047,
+      "sha256": "e3e2b7cb06ce7890c077fe66ec3e521e63515f958fcf5f7a3e0b787721564125",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/gxe/weather_daily.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/weather_daily.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/gxe/weather_daily.tsv",
+      "bytes": 162522,
+      "sha256": "cc2ccc7fba4ed5e836e466b1f8c8220ea3f7f2162579fa7b12fad655ce3c1ff6",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/gxe/weather_source_map.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/weather_source_map.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/gxe/weather_source_map.tsv",
+      "bytes": 3285,
+      "sha256": "8b7a0206ca94d9afa327134bba8fa2c43367abe3e51a9cfd08194575dcf06a35",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/gxe/window_coverage.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/gxe/window_coverage.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/gxe/window_coverage.tsv",
+      "bytes": 1978,
+      "sha256": "07e45c84d70fd5896e5afc03de0dd00b631974ecf93a546458f56f3c47f42953",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/pangenome/DATA_SCHEMA.txt",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/DATA_SCHEMA.txt",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/pangenome/DATA_SCHEMA.txt",
+      "bytes": 855,
+      "sha256": "4c745fd43f18421cb071ffe8da1c06a17e426b9d4993e9e07ae9830e5dd48810",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/pangenome/epav_cv_folds.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/epav_cv_folds.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/pangenome/epav_cv_folds.tsv",
+      "bytes": 3189,
+      "sha256": "c0a303b6da1ed8d1ce8060c431e2f87c2a33e127698bf544ad95ffafa992ea87",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/pangenome/epav_excluded_samples.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/epav_excluded_samples.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/pangenome/epav_excluded_samples.tsv",
+      "bytes": 9340,
+      "sha256": "a8a440b53e124420281786b35c459c00ad789c8f5fd117802fe29dc42b970a0d",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/pangenome/epav_features.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/epav_features.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/pangenome/epav_features.tsv",
+      "bytes": 208732,
+      "sha256": "dd3b9eef6fc55fcb03e66a19503b08b154b778d26d9e341263717063b33c5c7f",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/pangenome/epav_matrix.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/epav_matrix.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/pangenome/epav_matrix.tsv",
+      "bytes": 2046370,
+      "sha256": "4ecccbf513eb6930a1d006f8cc93ca990cc7e95b5aad9872bc1602e74a04cbbe",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/pangenome/epav_phenotype.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/epav_phenotype.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/pangenome/epav_phenotype.tsv",
+      "bytes": 15358,
+      "sha256": "f4a5b0c79aa5f01e7e2a44863134b5301468ace5717f174a39711c5e18ac3ca4",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/pangenome/epav_sample_map.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/epav_sample_map.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/pangenome/epav_sample_map.tsv",
+      "bytes": 49045,
+      "sha256": "a735fbb7f22ec7d0f99c92b243802095f83700269527d781f84600b657480e69",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/pangenome/old_column_shift.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/old_column_shift.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/pangenome/old_column_shift.tsv",
+      "bytes": 11573,
+      "sha256": "448a612fd02e968b20ec57303c760a5a975f28d88c9ee0eceab8ec6409ee3ad4",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/pangenome/provenance.json",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/provenance.json",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/pangenome/provenance.json",
+      "bytes": 3385,
+      "sha256": "14010a223598d389566bee72d098c2c5d3db31e25dd1bc1ff0d833613574794b",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/pangenome/sources/Yang2025_S1.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/sources/Yang2025_S1.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/pangenome/sources/Yang2025_S1.tsv",
+      "bytes": 14348,
+      "sha256": "5655e5cf26000dbb5904d2015ea9f39868da735a7fe59cafaecb51dcc2cf71d2",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/pangenome/sources/tpc119982SupplementalDS1.xlsx",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/sources/tpc119982SupplementalDS1.xlsx",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/pangenome/sources/tpc119982SupplementalDS1.xlsx",
+      "bytes": 126891,
+      "sha256": "84119457fe5fb32bf2a77f6bc1bb2ef7dece5e299a9f48a10c3611180c3cc5b3",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/pangenome/sources/tpc119982SupplementalDS6.xlsx",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/sources/tpc119982SupplementalDS6.xlsx",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/pangenome/sources/tpc119982SupplementalDS6.xlsx",
+      "bytes": 62385,
+      "sha256": "e7ae41ebe55e04476c8e123fe66fd129b3bf9951d5b1cb51f39127d2625a873d",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/pangenome/sv_cv_folds.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/sv_cv_folds.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/pangenome/sv_cv_folds.tsv",
+      "bytes": 288,
+      "sha256": "57d53ba74fa2dd78848f2f04a5b4238e4cba3ab3a6ee4ebcee3da8cd5a3dc68a",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/pangenome/sv_excluded_samples.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/sv_excluded_samples.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/pangenome/sv_excluded_samples.tsv",
+      "bytes": 20941,
+      "sha256": "3a4fe8bc12ae581ff7f0bd1b47c1d86e83834314ab3344c00c0de0960e155f67",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/pangenome/sv_genotype_matrix.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/sv_genotype_matrix.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/pangenome/sv_genotype_matrix.tsv",
+      "bytes": 2548030,
+      "sha256": "78305ba6682de9cb00180cc81c658f864decbb51f13ad9522e50e1bf5ce23cbb",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/pangenome/sv_matched.vcf",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/sv_matched.vcf",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/pangenome/sv_matched.vcf",
+      "bytes": 2609235,
+      "sha256": "06a913f22ece52b87542c184670b5b5e0d642c65ad49de856c2ff47ab0b3477c",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/pangenome/sv_phenotype.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/sv_phenotype.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/pangenome/sv_phenotype.tsv",
+      "bytes": 1194,
+      "sha256": "ed5ae9af7086e1cfc5549ad7323744fa0e3ded15a923be83ef0bae2b54aa73c9",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/pangenome/sv_sample_map.tsv",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/10.BM-REMAIN-CROP-GXE-PAN-012__strict/data/pangenome/sv_sample_map.tsv",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/pangenome/sv_sample_map.tsv",
+      "bytes": 2442,
+      "sha256": "f7991306de3e0062342772d3e072ea3c9d331726d642fd7393e75a6c81d70f83",
+      "role": "formal_input_or_source_document"
+    }
+  ],
+  "hidden_truth_excluded": true,
+  "historical_scores_reused": false
+}

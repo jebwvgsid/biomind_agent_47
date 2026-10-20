@@ -1,0 +1,2 @@
+case_id	input_revision	input_status	analysis_requirement	verification_scope
+BM-REMAIN-GWAS-008__strict	20261020-fullanalysis	ready_verified	all_stages_must_run	real 5000-record subset through PLINK/K/EMMAX; full VCF not rerun

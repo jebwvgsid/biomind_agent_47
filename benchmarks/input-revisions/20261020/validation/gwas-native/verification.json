@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "scope": "first 5000 real VCF records, not full GWAS or benchmark scoring",
+  "vcf_samples": 215,
+  "post_qc_markers": 3144,
+  "emmax_records": 3144,
+  "emmax_columns": [
+    "marker",
+    "beta",
+    "SE",
+    "p"
+  ],
+  "kinship": "/public/home/liusiqi/03.\u6bd5\u8bbe/BioMind_Original_Cases_Revision_20261020/evidence/gwas-native/markers.aBN.kinf",
+  "slurm_job_id": "5193987"
+}

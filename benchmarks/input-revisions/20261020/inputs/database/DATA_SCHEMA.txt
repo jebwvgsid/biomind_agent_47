@@ -1,0 +1,1 @@
+修订版 20261020-fullanalysis。query_input.json 给定查询主题、分页范围、链接获取上限、Ensembl ENSG00000142166 (IFNAR1, human)、限频及超时规则。实际元数据应联网重新检索，不把验收响应当本次结果；首次20条搜索结果不等于全库。无需用户补 gene ID。不得下载FASTQ。

@@ -1,0 +1,7 @@
+{
+  "source": "/public/home/liusiqi/03.\u6bd5\u8bbe/benchmarks/01.\u6d4b\u8bd5/04.\u91cd\u6d4b\u5e8f/Part6.GWAS/data/Real_snp.vcf.gz",
+  "records_scanned": 1306470,
+  "records_retained": 13771,
+  "spacing_bp": 100000,
+  "selection": "first biallelic SNP at least 100 kb after preceding retained SNP per chromosome; genotype QC follows"
+}

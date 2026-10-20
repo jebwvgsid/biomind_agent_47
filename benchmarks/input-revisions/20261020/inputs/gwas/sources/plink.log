@@ -1,0 +1,43 @@
+PLINK v1.9.0 64-bit (27 Sep 2026)                  cog-genomics.org/plink/1.9/
+(C) 2005-2026 Shaun Purcell, Christopher Chang   GNU General Public License v3
+Logging to /public/home/liusiqi/03.毕设/benchmarks/biomind_autotest_20261011_preflight/data_supplement_research_20261012/completion_v2/gwas_work/spaced.log.
+Options in effect:
+  --allow-extra-chr
+  --double-id
+  --geno 0.1
+  --maf 0.05
+  --make-bed
+  --memory 256
+  --out /public/home/liusiqi/03.毕设/benchmarks/biomind_autotest_20261011_preflight/data_supplement_research_20261012/completion_v2/gwas_work/spaced
+  --threads 2
+  --vcf /public/home/liusiqi/03.毕设/benchmarks/biomind_autotest_20261011_preflight/data_supplement_research_20261012/completion_v2/gwas_work/spaced.vcf.gz
+
+515118 MB RAM detected; reserving 256 MB for main workspace.
+--vcf: 1k variants complete.--vcf: 2k variants complete.--vcf: 3k variants complete.--vcf: 4k variants complete.--vcf: 5k variants complete.--vcf: 6k variants complete.--vcf: 7k variants complete.--vcf: 8k variants complete.--vcf: 9k variants complete.--vcf: 10k variants complete.--vcf: 11k variants complete.--vcf: 12k variants complete.--vcf: 13k variants complete.--vcf:
+/public/home/liusiqi/03.毕设/benchmarks/biomind_autotest_20261011_preflight/data_supplement_research_20261012/completion_v2/gwas_work/spaced-temporary.bed
++
+/public/home/liusiqi/03.毕设/benchmarks/biomind_autotest_20261011_preflight/data_supplement_research_20261012/completion_v2/gwas_work/spaced-temporary.bim
++
+/public/home/liusiqi/03.毕设/benchmarks/biomind_autotest_20261011_preflight/data_supplement_research_20261012/completion_v2/gwas_work/spaced-temporary.fam
+written.
+13771 variants loaded from .bim file.
+215 people (0 males, 0 females, 215 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to
+/public/home/liusiqi/03.毕设/benchmarks/biomind_autotest_20261011_preflight/data_supplement_research_20261012/completion_v2/gwas_work/spaced.nosex
+.
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 215 founders and 0 nonfounders present.
+Calculating allele frequencies... 0%1%2%3%4%5%6%7%8%9%10%11%12%13%14%15%16%17%18%19%20%21%22%23%24%25%26%27%28%29%30%31%32%33%34%35%36%37%38%39%40%41%42%43%44%45%46%47%48%49%50%51%52%53%54%55%56%57%58%59%60%61%62%63%64%65%66%67%68%69%70%71%72%73%74%75%76%77%78%79%80%81%82%83%84%85%86%87%88%89%90%91%92%93%94%95%96%97%98%99% done.
+Total genotyping rate is 0.932028.
+3367 variants removed due to missing genotype data (--geno).
+0 variants removed due to minor allele threshold(s)
+(--maf/--max-maf/--mac/--max-mac).
+10404 variants and 215 people pass filters and QC.
+Note: No phenotypes present.
+--make-bed to
+/public/home/liusiqi/03.毕设/benchmarks/biomind_autotest_20261011_preflight/data_supplement_research_20261012/completion_v2/gwas_work/spaced.bed
++
+/public/home/liusiqi/03.毕设/benchmarks/biomind_autotest_20261011_preflight/data_supplement_research_20261012/completion_v2/gwas_work/spaced.bim
++
+/public/home/liusiqi/03.毕设/benchmarks/biomind_autotest_20261011_preflight/data_supplement_research_20261012/completion_v2/gwas_work/spaced.fam
+... 0%1%2%3%4%5%6%7%8%9%10%11%12%13%14%15%16%17%18%19%20%21%22%23%24%25%26%27%28%29%30%31%32%33%34%35%36%37%38%39%40%41%42%43%44%45%46%47%48%49%50%51%52%53%54%55%56%57%58%59%60%61%62%63%64%65%66%67%68%69%70%71%72%73%74%75%76%77%78%79%80%81%82%83%84%85%86%87%88%89%90%91%92%93%94%95%96%97%98%99%done.

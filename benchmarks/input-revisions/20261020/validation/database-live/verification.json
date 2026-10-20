@@ -1,0 +1,73 @@
+{
+  "geo": {
+    "total_count": 216,
+    "page_size": 20,
+    "accessions": [
+      "GSE335916",
+      "GSE325520",
+      "GSE339365",
+      "GSE339599",
+      "GSE338165",
+      "GSE322527",
+      "GSE309375",
+      "GSE306664",
+      "GSE256041",
+      "GSE326589",
+      "GSE233321",
+      "GSE326661",
+      "GSE317902",
+      "GSE275341",
+      "GSE314010",
+      "GSE318408",
+      "GSE317465",
+      "GSE310935",
+      "GSE283746",
+      "GSE283744"
+    ]
+  },
+  "sra": {
+    "status": "PASS",
+    "geo_uid": "200335916",
+    "linked_count": 31,
+    "fetched_ids": [
+      "45212694",
+      "45212693",
+      "45212692",
+      "45212691",
+      "45212690",
+      "45212689",
+      "45212688",
+      "45212687",
+      "45212686",
+      "45212685",
+      "45212684",
+      "45212683",
+      "45212682",
+      "45212681",
+      "45212680",
+      "45212679",
+      "45212678",
+      "45212677",
+      "45212676",
+      "45212675"
+    ],
+    "xml_root": "EXPERIMENT_PACKAGE_SET"
+  },
+  "pubmed": {
+    "status": "PASS",
+    "geo_uid": "200335916",
+    "linked_count": 1,
+    "fetched_ids": [
+      "42705863"
+    ],
+    "xml_root": "PubmedArticleSet"
+  },
+  "ensembl": {
+    "status": "PASS",
+    "id": "ENSG00000142166",
+    "species": "homo_sapiens",
+    "assembly": "GRCh38"
+  },
+  "scope": "Live first GEO search page and real linked fetch for SRA/PubMed plus IFNAR1; not full benchmark evaluation",
+  "status": "PASS"
+}

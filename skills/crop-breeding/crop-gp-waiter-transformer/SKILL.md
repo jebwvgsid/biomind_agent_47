@@ -50,13 +50,17 @@ Read `references/install-and-data.md` before installing GP-WAITER, checking the 
 - `marker_annotation.gff3` or SNP coordinate table: optional, for SNP-to-gene mapping.
 - `covariates.tsv`: optional population structure, batch, environment, family, or year covariates.
 
+## Task Scope And Shared Checks
+
+Read `../_shared/gp-audit-and-data-validation.md` sections A–C for task evidence, matrix identity and observation checks. Apply the checks relevant to the requested analysis; complete a requested readiness audit even when a later training stage lacks inputs or resources. Keep design declarations, actual execution and stage-specific blockers separate.
+
 ## Workflow
 
-1. Verify sample IDs, marker IDs, missingness, marker order, and phenotype scale.
-2. Convert GWAS p-values to weights with `-log10(p)`, cap infinite values, and record the cap rule.
+1. Apply the shared matrix/ID checks; verify sample/marker order, missingness, phenotype scale and the provenance of GWAS weights.
+2. Fix the prediction target and outer evaluation split before generating weights. Use GWAS fitted only within the permitted training partition or documented independent external weights; then convert p-values with `-log10(p)`, cap infinite values and record the cap rule.
 3. Train a professional baseline first with `crop-breeding/crop-gs-rrblup-gblup`; compare any weighted deep model against the same validation split.
 4. Train GP-WAITER-style model only after the baseline split and metrics are fixed.
-5. Use grouped cross-validation for family, location, year, or environment structure; never mix genetically or environmentally dependent rows across train/test folds.
+5. Match grouped or environment/year-held-out validation to the stated prediction target and dependency structure. For known genotypes in missing environments, state which historical observations are permitted.
 6. Evaluate Pearson r, Spearman rho, MSE, RMSE, MAE, R2, training time, peak memory when available, and fold-level variance.
 7. Interpret the model with attention weights and SHAP-style feature attribution; map high-priority SNPs to genes only after checking marker coordinates.
 
@@ -75,7 +79,7 @@ Use the upstream GP-WAITER repository for exact execution. Do not substitute Bio
 
 ## Rules
 
-- Do not use GWAS weights computed on the full dataset when reporting test performance; compute weights inside each training fold or label the result as non-independent.
+- Do not report independent test performance using GWAS weights fitted with that test set’s phenotypes. Verify training membership and weight provenance, including marker/reference compatibility. A fold-design table or matching fold numbers alone does not prove which labels entered weight fitting; use the shared evidence states.
 - Do not report only the deep learning result. Always include statistical and machine-learning baselines unless the user explicitly asks for a pure GP-WAITER reproduction.
 - Treat SHAP and attention as prioritization evidence, not causal validation.
 - Warn when sample size is small relative to marker count or when GPU memory is likely to be limiting.

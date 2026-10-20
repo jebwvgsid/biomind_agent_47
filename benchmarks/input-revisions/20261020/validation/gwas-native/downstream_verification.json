@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "scope": "GWAS subset downstream plotting/GFF compatibility; separate real 30-marker LD capability test, not full-genome candidate discovery",
+  "effective_markers": 3144,
+  "significant_subset_markers": 0,
+  "VCF_header_contigs": 14,
+  "GFF_contigs_matched": 13,
+  "VCF_header_contigs_without_GFF_genes": [
+    "Chr14"
+  ],
+  "LD_pairs": 435
+}

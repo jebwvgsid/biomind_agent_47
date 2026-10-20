@@ -1,0 +1,707 @@
+[
+  {
+    "path": ".gitattributes",
+    "bytes": 51,
+    "sha256": "e4120b9d289b4adacec9932bccaa6eee2ddef40c23094f55dbd5bef371b9777d"
+  },
+  {
+    "path": ".gitignore",
+    "bytes": 310,
+    "sha256": "38e1d8943e4fb9f65c3ab91a3347802ebd164df9390c943494dfd2294fb2c1b7"
+  },
+  {
+    "path": "README.txt",
+    "bytes": 974,
+    "sha256": "9b2dcd6c21acec5ccdb5153d1878019468ba1597a082006e01631eebb4161c75"
+  },
+  {
+    "path": "cases/01/BM-REMAIN-GWAS-008__strict.md",
+    "bytes": 5960,
+    "sha256": "d2bf130d9363d15c24231c26846e007b91395577ce2ac55414423af2f35e38ba"
+  },
+  {
+    "path": "cases/01/data_inventory.tsv",
+    "bytes": 3271,
+    "sha256": "b396801b79fc634fd4155db83f1527982d336cd1593eb3f53970e94eeae17591"
+  },
+  {
+    "path": "cases/01/input_manifest.json",
+    "bytes": 13071,
+    "sha256": "e42c9a25e893772cfce80d0f9902e5fe29b5aca4d22e766f0d8e9119320c551a"
+  },
+  {
+    "path": "cases/01/input_status.tsv",
+    "bytes": 228,
+    "sha256": "afdbaa2aa1ede3fba2eb24516c28a6d6ed4b4a9e7a2b17d35220b050e65455c5"
+  },
+  {
+    "path": "cases/02/BM-REMAIN-CROP-ADVGP-010__strict.md",
+    "bytes": 7532,
+    "sha256": "90ffc1a2017115d49bed806573c6a8ed0c6783170951f1a26d4eb4e17ee2e24e"
+  },
+  {
+    "path": "cases/02/analysis_support/train_multiomics.py",
+    "bytes": 7026,
+    "sha256": "aec3212fd960c73215bbab7f47dbce1ce5e3804e7af42010b64e019c66596593"
+  },
+  {
+    "path": "cases/02/data_inventory.tsv",
+    "bytes": 1691,
+    "sha256": "4a75e90584321482e4b2e08b55c68c827eedc329ca867575d97ace7346720237"
+  },
+  {
+    "path": "cases/02/input_manifest.json",
+    "bytes": 7013,
+    "sha256": "de99434bfd8d8ae3cf070bb00de060587fd6628a0464cd909dbf5fb7c615e118"
+  },
+  {
+    "path": "cases/02/input_status.tsv",
+    "bytes": 210,
+    "sha256": "55ccf39d67999df77400db09ad93bee229b1e89ea44fe060872888a17b3e1aeb"
+  },
+  {
+    "path": "cases/03/BM-REMAIN-CROP-GXE-PAN-012__strict.md",
+    "bytes": 9121,
+    "sha256": "10ea23d55c17776d8fa790e350b17e9f2c26c0cbd7da736411640de0152c85b2"
+  },
+  {
+    "path": "cases/03/data_inventory.tsv",
+    "bytes": 4593,
+    "sha256": "6c20c2437e86d4c304e8da6684e3b96279945b6111c7aad665c9f5acbc223f4c"
+  },
+  {
+    "path": "cases/03/input_manifest.json",
+    "bytes": 18301,
+    "sha256": "5b7ee29eb0991f71741d313489e38d2b8c029eacf551038cc17dc78af3cbb41f"
+  },
+  {
+    "path": "cases/03/input_status.tsv",
+    "bytes": 248,
+    "sha256": "6bc165cb79c8dce01af5315f2a0c9a54123999e64ad7ef3274d83513d141d0aa"
+  },
+  {
+    "path": "cases/04/BM-REMAIN-DB-004__strict.md",
+    "bytes": 5052,
+    "sha256": "14f1863cea6404516cc2d1888162a0e06182f00c3388b1ed953396d6aa9da617"
+  },
+  {
+    "path": "cases/04/data_inventory.tsv",
+    "bytes": 298,
+    "sha256": "b0459d5510762289588cc6d6218d4bf026877200f9d99861d42de1c73a00c959"
+  },
+  {
+    "path": "cases/04/input_manifest.json",
+    "bytes": 1518,
+    "sha256": "b3c7f5453a0591d84e433250ff2b8b3a003eec87f7dd6f31f17c2ba0f8762d40"
+  },
+  {
+    "path": "cases/04/input_status.tsv",
+    "bytes": 216,
+    "sha256": "871f0771e62fca58ea49716be3ac60a466bcfba6d29c3828497d6a2a1ea272ce"
+  },
+  {
+    "path": "external-assets.json",
+    "bytes": 1976,
+    "sha256": "0641da94ed35f9616d3713efda38bfb8aa6eadcf2f06ea865c0323534ae58b74"
+  },
+  {
+    "path": "inputs/database/DATA_SCHEMA.txt",
+    "bytes": 337,
+    "sha256": "b44878b2b0d8892af26eff9c37159e1961b25313837d9fb3c1862c4776a98abe"
+  },
+  {
+    "path": "inputs/database/query_input.json",
+    "bytes": 698,
+    "sha256": "847c97bd10bc627fe462c8d285ef53499caac3f65b3635e431498528a83abff9"
+  },
+  {
+    "path": "inputs/gwas/DATA_SCHEMA.txt",
+    "bytes": 790,
+    "sha256": "462909941a3155de451059d576cec598990a4d38417f5910d95c591708eb5c3a"
+  },
+  {
+    "path": "inputs/gwas/Q_row_map.json",
+    "bytes": 13653,
+    "sha256": "184c3d7719445189eaa33a02570167d0376464ed649b68a9fce0e2121eaa587f"
+  },
+  {
+    "path": "inputs/gwas/Q_sample_map.tsv",
+    "bytes": 3999,
+    "sha256": "75e92e26bb4879e7e76712d9505985ca507bc506c1e35ca2ffe92ba5ba187797"
+  },
+  {
+    "path": "inputs/gwas/Q_with_sample_ids.tsv",
+    "bytes": 6988,
+    "sha256": "dc46b41a071ca0f4bcb60dcd4ce6c4845b85bca45d27105ab3458812ba3db420"
+  },
+  {
+    "path": "inputs/gwas/Real_snp.regenerated.3.Q",
+    "bytes": 5805,
+    "sha256": "f81760e90e4a6de9ed0b4ec9b75279c2d3712afbd897faa0735b6d0192de7508"
+  },
+  {
+    "path": "inputs/gwas/Real_snp.regenerated.fam",
+    "bytes": 4945,
+    "sha256": "b0f47659f020a183cd5270c9bb962bb4966f6fb40c0dcc619e89b8278f3bf3c9"
+  },
+  {
+    "path": "inputs/gwas/chromosome_codes.tsv",
+    "bytes": 109,
+    "sha256": "af9af3d27aba4d18c8abefcb2c19d4507f99953cdc3fb1bda94d5a9a46acd096"
+  },
+  {
+    "path": "inputs/gwas/covariates.FID_IID_intercept_Q1_Q2.tsv",
+    "bytes": 7310,
+    "sha256": "23c75d02ddc087066de5f840044062f3b73f4d33921983d1b0a9a7b2f6585335"
+  },
+  {
+    "path": "inputs/gwas/formal_samples.fam",
+    "bytes": 4945,
+    "sha256": "b0f47659f020a183cd5270c9bb962bb4966f6fb40c0dcc619e89b8278f3bf3c9"
+  },
+  {
+    "path": "inputs/gwas/formal_samples.log",
+    "bytes": 1552,
+    "sha256": "af5cb98680bdb1122a43434b613e4f676211e7160e486bad267e1015057a3cdd"
+  },
+  {
+    "path": "inputs/gwas/formal_samples.nosex",
+    "bytes": 3010,
+    "sha256": "b29ef91e7606e870a739cda0ba6c52183965177c3377d573e33f4ff3641fcf9c"
+  },
+  {
+    "path": "inputs/gwas/formal_samples.tfam",
+    "bytes": 4945,
+    "sha256": "b0f47659f020a183cd5270c9bb962bb4966f6fb40c0dcc619e89b8278f3bf3c9"
+  },
+  {
+    "path": "inputs/gwas/phenotype.tsv",
+    "bytes": 2794,
+    "sha256": "a3f76983a2179edd25757625d2c757462eb909a7e740b4eb6dda780d0da29d46"
+  },
+  {
+    "path": "inputs/gwas/provenance.json",
+    "bytes": 7600,
+    "sha256": "a2e50298dae2463a5c9ee7b77aaec77fa0914f9a283d45810c12046be2076cd6"
+  },
+  {
+    "path": "inputs/gwas/sources/admixture.log",
+    "bytes": 3374,
+    "sha256": "380faa3211ff492ef89bd2aeb3207e08e899363e81cec78771bdbfb0f1650978"
+  },
+  {
+    "path": "inputs/gwas/sources/plink.log",
+    "bytes": 4024,
+    "sha256": "5a5feaf13f1b4d305b8d3a5767a9b1e0a2f060f05f2219a2fa34389450f67292"
+  },
+  {
+    "path": "inputs/gwas/sources/prepare_gwas.py.txt",
+    "bytes": 3903,
+    "sha256": "f003d1a56b387c5ef2b310bb02fefe4aaf37c8346a4cf6c7b77cd9ab68dfb242"
+  },
+  {
+    "path": "inputs/gwas/sources/provenance_20261012.json",
+    "bytes": 1097,
+    "sha256": "870abe5c086f69d03d0fb36cbd66a91ca811b39e6e6822ac8d7f90f8a41c35a9"
+  },
+  {
+    "path": "inputs/gwas/sources/reproduce_commands.json",
+    "bytes": 1052,
+    "sha256": "4f5d64ec60a78150c05187d034c2606f108cd216b84f4477836c5f1b26c1eb70"
+  },
+  {
+    "path": "inputs/gwas/sources/spacing.json",
+    "bytes": 337,
+    "sha256": "1e75ab5607ef153f9741e151030c869841b266f720310280ff288dd521df3a09"
+  },
+  {
+    "path": "inputs/gwas/vcf_to_plink_chromosome.tsv",
+    "bytes": 413,
+    "sha256": "a05568f5919e90b037e69df06191bfd8be90b8d18943393842e3bfd791a382f3"
+  },
+  {
+    "path": "inputs/gxe/DATA_SCHEMA.txt",
+    "bytes": 858,
+    "sha256": "dba86dd7c4a19e3892073dd7eb3f40b06e19cfe847865485f1e85f02192017d5"
+  },
+  {
+    "path": "inputs/gxe/analysis_window.tsv",
+    "bytes": 101,
+    "sha256": "16b64314c905b4d5610fbf83af40703144ac3740cc3af9d844fdfb7298009b32"
+  },
+  {
+    "path": "inputs/gxe/observation_identity.tsv",
+    "bytes": 73773,
+    "sha256": "0b72e7939a1c4b88f5120a365397ca8f2d0d8f975d5f491e22d918aa0db02204"
+  },
+  {
+    "path": "inputs/gxe/provenance.json",
+    "bytes": 3713,
+    "sha256": "0d21bb9f6efd8e60fede6c3cb1887f00ff658785307e9518a3f90a3b85908e97"
+  },
+  {
+    "path": "inputs/gxe/source_field_metadata.csv",
+    "bytes": 13940,
+    "sha256": "0fb4aca2d7ec809b0c98dc1c9fde0b019bc3bdc90c26102ba7ad02d2ece35355"
+  },
+  {
+    "path": "inputs/gxe/source_plot_records.csv",
+    "bytes": 179845,
+    "sha256": "4aed4b0cd95270f386984fc9d7f0cda6586e78c9cf63ddea78416d15c082f22b"
+  },
+  {
+    "path": "inputs/gxe/source_weather_readMe.txt",
+    "bytes": 1159,
+    "sha256": "4b4374a54c18c652a413ea88210c6500871dc25ab2f38fd4b8e14c154325b8f0"
+  },
+  {
+    "path": "inputs/gxe/source_weather_records.csv",
+    "bytes": 18368047,
+    "sha256": "e3e2b7cb06ce7890c077fe66ec3e521e63515f958fcf5f7a3e0b787721564125"
+  },
+  {
+    "path": "inputs/gxe/weather_daily.tsv",
+    "bytes": 162522,
+    "sha256": "cc2ccc7fba4ed5e836e466b1f8c8220ea3f7f2162579fa7b12fad655ce3c1ff6"
+  },
+  {
+    "path": "inputs/gxe/weather_source_map.tsv",
+    "bytes": 3285,
+    "sha256": "8b7a0206ca94d9afa327134bba8fa2c43367abe3e51a9cfd08194575dcf06a35"
+  },
+  {
+    "path": "inputs/gxe/window_coverage.tsv",
+    "bytes": 1978,
+    "sha256": "07e45c84d70fd5896e5afc03de0dd00b631974ecf93a546458f56f3c47f42953"
+  },
+  {
+    "path": "inputs/multiomics/DATA_SCHEMA.txt",
+    "bytes": 763,
+    "sha256": "2c39e6dd8f56d4a866a6690cb96ba9b2200c45ce5198aa52089bb358c85a88e9"
+  },
+  {
+    "path": "inputs/multiomics/cv_fold_design.tsv",
+    "bytes": 461,
+    "sha256": "3ef1fd9b82761ab544b5ee59ed8a5913dcf3e7a4e1b8ca136a4125b1867f7741"
+  },
+  {
+    "path": "inputs/multiomics/expression_matrix.tsv",
+    "bytes": 12937,
+    "sha256": "147cc096d1027f7d8ba978464eb1c3767dfc6f99f9e7058a71cf057c01f4eea4"
+  },
+  {
+    "path": "inputs/multiomics/genotype_matrix.tsv",
+    "bytes": 4226,
+    "sha256": "fbbfdd291414a146bd547d93b4e2b2acb5c40de10453dd639bdf31674202ac20"
+  },
+  {
+    "path": "inputs/multiomics/gwas_weight_fold_design.tsv",
+    "bytes": 540,
+    "sha256": "473f0dd8011133ce7b3e42bce01e29a0d3579a556f159ad7b320fbdf650034c6"
+  },
+  {
+    "path": "inputs/multiomics/metabolite_matrix.tsv",
+    "bytes": 5337,
+    "sha256": "e8b89304d47ba1e4f008b586c34d6e0c582399110a97162c63fcfa212a5925c4"
+  },
+  {
+    "path": "inputs/multiomics/model_config.json",
+    "bytes": 1976,
+    "sha256": "e3562cbd7ff0e3c27d5ceaceb5232fdd64e01588f75fed3759bd06641f2163f1"
+  },
+  {
+    "path": "inputs/multiomics/omics_metadata.tsv",
+    "bytes": 3087,
+    "sha256": "f70511a6f6bb91a13608b1fa1e7d31f555d0cf1617714da82250fe4394726ee6"
+  },
+  {
+    "path": "inputs/multiomics/outer_fold_membership.tsv",
+    "bytes": 2643,
+    "sha256": "0a864f30d9c7cc8ef4efe8ac95e20bf072c40d47420d0e85348c4b5b4bf70531"
+  },
+  {
+    "path": "inputs/multiomics/phenotype.tsv",
+    "bytes": 556,
+    "sha256": "d24448ad5907b9069d6a91f4727641a34c7d43ef3c5b461d3a1675dcd3029f0c"
+  },
+  {
+    "path": "inputs/multiomics/provenance.json",
+    "bytes": 1505,
+    "sha256": "13169eeff41b4f178a3b4a6193c1efed6d8bd4853fea0a8a4d1a8af55cc4426b"
+  },
+  {
+    "path": "inputs/pangenome/DATA_SCHEMA.txt",
+    "bytes": 855,
+    "sha256": "4c745fd43f18421cb071ffe8da1c06a17e426b9d4993e9e07ae9830e5dd48810"
+  },
+  {
+    "path": "inputs/pangenome/epav_cv_folds.tsv",
+    "bytes": 3189,
+    "sha256": "c0a303b6da1ed8d1ce8060c431e2f87c2a33e127698bf544ad95ffafa992ea87"
+  },
+  {
+    "path": "inputs/pangenome/epav_excluded_samples.tsv",
+    "bytes": 9340,
+    "sha256": "a8a440b53e124420281786b35c459c00ad789c8f5fd117802fe29dc42b970a0d"
+  },
+  {
+    "path": "inputs/pangenome/epav_features.tsv",
+    "bytes": 208732,
+    "sha256": "dd3b9eef6fc55fcb03e66a19503b08b154b778d26d9e341263717063b33c5c7f"
+  },
+  {
+    "path": "inputs/pangenome/epav_matrix.tsv",
+    "bytes": 2046370,
+    "sha256": "4ecccbf513eb6930a1d006f8cc93ca990cc7e95b5aad9872bc1602e74a04cbbe"
+  },
+  {
+    "path": "inputs/pangenome/epav_phenotype.tsv",
+    "bytes": 15358,
+    "sha256": "f4a5b0c79aa5f01e7e2a44863134b5301468ace5717f174a39711c5e18ac3ca4"
+  },
+  {
+    "path": "inputs/pangenome/epav_sample_map.tsv",
+    "bytes": 49045,
+    "sha256": "a735fbb7f22ec7d0f99c92b243802095f83700269527d781f84600b657480e69"
+  },
+  {
+    "path": "inputs/pangenome/old_column_shift.tsv",
+    "bytes": 11573,
+    "sha256": "448a612fd02e968b20ec57303c760a5a975f28d88c9ee0eceab8ec6409ee3ad4"
+  },
+  {
+    "path": "inputs/pangenome/provenance.json",
+    "bytes": 3385,
+    "sha256": "14010a223598d389566bee72d098c2c5d3db31e25dd1bc1ff0d833613574794b"
+  },
+  {
+    "path": "inputs/pangenome/sources/Yang2025_S1.tsv",
+    "bytes": 14348,
+    "sha256": "5655e5cf26000dbb5904d2015ea9f39868da735a7fe59cafaecb51dcc2cf71d2"
+  },
+  {
+    "path": "inputs/pangenome/sources/tpc119982SupplementalDS1.xlsx",
+    "bytes": 126891,
+    "sha256": "84119457fe5fb32bf2a77f6bc1bb2ef7dece5e299a9f48a10c3611180c3cc5b3"
+  },
+  {
+    "path": "inputs/pangenome/sources/tpc119982SupplementalDS6.xlsx",
+    "bytes": 62385,
+    "sha256": "e7ae41ebe55e04476c8e123fe66fd129b3bf9951d5b1cb51f39127d2625a873d"
+  },
+  {
+    "path": "inputs/pangenome/sv_cv_folds.tsv",
+    "bytes": 288,
+    "sha256": "57d53ba74fa2dd78848f2f04a5b4238e4cba3ab3a6ee4ebcee3da8cd5a3dc68a"
+  },
+  {
+    "path": "inputs/pangenome/sv_excluded_samples.tsv",
+    "bytes": 20941,
+    "sha256": "3a4fe8bc12ae581ff7f0bd1b47c1d86e83834314ab3344c00c0de0960e155f67"
+  },
+  {
+    "path": "inputs/pangenome/sv_genotype_matrix.tsv",
+    "bytes": 2548030,
+    "sha256": "78305ba6682de9cb00180cc81c658f864decbb51f13ad9522e50e1bf5ce23cbb"
+  },
+  {
+    "path": "inputs/pangenome/sv_matched.vcf",
+    "bytes": 2609235,
+    "sha256": "06a913f22ece52b87542c184670b5b5e0d642c65ad49de856c2ff47ab0b3477c"
+  },
+  {
+    "path": "inputs/pangenome/sv_phenotype.tsv",
+    "bytes": 1194,
+    "sha256": "ed5ae9af7086e1cfc5549ad7323744fa0e3ded15a923be83ef0bae2b54aa73c9"
+  },
+  {
+    "path": "inputs/pangenome/sv_sample_map.tsv",
+    "bytes": 2442,
+    "sha256": "f7991306de3e0062342772d3e072ea3c9d331726d642fd7393e75a6c81d70f83"
+  },
+  {
+    "path": "manifest.json",
+    "bytes": 4550,
+    "sha256": "77665375076b25ef2a6b5d50526727719ebb3471548305f5848da639ab58399e"
+  },
+  {
+    "path": "review/BM-REMAIN-CROP-ADVGP-010__strict.patch",
+    "bytes": 21640,
+    "sha256": "6c53e81f987ca0d90c44f063d98eea0042370c2739f83c8a8e0ffdcb0138e999"
+  },
+  {
+    "path": "review/BM-REMAIN-CROP-GXE-PAN-012__strict.patch",
+    "bytes": 21481,
+    "sha256": "d27d795133f28280296525b0f9eac3d4140ee25eb6490f3879bff83e2b9b905f"
+  },
+  {
+    "path": "review/BM-REMAIN-DB-004__strict.patch",
+    "bytes": 14905,
+    "sha256": "e583e6c5fc03968b6c546aa4be1462d27c9c0ad55447782b8dc2f7e41f1dfcf3"
+  },
+  {
+    "path": "review/BM-REMAIN-GWAS-008__strict.patch",
+    "bytes": 17625,
+    "sha256": "70148504c75a0891bd43f9f903dff01dbb4337580cc6bdc32223e3a5865bdf5f"
+  },
+  {
+    "path": "review/README.txt",
+    "bytes": 492,
+    "sha256": "fc6d4ff0103e871e6c32c77437d5886e417f3f99aaaa6595574541a0b8f81bba"
+  },
+  {
+    "path": "review/gp_waiter_training_entrypoint.patch",
+    "bytes": 16658,
+    "sha256": "7e05b6f53ba231cc2ae608774d8d701c67d4cffc5e77d848cae73c9cd6285ca5"
+  },
+  {
+    "path": "tools/apply_revision.py",
+    "bytes": 5565,
+    "sha256": "320e6a5ee4703e21e29da1877eeb202ee79b87d4a8bb08c287bd3d51eaa27af7"
+  },
+  {
+    "path": "tools/audit_revision.py",
+    "bytes": 4264,
+    "sha256": "ee4b25d9e54a03f5fe5ac2f62b26c5b021260c1a65b4bb3a19282e0e7064b261"
+  },
+  {
+    "path": "tools/debug_gxe.R",
+    "bytes": 3336,
+    "sha256": "dd6d405f3495ba621af19c69ddee03ebcb994e4c05f4d6c96244ec717a5d4de9"
+  },
+  {
+    "path": "tools/fetch_fpkm_header.py",
+    "bytes": 712,
+    "sha256": "993fcbd8ee34696307512a87877ff01dcb97e328cabc98e8cac40763d6db89a0"
+  },
+  {
+    "path": "tools/fetch_inputs.py",
+    "bytes": 1688,
+    "sha256": "8be82d9f4c45e6592893c8c6f577603485373179171d2471ff9b68fd09590025"
+  },
+  {
+    "path": "tools/fetch_more_metadata.py",
+    "bytes": 941,
+    "sha256": "cdc7d54c56706cadd850139917213561abad425d701a0a57d738052e7400649c"
+  },
+  {
+    "path": "tools/fetch_public_fallback.py",
+    "bytes": 967,
+    "sha256": "091e48c8ff4f149740f2117ce8bf0ff346ddfdde8a3c0fb10211d82e9a806130"
+  },
+  {
+    "path": "tools/fetch_sources.py",
+    "bytes": 1964,
+    "sha256": "1baf4fce7811d6abbfb810c63f139e654d91505e841e56439a4b4b318716cab3"
+  },
+  {
+    "path": "tools/fetch_sv_range.py",
+    "bytes": 976,
+    "sha256": "dae119f0cc938e75a6502c6c3859b0f3d8b31880bebe214e50571fda395a046c"
+  },
+  {
+    "path": "tools/fetch_zenodo_inputs.py",
+    "bytes": 1215,
+    "sha256": "d1e1c580875f5484301d0c90fcfcd8954aeba53cc3a8fac13d8def9a3de3fd2a"
+  },
+  {
+    "path": "tools/finalize_input_notes.py",
+    "bytes": 5557,
+    "sha256": "c0e8ace9e8c20225cf8d8f4704bc06315bb0b32b420ee9dc5e2311369f1313da"
+  },
+  {
+    "path": "tools/hydrate_external_assets.py",
+    "bytes": 1353,
+    "sha256": "4c2cfcbf8608d4091d332efccf18e48d5b497822990f8c570bcf738d7f92f517"
+  },
+  {
+    "path": "tools/match_sv_source.py",
+    "bytes": 1482,
+    "sha256": "4c70a404610d067592a19056945a7e4dbb37ddfdd00a72dcc5e2b20779106291"
+  },
+  {
+    "path": "tools/plot_gwas_validation.R",
+    "bytes": 544,
+    "sha256": "0e9d9542bf2bb5751c31e6938626166e4a179a81d6da8e80b124f93f863a35f5"
+  },
+  {
+    "path": "tools/prepare_core_inputs.py",
+    "bytes": 2853,
+    "sha256": "e8198704f5d61ebe5f9bbd1d83c979adf55d77289b581f610274c420cbdf6635"
+  },
+  {
+    "path": "tools/prepare_pangenome_verified.py",
+    "bytes": 7991,
+    "sha256": "ac191aa6728028b7c9544561a5d8495e7fc2fb5be8abbe25296a7358a0a9e328"
+  },
+  {
+    "path": "tools/probe_dnngp.py",
+    "bytes": 504,
+    "sha256": "3653543d7d32f678ebd2498c0483b051a3ee903198ae1cc2b3001a49187f4e96"
+  },
+  {
+    "path": "tools/probe_dnngp_fit.py",
+    "bytes": 1112,
+    "sha256": "bd526e230e7fbaa469b4dce2718c12cf4fe68064caafb1f85018fe44e4a2afe3"
+  },
+  {
+    "path": "tools/probe_gp.py",
+    "bytes": 1143,
+    "sha256": "fc79c581b9876c855bec13e2c962addd0bf100e0f54fbe9f6d9508fb53388200"
+  },
+  {
+    "path": "tools/probe_gp_adapted.py",
+    "bytes": 1240,
+    "sha256": "99ac774231fc7ff3597676e45fc492ce91926a874616697ab7ae71c1090b12f6"
+  },
+  {
+    "path": "tools/probe_native_api.py",
+    "bytes": 393,
+    "sha256": "041f746439d44d790fbffacefa2eeb3fcc7b190a14ed5304f2e5e2c8f71689c4"
+  },
+  {
+    "path": "tools/recover_pav_positions.py",
+    "bytes": 2078,
+    "sha256": "f0aee3aa70a8ba7e83c6e2e72f3e523fc2be61f0b65d0ae8989dd574bcba6ce4"
+  },
+  {
+    "path": "tools/scan_full_vcf.py",
+    "bytes": 1181,
+    "sha256": "4917c42f35a1210e3d39f57272fb9f640e23f3226d5513eba8c0a1acb3bd3b8f"
+  },
+  {
+    "path": "tools/train_multiomics.py",
+    "bytes": 7026,
+    "sha256": "aec3212fd960c73215bbab7f47dbce1ce5e3804e7af42010b64e019c66596593"
+  },
+  {
+    "path": "tools/verify_database.py",
+    "bytes": 2787,
+    "sha256": "e31176c9cda3947373af2782c4b1e9bd54b728c2e8b06b2556c1f96ec1f177b0"
+  },
+  {
+    "path": "tools/verify_gwas.py",
+    "bytes": 2697,
+    "sha256": "a295b02511a44af90f361815adb04bb18522e307a59e062ba997a71b6ddf30d7"
+  },
+  {
+    "path": "tools/verify_gwas_downstream.py",
+    "bytes": 3379,
+    "sha256": "9c927763eed7d2553d593cd2774c41683b32cf9bebf3b9ee463939e5a18a456d"
+  },
+  {
+    "path": "tools/verify_gxe.R",
+    "bytes": 3318,
+    "sha256": "6c53c30cbcdc83bac7357143ea7be5bb24ac12ba7c965840732d5effd32fe50d"
+  },
+  {
+    "path": "tools/verify_pangenome.R",
+    "bytes": 2123,
+    "sha256": "5ac2124edfd660fd32e79cc69a94f98ed56415d79389f56ee239223c4dd3acee"
+  },
+  {
+    "path": "tools/write_delivery_report.py",
+    "bytes": 7998,
+    "sha256": "d9bbbaac0a5d1aed65b29ca5e87c5835de1750114b05ceab1d1d2a1feeebf4bb"
+  },
+  {
+    "path": "tools/write_gxe_prompt.py",
+    "bytes": 6453,
+    "sha256": "6c824076da2a3e1718f9746da2bca7ab123634edb2deb37aae7e2508757365c1"
+  },
+  {
+    "path": "tools/write_prompts.py",
+    "bytes": 13613,
+    "sha256": "7ca5f5d916205354537401e8818b7c0e2a2b31f6b37e72fbf1e2d0da77749fdf"
+  },
+  {
+    "path": "tools/xlsx_read.py",
+    "bytes": 1435,
+    "sha256": "e00f878e116f08594e02d90088552ba99b5ed8cdd74cf7403ad0ac9dfe25c517"
+  },
+  {
+    "path": "validation/database-live/verification.json",
+    "bytes": 1426,
+    "sha256": "8926f76552ec0d3650f8923e8bbb267e142ab70581b1dd4386cea44f276110f7"
+  },
+  {
+    "path": "validation/final-audit.json",
+    "bytes": 39700,
+    "sha256": "6621b8336f2e1ee54d4a862e8fed3ff4a56b1a3cc53000a0ad45eedc50a7db66"
+  },
+  {
+    "path": "validation/full-vcf-integrity.json",
+    "bytes": 1246,
+    "sha256": "b5046dfeb547176e1b545aff130f9d44db17c1267aaaab165d3a4a14271f57c5"
+  },
+  {
+    "path": "validation/gwas-native/downstream_verification.json",
+    "bytes": 368,
+    "sha256": "ab20ae19a1514bff892298c36b67835d47b59df9e248d2de1829c225ede9197b"
+  },
+  {
+    "path": "validation/gwas-native/verification.json",
+    "bytes": 405,
+    "sha256": "876e1ab7ddd3b867c93465312642e486737efab2848cac1340b5697f83d8fc67"
+  },
+  {
+    "path": "validation/gxe-verified/status.tsv",
+    "bytes": 77,
+    "sha256": "2c97cea9cd83bfbb8b58eb0d05eb7fc99afe6ccdbb5289684b276d678cf50a7e"
+  },
+  {
+    "path": "validation/input-file-hashes.json",
+    "bytes": 14962,
+    "sha256": "fac31e4cbcc6a9d7241405a25bb0dda21b59eb57c23e13a645807e4ae30bfa9a"
+  },
+  {
+    "path": "validation/native-cv/cropformer/fold_audit.json",
+    "bytes": 3742,
+    "sha256": "742dffe58a087908b723bbc4dcfb809171bc7699712dab41efe6e6486224c8f2"
+  },
+  {
+    "path": "validation/native-cv/cropformer/verification.json",
+    "bytes": 2460,
+    "sha256": "c7ec99ec6c886e3c2822f5760c8d469a85ec08eaef55548a4df199ea9edb8ec2"
+  },
+  {
+    "path": "validation/native-cv/dnngp/fold_audit.json",
+    "bytes": 3762,
+    "sha256": "2cf92c87498bcbf5af9c3fb04f542756d9253229d10b49f9f5885207db25edf4"
+  },
+  {
+    "path": "validation/native-cv/dnngp/verification.json",
+    "bytes": 2456,
+    "sha256": "51cca57fcfc4aa47854e7e9a1f82c6946aaa6fb620a185508aaf30c3a0985f90"
+  },
+  {
+    "path": "validation/native-cv/gp_waiter/fold_audit.json",
+    "bytes": 3742,
+    "sha256": "742dffe58a087908b723bbc4dcfb809171bc7699712dab41efe6e6486224c8f2"
+  },
+  {
+    "path": "validation/native-cv/gp_waiter/verification.json",
+    "bytes": 2460,
+    "sha256": "b39ec08e251cf1646bc503e22a0bd8bd22e0ad716d9fb75018825d0207d7bb60"
+  },
+  {
+    "path": "validation/pangenome-native/verification.tsv",
+    "bytes": 156,
+    "sha256": "010742af962a44fe5c1c4914ad56064391f501e0dd796fd4eb9480caa85a919e"
+  },
+  {
+    "path": "validation/pav-recovery.json",
+    "bytes": 808,
+    "sha256": "dcfeea56842a9cb1f5ca6ef4affde7393b63728221910df52692378537104ae2"
+  },
+  {
+    "path": "validation/sv-source-match.json",
+    "bytes": 503,
+    "sha256": "9379bf847ac1ce14377b86554b39e6d229f22bd649e5bd82fe77878763b7f809"
+  },
+  {
+    "path": "交付与验收说明.txt",
+    "bytes": 10076,
+    "sha256": "6072b4f3927302b9a37f3906a1073fd32fcf302aac79d7e52983e95a59ee943f"
+  }
+]

@@ -1,10 +1,10 @@
 ---
 name: gwas-emmax-association
 description: Run EMMAX mixed linear model GWAS from PLINK transposed genotype files, sorted phenotype, kinship matrix,
-  and optional Q/PCA covariates. Use for fast SNP, InDel, or SV association testing when the target model is EMMAX
+  and task-specified Q/PCA covariates. Use for fast SNP, InDel, or SV association testing when the target model is EMMAX
   and outputs must include p-values, logs, standardized Manhattan input, and validation summaries.
 metadata:
-  version: 1.0.0
+  version: 1.0.1
 compatibility: 需要本技能 references/dependencies.md 列明的现有软件；不自动安装。输入输出位于分析项目。
 ---
 
@@ -49,55 +49,87 @@ Optional:
 | Parameter | Default / rule |
 |---|---|
 | `KINSHIP` | compute from same marker prefix unless valid existing matrix is provided |
-| `COVARIATE` | EMMAX format `FID IID intercept covariates...` |
+| `COVARIATE` | EMMAX format `FID IID intercept covariates...`; mandatory when the task requires covariates |
 | `PRECISION` | `10` for `-d` |
 
-Kinship:
+Use the executable/environment entry provided for this task. Set `EMMAX_BIN`
+and `EMMAX_KIN_BIN` to those actual executables; the INTEL defaults below apply
+when those are the declared tools. Do not add routine environment discovery or
+version/help probes when the task already provides a verified entry. Resolve
+an unknown option only when needed for the current command, within task scope.
+
+Before association, verify the declared phenotype and covariate FID/IID order
+against TFAM, finite covariates, and the fixed-effect design rank. Preserve the
+original Q and use the task's declared columns. If required Q has no proven
+full-row mapping, return `blocked_covariate_mapping` and stop dependent work.
+Do not use intercept-only covariates, remove `-c`, substitute PCA, or rerun a
+reduced model to complete this task. Resume after complete, version-matched
+identity evidence is supplied; independent input QC follows the task's scope.
+
+Compute kinship from the declared genotype prefix when an appropriate matrix
+has not already been provided:
 
 ```bash
-emmax-kin-intel64 \
+"${EMMAX_KIN_BIN:-emmax-kin-intel64}" \
   -v \
   -d "${PRECISION:-10}" \
-  -o "${OUTDIR}/02.association/pop.kinship" \
   "${TPED_PREFIX}" \
   > "${OUTDIR}/logs/emmax.kinship.log" 2>&1
 ```
 
-Association without covariates:
+Set `KINSHIP` to the actual successful command's output. The official INTEL
+example produces `<prefix>.aBN.kinf` without `-s` and `<prefix>.aIBS.kinf` with
+`-s`; follow the task's estimator and the installed build's actual output.
+Do not assume a universal kinship `-o` option or invent a filename. Validate K
+dimensions, finite values, and sample-order provenance. For labeled K, any
+sample reordering must be applied to both axes.
+
+Run association with the validated covariates required by the task:
 
 ```bash
-emmax-intel64 \
+"${EMMAX_BIN:-emmax-intel64}" \
   -v \
   -d "${PRECISION:-10}" \
   -t "${TPED_PREFIX}" \
   -p "${PHENO_EMMAX}" \
-  -k "${OUTDIR}/02.association/pop.kinship" \
+  -k "${KINSHIP}" \
+  -c "${COVARIATE}" \
   -o "${OUTDIR}/02.association/emmax" \
   > "${OUTDIR}/logs/emmax.log" 2> "${OUTDIR}/logs/emmax.err"
 ```
 
-Add covariates only after order validation:
+Omit `-c` only when the task's declared model has no such covariates. Missing
+required covariate evidence is a blocked dependency, not permission to do so.
 
-```bash
--c "${COVARIATE}"
-```
-
-Standardize result for plotting:
+Standardize results by unique marker ID. The official INTEL `.ps` schema is
+headerless `SNP_ID beta SE(beta) P`: one ID field and P in column 4. TPED supplies
+CHR, marker ID, cM and BP in its first four fields; take coordinates from those
+fields, not from the marker name. This converter supports the explicit
+`emmax-intel4` schema and rejects other widths; a different version requires a
+separately documented, named schema implementation rather than P-column guessing.
 
 ```bash
 python "${SKILL_DIR}/scripts/emmax_to_manhattan.py" \
   --tped "${TPED_PREFIX}.tped" \
   --emmax "${OUTDIR}/02.association/emmax.ps" \
-  --out "${OUTDIR}/02.association/emmax.manht_input.tsv"
+  --schema emmax-intel4 \
+  --out "${OUTDIR}/02.association/emmax.manht_input.tsv" \
+  > "${OUTDIR}/02.association/emmax_conversion_audit.json"
 ```
+
+Check the exit status and audit `status=passed` before using the table. A
+nonzero exit blocks result plotting and annotation even if an older output
+still exists. The converter preserves the existing `SNP CHR BP P` columns,
+reports counts and hashes, and publishes only after complete validation.
 
 ## 输出结果
 
 Expected outputs:
 
-- `02.association/pop.kinship`
+- the actual kinship output recorded as `KINSHIP`
 - `02.association/emmax.ps`
 - `02.association/emmax.manht_input.tsv`
+- `02.association/emmax_conversion_audit.json`
 - `02.association/emmax_summary.tsv`
 - `logs/emmax.log`
 - `logs/emmax.err`
@@ -111,7 +143,19 @@ awk 'NR>1 && ($4 <= 0 || $4 > 1){bad++} END{exit bad>0}' \
   "${OUTDIR}/02.association/emmax.manht_input.tsv"
 ```
 
-Rows in `emmax.ps` should be close to markers in `.tped`; report mismatches before plotting.
+Require one unique result ID per TPED marker, exact ID-set equality, valid
+positive coordinates, and finite P in `(0,1]`. Reordered results are joined by
+ID and emitted in TPED order. Duplicate IDs, unexplained missing/extra IDs,
+malformed rows and invalid P fail conversion; never truncate to the shorter
+file, pair by row position, or silently filter. Reconcile TPED rows, result
+rows, unique/matched IDs, valid P rows and output rows in the audit. Use the
+successful `valid_tested_markers` count as M for a task-prescribed `0.05/M`
+threshold; it validates result records, not the scientific model. A valid
+analysis with no significant hits can produce empty hit/region tables. An
+empty or failed result file is not that outcome.
+
+Schema references: [official EMMAX INTEL guide](https://genome.sph.umich.edu/wiki/EMMAX)
+and [PLINK TPED/MAP formats](https://www.cog-genomics.org/plink/1.9/formats#tped).
 
 ## 常见错误及解决办法
 
@@ -119,8 +163,8 @@ Rows in `emmax.ps` should be close to markers in `.tped`; report mismatches befo
 |---|---|---|
 | phenotype and TFAM sample counts differ | sample mismatch | rerun prep and inspect missing samples |
 | kinship reused from another marker set | invalid model covariance | recompute kinship or document intentional reuse |
-| Q/PCA file order wrong | covariates assigned incorrectly | sort with `sort_phenotype.py` |
-| p-values not in final column | output version differs | inspect `emmax.ps` before conversion |
+| Q/PCA file order wrong | covariates may be assigned incorrectly | establish full-row identity first; only then sort with `sort_phenotype.py` and verify TFAM order |
+| `.ps` differs from the declared schema | output version or format differs | stop conversion and supply a documented named schema; never infer P from column position or numerical range |
 | EMMAX binary missing | environment not ready | report blocked with exact command |
 
 ## 相似的 skills

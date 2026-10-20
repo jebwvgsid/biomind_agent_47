@@ -1,0 +1,138 @@
+{
+  "input_version": "20261020-new-Q",
+  "origin": {
+    "method": "ADMIXTURE 1.4.0, K=3, seed=20261012, genotype-derived; old unmapped Q is not relabeled or reused",
+    "samples": 215,
+    "markers": 10404,
+    "spacing": {
+      "source": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part6.GWAS/data/Real_snp.vcf.gz",
+      "records_scanned": 1306470,
+      "records_retained": 13771,
+      "spacing_bp": 100000,
+      "selection": "first biallelic SNP at least 100 kb after preceding retained SNP per chromosome; genotype QC follows"
+    },
+    "qc": "MAF>=0.05; SNP missing fraction<=0.10; physical spacing 100kb (not an assertion of full LD independence)",
+    "sample_order_validation": "fresh PLINK FAM equals source VCF header exactly",
+    "software": "/public/home/liusiqi/03.毕设/benchmarks/biomind_autotest_20261011_preflight/data_supplement_research_20261012/completion_v2/tools/admixture_linux-1.4.0/admixture",
+    "scope": "small-marker population structure covariate for functional benchmark; K fixed by revised benchmark design, not inferred optimal",
+    "q_sha256": "f81760e90e4a6de9ed0b4ec9b75279c2d3712afbd897faa0735b6d0192de7508"
+  },
+  "verification": {
+    "old_q_identity": "NOT_RECOVERED",
+    "new_q_adoption": "PASS",
+    "source_vcf_full_sha256": "0f9745d9e931a353ee61a55c577dbb8eb5196263b4bacb0e79e7a9450ee76ccc",
+    "formal_vcf_full_sha256": "0f9745d9e931a353ee61a55c577dbb8eb5196263b4bacb0e79e7a9450ee76ccc",
+    "samples": 215,
+    "q_columns": 3,
+    "duplicate_missing_extra_ids": 0,
+    "q_row_sums_max_error": 1.000000000139778e-06,
+    "covariate_rank": 3,
+    "covariate_shape": [
+      215,
+      3
+    ],
+    "helper_command": [
+      "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+      "/public/home/liusiqi/03.毕设/BioMind-worktrees/unified-core-plugins-20261009/skills/population-genetics/gwas-vcf-prep-qc/scripts/sort_phenotype.py",
+      "--tfam",
+      "/public/home/liusiqi/03.毕设/benchmarks/03.输入修复26.10.20/00.共享数据/gwas/formal_samples.tfam",
+      "--phenotype",
+      "/public/home/liusiqi/03.毕设/benchmarks/03.输入修复26.10.20/00.共享数据/gwas/Real_snp.regenerated.3.Q",
+      "--input-kind",
+      "q_covariates",
+      "--q-row-map",
+      "/public/home/liusiqi/03.毕设/benchmarks/03.输入修复26.10.20/00.共享数据/gwas/Q_row_map.json",
+      "--header",
+      "absent",
+      "--trait",
+      "1,2",
+      "--out-emmax-covar",
+      "/public/home/liusiqi/03.毕设/benchmarks/03.输入修复26.10.20/00.共享数据/gwas/covariates.FID_IID_intercept_Q1_Q2.tsv"
+    ],
+    "formal_tfam_sha256": "b0f47659f020a183cd5270c9bb962bb4966f6fb40c0dcc619e89b8278f3bf3c9",
+    "association_kinship_admixture_rerun": "NOT_RUN"
+  },
+  "source_evidence": [
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/01.测试/04.重测序/Part6.GWAS/data/Real_snp.vcf.gz",
+      "sha256": "0f9745d9e931a353ee61a55c577dbb8eb5196263b4bacb0e79e7a9450ee76ccc",
+      "bytes": 759180760,
+      "nlink": 1
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/00.共享数据/教学数据/04.重测序/Part6.GWAS/data/Real_snp.vcf.gz",
+      "sha256": "0f9745d9e931a353ee61a55c577dbb8eb5196263b4bacb0e79e7a9450ee76ccc",
+      "bytes": 759180760,
+      "nlink": 1
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_autotest_20261011_preflight/data_supplement_research_20261012/completion_v2/gwas_work/admixture.log",
+      "sha256": "380faa3211ff492ef89bd2aeb3207e08e899363e81cec78771bdbfb0f1650978",
+      "bytes": 3374,
+      "nlink": 1
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_autotest_20261011_preflight/data_supplement_research_20261012/completion_v2/gwas_work/plink.log",
+      "sha256": "5a5feaf13f1b4d305b8d3a5767a9b1e0a2f060f05f2219a2fa34389450f67292",
+      "bytes": 4024,
+      "nlink": 1
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_autotest_20261011_preflight/data_supplement_research_20261012/completion_v2/gwas_work/reproduce_commands.json",
+      "sha256": "4f5d64ec60a78150c05187d034c2606f108cd216b84f4477836c5f1b26c1eb70",
+      "bytes": 1052,
+      "nlink": 1
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_autotest_20261011_preflight/data_supplement_research_20261012/completion_v2/gwas_work/spaced.3.Q",
+      "sha256": "f81760e90e4a6de9ed0b4ec9b75279c2d3712afbd897faa0735b6d0192de7508",
+      "bytes": 5805,
+      "nlink": 1
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_autotest_20261011_preflight/data_supplement_research_20261012/completion_v2/gwas_work/spaced.bed",
+      "sha256": "ca2e12bc030828dd21331a6082e24389a77091af60e3bfb7fbf2624fc2702053",
+      "bytes": 561819,
+      "nlink": 1
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_autotest_20261011_preflight/data_supplement_research_20261012/completion_v2/gwas_work/spaced.bim",
+      "sha256": "a347ca4261a66f34d67be4b543e2a9cfb69c913de4a0b3b2f785431736b9a3c9",
+      "bytes": 201435,
+      "nlink": 1
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_autotest_20261011_preflight/data_supplement_research_20261012/completion_v2/gwas_work/spaced.bim.original",
+      "sha256": "a347ca4261a66f34d67be4b543e2a9cfb69c913de4a0b3b2f785431736b9a3c9",
+      "bytes": 201435,
+      "nlink": 1
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_autotest_20261011_preflight/data_supplement_research_20261012/completion_v2/gwas_work/spaced.fam",
+      "sha256": "b0f47659f020a183cd5270c9bb962bb4966f6fb40c0dcc619e89b8278f3bf3c9",
+      "bytes": 4945,
+      "nlink": 1
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_autotest_20261011_preflight/data_supplement_research_20261012/completion_v2/gwas_work/spaced.log",
+      "sha256": "e0cb592cb6ab043cea972a5471338ac1ed4a2a7d6a327529b17f498629aabf34",
+      "bytes": 2367,
+      "nlink": 1
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_autotest_20261011_preflight/data_supplement_research_20261012/completion_v2/gwas_work/spaced.vcf.gz",
+      "sha256": "47b67140fc44ba7bf2d2b82d577be356c24170c49bb9d352266161f44e0df9df",
+      "bytes": 7998239,
+      "nlink": 1
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/biomind_autotest_20261011_preflight/data_supplement_research_20261012/completion_v2/gwas_work/spacing.json",
+      "sha256": "1e75ab5607ef153f9741e151030c869841b266f720310280ff288dd521df3a09",
+      "bytes": 337,
+      "nlink": 1
+    }
+  ],
+  "future_tped_contract": "QC 不删除样本。正式 TPED 的 TFAM 必须与 formal_samples.tfam 按 FID/IID 全量核对；字节哈希不同须依据同一已核 Q/FAM 身份对实际目标 TFAM 重新绑定 row-map，不能沿用不匹配哈希。K 的两轴按实际正式 TFAM；本次未预先生成 K。",
+  "active_revision": "20261020-fullanalysis",
+  "revision_notes": "修订版 20261020-fullanalysis。正式性状为 phenotype.tsv（sample_id/C16_0），由原无表头教学文件原值转换。VCF、GFF 未改动。新版 Q 的215行身份绑定 Q_row_map.json/Q_sample_map.tsv 和源 FAM；不能继续使用旧无身份 Real_snp.3.Q。covariates.FID_IID_intercept_Q1_Q2.tsv 无表头、五列，按 TFAM ID 重排。K 必须由本次过滤 TPED 计算；本机 emmax-kin 实测输出 aBN.kinf。emmax-intel64 的 .ps 为 marker/beta/SE/p 四列。原教学参考组装 accession/性状单位未提供，题面保留来源限制。"
+}

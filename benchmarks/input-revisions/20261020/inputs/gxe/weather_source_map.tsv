@@ -1,0 +1,28 @@
+environment_id	official_weather_label	source_station_ids	source_label_basis	source_group	present_in_old_timeseries	field_station_serial	field_station_latitude	field_station_longitude
+2021_COH1	COH1	14289	exact official label token; source CSV retained	weather_COH1	True	14289	40.6498	-104.9955
+2021_DEH1	DEH1	22053	exact official label token; source CSV retained	weather_DEH1	True	22053	38.635	-75.455
+2021_GAH1	GAH1	8427	exact official label token; source CSV retained	weather_GAH1	True	8427	31.507281	-83.558275
+2021_GAH2	GAH2	8631	exact official label token; source CSV retained	weather_GAH2	True	8631	33.71955986	-83.30836191
+2021_GEH1	GEH1	8658	exact official label token; source CSV retained	weather_GEH1	True	8658	51.47064	9.92645
+2021_IAH1	IAH1	11859	exact official label token; source CSV retained	weather_IAH1	True	m2700s11859	41.199041	-91.495209
+2021_IAH2	IAH2	9082	exact official label token; source CSV retained	weather_IAH2	True	m2700s26917	42.064271	-94.721072
+2021_IAH3	IAH3		exact official label token; source CSV retained	weather_IAH3	True	m2700s9082	41.975857	-92.240958
+2021_IAH4	IAH4	LauterLab	exact official label token; source CSV retained	weather_IAH4	True	m2700sLauterLab	41.997611	-93.696219
+2021_ILH1	ILH1		exact official label token; source CSV retained	weather_ILH1	True			
+2021_INH1	INH1	8657	exact official label token; source CSV retained	weather_INH1	True	8657	40.476553	-86.99722
+2021_MIH1	MIH1	9078	exact official label token; source CSV retained	weather_MIH1	True	9078	42.707406	-84.469747
+2021_MNH1	MNH1		exact official label token; source CSV retained	weather_MNH1	True	8650	44.070646	-93.526485
+2021_NCH1	NCH1	8659	exact official label token; source CSV retained	weather_NCH1	True	8659	36.12658689	-77.17781824
+2021_NEH1	NEH1	10801	exact official label token; source CSV retained	weather_NEH1	True	10801	40.86125437	-96.59678971
+2021_NEH2	NEH2_NEH3		exact official label token; source CSV retained	weather_NEH2_NEH3	False		41.0537589	-100.7499881
+2021_NEH3	NEH2_NEH3		exact official label token; source CSV retained	weather_NEH2_NEH3	False		41.0899229	-100.7799655
+2021_NYH2	NYH2	1087	exact official label token; source CSV retained	weather_NYH2	True	1087	42.73366	-76.65654
+2021_NYH3	NYH3_NYS1	1086	exact official label token; source CSV retained	weather_NYH3_NYS1	False	1086	42.73384	-76.65443
+2021_NYS1	NYH3_NYS1	1086	exact official label token; source CSV retained	weather_NYH3_NYS1	False	1086	42.73384	-76.65443
+2021_SCH1	SCH1	8655	exact official label token; source CSV retained	weather_SCH1	True	8655	34.623028	-82.737083
+2021_TXH1	TXH1_TXH3	8428	exact official label token; source CSV retained	weather_TXH1_TXH3	False	8428	30.538862	-96.428477
+2021_TXH2	TXH2	14790	exact official label token; source CSV retained	weather_TXH2	True	14790	30.538862	-96.428477
+2021_TXH3	TXH1_TXH3	8428	exact official label token; source CSV retained	weather_TXH1_TXH3	False	8428	30.538862	-96.428477
+2021_WIH1	WIH1		exact official label token; source CSV retained	weather_WIH1	True		43.057222	-89.529444
+2021_WIH2	WIH2	1997	exact official label token; source CSV retained	weather_WIH2	True	1997	43.319722	-89.332778
+2021_WIH3	WIH3	1332	exact official label token; source CSV retained	weather_WIH3	True	1332	44.115556	-89.547778

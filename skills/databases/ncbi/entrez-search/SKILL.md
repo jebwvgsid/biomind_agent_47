@@ -18,9 +18,13 @@ compatibility: 需要本技能 references/dependencies.md 列明的现有软件�
 [dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
 本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
+## 联网与结构化结果核验
+
+首次联网前读取 [公共数据库联网与结构化结果核验](../../references/network-and-structured-retrieval.md)，同一会话已读且未变时复用。先确认当前可用的官方 API 或插件路径，再按下列领域工作流执行；复用当前工具 schema 已提供的原始响应模式；搜索摘要和未完整回收的正文不能替代结构化记录。
+
 # NCBI Entrez Search
 
-Use this skill for the discovery step in NCBI databases. It should produce record IDs, counts, query diagnostics, and database field information. It should not download full FASTA/GenBank/PubMed records; use `ncbi-entrez-fetch` after IDs are selected.
+Use this skill for the discovery step in NCBI databases. It should produce record IDs, counts, query diagnostics, and database field information. It should not download full FASTA/GenBank/PubMed records; use `entrez-fetch` after IDs are selected.
 
 ## When To Use
 
@@ -37,17 +41,22 @@ Do not use this skill for full record download, GEO-specific metadata parsing, B
 
 1. Choose the NCBI database: usually `pubmed`, `gene`, `nucleotide`, `protein`, `sra`, `gds`, `bioproject`, `assembly`, or `taxonomy`.
 2. Build an explicit query with field tags when possible.
-3. Run `Entrez.esearch()` to get count and IDs.
+3. Use `Entrez.esearch()` or an equivalent official ESearch request through a verified transport to get Count and IDs; validate the actual response before treating an empty IdList as a valid zero-result search.
 4. If the field syntax is unclear, run `Entrez.einfo(db=...)`.
 5. If the database is unclear, run `Entrez.egquery(term=...)`.
-6. Report the database, query string, total count, returned IDs, and whether the query was translated.
+6. Report the database, exact query, total Count, returned and selected UID counts, retstart/retmax, query translation, warnings, and whether retrieval is partial. For an exhaustive request, page or use History server and verify coverage; do not describe the first page as the full set.
+
+## Query Validation
+
+Field tags depend on the chosen database. Inspect EInfo and the response ErrorList/WarningList/QueryTranslation when a tag is uncertain or a result is unexpectedly empty. Build AND/OR expressions with parentheses before adding record-type filters. ESearch UIDs are not necessarily public accessions; resolve and verify accessions in ESummary/EFetch. A database/API parse error is not Count=0.
 
 ## Query Patterns
 
 ```python
+import os
 from Bio import Entrez
 
-Entrez.email = "your.email@example.com"
+Entrez.email = os.environ.get("NCBI_EMAIL") or Entrez.email  # Use a real configured contact; never invent one.
 term = "Saccharum[orgn] AND sucrose synthase[title]"
 handle = Entrez.esearch(db="pubmed", term=term, retmax=20)
 record = Entrez.read(handle)
@@ -113,7 +122,7 @@ For each search, report:
 - number of IDs returned
 - returned IDs or accessions
 - query translation when NCBI rewrites the query
-- recommended next skill, usually `ncbi-entrez-fetch`, `ncbi-entrez-link`, or `ncbi-geo-data`
+- recommended next skill, usually `entrez-fetch`, `entrez-link`, or `geo-data`
 
 ## Related Skills
 

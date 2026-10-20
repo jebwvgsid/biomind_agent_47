@@ -1,0 +1,27 @@
+{
+  "case_id": "BM-REMAIN-DB-004__strict",
+  "input_revision": "20261020-fullanalysis",
+  "purpose": "actual_analysis",
+  "original_question_backed_up_at": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/backup/04",
+  "output_directory": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/03.序列检索与数据库/04.BM-REMAIN-DB-004__strict/output_inputfix_20261020",
+  "files": [
+    {
+      "relative_path": "data/database/DATA_SCHEMA.txt",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/03.序列检索与数据库/04.BM-REMAIN-DB-004__strict/data/database/DATA_SCHEMA.txt",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/database/DATA_SCHEMA.txt",
+      "bytes": 337,
+      "sha256": "b44878b2b0d8892af26eff9c37159e1961b25313837d9fb3c1862c4776a98abe",
+      "role": "formal_input_or_source_document"
+    },
+    {
+      "relative_path": "data/database/query_input.json",
+      "path": "/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/03.序列检索与数据库/04.BM-REMAIN-DB-004__strict/data/database/query_input.json",
+      "resolved_source": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/inputs/database/query_input.json",
+      "bytes": 698,
+      "sha256": "847c97bd10bc627fe462c8d285ef53499caac3f65b3635e431498528a83abff9",
+      "role": "formal_input_or_source_document"
+    }
+  ],
+  "hidden_truth_excluded": true,
+  "historical_scores_reused": false
+}

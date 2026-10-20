@@ -1,0 +1,71 @@
+[
+  {
+    "pid": 889042,
+    "ppid": 1,
+    "executable": "/usr/bin/python3.9",
+    "entry": "/public/home/liusiqi/03.毕设/04.智能体生物学分析/01.棉花/06.analysis/biomind_hic_to_cool_20261017/11.stage_delivery_20261019/00.supervision/biomind_structures_session_20261019/01.scripts/supervise_biomind.py",
+    "cwd": "/public/home/liusiqi/03.毕设/04.智能体生物学分析/01.棉花",
+    "started": "2026-10-19T11:26:10.753663+08:00",
+    "selected_args": {},
+    "session_or_log_fds": [],
+    "cpu_seconds": 160.25
+  },
+  {
+    "pid": 889043,
+    "ppid": 889042,
+    "executable": "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.runtime/node/bin/node",
+    "entry": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-74c1e69c19a5e6b7/integrations/pi_runtime/dist/host.js",
+    "cwd": "/public/home/liusiqi/03.毕设/04.智能体生物学分析/01.棉花",
+    "started": "2026-10-19T11:26:10.803936+08:00",
+    "selected_args": {
+      "--project-dir": "/public/home/liusiqi/03.毕设/04.智能体生物学分析/01.棉花",
+      "--config": "/public/home/liusiqi/03.毕设/04.智能体生物学分析/01.棉花/06.analysis/biomind_hic_to_cool_20261017/11.stage_delivery_20261019/00.supervision/biomind_structures_session_20261019/00.control/biomind-runtime.json"
+    },
+    "session_or_log_fds": [],
+    "cpu_seconds": 482.38
+  },
+  {
+    "pid": 919298,
+    "ppid": 889043,
+    "executable": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python3.12",
+    "entry": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-74c1e69c19a5e6b7/integrations/pi_runtime/python_service.py",
+    "cwd": "/public/home/liusiqi/03.毕设/04.智能体生物学分析/01.棉花",
+    "started": "2026-10-19T11:27:27.334240+08:00",
+    "selected_args": {
+      "--cwd": "/public/home/liusiqi/03.毕设/04.智能体生物学分析/01.棉花"
+    },
+    "session_or_log_fds": [],
+    "cpu_seconds": 104.77
+  },
+  {
+    "pid": 2228206,
+    "ppid": 1,
+    "executable": "/usr/bin/python3.9",
+    "entry": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/delivery/service/plugin-lifecycle/59f269bcd8027d40b8685feffd14a656176d5817/server/server-service.py",
+    "cwd": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/studio/backend/pi-studio",
+    "started": "2026-10-19T21:41:53.194445+08:00",
+    "selected_args": {
+      "--config": "/public/home/liusiqi/03.毕设/BioMind_Studio_Workbench_20261009/deployment/private/service.json",
+      "--instance": "02c92df85df7436faa9fd6873aadbe56"
+    },
+    "session_or_log_fds": [
+      "/public/home/liusiqi/03.毕设/BioMind_Studio_Workbench_20261009/deployment/private/state/logs/02c92df85df7436faa9fd6873aadbe56.holder.log",
+      "/public/home/liusiqi/03.毕设/BioMind_Studio_Workbench_20261009/deployment/private/state/logs/02c92df85df7436faa9fd6873aadbe56.holder.log"
+    ],
+    "cpu_seconds": 69.19
+  },
+  {
+    "pid": 2228208,
+    "ppid": 2228206,
+    "executable": "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.runtime/node/bin/node",
+    "entry": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/delivery/service/plugin-lifecycle/59f269bcd8027d40b8685feffd14a656176d5817/server/next-service.mjs",
+    "cwd": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/studio/backend/pi-studio",
+    "started": "2026-10-19T21:41:53.274599+08:00",
+    "selected_args": {},
+    "session_or_log_fds": [
+      "/public/home/liusiqi/03.毕设/BioMind_Studio_Workbench_20261009/deployment/private/state/logs/02c92df85df7436faa9fd6873aadbe56.backend.log",
+      "/public/home/liusiqi/03.毕设/BioMind_Studio_Workbench_20261009/deployment/private/state/logs/02c92df85df7436faa9fd6873aadbe56.backend.log"
+    ],
+    "cpu_seconds": 36.61
+  }
+]

@@ -18,6 +18,10 @@ compatibility: 需要本技能 references/dependencies.md 列明的现有软件�
 [dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
 本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
+## 联网与结构化结果核验
+
+首次联网前读取 [公共数据库联网与结构化结果核验](../../references/network-and-structured-retrieval.md)，同一会话已读且未变时复用。先确认当前可用的官方 API 或插件路径，再按下列领域工作流执行；复用当前工具 schema 已提供的原始响应模式；搜索摘要和未完整回收的正文不能替代结构化记录。
+
 # NCBI GEO Data
 
 Use this skill to find and inspect public expression datasets in NCBI GEO. It covers GEO Series/DataSets/Samples/Platforms, processed matrix discovery, and GEO-to-SRA linking.
@@ -78,17 +82,18 @@ For each useful dataset, report:
 
 1. Search GEO DataSets or Series by organism, condition, tissue, gene, technology, or PubMed ID.
 2. Summarize candidate datasets with accession, title, sample count, platform, organism, and publication.
-3. If raw sequencing is needed, link GEO records to SRA.
-4. If processed data is needed, use GEO series matrix files or `GEOparse`.
+3. If raw sequencing metadata is needed, verify the selected GSE accession against its GDS UID, then link to SRA and resolve experiment metadata to Run accessions. Inspect all applicable link blocks and batch all selected SRA UIDs. Respect a metadata-only or no-FASTQ task boundary.
+4. If processed data is needed, use GEO series matrix files or `GEOparse`. Compare the study sample count with the retrieved GSM count; label a subset explicitly. Preserve GSE/GSM/experiment/Run relations, tissue, treatment, genotype and biological replicate information when supplied by the record.
 
 ## Search Patterns
 
 GEO is queried through the Entrez `gds` database.
 
 ```python
+import os
 from Bio import Entrez
 
-Entrez.email = "your.email@example.com"
+Entrez.email = os.environ.get("NCBI_EMAIL") or Entrez.email  # Use a real configured contact; never invent one.
 term = "Saccharum drought RNA-seq AND gse[entry_type]"
 handle = Entrez.esearch(db="gds", term=term, retmax=20)
 record = Entrez.read(handle)
@@ -118,6 +123,8 @@ python "${SKILL_DIR}/examples/search_geo.py" --term "Saccharum drought RNA-seq" 
 
 Find SRA runs linked to a GEO series:
 
+Inspect every relevant LinkSetDb entry and batch the entire selected SRA UID list; a first link block or fixed prefix cannot establish completeness. Numeric SRA UIDs, SRX/ERX/DRX experiments and SRR/ERR/DRR runs are distinct identifiers. Keep per-batch requested UID and returned record counts; runinfo CSV without a source UID cannot prove a one-to-one UID-to-Run mapping. When the task requires SRA EFetch XML, obtain and preserve that XML and extract Run accessions from its RUN elements; the CSV helper does not satisfy that format requirement. An empty ELink result needs endpoint/source checks and must not be generalized to “this study has no SRA data”.
+
 ```bash
 python "${SKILL_DIR}/examples/geo_to_sra.py" --gse GSE147507 --out GSE147507_sra_runs.txt
 ```
@@ -127,6 +134,10 @@ Find GEO records linked to a PubMed article:
 ```bash
 python "${SKILL_DIR}/examples/geo_from_pubmed.py" --pmid 32228226
 ```
+
+## Study Selection and Coverage
+
+Search match is a candidate, not proof that all samples satisfy the requested organism, cell type, treatment, technology or replication. Check the actual GSE/GSM metadata before inclusion. Report total matching records, selected datasets, retrieved samples, linked experiments, unique runs and any unqueried subset separately. Keep publication and supplementary-file links tied to the verified study. Do not substitute an unrelated example accession for task evidence.
 
 ## Report Back
 

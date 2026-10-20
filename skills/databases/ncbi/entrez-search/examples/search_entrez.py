@@ -6,11 +6,17 @@ Example:
 
 import argparse
 import os
+import sys
 from Bio import Entrez
 
 
 def configure_entrez(email: str | None, api_key: str | None) -> None:
-    Entrez.email = email or os.environ.get("NCBI_EMAIL") or "your.email@example.com"
+    resolved_email = email or os.environ.get("NCBI_EMAIL") or getattr(Entrez, "email", None)
+    if resolved_email == "your.email@example.com":
+        resolved_email = None
+    Entrez.email = resolved_email
+    if not resolved_email:
+        print("[WARN] No real NCBI contact email configured; no placeholder is sent. Configure --email or NCBI_EMAIL for NCBI contact/usage guidance. This is not an authentication failure.", file=sys.stderr)
     key = api_key or os.environ.get("NCBI_API_KEY")
     if key:
         Entrez.api_key = key
@@ -26,6 +32,8 @@ def main() -> None:
     parser.add_argument("--api-key", help="Optional NCBI API key. Defaults to NCBI_API_KEY env var.")
     args = parser.parse_args()
 
+    if args.max_results <= 0:
+        raise SystemExit("--max-results must be positive")
     configure_entrez(args.email, args.api_key)
     kwargs = {"db": args.db, "term": args.term, "retmax": args.max_results}
     if args.sort:
@@ -35,10 +43,19 @@ def main() -> None:
     record = Entrez.read(handle)
     handle.close()
 
+    if "Count" not in record or "IdList" not in record:
+        raise RuntimeError("Malformed ESearch response: Count or IdList missing")
+    if record.get("ERROR") or record.get("ErrorList"):
+        raise RuntimeError("ESearch returned an API error; inspect the response")
+    count = int(record["Count"])
+    ids = [str(uid) for uid in record["IdList"]]
+    if count < 0 or len(ids) != len(set(ids)) or len(ids) > count:
+        raise RuntimeError("Inconsistent ESearch counts or duplicate IDs")
     print(f"Database: {args.db}")
     print(f"Query: {args.term}")
-    print(f"Total matches: {record.get('Count', '0')}")
-    print(f"Returned IDs: {len(record.get('IdList', []))}")
+    print(f"Total matches: {record['Count']}")
+    print(f"Returned IDs: {len(record['IdList'])}")
+    print(f"Retmax: {args.max_results}; status: {'complete_id_list' if len(ids) == count else 'partial_id_list'}")
     for item in record.get("IdList", []):
         print(item)
     if record.get("QueryTranslation"):

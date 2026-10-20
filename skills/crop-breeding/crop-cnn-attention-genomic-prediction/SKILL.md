@@ -49,13 +49,17 @@ Read `references/install-and-data.md` before installing Cropformer, preparing up
 - `marker_annotation.tsv` or `gff3`: optional marker coordinates and gene mapping.
 - `haplotype_region.tsv`: optional regions for haplotype analysis after SNP prioritization.
 
+## Task Scope And Shared Checks
+
+Read `../_shared/gp-audit-and-data-validation.md` sections A–C for task evidence, matrix identity and observation checks. Apply the checks relevant to the requested analysis; complete a requested readiness audit even when a later training stage lacks inputs or resources. Keep design declarations, actual execution and stage-specific blockers separate.
+
 ## Workflow
 
-1. Validate marker encoding and sample matching.
+1. Apply the shared matrix/ID checks, then validate marker encoding, complete sample/marker alignment and the evaluation split.
 2. Train the professional rrBLUP/GBLUP baseline with `crop-breeding/crop-gs-rrblup-gblup` first.
 3. If using a Cropformer-like route, choose marker filtering or feature selection inside the training fold.
 4. Encode genotypes consistently; preserve marker position whenever interpretation is needed.
-5. Train CNN + multi-head self-attention with early stopping and fixed folds.
+5. Train CNN + multi-head self-attention with fixed outer folds; early stopping and tuning use only the permitted inner training/validation data, with preprocessing fitted within that boundary.
 6. Extract attention weights and run SHAP-style or permutation attribution where feasible.
 7. Map prioritized SNPs to genes and optionally summarize haplotypes in candidate regions.
 

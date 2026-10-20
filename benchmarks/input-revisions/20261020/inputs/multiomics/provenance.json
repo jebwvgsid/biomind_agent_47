@@ -1,0 +1,15 @@
+{
+  "input_version": "20261020-design-audit",
+  "verification": {
+    "sample_count": 24,
+    "all_ids_aligned_unique": true,
+    "audit_level": "DESIGN_ONLY",
+    "actual_training_evidence": "NOT_SUPPLIED_NOT_CREATED",
+    "removed_hidden_answer_column": "omics_metadata.truth_causal",
+    "fold_labels_do_not_prove_training": true
+  },
+  "metadata_original_sha256": "2ec18c8ca9d1644ee7887143b5a1c25aebf06a30a30c140514f1c44eec79c1ce",
+  "generator_review": "simulate_multiomics_gp in generate_completion_fixtures.py writes design files and simulated data; it does not train the three requested native models. Generator/hidden effects are not supplied as formal inputs.",
+  "active_revision": "20261020-fullanalysis",
+  "revision_notes": "修订版 20261020-fullanalysis，24样本功能分析。genotype64/expression60/metabolite24均按sample_id对齐，目标trait_multiomics_yield。omics_metadata是特征层表，不是样本表。正式折使用cv_fold_design；gwas_weight_fold_design的同号表示该样本所属的外层留出折，权重只从其补集重新计算，不是已执行GWAS结果。model_config明确三个原生模型的参数与训练要求，不能只交充分性审计。GP-WAITER输入8x8与卷积/注意力/输出头一起配置；原生网络拓扑保留，尺寸参数不同于论文大数据配置。三模型CPU可运行，参数10epochs用于此小样本功能题。没有提供隐藏真值、生成效应或历史评分。实际运行结果不作为正式输入。"
+}

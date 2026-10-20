@@ -1,0 +1,15 @@
+{
+  "source_sha256": "aba7c8af550e5dd20648b3f3bfea9f1ab64e06a0d381ae8690da3489f2d91a19",
+  "old_sha256": "e481796f455a7289fb340925df1cc9365fd8d7556b5b06f1bc0ab981297f9448",
+  "raw_records": 48136,
+  "raw_header_fields": 507,
+  "trailing_empty_field_on_every_record": true,
+  "source_samples": 503,
+  "original_technical_positions": 2000,
+  "matched_positions": 2000,
+  "unique_positions": 2000,
+  "ambiguous_positions": 0,
+  "unmatched_positions": [],
+  "binary_threshold": ">=1",
+  "corruption": "Each raw record has a trailing tab absent from header. Historical pandas parsing shifted columns: gene_id holds source chromosome, old sample A797NW actually B73, and old metadata position_right actually sample A797NW. New data must be regenerated from source; old genotype/phenotype name joins are invalid."
+}

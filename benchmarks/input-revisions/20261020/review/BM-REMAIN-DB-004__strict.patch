@@ -1,0 +1,144 @@
+--- /public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/backup/04/BM-REMAIN-DB-004__strict.md
++++ /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/03.序列检索与数据库/04.BM-REMAIN-DB-004__strict/BM-REMAIN-DB-004__strict.md
+@@ -1,116 +1,37 @@
+ # BM-REMAIN-DB-004__strict
+ 
+-- task_name: Public database discovery and record retrieval
+-- ambiguity_level: strict
+-- step_length: M
+-- step_count_estimate: 4
+-- data_status: partial
+-
+-复制下面文本块作为本题测试提示词。
++输入与任务修订：20261020-fullanalysis。此版本要求实际分析，历史输出与评分对应旧题，不适用于本版本。
+ 
+ ```text
+ 【Bioinformatics Agent Benchmark Test】
+ benchmark_id: BM-REMAIN-DB-004
+-task_name: Public database discovery and record retrieval
++input_revision: 20261020-fullanalysis
+ ambiguity_level: strict
+-step_length: M
+-step_count_estimate: 4
+-data_status: partial
++data_status: ready_verified
++task_name: Live public database discovery and gene metadata retrieval
+ 
+-路径上下文：
+-- 本题目录：/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/03.序列检索与数据库/04.BM-REMAIN-DB-004__strict
+-- 本题数据目录：/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/03.序列检索与数据库/04.BM-REMAIN-DB-004__strict/data
+-- 本题输出根目录：/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/03.序列检索与数据库/04.BM-REMAIN-DB-004__strict/output
+-- 输入与输出均使用绝对路径；data 内的软链接指向本测试集的共享数据。
++路径（绝对路径）：
++PROJECT=/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/03.序列检索与数据库/04.BM-REMAIN-DB-004__strict
++DATA=/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/03.序列检索与数据库/04.BM-REMAIN-DB-004__strict/data
++OUT=/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/03.序列检索与数据库/04.BM-REMAIN-DB-004__strict/output_inputfix_20261020
++正式输入以 PROJECT/input_manifest.json 为准。data_inventory.tsv 与 input_status.tsv 是本版本有效清单；带旧日期后缀的清单只作为历史保存，不能补充本题输入。
+ 
++执行要求：
++Linux/Bash；按下文指定的绝对软件路径执行。输入只读，工作副本、索引、脚本、模型、表格、图片和日志全部写入 OUT；不写旧 output/ 或其他历史输出。不得读取历史结果、评判规则、隐藏答案或未列入清单的数据。无需安装 BioMind 或同名 skill；可使用指定原生模型与明示的等价实现。不得安装或修改共享软件环境。
++只允许实际执行成功的阶段标记 completed；文件存在、软件安装或格式通过均不等于模型运行完成。遇到真实错误保存命令、退出码、stderr 和阶段原因，继续独立阶段。本版没有故意缺失的关键输入，也没有“仅交充分性审计即可”的成功条件。
++全量大 VCF 分析通过 Slurm 申请资源；使用实际分配的额度。已核实 AMD_9A14 分区账户 zhangxingtan、QoS user_liusiqi，单核内存上限 3600 MB；例如 4 CPU/12 GB，记录实际作业 ID。队列变化时按实时错误记录，不将调度失败写成数据缺失。
++固定随机种子 20260603。不同版本的性能、结果和评分不可直接混用。
+ 
+-请按下面的严格测试要求执行。不要查看任何 benchmark 评判标准或隐藏答案文件。
++目标：完成 human PBMC interferon stimulation scRNA-seq 的 GEO→SRA/PubMed 元数据检索，并查询人类 IFNAR1 的明确 Ensembl gene stable ID。
++正式输入 DATA/database/query_input.json，明确 gene_stable_id=ENSG00000142166、species=homo_sapiens。该 ID 是本题给定查询对象；坐标、组装版本和数据库版本须从本次响应读取。
++环境：/public/home/liusiqi/anaconda3/envs/biomind/bin/python；urllib/requests、JSON/XML 标准解析即可。公共 API 不要求提供 API key；不得把密钥写入日志或报告。
++1. NCBI ESearch db=gds、term="Homo sapiens[Organism] AND PBMC AND interferon AND single cell"、retmode=json、retmax=20、retstart=0、sort=relevance。保存实际编码 URL、Count、返回 UID。任务范围明确为本次第一页最多 20 条，不把本页说成全部数据库记录。
++2. ESummary 对真实 UID 获取 GSE/GSM、标题、物种、实验类型、研究描述；逐条判断是否真正支持 PBMC、干扰素刺激和单细胞 RNA 测序，区分 confirmed/candidate/excluded 与证据字段。不因为关键词命中就断言全部适合。
++3. 对每个本页 UID 分别 ELink dbfrom=gds→sra 和 pubmed；先保存完整关联 ID 列表，再分别取数值 ID 升序前 20 个 SRA、前 5 个 PubMed 做 EFetch XML。逐 UID 报告关联总数、获取数、是否截断。无关联写 no_links 和空表，不伪造 accession；不能在 search/link 前编造 fetch ID。SRA Run accession 只能解析真实 XML。GSE/GSM 到 SRA/PubMed 的连接均保留源 UID，不做无依据串联。
++4. GET https://rest.ensembl.org/lookup/id/ENSG00000142166?expand=0;content-type=application/json，Accept: application/json；核验返回 id/species/object_type，输出 display_name、description、seq_region_name、start、end、strand、assembly_name、version 与请求时间，不预填坐标。
++5. 无 key 的 NCBI 请求串行间隔至少 0.4 秒，timeout=30 秒；瞬时失败最多重试 2 次并退避，保留 HTTP 状态与错误。服务不可用标记具体阶段网络错误，继续其他 API；禁止 FASTQ 或其他大规模测序下载。
++产物：query_log.tsv（时间、URL/参数、HTTP、字节数、返回数、尝试次数）、raw_responses/（实际 HTTP 正文）、geo_candidate_table.tsv、sra_run_mapping.tsv、pubmed_evidence.tsv、retrieval_scope.tsv、ensembl_gene_summary.json。成功条件：四个 API 操作阶段均完成或真实返回无关联；仅计划查询不算已完成。
+ 
+-执行环境与边界：
+-- 执行端为能访问本服务器绝对路径的 Linux/Bash；本题指定分析环境和软件入口见“用户问题：”后的环境段。
+-- Conda 可执行文件为 /public/home/liusiqi/anaconda3/bin/conda。使用指定环境内的 bin/python、bin/Rscript 或 CLI；需要激活钩子时使用 conda run --no-capture-output -p <本题实际 Conda prefix> <分析命令>，不依赖前一个 shell 的激活状态。启动器目录不是 Conda prefix。
+-- 被测智能体自身的控制程序环境不承担科学分析依赖；每个分析命令均明确使用本题指定入口。
+-- 需要 Slurm 时先核实实际分区、账户及分配到的 CPU/内存/时限/GPU 配额，不把机器总资源当作任务额度；网络和外部服务凭据仍按实际任务需要确认。
+-- data/ 软链接指向共享输入，只读使用；索引、中间文件或其他需要修改的内容在本题 output/ 内建立工作副本。结果、临时分析文件和日志均放在本题 output/ 内，不修改共享输入和共享 Conda 环境。
+-- 如果执行端无法访问题面绝对路径，报告执行环境/挂载不匹配；不将其误报为生物学输入缺失，不伪称完成分析。
+-
+-跨智能体测试约定：
+-- 本题源自 BioMind 测试集。正文中的 skill 名称是分析流程参考；可使用本题给出的软件、脚本和方法完成，不要求安装 BioMind 或具有同名知识库。
+-- 保留题目指定的生物学目标、方法/软件限制、参数、正式输入、输出文件名和停止条件。不得把明确指定的方法替换成不等价分析；环境说明不补充缺失的样本分组、contrast、阈值或答案。
+-- 只检查本题提供的输入与软件环境；不要读取旧测试的 output/、其他智能体的结果、历史会话、评分规则或隐藏答案。目录名包含 fixtures_simulated_truth 的已列出正式输入仍按本题输入清单使用，不得扩展读取其中未提供的评测真值。
+-
+-用户问题：
+-本题分析环境（测试方指定，分析依赖已安装）：
+-- HTTP/XML/JSON 请求：使用Conda 环境 biomind（绝对路径：/public/home/liusiqi/anaconda3/envs/biomind；可执行入口在 bin/）。
+-- 测试方已确认：以上指定分析环境及本题分析所需依赖均已安装。各阶段使用对应环境的绝对路径和软件入口；输入是否充分及结果是否有效仍按本题规则判断。
+-- 不安装、升级、重装软件或创建环境，不执行 conda/pip 安装、conda clean/config；同一分析命令或作业脚本需要衍生调用工具时，设置对应 bin 的 PATH。
+-- 从正式输入盘点和分析步骤开始；保留输入 QC、resolution/weight、样本方向、contrast、关键参数及科学结果验证。
+-- 只有正式分析命令实际报错时，记录命令、退出码和 stderr，按原题规则标记 blocked/stage_blocked 并继续独立阶段；不进入查找或安装重试循环，不伪造结果。
+-
+-请查询 human PBMC interferon stimulation scRNA-seq 的 GEO 记录，先用 geo-data/entrez-search 找 GSE/GSM，再用 entrez-link 映射 SRA/PubMed，最后 fetch compact metadata。另请用 Ensembl 查询一个明确给出的 gene stable ID。不能下载 FASTQ，网络不可用时 blocked。
+-
+-分析流程参考（名称沿用原题，不要求安装同名 skill）：
+-- databases/ncbi/entrez-search
+-- databases/ncbi/entrez-link
+-- databases/ncbi/entrez-fetch
+-- databases/ncbi/geo-data
+-- databases/ensembl/ensembl-database
+-
+-strict 流程细节（本题已展开，无需预先掌握同名 skill）：
+-以下为本 strict 的执行说明；正文已有的科学参数优先，补充的数值是本版明确采用的流程参数。未给出的生物学分组、样本对应、倍性等不能用软件默认值代替；KNOWN_ABSENT_FOR_THIS_TASK 继续适用。
+-变量绑定（Shell 路径始终加引号；OUT 是本题 output 根目录）：
+-  OUT='/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/03.序列检索与数据库/04.BM-REMAIN-DB-004__strict/output'
+-  DATA='/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/03.序列检索与数据库/04.BM-REMAIN-DB-004__strict/data'
+-  SKILLS='/public/home/liusiqi/03.毕设/Biomind_v1/skills'
+-原生命令名使用上文对应分析环境的 bin 入口；同一脚本的 PATH 也指定到该环境。下面 <...> 表示按紧邻说明绑定的实际输入/输出，不能把占位符当文件。需要临时文件或新索引时放在 OUT 的工作副本中。
+-软件：biomind 环境 Python requests/urllib、JSON/XML 解析；使用 NCBI E-utilities 与 Ensembl REST，不需 BioMind 私有接口。
+-查询步骤：向 https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi 发送 db=gds、term="Homo sapiens[Organism] AND PBMC AND interferon AND single cell"、retmode=json、retmax=20；保留实际编码后的 URL/参数。由返回 UID 用 esummary.fcgi(db=gds,retmode=json) 获取真实 GSE/GSM accession；elink.fcgi(dbfrom=gds,db=sra 或 pubmed,id=实际UID) 建立关联，然后 efetch.fcgi(db=sra 或 pubmed,id=实际关联ID,retmode=xml) 获取紧凑元数据。不得提前编造 accession。
+-无 API key 时请求间隔至少 0.34 秒，每次 timeout=30 秒，瞬时失败最多重试 2 次并退避；记录时间、HTTP 状态、返回记录数/错误，不无限轮询。SRA Run accession 必须来自实际 XML。禁止下载 FASTQ。
+-Ensembl：仅在用户/正式输入给出明确 gene stable ID 后 GET https://rest.ensembl.org/lookup/id/{stable_id}?expand=0，Accept: application/json。当前正文没有具体 stable ID 时，只将该阶段标 blocked_need_gene_id，不能拿本地自定义 gene ID 或自行挑选人类基因填空；NCBI 查询仍可独立执行。
+-交付位置：/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/03.序列检索与数据库/04.BM-REMAIN-DB-004__strict/output。按原题“预期产物”提供表、图、report.md/reproduce.sh；包装脚本没有自动生成的汇总/报告由本次分析补齐。报告和复现脚本写在上述交付目录，不能仅在源码目录留日志。
+-
+-
+-输入文件或数据位置：
+-- QUERY: user-provided organism, gene, publication, or GEO search terms
+-
+-输出目录：
+-/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/03.序列检索与数据库/04.BM-REMAIN-DB-004__strict/output
+-
+-允许：
+-- 允许访问 NCBI/Ensembl 公共 API。
+-- 允许仅输出 planned queries when network is unavailable。
+-
+-禁止：
+-- 禁止下载 FASTQ。
+-- 禁止 fetch 在 search/link 之前伪造 ID。
+-- 禁止把本地 custom genome ID 当作 Ensembl stable ID。
+-
+-依赖规则：
+-网络或 API 失败时 blocked_network；必须保留 query string 和错误信息。
+-
+-停止条件：
+-完成 public record tables 或 blocked_network。
+-
+-预期产物：
+-- query_log.tsv
+-- geo_candidate_table.tsv
+-- sra_run_mapping.tsv
+-- pubmed_evidence.tsv
+-- ensembl_gene_summary.json
+-- report.md
+-- reproduce.sh
+-
+-通用要求：
+-- 只使用本提示词给出的正式输入或数据目录；不得把智能体代码仓库目录误当作 benchmark 数据根目录。
+-- 本题输入与输出路径均为绝对路径，不依赖当前工作目录。
+-- 不要使用 demo、toy、tests、fixtures_legacy_toy、expected_answers 或任何隐藏答案文件作为分析依据。
+-- 缺少或无法确认关键输入、样本方向、contrast、resolution、阈值或项目背景时，先做只读验证和正式产物搜索；仍不确定则 ask_user/blocked_need_user_decision，不要猜测。
+-- 若本提示词明确标注 `KNOWN_ABSENT_FOR_THIS_TASK`，则该输入已知不提供；不要反复询问或借用其他 benchmark/hidden/fixture 文件，应按本任务规则写 skipped/stage_blocked 并继续可执行步骤。
+-- 如果依赖、输入或上游结果不足，请明确写 blocked/stage_blocked，并说明缺少什么；不要伪造结果。
+-- 最终至少生成 report.md 和 reproduce.sh；多阶段任务还应生成 stage_status.tsv 或等价状态表。
++交付共通要求：
++在 OUT 写 report.md、reproduce.sh、stage_status.tsv、commands.json（包含软件版本、命令、退出码）。报告列明输入版本、实际使用/排除的样本和特征、参数、方法限制、运行状态；所有结果必须来自本次运行。reproduce.sh 使用绝对入口，重复执行不得破坏输入与历史结果。
+ ```
+-整理说明（不属于测试提示词）：
+-
+-- 数据清单：`/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/03.序列检索与数据库/04.BM-REMAIN-DB-004__strict/data_inventory.tsv`。
+-- 输入状态：`/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/03.序列检索与数据库/04.BM-REMAIN-DB-004__strict/input_status.tsv`。
+-- 本题未给出可归档的本地数据文件；保留原题的查询条件或输入要求。

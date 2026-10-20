@@ -1,0 +1,308 @@
+--- /public/home/liusiqi/03.毕设/benchmarks/runtime_setup_20261014/output/sources/GP-WAITER/train-test.py
++++ /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/analysis_support/train_multiomics.py
+@@ -1,226 +1,79 @@
+-import numpy as np
+-from sklearn.model_selection import train_test_split
+-import torch.utils.data as Data
+-# from orin import GP_WAITER as gp
+-from model import GP_WAITER as gp
+-import shutil
+-import os
+-import torch
+-from torch import nn
+-import torch.optim as optim
+-import pandas as pd
+-from torch.utils.tensorboard import SummaryWriter
+-
+-
+-class EarlyStopping:
+-   
+-    def __init__(self, patience=7, verbose=False, delta=0, path=''):
+-        """
+-        Args:
+-            patience (int): 验证损失没有提升的容忍 epoch 数，之后停止
+-            verbose (bool): 若为 True，每次保存最佳模型时打印信息
+-            delta (float): 最小变化，小于该值视为无提升
+-            path (str): 模型保存路径
+-        """
+-        self.patience = patience
+-        self.verbose = verbose
+-        self.delta = delta
+-        self.path = path
+-        self.counter = 0           # 记录连续未提升的 epoch 数
+-        self.best_score = None      # 最佳验证指标（如损失）
+-        self.early_stop = False     # 是否触发早停
+-        self.val_loss_min = np.Inf   # 当前最小验证损失
+-
+-    def __call__(self, val_loss, model):
+-        score = val_loss  
+-
+-        if self.best_score is None:
+-            # 第一次调用，直接保存模型
+-            self.best_score = score
+-            self.save_checkpoint(val_loss, model)
+-        elif score > self.best_score - self.delta:
+-            # 没有提升（score 没有大于 best_score + delta）
+-            self.counter += 1
+-            print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
+-            if self.counter >= self.patience:
+-                self.early_stop = True
+-        else:
+-            # 有提升，更新最佳分数，重置计数器，保存模型
+-            self.best_score = score
+-            self.save_checkpoint(val_loss, model)
+-            self.counter = 0
+-
+-    def save_checkpoint(self, val_loss, model):
+-        """保存当前最佳模型（验证损失最小）"""
+-        if self.verbose:
+-            print(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
+-        torch.save(model.state_dict(), self.path)
+-        self.val_loss_min = val_loss
+-
+-def transform(line_gen):
+-    line_gen = line_gen.strip('\n')
+-    splited_line_gen = line_gen.split(',')
+-    g = list(map(lambda x: float(x), splited_line_gen[1:]))
+-    g = np.array(g).reshape(180, 4589)
+-    g = g.astype(np.float32)
+-    return g
+-
+-
+-def train(phe_s,num_epochs,batch_size,lr):
+-    filepath_gen = "./data/" + phe_s + "_gen.txt"
+-    filepath_phe = "./data/" + phe_s + "_phe.csv"
+-   
+-    phe=pd.read_csv(filepath_phe)
+-  
+-    phe=phe[phe_s]/100
+-  
+-    g_array=[]
+-
+-    site=pd.read_csv("./data/"+phe_s+"_sitescore.csv")
+-    env_SiteScore=site.iloc[:, 2].to_numpy()
+-  
+-    env_SiteScore = env_SiteScore.reshape(180, 4589)
+- 
+-    with open(filepath_gen, "r") as f:
+-        line = f.readline()
+-        while line:      
+-            gen=transform(line)
+-            g_array.append(gen)
+-            line = f.readline()
+-        
+-    print(len(g_array))
+-    print(np.array(g_array).shape)
+-
+-
+-    xtrain, xtest, ytrain, ytest = train_test_split(g_array, phe, test_size=0.2, random_state=100)
+-    xtrain=np.array(xtrain)
+-    ytrain=np.array(ytrain)
+-    xtest=np.array(xtest)
+-    ytest=np.array(ytest)
+-    print(xtrain.shape,ytrain.shape,xtest.shape,ytest.shape)
+-
+-    params_path = os.path.join('parameters', "T_CNN_SiteScore", phe_s+'_80w_8layers_'+str(batch_size)+'b_0.001lr')
+-    print('params_path:', params_path)
+-    if (not os.path.exists(params_path)):
+-        os.makedirs(params_path)
+-        print('create params directory %s' % (params_path))
+-    else:
+-        shutil.rmtree(params_path)
+-        os.makedirs(params_path)
+-        print('delete the old one and create params directory %s' % (params_path))
+-
+-    USE_CUDA = torch.cuda.is_available()
+-    DEVICE = torch.device('cuda:0')
+-    # DEVICE = torch.device('cpu')
+-    print("CUDA:", USE_CUDA, DEVICE)
+-    env_SiteScore = torch.Tensor(env_SiteScore).to(DEVICE)
+-    param=[{"embed_size1":312,"embed_size2":260,"num_heads":12},
+-           {"embed_size1":260,"embed_size2":100,"num_heads":10},
+-           {"embed_size1":100,"embed_size2":20,"num_heads":5}]
+-
+-    conv_params = [
+-        {"in_channels": 1, "out_channels": 1, "kernel_size": (90, 101), "stride": (1, 4)},
+-        {"in_channels": 1, "out_channels": 1, "kernel_size": (60, 101), "stride": (1, 2)},
+-        {"in_channels": 1, "out_channels": 1, "kernel_size": (1, 101), "stride": (1, 1)},
+-        {"in_channels": 1, "out_channels": 1, "kernel_size": (1, 101), "stride": (1, 1)}
+-    ]
+-
+-    model=gp.TModel(embed_size=param[2]["embed_size2"],w=env_SiteScore,conv_params=conv_params,param=param,num_layers=3).to(DEVICE)
+-  
+-    if torch.cuda.is_available():
+-        model.cuda()  
+-
+-    criterion = nn.MSELoss()
+-    # criterion = nn.BCELoss()
+-    Optimizer = optim.Adam(model.parameters(), lr=lr)
+-
+-    sw = SummaryWriter(log_dir=params_path, flush_secs=5)
+-    xtrain=torch.Tensor(xtrain)
+-    ytrain = torch.Tensor(ytrain)
+-    xtest = torch.Tensor(xtest)
+-    ytest = torch.Tensor(ytest)
+-    train_dataset=Data.TensorDataset(xtrain,ytrain)
+-    train_loader = Data.DataLoader(dataset=train_dataset, batch_size=batch_size, num_workers=1, drop_last=True,
+-                                   shuffle=True)
+-    test_dataset = Data.TensorDataset(xtest,ytest)
+-    test_loader = Data.DataLoader(dataset=test_dataset, batch_size=batch_size, num_workers=1, drop_last=False,
+-                                   shuffle=True)
+-    early_stopping = EarlyStopping(patience=20, verbose=True, delta=1e-4, path=params_path+'/best_model.params')
+-    for epoch in range(num_epochs):
+-        #time_epoch_start = time.time()
+-        params_filename = os.path.join(params_path, 'epoch_%s.params' % epoch) 
+-
+-        t_labels = []
+-        t_outputs = []
+-        train_loss=0.0
+-        for batch_index, (train_data, train_label) in enumerate(train_loader):
+-            if torch.cuda.is_available():
+-                train_data = train_data.cuda()
+-                print("++++",train_label.shape)
+-                train_label = train_label.cuda()
+-            # input_data = train_data.view(train_data.size(0), -1)
+-                output = model(train_data)
+-                loss = criterion(output, train_label)
+-                train_loss += loss.item()
+-                print('output:',output.shape)
+-                print('train_label:',train_label.shape)
+-
+-                a = output.to('cpu')
+-                t_outputs.append(a.detach().numpy())
+-                b = train_label.cpu()
+-                t_labels.append(b.detach().numpy())
+-                
+-                Optimizer.zero_grad()
+-                loss.backward()
+-                Optimizer.step()
+-
+-                print('Epoch: {}, batch_index:{},Loss: {:.5f}'.format(epoch, batch_index, loss))
+-
+-
+-        t_outputs = np.concatenate(t_outputs, axis=0)
+-   
+-        t_labels = np.concatenate(t_labels, axis=0)
+-     
+-        m = np.corrcoef(t_outputs, t_labels)
+-        print("correlation coefficient of train:", m)
+-        train_loss=criterion(torch.Tensor(t_outputs),torch.Tensor(t_labels)).item()
+-        sw.add_scalar("training loss per epoch",  train_loss, epoch)
+-        sw.add_scalar("correlation coefficient of training_dataset per epoch", m[0, 1], epoch)
+-        torch.save(model.state_dict(), params_filename)
+-        test_prediction=[]
+-        test_all_labels=[]
+-        with torch.no_grad():
+-            model.eval()
+-            for batch_index, (test_data, test_label) in enumerate(test_loader):
+-                if torch.cuda.is_available():
+-                    test_data = test_data.cuda()
+-                    test_label = test_label.cuda()
+-                    test_output = model(test_data)
+-                    # test_loss = criterion(test_output, test_label)
+-                    # val_loss += test_loss.item()
+-            
+-                    a = test_output.to('cpu').numpy()
+-                    test_prediction.append(a)
+-                    b = test_label.cpu().numpy()
+-                    test_all_labels.append(b)
+-                # print("batch_index=======",batch_index)
+-                # print("a.shape,b.shape:",a.shape,b.shape)
+-            # val_loss /= len(test_loader.dataset)
+-            test_outputs = np.concatenate(test_prediction, axis=0)
+-
+-            test_labels = np.concatenate(test_all_labels, axis=0)
+-            test_loss = criterion(torch.Tensor(test_outputs), torch.Tensor(test_labels)).item()
+-            print("test_outputs.shape,test_labels.shape:",test_outputs.shape,test_labels.shape)
+-            m = np.corrcoef(test_outputs, test_labels)
+-            print("correlation coefficient of test:", m)
+-            sw.add_scalar("correlation coefficient of testing dataset per epoch", m[0, 1], epoch)
+-
+-        early_stopping(test_loss, model)
+-        if early_stopping.early_stop:
+-            print("Early stopping triggered")
+-            break
+-
+-
+-
+-if __name__ == '__main__':
+-    train(phe_s="O.H17",num_epochs=200,batch_size=32,lr=0.001)
++"""Native models; explicit data dimensions, fixed epochs and sealed outer folds.
++The GP adapter retains upstream TModel; only size-dependent kernel/attention
++parameters change. No padding invents markers. Single-row inference repeats
++the same tensor to avoid the upstream squeeze() bug, returning one prediction.
++"""
++from pathlib import Path
++import argparse,os,sys,json,hashlib
++p=argparse.ArgumentParser();p.add_argument('--model',choices=['gp_waiter','cropformer','dnngp'],required=True);p.add_argument('--data',required=True);p.add_argument('--out',required=True);p.add_argument('--config',required=True);a=p.parse_args()
++D=Path(a.data).resolve();O=Path(a.out).resolve();O.mkdir(parents=True,exist_ok=True)
++os.environ.update(MPLCONFIGDIR=str(O/'mpl'),KERAS_HOME=str(O/'keras'),XDG_CACHE_HOME=str(O/'cache'),TF_NUM_INTEROP_THREADS='1',TF_NUM_INTRAOP_THREADS='1',OMP_NUM_THREADS='1',OPENBLAS_NUM_THREADS='1')
++import numpy as np,pandas as pd
++C=json.loads(Path(a.config).read_text());S=Path(C['runtime_root']);cfg=C[a.model]
++g=pd.read_csv(D/'genotype_matrix.tsv',sep='\t',index_col=0);ph=pd.read_csv(D/'phenotype.tsv',sep='\t',index_col=0);fold=pd.read_csv(D/'cv_fold_design.tsv',sep='\t',index_col=0);ids=list(g.index);assert len(set(ids))==len(ids);assert set(ids)==set(ph.index)==set(fold.index)
++y=ph.loc[ids,C['target']].values.astype('float32');f=fold.loc[ids,'fold_id'].values
++parts=[g]
++if a.model=='dnngp':
++ for n in ['expression_matrix.tsv','metabolite_matrix.tsv']:
++  t=pd.read_csv(D/n,sep='\t',index_col=0);assert set(t.index)==set(ids);parts.append(t.loc[ids])
++x=pd.concat(parts,axis=1).values.astype('float32');assert np.isfinite(y).all();preds=[];audits=[]
++for k in sorted(set(f)):
++ W=O/f'fold_{k}';W.mkdir(exist_ok=True);outer=np.flatnonzero(f!=k);test=np.flatnonzero(f==k);np.random.seed(C['seed']+int(k));train=outer.copy();inner=[]
++ if a.model=='dnngp':
++  # Inner holdout independent of outer-test labels; native callbacks see inner only.
++  order=sorted(outer,key=lambda j:hashlib.sha256(f"{C['seed']}|{k}|{ids[j]}".encode()).digest());nval=max(3,int(np.ceil(.2*len(outer))));inner=np.array(order[:nval]);train=np.array(order[nval:])
++ mu=np.nanmean(x[train],axis=0);assert np.isfinite(mu).all();filled=np.where(np.isnan(x),mu,x);sd=filled[train].std(0);sd=np.where(sd<1e-7,1.,sd);xx=(filled-mu)/sd;ym=y[train].mean();ys=y[train].std();assert ys>0;yy=(y-ym)/ys
++ np.savez(W/'preprocessing.npz',mean=mu,scale=sd,y_mean=ym,y_scale=ys)
++ if a.model in ['gp_waiter','cropformer']:
++  import torch
++  torch.set_num_threads(1);torch.manual_seed(C['seed']+int(k));device=torch.device(cfg.get('device','cpu'))
++  if device.type=='cuda' and not torch.cuda.is_available():raise RuntimeError('requested CUDA but no allocated device')
++  if a.model=='gp_waiter':
++   from scipy.stats import linregress
++   sys.path.insert(0,str(S/'sources/GP-WAITER'));from model import GP_WAITER as gp
++   weights=[]
++   for j in range(x.shape[1]):
++    pv=1. if np.std(xx[train,j])<1e-7 else float(linregress(xx[train,j],y[train]).pvalue)
++    weights.append(1.+min(10.,-np.log10(max(pv,1e-10))))
++   pd.DataFrame({'feature_id':g.columns,'weight':weights,'training_fold_excludes':k}).to_csv(W/'gwas_weights.tsv',sep='\t',index=False)
++   h,w=cfg['input_shape'];assert h*w==x.shape[1],'input_shape product must equal real marker count; padding forbidden'
++   conv=cfg['conv_params'];H,Wd=h,w
++   for c in conv:H=(H-c['kernel_size'][0])//c['stride'][0]+1;Wd=(Wd-c['kernel_size'][1])//c['stride'][1]+1
++   assert H>0 and Wd==cfg['attention'][0]['embed_size1']
++   net=gp.TModel(embed_size=cfg['attention'][-1]['embed_size2'],w=torch.tensor(weights,dtype=torch.float32,device=device).reshape(h,w),conv_params=conv,param=cfg['attention'],num_layers=len(cfg['attention']))
++   # Same two Conv1d layers and activation topology; dimensions configured for this panel.
++   if 'output_convolutions' in cfg:
++    for index,cc in zip([0,2],cfg['output_convolutions']):
++     net.out_r[index]=torch.nn.Conv1d(1,1,cc['kernel_size'],stride=cc['stride']);H=(H-cc['kernel_size'])//cc['stride']+1
++    assert H==1,'configured output head must reduce height to one'
++   xx=xx.reshape(len(ids),h,w)
++  else:
++   sys.path.insert(0,str(S/'entrypoints/Cropformer'));from model import SelfAttention
++   net=SelfAttention(input_size=x.shape[1],**cfg['model_parameters'])
++  net.to(device);opt=torch.optim.Adam(net.parameters(),lr=cfg['learning_rate']);xt=torch.tensor(xx,dtype=torch.float32,device=device);yt=torch.tensor(yy,dtype=torch.float32,device=device)
++  def forward(z):
++   n=z.shape[0]
++   if a.model=='gp_waiter' and n==1:z=torch.cat([z,z],dim=0)
++   return net(z).reshape(-1)[:n]
++  hist=[]
++  for epoch in range(cfg['epochs']):
++   net.train();opt.zero_grad();v=forward(xt[train]);loss=(v-yt[train]).square().mean();assert torch.isfinite(loss);loss.backward();opt.step();hist.append({'epoch':epoch+1,'training_loss':float(loss.detach())})
++  net.eval()
++  with torch.no_grad():
++   pp=forward(xt[test]).cpu().numpy()*ys+ym
++   # Independent one-sample inference must agree with batched prediction.
++   single=forward(xt[test[:1]]).cpu().numpy()*ys+ym
++   assert np.allclose(pp[:1],single,rtol=1e-4,atol=1e-4)
++  torch.save({'state_dict':net.state_dict(),'config':cfg,'feature_order':list(g.columns)},W/'model.pt');pd.DataFrame(hist).to_csv(W/'training_history.tsv',sep='\t',index=False)
++ else:
++  sys.path.insert(0,str(S/'sources/DNNGP/Scripts'));import tensorflow as tf,dnngp
++  tf.keras.backend.clear_session();tf.random.set_seed(C['seed']+int(k));xx=xx[:,:,None]
++  ret=dnngp.dnngp_model(xx[train],xx[inner],yy[train],yy[inner],xx.shape[1],cfg['epochs'],cfg['patience'],cfg['batch_size'],cfg['learning_rate'],cfg['dropout1'],cfg['dropout2'],str(W)+'/',cfg['earlystopping'],'yield',int(k))
++  files=list(W.glob('*.h5'));assert len(files)==1
++  net=tf.keras.models.load_model(files[0],compile=False);pp=net.predict(xx[test],verbose=0).reshape(-1)*ys+ym
++  ret[2].to_csv(W/'training_history.tsv',sep='\t',index=False)
++ assert len(pp)==len(test) and np.isfinite(pp).all()
++ for j,v in zip(test,pp):preds.append({'sample_id':ids[j],'fold_id':int(k),'observed':float(y[j]),'predicted':float(v)})
++ audits.append({'fold':int(k),'training_ids':[ids[j] for j in train],'inner_validation_ids':[ids[j] for j in inner],'outer_test_ids':[ids[j] for j in test],'epochs':cfg['epochs'],'preprocessing_fit':'training_ids only','test_labels_used_by_training':False})
++ (O/'fold_audit.json').write_text(json.dumps(audits,indent=2));print(a.model,'fold',k,'PASS',flush=True)
++r=pd.DataFrame(preds);assert len(r)==len(ids) and r.sample_id.nunique()==len(ids);r.to_csv(O/'oof_predictions.tsv',sep='\t',index=False);m={'status':'PASS','model':a.model,'n_oof':len(r),'rmse':float(np.sqrt(np.mean((r.predicted-r.observed)**2))),'pearson':float(r.predicted.corr(r.observed)),'purpose':'small simulated input functional validation; not paper performance reproduction','config':C,'slurm_job_id':os.getenv('SLURM_JOB_ID')};(O/'verification.json').write_text(json.dumps(m,indent=2));print(m['status'],a.model,m['rmse'],flush=True)

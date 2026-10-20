@@ -19,9 +19,13 @@ compatibility: 需要本技能 references/dependencies.md 列明的现有软件�
 [dependencies.md](references/dependencies.md)；安装、升级或修改环境需要事先明确授权。
 本文命令可由任意提供命令执行能力的 Agent 或终端使用；不会在读取技能时安装或体检环境。
 
+## 联网与结构化结果核验
+
+首次联网前读取 [公共数据库联网与结构化结果核验](../../references/network-and-structured-retrieval.md)，同一会话已读且未变时复用。先确认当前可用的官方 API 或插件路径，再按下列领域工作流执行；复用当前工具 schema 已提供的原始响应模式；搜索摘要和未完整回收的正文不能替代结构化记录。
+
 # NCBI Entrez Fetch
 
-Use this skill when the user already has NCBI IDs or accessions and needs record content. This is the retrieval step after `ncbi-entrez-search` or `ncbi-entrez-link`.
+Use this skill when the user already has NCBI IDs or accessions and needs record content. This is the retrieval step after `entrez-search` or `entrez-link`.
 
 ## When To Use
 
@@ -38,10 +42,10 @@ Do not use this skill when the user only has keywords, needs GEO-specific datase
 
 1. Confirm the IDs/accessions and the target NCBI database.
 2. Choose `Entrez.efetch()` for full records or `Entrez.esummary()` for compact metadata.
-3. Choose output format: FASTA for sequences, GenBank/GenPept for annotated records, XML/JSON/TSV for metadata.
+3. Choose a format that the particular database and method support: FASTA for sequences, GenBank/GenPept for annotated records, and supported XML/JSON for metadata. TSV is normally a derived table, not a universal EFetch retmode. Keep the official raw response separately.
 4. Fetch in batches for long ID lists and respect NCBI rate limits.
 5. Save outputs with clear filenames.
-6. Validate that files are non-empty and match the requested record type.
+6. Validate format and identity: parse the raw response, reject API error/challenge pages, compare requested IDs with actual returned record IDs, and report missing, unexpected or duplicate IDs. Do not match records by response order alone.
 7. Report requested count, fetched count, output paths, failed IDs, and warnings.
 
 ## Database And Output Choices
@@ -62,9 +66,10 @@ Do not use this skill when the user only has keywords, needs GEO-specific datase
 Fetch one nucleotide FASTA:
 
 ```python
+import os
 from Bio import Entrez
 
-Entrez.email = "your.email@example.com"
+Entrez.email = os.environ.get("NCBI_EMAIL") or Entrez.email  # Use a real configured contact; never invent one.
 with Entrez.efetch(db="nucleotide", id="NM_007294", rettype="fasta", retmode="text") as handle:
     fasta = handle.read()
 ```
@@ -72,9 +77,10 @@ with Entrez.efetch(db="nucleotide", id="NM_007294", rettype="fasta", retmode="te
 Fetch one GenBank record:
 
 ```python
+import os
 from Bio import Entrez
 
-Entrez.email = "your.email@example.com"
+Entrez.email = os.environ.get("NCBI_EMAIL") or Entrez.email  # Use a real configured contact; never invent one.
 with Entrez.efetch(db="nucleotide", id="NM_007294", rettype="gb", retmode="text") as handle:
     genbank_text = handle.read()
 ```
@@ -82,9 +88,10 @@ with Entrez.efetch(db="nucleotide", id="NM_007294", rettype="gb", retmode="text"
 Fetch compact Gene summaries:
 
 ```python
+import os
 from Bio import Entrez
 
-Entrez.email = "your.email@example.com"
+Entrez.email = os.environ.get("NCBI_EMAIL") or Entrez.email  # Use a real configured contact; never invent one.
 with Entrez.esummary(db="gene", id="672") as handle:
     records = Entrez.read(handle)
 ```
@@ -113,9 +120,9 @@ python "${SKILL_DIR}/examples/fetch_pubmed.py" --pmids 32228226 --out pubmed_rec
 
 - FASTA output should be non-empty and contain headers beginning with `>`.
 - GenBank/GenPept output should contain `LOCUS`.
-- XML output should be parseable as XML or readable by `Entrez.read()`.
+- XML output should be parseable as XML or readable by `Entrez.read()` from a binary file/BytesIO; keep each independently returned XML document in a separate file instead of concatenating XML roots; JSON must use a JSON parser. A normal XML root plus an API error is a failure, not a completed fetch.
 - Summary tables should contain the requested IDs and key metadata fields.
-- Failed IDs should be written to a failed-ID file or explicitly reported.
+- Failed or missing IDs should be written to a failed-ID file or explicitly reported. A partially populated table is partial success; a missing abstract in a retrieved record is different from a missing/unretrieved record. Handle both PubmedArticle and PubmedBookArticle using their actual PMID fields; retain the record type. A record without an abstract can still be retrieved successfully. Reconcile every requested PMID and retain each raw XML batch before parsing.
 
 ## Report Back
 

@@ -1,0 +1,38 @@
+PLINK v1.9.0 64-bit (27 Sep 2026)
+Options in effect:
+  --allow-extra-chr
+  --make-just-fam
+  --memory 64
+  --out /public/home/liusiqi/03.毕设/benchmarks/03.输入修复26.10.20/00.共享数据/gwas/formal_samples
+  --threads 1
+  --vcf /public/home/liusiqi/03.毕设/BioMind_Submission_Work_20261020/result/evidence/sample-header-one-record.vcf
+
+Hostname: ln02
+Working directory: /public/home/liusiqi/03.毕设
+Start time: Tue Oct 20 00:31:23 2026
+
+Random number seed: 1792427483
+515118 MB RAM detected; reserving 64 MB for main workspace.
+--vcf:
+/public/home/liusiqi/03.毕设/benchmarks/03.输入修复26.10.20/00.共享数据/gwas/formal_samples-temporary.bed
++
+/public/home/liusiqi/03.毕设/benchmarks/03.输入修复26.10.20/00.共享数据/gwas/formal_samples-temporary.bim
++
+/public/home/liusiqi/03.毕设/benchmarks/03.输入修复26.10.20/00.共享数据/gwas/formal_samples-temporary.fam
+written.
+1 variant loaded from .bim file.
+215 people (0 males, 0 females, 215 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to
+/public/home/liusiqi/03.毕设/benchmarks/03.输入修复26.10.20/00.共享数据/gwas/formal_samples.nosex
+.
+Using 1 thread.
+Before main variant filters, 215 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Total genotyping rate is 0.925581.
+1 variant and 215 people pass filters and QC.
+Note: No phenotypes present.
+--make-just-fam to
+/public/home/liusiqi/03.毕设/benchmarks/03.输入修复26.10.20/00.共享数据/gwas/formal_samples.fam
+... done.
+
+End time: Tue Oct 20 00:31:23 2026

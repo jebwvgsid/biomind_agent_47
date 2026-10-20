@@ -1,0 +1,27 @@
+[
+  [
+    "/public/home/liusiqi/03.\u6bd5\u8bbe/benchmarks/biomind_autotest_20261011_preflight/dependency_plan/proposed-envs/bio_gwas_cli/bin/plink",
+    "--vcf",
+    "/public/home/liusiqi/03.\u6bd5\u8bbe/benchmarks/biomind_autotest_20261011_preflight/data_supplement_research_20261012/completion_v2/gwas_work/spaced.vcf.gz",
+    "--double-id",
+    "--allow-extra-chr",
+    "--maf",
+    "0.05",
+    "--geno",
+    "0.1",
+    "--make-bed",
+    "--threads",
+    "2",
+    "--memory",
+    "256",
+    "--out",
+    "/public/home/liusiqi/03.\u6bd5\u8bbe/benchmarks/biomind_autotest_20261011_preflight/data_supplement_research_20261012/completion_v2/gwas_work/spaced"
+  ],
+  [
+    "/public/home/liusiqi/03.\u6bd5\u8bbe/benchmarks/biomind_autotest_20261011_preflight/data_supplement_research_20261012/completion_v2/tools/admixture_linux-1.4.0/admixture",
+    "--seed=20261012",
+    "-j2",
+    "/public/home/liusiqi/03.\u6bd5\u8bbe/benchmarks/biomind_autotest_20261011_preflight/data_supplement_research_20261012/completion_v2/gwas_work/spaced.bed",
+    "3"
+  ]
+]

@@ -1,0 +1,161 @@
+--- /public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/backup/02/BM-REMAIN-CROP-ADVGP-010__strict.md
++++ /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/BM-REMAIN-CROP-ADVGP-010__strict.md
+@@ -1,128 +1,42 @@
+ # BM-REMAIN-CROP-ADVGP-010__strict
+ 
+-- task_name: Advanced crop genomic prediction and multi-omics sufficiency
+-- ambiguity_level: strict
+-- step_length: M
+-- step_count_estimate: 4
+-- data_status: partial
+-
+-复制下面文本块作为本题测试提示词。
++输入与任务修订：20261020-fullanalysis。此版本要求实际分析，历史输出与评分对应旧题，不适用于本版本。
+ 
+ ```text
+ 【Bioinformatics Agent Benchmark Test】
+ benchmark_id: BM-REMAIN-CROP-ADVGP-010
+-task_name: Advanced crop genomic prediction and multi-omics sufficiency
++input_revision: 20261020-fullanalysis
+ ambiguity_level: strict
+-step_length: M
+-step_count_estimate: 4
+-data_status: partial
++data_status: ready_verified
++task_name: Native multiomics model training and held-out prediction
+ 
+-路径上下文：
+-- 本题目录：/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict
+-- 本题数据目录：/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data
+-- 本题输出根目录：/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/output
+-- 输入与输出均使用绝对路径；data 内的软链接指向本测试集的共享数据。
++路径（绝对路径）：
++PROJECT=/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict
++DATA=/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data
++OUT=/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/output_inputfix_20261020
++正式输入以 PROJECT/input_manifest.json 为准。data_inventory.tsv 与 input_status.tsv 是本版本有效清单；带旧日期后缀的清单只作为历史保存，不能补充本题输入。
+ 
++执行要求：
++Linux/Bash；按下文指定的绝对软件路径执行。输入只读，工作副本、索引、脚本、模型、表格、图片和日志全部写入 OUT；不写旧 output/ 或其他历史输出。不得读取历史结果、评判规则、隐藏答案或未列入清单的数据。无需安装 BioMind 或同名 skill；可使用指定原生模型与明示的等价实现。不得安装或修改共享软件环境。
++只允许实际执行成功的阶段标记 completed；文件存在、软件安装或格式通过均不等于模型运行完成。遇到真实错误保存命令、退出码、stderr 和阶段原因，继续独立阶段。本版没有故意缺失的关键输入，也没有“仅交充分性审计即可”的成功条件。
++全量大 VCF 分析通过 Slurm 申请资源；使用实际分配的额度。已核实 AMD_9A14 分区账户 zhangxingtan、QoS user_liusiqi，单核内存上限 3600 MB；例如 4 CPU/12 GB，记录实际作业 ID。队列变化时按实时错误记录，不将调度失败写成数据缺失。
++固定随机种子 20260603。不同版本的性能、结果和评分不可直接混用。
+ 
+-请按下面的严格测试要求执行。不要查看任何 benchmark 评判标准或隐藏答案文件。
++目标：对同一份已对齐的模拟多组学输入，实际训练 GP-WAITER、Cropformer、DNNGP 并完成五折折外预测。它是 24 个样本的功能测试，不是论文性能复现，也不能据此宣称育种价值。
++正式输入 DATA/multiomics/：genotype_matrix.tsv（sample_id + 64 个 0/1/2 剂量）、expression_matrix.tsv（60 特征）、metabolite_matrix.tsv（24 特征）、phenotype.tsv（trait_multiomics_yield）、omics_metadata.tsv（特征层元数据，不是样本表）、cv_fold_design.tsv、gwas_weight_fold_design.tsv、model_config.json。各矩阵行是样本，列是特征；按 sample_id 明确连接，特征顺序固定为各文件表头。不得读取模拟真值或隐藏因果标签。
++原生模块及环境：
++- GP-WAITER：/public/home/liusiqi/03.毕设/benchmarks/runtime_setup_20261014/output/envs/gp_waiter/bin/python；原模块 /public/home/liusiqi/03.毕设/benchmarks/runtime_setup_20261014/output/sources/GP-WAITER/model/GP_WAITER.cpython-39-x86_64-linux-gnu.so。
++- Cropformer：/public/home/liusiqi/03.毕设/benchmarks/runtime_setup_20261014/output/envs/cropformer/bin/python；入口 /public/home/liusiqi/03.毕设/benchmarks/runtime_setup_20261014/output/entrypoints/Cropformer/model.py 的 SelfAttention（该副本只补齐缺失 nn 导入）。
++- DNNGP：/public/home/liusiqi/03.毕设/benchmarks/runtime_setup_20261014/output/envs/dnngp_tf26/bin/python；/public/home/liusiqi/03.毕设/benchmarks/runtime_setup_20261014/output/sources/DNNGP/Scripts/dnngp.cpython-39-x86_64-linux-gnu.so 中 dnngp_model。
++本版可配置训练入口 PROJECT/analysis_support/train_multiomics.py：分别用对应环境调用 --model gp_waiter|cropformer|dnngp --data DATA/multiomics --config DATA/multiomics/model_config.json --out OUT/对应模型。参数必须绑定为本题绝对路径，不将文字占位符直接传给 shell。入口可在 OUT 中复制修改，保留具体 diff 与参数；不得用 sklearn 简化模型替代原生网络。
++1. 核对所有 ID、特征层、剂量、缺失、重复与折；按 cv_fold_design 的 fold_id=1..5 原样划分。每个样本必须且只能获得一次折外预测。外层测试标签不参与任何插补、缩放、权重、特征选择、调参和早停。
++2. 目标固定 trait_multiomics_yield。每折输入均值/标准差只用实际训练样本拟合；标准差接近 0 的列用 scale=1；缺值用训练均值，训练中全缺失的列明确排除并记录。y 只用训练均值/标准差缩放，预测后还原原尺度。
++3. GP-WAITER 使用原生 TModel 与固定 model_config。64 个真实标记按原顺序 reshape 8×8，无填充/复制标记。四层 Conv2d 核为 3×3、3×3、1×1、1×1；输出 4×4，三层注意力维数为 4→8→8→8，头数 1、2、2；保留原生两层输出 Conv1d 与激活，核/步长配置为 2/1、3/1，将 4 个位置缩为 1。是保持原生网络结构的小尺寸配置，不等同论文 180×4589 参数规模。只在外层训练折逐标记拟合单变量线性关联，权重 w=1+min(10,-log10(max(p,1e-10)))，常量列 p=1；每折保存权重、marker 顺序和训练 ID。此处为模拟输入的训练折关联权重，不宣称已完成控制群体结构的正式 GWAS。
++4. Cropformer 用原生 SelfAttention，input_size=64、hidden_size=32、heads=4、kernel_size=3、两类 dropout=0.2。
++5. GP-WAITER 与 Cropformer 固定 Adam lr=0.001、10 epochs、全训练折小批次、seed=20260603+fold，禁止根据外层测试损失选择 epoch。本配置支持 CPU，无 GPU 也可完整运行；若显式设置 CUDA 必须使用已分配设备。原生 GP 的 squeeze 在单样本批次会丢维，入口以同一输入张量的计算副本避免此问题，并仅返回一条预测；不产生额外生物样本，要求单条与批量推理一致。
++6. DNNGP 拼接 genotype→expression→metabolite 共 148 特征。外层训练 ID 按 SHA256('20260603|fold|sample_id') 排序，前 max(3,ceil(0.2*n_train)) 为内层验证，其余实际训练；所有缩放用实际训练子集。调用原生 dnngp_model，外层测试不传入该函数。固定 10 epochs、batch=4、lr=0.001、dropout1/2=0.2、patience=20、earlystopping=40；内层验证用于原生训练监控，训练后加载原生输出 .h5 对封存的外层测试预测。保存实际 checkpoint、训练历史与 fold_audit。
++产物：input_qc.tsv、sample_alignment.tsv、每模型五折 model.pt 或 .h5、preprocessing.npz、fold_audit.json、training_history.tsv、oof_predictions.tsv（sample_id/fold_id/observed/predicted）、模型比较表（相同外层样本上的 RMSE/MAE/Pearson；常量预测相关系数记 NA）、预测散点图。报告明确 DNNGP 使用内层验证、三模型训练样本量/输入层不同；小样本指标只作为本数据划分的结果。成功条件是三个模型全部实际训练和预测，不能只交“可安装/可路由”的说明。
+ 
+-执行环境与边界：
+-- 执行端为能访问本服务器绝对路径的 Linux/Bash；本题指定分析环境和软件入口见“用户问题：”后的环境段。
+-- Conda 可执行文件为 /public/home/liusiqi/anaconda3/bin/conda。使用指定环境内的 bin/python、bin/Rscript 或 CLI；需要激活钩子时使用 conda run --no-capture-output -p <本题实际 Conda prefix> <分析命令>，不依赖前一个 shell 的激活状态。启动器目录不是 Conda prefix。
+-- 被测智能体自身的控制程序环境不承担科学分析依赖；每个分析命令均明确使用本题指定入口。
+-- 需要 Slurm 时先核实实际分区、账户及分配到的 CPU/内存/时限/GPU 配额，不把机器总资源当作任务额度；网络和外部服务凭据仍按实际任务需要确认。
+-- data/ 软链接指向共享输入，只读使用；索引、中间文件或其他需要修改的内容在本题 output/ 内建立工作副本。结果、临时分析文件和日志均放在本题 output/ 内，不修改共享输入和共享 Conda 环境。
+-- 如果执行端无法访问题面绝对路径，报告执行环境/挂载不匹配；不将其误报为生物学输入缺失，不伪称完成分析。
+-
+-跨智能体测试约定：
+-- 本题源自 BioMind 测试集。正文中的 skill 名称是分析流程参考；可使用本题给出的软件、脚本和方法完成，不要求安装 BioMind 或具有同名知识库。
+-- 保留题目指定的生物学目标、方法/软件限制、参数、正式输入、输出文件名和停止条件。不得把明确指定的方法替换成不等价分析；环境说明不补充缺失的样本分组、contrast、阈值或答案。
+-- 只检查本题提供的输入与软件环境；不要读取旧测试的 output/、其他智能体的结果、历史会话、评分规则或隐藏答案。目录名包含 fixtures_simulated_truth 的已列出正式输入仍按本题输入清单使用，不得扩展读取其中未提供的评测真值。
+-
+-用户问题：
+-本题分析环境（测试方指定，分析依赖已安装）：
+-- 输入表核验：使用Conda 环境 biomind（绝对路径：/public/home/liusiqi/anaconda3/envs/biomind；可执行入口在 bin/）。
+-- GP-WAITER 官方模型：使用Conda 环境 gp_waiter（绝对路径：/public/home/liusiqi/03.毕设/benchmarks/runtime_setup_20261014/output/envs/gp_waiter；可执行入口在 bin/）。
+-- Cropformer 官方模型：使用Conda 环境 cropformer（绝对路径：/public/home/liusiqi/03.毕设/benchmarks/runtime_setup_20261014/output/envs/cropformer；可执行入口在 bin/）。
+-- DNNGP 官方模型：使用Conda 环境 dnngp_tf26（绝对路径：/public/home/liusiqi/03.毕设/benchmarks/runtime_setup_20261014/output/envs/dnngp_tf26；可执行入口在 bin/）。
+-- 测试方已确认：以上指定分析环境及本题分析所需依赖均已安装。各阶段使用对应环境的绝对路径和软件入口；输入是否充分及结果是否有效仍按本题规则判断。
+-- 不安装、升级、重装软件或创建环境，不执行 conda/pip 安装、conda clean/config；同一分析命令或作业脚本需要衍生调用工具时，设置对应 bin 的 PATH。
+-- GP-WAITER 源码目录：/public/home/liusiqi/03.毕设/benchmarks/runtime_setup_20261014/output/sources/GP-WAITER；使用 gp_waiter/bin/python 和该目录 model/GP_WAITER.cpython-39-x86_64-linux-gnu.so。官方训练入口使用 CUDA，正式训练须有实际分配的 GPU。
+-- Cropformer 原始源码固定保存在 /public/home/liusiqi/03.毕设/benchmarks/runtime_setup_20261014/output/sources/Cropformer；实际运行入口使用 /public/home/liusiqi/03.毕设/benchmarks/runtime_setup_20261014/output/entrypoints/Cropformer 内的 model.py / model_prediction.py（使用 cropformer/bin/python）。运行副本仅为原始 model.py 补齐缺失的 import torch.nn as nn，模型结构和参数未改动。
+-- DNNGP 原生 Linux 入口：/public/home/liusiqi/03.毕设/benchmarks/runtime_setup_20261014/output/sources/DNNGP/Scripts/dnngp_runner.py；使用 dnngp_tf26/bin/python，TensorFlow 2.6.0；该环境已验证 CPU 运行。
+-- 从本题 output 内的脚本导入官方模块时，在同一条分析命令中设置 PYTHONPATH：GP-WAITER 为 /public/home/liusiqi/03.毕设/benchmarks/runtime_setup_20261014/output/sources/GP-WAITER；Cropformer 为 /public/home/liusiqi/03.毕设/benchmarks/runtime_setup_20261014/output/entrypoints/Cropformer；DNNGP 为 /public/home/liusiqi/03.毕设/benchmarks/runtime_setup_20261014/output/sources/DNNGP/Scripts。各模型分开调用，不混用这些同名模块。
+-- 原生脚本如有硬编码数据/输出路径，在本题 output 内建立脚本工作副本再按本题正式输入调整，并保留源码目录的模块导入路径；模型、输入核验和所需资源分别记录状态。GP-WAITER 训练脚本会清理其既有参数子目录，必须使用新的本题输出子目录。
+-- 从正式输入盘点和分析步骤开始；保留输入 QC、resolution/weight、样本方向、contrast、关键参数及科学结果验证。
+-- 只有正式分析命令实际报错时，记录命令、退出码和 stderr，按原题规则标记 blocked/stage_blocked 并继续独立阶段；不进入查找或安装重试循环，不伪造结果。
+-
+-请测试 GP-WAITER、Cropformer CNN-attention 和 DNNGP multi-omics 的数据/环境边界。不得使用 BioMind 本地 sklearn runner。检查 simulated multiomics_gp 的 genotype/expression/metabolite/phenotype、omics_metadata、cv_fold_design 和 gwas_weight_fold_design 是否样本对齐且无 fold 泄漏；缺 upstream repo/env 或样本不对齐时 blocked。
+-
+-分析流程参考（名称沿用原题，不要求安装同名 skill）：
+-- crop-breeding/crop-gp-waiter-transformer
+-- crop-breeding/crop-cnn-attention-genomic-prediction
+-- crop-breeding/crop-dnngp-multiomics-prediction
+-
+-strict 流程细节（本题已展开，无需预先掌握同名 skill）：
+-以下为本 strict 的执行说明；正文已有的科学参数优先，补充的数值是本版明确采用的流程参数。未给出的生物学分组、样本对应、倍性等不能用软件默认值代替；KNOWN_ABSENT_FOR_THIS_TASK 继续适用。
+-变量绑定（Shell 路径始终加引号；OUT 是本题 output 根目录）：
+-  OUT='/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/output'
+-  DATA='/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data'
+-  SKILLS='/public/home/liusiqi/03.毕设/Biomind_v1/skills'
+-原生命令名使用上文对应分析环境的 bin 入口；同一脚本的 PATH 也指定到该环境。下面 <...> 表示按紧邻说明绑定的实际输入/输出，不能把占位符当文件。需要临时文件或新索引时放在 OUT 的工作副本中。
+-本题核心是数据与方法充分性核验，允许仅交付路线和阻塞说明，不要求为证明环境可用而启动训练。软件入口沿用环境段的 GP-WAITER、Cropformer、DNNGP 官方源码与各自 Python；表格核验用 biomind Python pandas。
+-逐一解析 genotype、expression、metabolite、phenotype、omics_sample_metadata、cv_fold_design、gwas_weight_fold_design，按明确 sample_id 对齐，报告每种组学的样本/特征数、缺失率、重复 ID、交集和剔除。基因型剂量、特征顺序和各组学尺度必须写入 manifest，不把同样的行数当样本对应依据。
+-GP-WAITER：需要模型兼容的 marker 输入、与外层训练折对应的 GWAS 权重；每折权重只能来自该训练折内的表型/GWAS，必须能追踪来源。官方训练入口需要已分配 CUDA GPU；安装完成不代表获得 GPU。Cropformer：需要可构建其 CNN/attention 输入张量的 marker 顺序、编码和训练/验证样本设计。DNNGP：需要与目标 y 对齐的所选 omics 矩阵，分组划分先于训练折插补/标准化。
+-固定审计 seed=20260603；只依据正式 cv_fold_design 使用外层折，验证/测试样本不得参与标准化拟合、GWAS 权重或特征筛选。若本题未给出训练目标、模型配置或必要 GPU，只将训练阶段记为待确认/blocked，数据充分性审计仍完成。data_sufficiency、sample_alignment、upstream_dependency_check、leakage_risk、stage_status 中将“软件已安装”“输入充分”“实际训练完成”分列；不以 sklearn 简化模型替代三种原生模型。
+-交付位置：/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/output。按原题“预期产物”提供表、图、report.md/reproduce.sh；包装脚本没有自动生成的汇总/报告由本次分析补齐。报告和复现脚本写在上述交付目录，不能仅在源码目录留日志。
+-
+-
+-输入文件或数据位置：
+-- /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/fixtures_simulated_truth/multiomics_gp/genotype_matrix.tsv
+-- /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/fixtures_simulated_truth/multiomics_gp/expression_matrix.tsv
+-- /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/fixtures_simulated_truth/multiomics_gp/metabolite_matrix.tsv
+-- /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/fixtures_simulated_truth/multiomics_gp/phenotype.tsv
+-- /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/fixtures_simulated_truth/multiomics_gp/omics_metadata.tsv
+-- /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/fixtures_simulated_truth/multiomics_gp/cv_fold_design.tsv
+-- /public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data/fixtures_simulated_truth/multiomics_gp/gwas_weight_fold_design.tsv
+-
+-输出目录：
+-/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/output
+-
+-允许：
+-- 允许只做 sufficiency/routing test。
+-- 允许列出 upstream install/format conversion commands。
+-
+-禁止：
+-- 禁止退回 sklearn runner 伪造高级模型结果。
+-- 禁止 full-data GWAS weights 进入 fold 内模型。
+-- 禁止将不对齐的 metabolite samples 强行合并。
+-- 禁止读取任何隐藏答案或评测真值文件，例如 answer_key.yaml、truth_*、expected_*、expected_answers。
+-
+-依赖规则：
+-upstream repo/env 缺失时 blocked_upstream_missing；样本不对齐时 blocked_data_insufficient。
+-
+-停止条件：
+-输出 sufficiency report、blocked reason 和可复现下一步。
+-
+-预期产物：
+-- data_sufficiency.tsv
+-- sample_alignment_report.tsv
+-- upstream_dependency_check.tsv
+-- leakage_risk_report.md
+-- stage_status.tsv
+-- report.md
+-- reproduce.sh
+-
+-通用要求：
+-- 只使用本提示词给出的正式输入或数据目录；不得把智能体代码仓库目录误当作 benchmark 数据根目录。
+-- 本题输入与输出路径均为绝对路径，不依赖当前工作目录。
+-- 不要使用 demo、toy、tests、fixtures_legacy_toy、expected_answers 或任何隐藏答案文件作为分析依据。
+-- 缺少或无法确认关键输入、样本方向、contrast、resolution、阈值或项目背景时，先做只读验证和正式产物搜索；仍不确定则 ask_user/blocked_need_user_decision，不要猜测。
+-- 若本提示词明确标注 `KNOWN_ABSENT_FOR_THIS_TASK`，则该输入已知不提供；不要反复询问或借用其他 benchmark/hidden/fixture 文件，应按本任务规则写 skipped/stage_blocked 并继续可执行步骤。
+-- 如果依赖、输入或上游结果不足，请明确写 blocked/stage_blocked，并说明缺少什么；不要伪造结果。
+-- 最终至少生成 report.md 和 reproduce.sh；多阶段任务还应生成 stage_status.tsv 或等价状态表。
++交付共通要求：
++在 OUT 写 report.md、reproduce.sh、stage_status.tsv、commands.json（包含软件版本、命令、退出码）。报告列明输入版本、实际使用/排除的样本和特征、参数、方法限制、运行状态；所有结果必须来自本次运行。reproduce.sh 使用绝对入口，重复执行不得破坏输入与历史结果。
+ ```
+-整理说明（不属于测试提示词）：
+-
+-- 数据清单：`/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/data_inventory.tsv`。
+-- 输入状态：`/public/home/liusiqi/03.毕设/benchmarks/02.测试26.9/05.作物育种与多组学/04.BM-REMAIN-CROP-ADVGP-010__strict/input_status.tsv`。

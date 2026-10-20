@@ -1,0 +1,504 @@
+source_column_1based	sample_id	source_header	source_accession	matched_phenotype	mapping_rule
+5	A797NW	A797NW	PI 406130 	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+6	B73	B73	PI 550473	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+7	DKPB80	DKPB80		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+8	L_289	L_289		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+9	CM99	CM99	Ames 27031	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+10	B54	B54	PI 550470	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+11	B101	B101	PI 564852	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+12	H122w	H122w	Ames 26805	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+13	F115	F115	PI 257513	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+14	MS12	MS12	Ames 24706	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+15	H71	H71	Ames 26793	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+16	CO117	CO117	Ames 27039	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+17	K150	K150	NSL 22630	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+18	LH145	LH145	PI 600959	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+19	DE3	DE3		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+20	KO679Y	KO679Y	PI 591017 	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+21	CSJ3	CSJ3	Ames 27057	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+22	LH60	LH60	PI 601404	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+23	HUANYAO	HUANYAO	Ames 2337	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+24	H114	H114	Ames 22751	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+25	LH123HT	LH123HT	PI 601079	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+26	Mo5	Mo5	PI 558523	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+27	KUNG-70	KUNG-70	PI 391662	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+28	A73	A73	Ames 22439	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+29	G80	G80	PI 601037	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+30	DKMBPM	DKMBPM		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+31	CO256	CO256	Ames 27051	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+32	INBRED_109	INBRED_109		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+33	Mo23W	Mo23W	Ames 20116	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+34	CO216	CO216	Ames 27044	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+35	B115	B115		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+36	CL27	CL27	Ames 27029	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+37	H113	H113	Ames 26803	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+38	G22_T122	G22_T122		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+39	CG65	CG65		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+40	B119	B119		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+41	K41	K41	NSL 22635	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+42	B99	B99	PI 584528	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+43	C15	C15	Ames 22016	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+44	MS211	MS211	Ames 24742	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+45	Mo39	Mo39	Ames 28937	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+46	Hi28	Hi28	PI 593010 	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+47	FR19	FR19	PI 600772	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+48	CO258	CO258	Ames 27053	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+49	DKMFD-13D	DKMFD-13D		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+50	MS222	MS222	Ames 24747	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+51	DKIB02	DKIB02		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+52	LP5	LP5	PI 601378	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+53	Chi-tan_120	Chi-tan_120		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+54	INBRED_305	INBRED_305		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+55	CO236	CO236	Ames 27046	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+56	CO237	CO237	Ames 27047	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+57	INBRED_309	INBRED_309		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+58	B114	B114		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+59	HUOBAI	HUOBAI	Ames 2339	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+60	GE54	GE54	Ames 10254 	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+61	MS142	MS142	Ames 24733	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+62	H124w	H124w	Ames 26806	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+63	C42	C42	Ames 23507	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+64	B120	B120		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+65	B87	B87	PI 608768	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+66	C102	C102	NSL 22983	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+67	B111	B111		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+68	DKMBNA	DKMBNA		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+69	B90	B90	PI 527699	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+70	MS132	MS132	Ames 24730	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+71	H96	H96	Ames 26797	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+72	Hi26	Hi26	PI 593008 	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+73	DKHBA1	DKHBA1		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+74	Mo44	Mo44	Ames 28938	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+75	Mo3	Mo3	PI 558522	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+76	AusTRCF_306238	AusTRCF_306238		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+77	B91	B91	PI 527700	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+78	Mo7	Mo7	PI 558516	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+79	W818G	W818G	Ames 30575	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+80	WU-TAN-TZAO	WU-TAN-TZAO	PI 391680	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+81	W552	W552	PI 520770	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+82	W612S	W612S		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+83	33-16	33-16	Ames 26771	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+84	W23	W23	NSL 30060	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+85	B2	B2	Ames 26769	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+86	CM7	CM7	Ames 27070	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+87	EP1	EP1	Ames 27111	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+88	W703	W703	NSL 30056	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+89	CML 220	CML 220	Ames 27087	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+90	CML 322	CML 322	Ames 27096	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+91	B68	B68	PI 550465	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+92	CO255	CO255	Ames 27107	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+93	CML 108	CML 108	Ames 27082	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+94	W609S	W609S		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+95	W815G	W815G	Ames 30572	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+96	CML 91	CML 91	Ames 27079	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+97	OH33	OH33	NSL 28965	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+98	F44	F44	PI 257515	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+99	CM174__source_col99	CM174		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+100	Pa468	Pa468	PI 517971	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+101	R225	R225	PI 531509	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+102	H49	H49	Ames 26787	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+103	PHT55	PHT55	PI 601498	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+104	CML 218	CML 218	Ames 27086	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+105	N545	N545	PI 594091	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+106	F2834T	F2834T	Ames 27112	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+107	R53	R53	NSL 30869	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+108	NKS8324	NKS8324		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+109	PHG80	PHG80		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+110	PHN11	PHN11	PI 601497	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+111	SD102	SD102	PI 533659	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+112	PHT77	PHT77	PI 601499	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+113	PHR36	PHR36	PI 601361	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+114	PHJ40	PHJ40	PI 601321	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+115	R30	R30	NSL 30868	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+116	PHK76	PHK76	PI 601496	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+117	A649	A649	Ames 23482	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+118	U_123	U_123		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+119	4554_INBRED	4554_INBRED		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+120	NK740	NK740		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+121	H110	H110	PI 550526	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+122	DE4	DE4		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+123	R197	R197	NSL 30902	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+124	A334	A334	Ames 23423	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+125	A155	A155	Ames 23396	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+126	CR1HT	CR1HT	PI 601080	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+127	A12	A12	NSL 42873	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+128	A71	A71	NSL 42875	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+129	A572	A572	Ames 23451	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+130	B14	B14	NSL 65866	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+131	Ki3	Ki3	Ames 27123	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+132	A648	A648	NSL 81597	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+133	80-2	80-2	PI 369437	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+134	A651	A651	Ames 23484	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+135	PHG29	PHG29	PI 601270	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+136	A674	A674	Ames 23498	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+137	A415-1-3_INBRED	A415-1-3_INBRED		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+138	A171	A171	NSL 42878	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+139	A322	A322	Ames 23422	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+140	A627	A627	Ames 23463	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+141	CML 228	CML 228	Ames 27088	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+142	A15	A15	Ames 23389	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+143	A385	A385	Ames 23429	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+144	CL22	CL22	Ames 27028	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+145	CML 52	CML 52	PI 595561	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+146	4F-35_BK	4F-35_BK		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+147	A663	A663	PI 607523	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+148	A662	A662	PI 607522	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+149	A321	A321	Ames 23421	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+150	LH38	LH38	PI 600791	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+151	B-28	B-28	PI 340860	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+152	LH93	LH93	PI 601171	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+153	B98	B98	PI 509542	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+154	K201	K201	NSL 22632	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+155	H14	H14	Ames 26774	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+156	LH39	LH39	PI 600944	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+157	LH61	LH61	PI 601416	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+158	B108	B108	PI 597926	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+159	MS106	MS106	Ames 24727	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+160	CL18	CL18	Ames 27025	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+161	B85	B85	PI 608777	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+162	MS223	MS223	Ames 24748	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+163	INBRED_141	INBRED_141		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+164	B66	B66	PI 550464	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+165	CH157	CH157	Ames 22441	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+166	CO158	CO158	Ames 27042	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+167	Mo28W	Mo28W	Ames 28928	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+168	C68	C68	Ames 22023	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+169	CI_40H	CI_40H		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+170	DKFBHJ	DKFBHJ		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+171	CH753-4	CH753-4	Ames 27021	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+172	B121	B121		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+173	CG108	CG108		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+174	F431	F431	PI 257515	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+175	B42	B42	PI 603939	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+176	CG10	CG10	Ames 24585	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+177	MS221	MS221	Ames 24746	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+178	H52	H52	Ames 26790	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+179	INBRED_100	INBRED_100		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+180	H121	H121	Ames 26804	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+181	CO257	CO257	Ames 27052	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+182	B-18_INBR.FR.SUPERGOLD	B-18_INBR.FR.SUPERGOLD		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+183	A673	A673	Ames 23497	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+184	CO245	CO245	Ames 27048	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+185	Il778d	Il778d	Ames 27446	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+186	K47	K47	NSL 22628	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+187	LH82	LH82	PI 601170	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+188	Ki21	Ki21	Ames 27125	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+189	B112	B112		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+190	Eng-Li_Chih	Eng-Li_Chih		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+191	B8	B8	NSL 65864	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+192	B88	B88	PI 550556	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+193	B113	B113		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+194	DK78371A	DK78371A		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+195	B106	B106	PI 594049	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+196	CL17	CL17	Ames 27024	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+197	R78	R78	NSL 30876	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+198	T146	T146	PI 340829	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+199	CM48	CM48	Ames 22747	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+200	N197	N197	Ames 22755	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+201	CG106	CG106		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+202	LH59	LH59	PI 601466	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+203	Mo30W	Mo30W	Ames 28930	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+204	ND265	ND265	PI 546494	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+205	ND167	ND167	NSL 32726	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+206	W37A	W37A	NSL 30073	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+207	N28	N28	Ames 19321	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+208	NC412	NC412		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+209	R71	R71	NSL 30872	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+210	ND247	ND247	PI 550503	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+211	MS225	MS225	Ames 24750	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+212	R181B	R181B	NSL 30896	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+213	Pa891	Pa891	PI 531083	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+214	PHG39	PHG39	PI 600981	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+215	T141	T141	PI 340827	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+216	PHW17	PHW17	PI 601362	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+217	PHG47	PHG47	PI 601318	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+218	MS224	MS224	Ames 24749	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+219	N538	N538	PI 594084	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+220	R226	R226	PI 531510	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+221	PHV63	PHV63	PI 601500	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+222	NC13	NC13	Ames 12726	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+223	N542	N542	PI 594088	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+224	W803G	W803G	Ames 30560	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+225	R113	R113	NSL 30883	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+226	MS67	MS67	Ames 24710	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+227	NC472	NC472		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+228	N209	N209	PI 595366	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+229	R134	R134	NSL 30884	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+230	N216	N216	PI 596355	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+231	PHG72	PHG72	PI 601319	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+232	C49A	C49A	Ames 27067	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+233	N534	N534	PI 594080	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+234	N215	N215	PI 595367	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+235	PHB09	PHB09	PI 601441	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+236	MS24A	MS24A	Ames 24708	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+237	N527	N527	PI 604606	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+238	N501	N501	PI 594050	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+239	MS226	MS226	Ames 24751	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+240	Pa392	Pa392	PI 517968	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+241	R101	R101	NSL 30878	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+242	ND230	ND230	NSL 32728	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+243	N193	N193	PI 550567	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+244	PHG35	PHG35	PI 601008	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+245	Os426	Os426	Ames 22756	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+246	NKH8431	NKH8431		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+247	MS72	MS72	Ames 24713	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+248	N218	N218	PI 596357	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+249	ND260	ND260	PI 550573	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+250	ND245	ND245	PI 550489	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+251	ND1	ND1	NSL 32723	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+252	N217	N217	PI 596356	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+253	NO._380	NO._380		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+254	R227	R227	PI 531511	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+255	NY_159_(Neveh_Yaar)	NY_159_(Neveh_Yaar)		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+256	SD101	SD101	PI 533658	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+257	W819G	W819G	Ames 30576	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+258	W814G	W814G	Ames 30571	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+259	ND251	ND251	PI 550532	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+260	W610S	W610S		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+261	W607S	W607S		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+262	W85	W85	PI 601502	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+263	W811G	W811G	Ames 30568	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+264	W59E	W59E	Ames 22767	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+265	W820G	W820G	Ames 30577	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+266	YING-55	YING-55	PI 391665	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+267	B84	B84	PI 608767	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+268	YONG_28	YONG_28		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+269	B14A	B14A	PI 550461	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+270	TZU-CHIAO-HSI-WU_105	TZU-CHIAO-HSI-WU_105		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+271	YANG	YANG	PI 391672	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+272	A659	A659	NSL 81599	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+273	F7	F7	PI 257507	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+274	B75	B75	PI 608774	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+275	A188	A188	Ames 22443	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+276	W_7151	W_7151		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+277	38-11	38-11	Ames 26604	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+278	WR3	WR3	NSL 30066	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+279	W611S	W611S		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+280	4226	4226	NSL 30904	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+281	W182BN	W182BN	PI 587155	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+282	A554	A554	PI 587138	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+283	W24	W24	NSL 30064	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+284	B64	B64	PI 550440	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+285	W605S	W605S	Ames 30557	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+286	A682	A682	PI 587143	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+287	W604S	W604S		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+288	YE-CHI-HUNG	YE-CHI-HUNG	PI 391682	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+289	N199	N199	PI 568158	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+290	A679	A679	PI 587142	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+291	T242	T242	PI 340830	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+292	S_56	S_56		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+293	W812G	W812G	Ames 30569	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+294	B77	B77	PI 608765	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+295	W9	W9	NSL 30065	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+296	ND262	ND262	PI 522250	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+297	W821G	W821G	Ames 30578	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+298	W810G	W810G		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+299	CH701-30	CH701-30	Ames 27069	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+300	B7	B7	NSL 65863	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+301	DKIB014	DKIB014		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+302	A	A	NSL 30861	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+303	Ki11	Ki11	Ames 27124	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+304	A427	A427	Ames 23435	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+305	A401	A401	Ames 23430	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+306	4578_INBRED	4578_INBRED		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+307	A258	A258	NSL 81596	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+308	DK4676A	DK4676A		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+309	A305	A305	Ames 23417	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+310	LH1	LH1	PI 644101	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+311	CI21E	CI21E		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+312	Oh7	Oh7	PI 587146	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+313	B110	B110		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+314	CH9	CH9	Ames 27068	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+315	H5	H5	Ames 26772	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+316	E2558W	E2558W	Ames 27110	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+317	A374	A374	Ames 23427	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+318	A680	A680	Ames 23503	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+319	CR_22_INBRED	CR_22_INBRED		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+320	SD15	SD15	NSL 34374	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+321	B97	B97	PI 564682	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+322	CO125	CO125	Ames 27106	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+323	DE811	DE811	PI 550558	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+324	Tr	Tr	Ames 26022	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+325	CI90C	CI90C		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+326	Va38	Va38	Ames 19011	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+327	YELLOW_3-4	YELLOW_3-4		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+328	B37	B37	PI 550467	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+329	CI31A	CI31A	Ames 21512	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+330	A632	A632	PI 587140	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+331	T9	T9	PI 340819	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+332	A635	A635	Ames 19309	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+333	A661	A661	PI 607521	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+334	B104	B104	PI 594047	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+335	B109	B109	PI 597927	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+336	W816G	W816G	Ames 30573	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+337	C123	C123	Ames 19313	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+338	H84	H84	PI 587128	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+339	W606S	W606S		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+340	Va52	Va52	Ames 19014	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+341	CO106	CO106	Ames 27105	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+342	CI187-2	CI187-2	Ames 28953	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+343	YE_4	YE_4		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+344	CI91B	CI91B		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+345	SD107	SD107	PI 538243	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+346	CI3A	CI3A		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+347	ND101	ND101	PI 550553	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+348	B52	B52	PI 550454	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+349	B103	B103	PI 594046	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+350	B105	B105	PI 594048	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+351	W701BC	W701BC	Ames 26768	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+352	W817G	W817G	Ames 30574	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+353	CML 323	CML 323	Ames 27097	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+354	A239	A239	Ames 23405	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+355	CI28A	CI28A		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+356	B79	B79	PI 608766	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+357	W802G	W802G	Ames 30559	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+358	C103	C103	Ames 19284	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+359	CM105	CM105	PI 587124	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+360	CM174__source_col360	CM174		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+361	B164	B164		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+362	G3_T5a	G3_T5a		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+363	U267Y	U267Y	Ames 27191	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+364	SD40	SD40	PI 606768	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+365	CML 444	CML 444		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+366	T232	T232	PI 550522	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+367	NC344	NC344	Ames 27168	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+368	M162W	M162W	Ames 27134 	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+369	CML 376	CML 376		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+370	M14	M14	NSL 30867	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+371	Ky228	Ky228	PI 587136	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+372	K148	K148	Ames 27122	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+373	CML 161	CML 161		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+374	Mo24W	Mo24W	PI 587144	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+375	NC356	NC356	Ames 27174	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+376	CML 197	CML 197		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+377	L317	L317	NSL 65873	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+378	W117Ht	W117Ht	Ames 8399	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+379	HP301	HP301	PI 587131	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+380	CML 488	CML 488		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+381	K64	K64	Ames 27121	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+382	CML 264	CML 264	PI 595544	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+383	R4	R4	Ames 27187	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+384	W64A	W64A	PI 587152	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+385	W22	W22	NSL 30053	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+386	NC358	NC358	Ames 27175	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+387	NC342	NC342	Ames 27167	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+388	CML 176	CML 176		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+389	W601S	W601S	Ames 30553 	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+390	Oh40B	Oh40B	NSL 28966	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+391	Va102	Va102	PI 587151	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+392	Yu796_NS	Yu796_NS		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+393	Va85	Va85	Ames 27193	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+394	CML 251	CML 251		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+395	SD44	SD44	PI 524969	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+396	P39	P39	PI 587133	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+397	Sg1533	Sg1533		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+398	W153R	W153R	PI 587154	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+399	NC230	NC230	Ames 12731	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+400	CML 216	CML 216		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+401	NC318	NC318	Ames 27155	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+402	CML 202	CML 202		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+403	R229	R229	PI 592734	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+404	CML 144	CML 144		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+405	R168	R168	Ames 19326	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+406	R177	R177	NSL 30894	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+407	4722	4722	PI 587130	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+408	Va99	Va99	Ames 24989	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+409	T234	T234	Ames 27190	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+410	Pa880	Pa880	PI 517974	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+411	MoG	MoG		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+412	Ia5125B	Ia5125B	Ames 27117	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+413	B107	B107	PI 597925	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+414	HP72-11	HP72-11	PI 542777	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+415	I159	I159	Ames 24589	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+416	W813G	W813G	Ames 30570	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+417	MS116	MS116	Ames 24729	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+418	ND283	ND283	NSL 32738	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+419	NC236	NC236	Ames 12734	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+420	B10	B10	NSL 65865	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+421	I29	I29	Ames 27115	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+422	NC340	NC340	Ames 27166 	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+423	NC222	NC222	Ames 12729	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+424	A340	A340	Ames 23424	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+425	NC232	NC232	Ames 12732	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+426	Il14H	Il14H	Ames 27118	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+427	K55	K55	Ames 22754	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+428	A208	A208	Ames 23402	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+429	Tx303	Tx303	PI 391676	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+430	NC264	NC264	PI 520774	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+431	Oh7B	Oh7B	NSL 22629	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+432	PHG50	PHG50	PI 601006	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+433	GE129	GE129	Ames 10256 	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+434	NC250	NC250	PI 550555	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+435	MEF156-55-2	MEF156-55-2	Ames 22043	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+436	Mo15W	Mo15W	PI 558518	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+437	Hy	Hy		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+438	Ia 453	Ia 453		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+439	MS153	MS153	Ames 24734 	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+440	AR228	AR228	PI 561522	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+441	M37W	M37W	Ames 27133 	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+442	PHZ51	PHZ51	PI 601322	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+443	Ki43	Ki43	Ames 27126	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+444	Mt42	Mt42	Ames 20140	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+445	Mp339	Mp339	PI 543916 	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+446	Pa405	Pa405	Ames 22757	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+447	EAST_028	EAST_028		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+448	K155	K155	NSL 22634	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+449	W32	W32	NSL 30071	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+450	SD42	SD42	PI 508277	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+451	Mo47	Mo47	PI 583352	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+452	Os420	Os420	NSL 65874	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+453	Il101T	Il101T		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+454	VaW6	VaW6	Ames 19000	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+455	NP87	NP87	PI 542716	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+456	CML 277	CML 277	PI 595550	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+457	CO192	CO192	Ames 27043	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+458	N6	N6	Ames 27137	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+459	CML 287	CML 287	PI 595565	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+460	H91	H91	Ames 27114	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+461	ND246	ND246	PI 550490	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+462	Mo45	Mo45	PI 583350	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+463	CML 421	CML 421		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+464	SG_30A	SG_30A		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+465	WXB6	WXB6	Ames 26745	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+466	Pa762	Pa762	Ames 27184	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+467	NY6371	NY6371	PI 610494	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+468	NC298	NC298	Ames 27261 	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+469	CML 247	CML 247	PI 595541	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+470	IDS69	IDS69	Ames 24576	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+471	Va14	Va14	Ames 27192	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+472	CML 254	CML 254	PI 595542	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+473	W809G	W809G	Ames 30566	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+474	Sg18	Sg18		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+475	CI64	CI64		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+476	WD	WD		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+477	OC19	OC19	PI 596506	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+478	CML 456	CML 456		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+479	CML 509	CML 509		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+480	IDS28	IDS28	Ames 24575	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+481	N28E	N28E		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+482	CML 491	CML 491		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+483	CML 312	CML 312		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+484	CML 511 	CML 511 		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+485	K4	K4	NSL 30038	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+486	CML 451	CML 451		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+487	Ky226	Ky226	Ames 27131	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+488	Pa778	Pa778	PI 560081	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+489	W608S	W608S		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+490	FC46	FC46	PI 257517	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+491	04033V	04033V		True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+492	CML 448	CML 448		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+493	N28Ht	N28Ht	Ames 27138	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+494	W603S	W603S	Ames 30555	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+495	N7A	N7A	PI 607512	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+496	52220	52220	Ames 2336	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+497	H95	H95	Ames 19319	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+498	AS5707	AS5707	Ames 22794	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+499	H99	H99	PI 587129	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+500	Ky21	Ky21	Ames 27130	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+501	CML 505	CML 505		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+502	CML 465	CML 465		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+503	I205	I205	Ames 24590	False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+504	LH143_maintainer	LH143_maintainer		False	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+505	LH149	LH149	PI 601493	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+506	Mo17	Mo17	PI 558532	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
+507	Oh43	Oh43	Ames 19288	True	exact raw header == S1 Genotype == S6 Genotype; no guessed aliases
