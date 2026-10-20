@@ -1,0 +1,13 @@
+{
+  "result": "PASS",
+  "releaseId": "d0cf9799989657590c3ca3dc2d4fc49b5568a82d8aeae548d67ff1e1b412c5c7",
+  "root": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-d0cf979998965759",
+  "sourceFingerprint": "c852814724bc961ce10e733f45856a37c15c933e5ea14340b71f7a422976e22a",
+  "sourceCommit": "6321f6e6ccc389ccff6f7bc045aafaa51c46ffb6",
+  "sourceFiles": 784,
+  "artifactFiles": 256,
+  "dependencyEntries": 25916,
+  "modelStarted": false,
+  "productionSelected": false,
+  "method": "standard core-release.verify with equivalent eight-reader dependency inventory; immutable prepared stage promoted atomically"
+}

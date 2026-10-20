@@ -1,0 +1,29 @@
+{
+  "status": "DEPLOYED",
+  "release": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-d0cf979998965759",
+  "build_id": "d0cf9799989657590c3ca3dc2d4fc49b5568a82d8aeae548d67ff1e1b412c5c7",
+  "source_commit": "6321f6e6ccc389ccff6f7bc045aafaa51c46ffb6",
+  "discovery": {
+    "schema": "BioMindStudioServiceV1",
+    "serviceId": "biomind-studio",
+    "serverId": "biomind-c8b9c760c4064a40bdae3a717785e2b3",
+    "status": "ready",
+    "serviceMode": "local",
+    "transport": "direct",
+    "user": "liusiqi",
+    "automaticReplay": false,
+    "desktopDetach": true,
+    "instanceId": "eeec4ea2234841c7884d7f75cacaedc5",
+    "jobName": "bm-biomind-studio-eeec4ea22348",
+    "host": "ln02",
+    "port": 45261,
+    "startedAt": 1792481229.426419,
+    "heartbeatAt": 1792481300.1912234,
+    "remoteAddress": "127.0.0.1",
+    "tunnelMode": "ssh-to-service-host"
+  },
+  "native_idle_shutdown": true,
+  "user_tasks_stopped": false,
+  "credentials_migrated": false,
+  "rebind_receipt": "/public/home/liusiqi/03.毕设/BioMind_Production_20261020/studio-rebind.json"
+}

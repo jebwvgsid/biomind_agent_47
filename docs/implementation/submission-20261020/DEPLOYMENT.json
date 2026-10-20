@@ -1,0 +1,66 @@
+{
+  "status": "CORE_AND_FOUR_CASE_ENTRIES_DEPLOYED",
+  "at_utc": "2026-10-20T07:32:31.579652+00:00",
+  "branch": "release/submission-20261020",
+  "build_id": "d0cf9799989657590c3ca3dc2d4fc49b5568a82d8aeae548d67ff1e1b412c5c7",
+  "build_source_commit": "6321f6e6ccc389ccff6f7bc045aafaa51c46ffb6",
+  "development_candidate_commit": "65f3fb6a48a188ca182760114743e25f41779b9d",
+  "release_root": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-d0cf979998965759",
+  "cli_entries": [
+    "/public/home/liusiqi/.local/bin/biomind",
+    "/public/home/liusiqi/03.毕设/BioMind/bin/biomind"
+  ],
+  "studio": {
+    "server_id": "biomind-c8b9c760c4064a40bdae3a717785e2b3",
+    "instance_id": "eeec4ea2234841c7884d7f75cacaedc5",
+    "status": "ready",
+    "connected_core_checks": {
+      "serviceReady": true,
+      "healthIdentity": true,
+      "bioMindProfile": true,
+      "nativePackageProtocol": true,
+      "coreBuild": true,
+      "coreCommit": true,
+      "piPinned": true,
+      "mainEntrypoint": true,
+      "agentDir": true
+    },
+    "native_idle_shutdown": true,
+    "windows_interaction": "NOT_RUN"
+  },
+  "original_case_manifest": "/public/home/liusiqi/03.毕设/BioMind_Original_Cases_Revision_20261020/manifest.json",
+  "benchmark_entry": "/public/home/liusiqi/03.毕设/BioMind_Production_20261020/benchmark-harness/biomind-entry.py",
+  "benchmark_manifest": "/public/home/liusiqi/03.毕设/BioMind_Production_20261020/benchmark-harness/manifest.json",
+  "four_case_isolated_web_plugin": "pi-web-access@0.38.0, all four actual project entries passed load-only checks",
+  "shared_agent_web_plugin": {
+    "status": "NOT_APPLIED",
+    "reason": "Existing legacy adoption receipt is no longer trusted after earlier launcher changes. The guarded maintenance audit also includes an idle cotton session, unreadable system helpers and unrelated user Slurm jobs. No locks or receipts were bypassed."
+  },
+  "validation": {
+    "source_files": 784,
+    "artifacts": 256,
+    "dependency_entries": 25916,
+    "release_tests_passed": 7,
+    "input_checks_passed": 191,
+    "git_input_blob_hashes": 141,
+    "external_raw_assets_verified": 7,
+    "cli_load": "PASS",
+    "four_case_loads": 4,
+    "studio_connected_checks": 9,
+    "historical_output_files_preserved": 411,
+    "formal_science_reexecution": false,
+    "formal_scoring": false
+  },
+  "old_cotton_session": "Idle after result; preserved, not terminated",
+  "slurm_jobs": "Preserved. User clarified the observed jobs are not the current BioMind jobs.",
+  "git_remote_push": {
+    "status": "NOT_PUSHED",
+    "https": "No GitHub HTTPS credential available",
+    "ssh": "No existing trusted GitHub ED25519 host key; strict host checking retained"
+  },
+  "rollback": {
+    "cli_command": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python /public/home/liusiqi/03.毕设/BioMind_Production_20261020/scripts/deploy_cli.py --rollback",
+    "studio_receipt": "/public/home/liusiqi/03.毕设/BioMind_Production_20261020/studio-rebind.json",
+    "previous_release": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-f7559c01a1eadc13"
+  }
+}
