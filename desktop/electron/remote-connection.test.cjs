@@ -2,7 +2,7 @@
 // Real connection HTML/script in an offline DOM. This is not Chromium/Windows acceptance.
 const test = require("node:test"), assert = require("node:assert/strict");
 const fs = require("node:fs"), path = require("node:path"), vm = require("node:vm");
-const { parseHTML } = require("../../backend/pi-studio/node_modules/linkedom");
+const { parseHTML } = require("../../../BioMind_Studio_S1_Implementation_20261006/candidate/pi-studio/node_modules/linkedom");
 const html = fs.readFileSync(path.join(__dirname, "remote-connection.html"), "utf8");
 const script = fs.readFileSync(path.join(__dirname, "remote-connection.js"), "utf8");
 const flush = async () => { for (let i = 0; i < 16; i++) await Promise.resolve(); };

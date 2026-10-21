@@ -12,10 +12,6 @@ import type {
   PendingFollowUp,
   PermissionLevel,
   PluginPackage,
-  PluginManagementResult,
-  PluginManagementRequest,
-  PackageDeclaration,
-  PackageScope,
   PreviewPayload,
   ProjectSummary,
   SkillInfo,
@@ -26,7 +22,8 @@ import type {
   ViewAttachment,
   ViewMessage,
 } from "./lib/types";
-import { readProjects, readWindowConfig, validateSnapshot } from "./lib/remoteData";
+import { cleanOutput, extensionsAlreadyLatest, hasLibuvAssertion, lastLine, stripAnsi } from "./lib/update";
+import { readProjects, readRestoration, readWindowConfig, validateSnapshot } from "./lib/remoteData";
 import { reportRendererIssue } from "./lib/rendererSafety";
 
 /* ------------------------------------------------------------------ *
@@ -1185,17 +1182,13 @@ interface PiStore {
   skills: (SkillInfo & { resourceId?: string; threadId?: string; cwd?: string })[];
   pluginsLoading: boolean;
   pluginsLoadRevision: number;
-  packageResult: PluginManagementResult | null;
-  packageBusy: boolean;
-  skillsStatus: string;
-  managePackages: (request: PluginManagementRequest) => Promise<boolean>;
   openPlugins: () => void;
   closePlugins: () => void;
   loadPlugins: () => Promise<void>;
-  configurePackage: (pkg: PluginPackage, declaration: PackageDeclaration) => Promise<boolean>;
-  installPackage: (source: string, scope: PackageScope) => Promise<boolean>;
-  removePackage: (pkg: PluginPackage) => Promise<boolean>;
-  updatePackages: (source?: string) => Promise<boolean>;
+  togglePackage: (source: string, enabled: boolean) => Promise<void>;
+  installPackage: (source: string) => Promise<void>;
+  removePackage: (source: string) => Promise<void>;
+  updatePackages: (source?: string) => Promise<void>;
   toggleSkill: (path: string, enabled: boolean) => Promise<void>;
   installSkill: (skill: SkillHubSkill) => Promise<boolean>;
 
@@ -1368,21 +1361,31 @@ export const useStore = create<PiStore>()((set, get) => ({
   },
 
   restoreRemoteThreads: async () => {
-    const snapshots = await window.pi.biomind.restoreThreads();
-    if (!Array.isArray(snapshots)) throw new Error("SESSION_RESTORE_FAILED");
-    snapshots.forEach(validateSnapshot);
+    const { snapshots, failures } = readRestoration(await window.pi.biomind.restoreThreads());
+    readWindowConfig(get().config);
+    // Reject a changed binding before committing any snapshot or failure.
+    for (const item of [...snapshots.map((snapshot) => ({ threadId: snapshot.threadId || snapshot.sessionFile, cwd: snapshot.cwd })), ...failures]) {
+      if (get().threads[item.threadId] && get().threads[item.threadId].cwd !== item.cwd) throw new Error("SESSION_RESTORE_FAILED");
+    }
     for (const snapshot of snapshots || []) await get().applyRemoteSnapshot(snapshot);
     set((state) => {
-      const restoredIds = (snapshots || []).map((snapshot: any) => snapshot.threadId || snapshot.sessionFile).filter((id: string) => !!state.threads[id]);
+      const threads = { ...state.threads };
+      for (const failure of failures) {
+        threads[failure.threadId] = { ...(threads[failure.threadId] || emptyThread(failure.cwd)), sessionFile: failure.threadId,
+          connected: false, loading: false, error: `此会话未恢复（${failure.code}）；未自动重发任务。` };
+      }
+      const restoredIds = [...snapshots.map((snapshot: any) => snapshot.threadId || snapshot.sessionFile), ...failures.map((failure) => failure.threadId)].filter((id: string) => !!threads[id]);
       const preferred = state.activeThreadId || state.config?.lastThreadId;
-      const activeThreadId = preferred && state.threads[preferred] ? preferred : null;
-      const cwd = activeThreadId ? state.threads[activeThreadId].cwd : state.activeProjectCwd;
+      const activeThreadId = preferred && threads[preferred] ? preferred : null;
+      const cwd = activeThreadId ? threads[activeThreadId].cwd : state.activeProjectCwd;
       return {
+        threads,
         openThreadIds: [...new Set([...state.openThreadIds, ...restoredIds])], activeThreadId,
         activeProjectCwd: cwd,
         expandedProjects: cwd ? { ...state.expandedProjects, [cwd]: true } : state.expandedProjects,
       };
     });
+    if (failures.length) get().pushToast("warning", `${failures.length} 个会话未恢复；请查看对应会话的错误，未自动重发任何任务。`);
     await get().refreshProjects(true);
   },
 
@@ -2376,68 +2379,87 @@ export const useStore = create<PiStore>()((set, get) => ({
 
   // ---- plugins ----
   pluginsOpen: false,
-  packages: [], skills: [], pluginsLoading: false, pluginsLoadRevision: 0,
-  packageResult: null, packageBusy: false, skillsStatus: "",
-  openPlugins: () => { set({ pluginsOpen: true }); void get().loadPlugins(); },
+  packages: [],
+  skills: [],
+  pluginsLoading: false,
+  pluginsLoadRevision: 0,
+  openPlugins: () => {
+    set({ pluginsOpen: true });
+    get().loadPlugins();
+  },
   closePlugins: () => set({ pluginsOpen: false }),
   loadPlugins: async () => {
-    const before = get(), cwd = before.activeProjectCwd || undefined, threadId = before.activeThreadId;
-    const thread = threadId ? before.threads[threadId] : undefined;
+    const before = get(), threadId = before.activeThreadId, thread = threadId ? before.threads[threadId] : undefined;
     const revision = before.pluginsLoadRevision + 1;
-    const current = () => get().pluginsLoadRevision === revision && (get().activeProjectCwd || undefined) === cwd;
-    set({ packages: [], skills: [], packageResult: null, pluginsLoading: true, pluginsLoadRevision: revision,
-      skillsStatus: "选择已连接的 BioMind 会话后，可读取当前 worker 的 Skills。" });
-    const packages = async () => {
-      try {
-        const result = await window.pi.plugins.getPackages(cwd ? { cwd } : {});
-        if (current()) set({ packages: result.packages || [], packageResult: result });
-      } catch (error: any) {
-        if (current()) set({ packageResult: { schema: "BioMindPluginsV1", status: "error", code: error?.message || "PACKAGE_LIST_FAILED", changed: false, reloadRequired: false, repairRequired: false } });
-      }
-    };
-    const skills = async () => {
-      if (!threadId || !thread?.connected || thread.cwd !== cwd) return;
-      try {
-        const rows = await window.pi.plugins.getSkills({ threadId, cwd: thread.cwd });
-        if (current() && get().activeThreadId === threadId) set({ skills: rows, skillsStatus: "当前会话服务器返回的 Skills；配置选择与已加载状态分别读取。" });
-      } catch (error: any) { if (current()) set({ skillsStatus: "Skills 状态不可用：" + (error?.message || "UNKNOWN") }); }
-    };
-    await Promise.allSettled([packages(), skills()]);
-    if (current()) set({ pluginsLoading: false });
-  },
-  managePackages: async (request) => {
-    const before = get();
-    if (before.packageBusy) return false;
-    // A failed/unknown receipt is not a fresh settings snapshot. Never drop
-    // optimistic concurrency merely because that receipt omitted its revision.
-    if (request.action !== "repair" && (before.packageResult?.status !== "ok" || !before.packageResult.revision)) {
-      get().pushToast("warning", "请先刷新服务器包状态，再提交操作；已有失败或未知结果不会自动重试。");
-      return false;
-    }
-    const cwd = before.activeProjectCwd || undefined;
-    set({ packageBusy: true });
+    set({ packages: [], skills: [], pluginsLoading: true, pluginsLoadRevision: revision });
     try {
-      const result = await window.pi.plugins.managePackages({ ...request, ...(cwd ? { cwd } : {}),
-        ...(before.packageResult?.revision ? { expectedRevision: before.packageResult.revision } : {}) });
-      if ((get().activeProjectCwd || undefined) === cwd) set({ packageResult: result, ...(result.packages ? { packages: result.packages } : {}) });
-      if (result.status !== "ok") {
-        get().pushToast(result.status === "BUSY" || result.status === "BLOCKED" ? "warning" : "error", result.code);
-        return false;
-      }
-      if (result.viewRestoreFailures?.length) get().pushToast("warning", "包管理已完成，但部分窗口视图待恢复；请返回原会话，勿重复提交包操作。");
-      get().pushToast("info", result.reloadRequired ? "配置已保存；已有 worker 需要重新加载。" : result.changed ? "包管理操作已完成；已读取服务器结果。" : "操作已完成；服务器未报告更改。");
-      return true;
-    } catch (error: any) {
-      const result: PluginManagementResult = { schema: "BioMindPluginsV1", status: "error", code: "PACKAGE_OUTCOME_UNKNOWN", changed: false, reloadRequired: false, repairRequired: false };
-      if ((get().activeProjectCwd || undefined) === cwd) set({ packageResult: result });
-      get().pushToast("error", "结果未知，请刷新服务器状态后再决定；未自动重试。" + (error?.message || ""));
-      return false;
-    } finally { set({ packageBusy: false }); }
+      if (!threadId || !thread?.connected || thread.cwd !== before.activeProjectCwd) throw new Error("请先选择已连接的真实 BioMind 会话；只读历史不能配置 Skills。");
+      const skills = await window.pi.plugins.getSkills({ threadId, cwd: thread.cwd });
+      if (get().pluginsLoadRevision === revision && get().activeThreadId === threadId && get().activeProjectCwd === thread.cwd) set({ skills });
+    } catch (e: any) {
+      if (get().pluginsLoadRevision === revision) get().pushToast("error", "加载插件失败：" + (e?.message || e));
+    } finally {
+      if (get().pluginsLoadRevision === revision) set({ pluginsLoading: false });
+    }
   },
-  configurePackage: (pkg, declaration) => get().managePackages({ action: "config", scope: pkg.scope, source: pkg.source, declaration }),
-  installPackage: (source, scope) => get().managePackages({ action: "install", source, scope }),
-  removePackage: pkg => get().managePackages({ action: "remove", source: pkg.source, scope: pkg.scope }),
-  updatePackages: source => get().managePackages({ action: "update", ...(source ? { source } : {}) }),
+  togglePackage: async (source, enabled) => {
+    set((s) => ({ packages: s.packages.map((p) => (p.source === source ? { ...p, enabled } : p)) }));
+    try {
+      await window.pi.plugins.setPackageEnabled(source, enabled);
+    } catch (e: any) {
+      get().pushToast("error", e?.message || "切换失败");
+      get().loadPlugins();
+    }
+  },
+  installPackage: async (source) => {
+    try {
+      const res: any = await window.pi.plugins.installPackage(source);
+      if (res?.output) get().pushToast(res.ok ? "info" : "warning", String(res.output).slice(0, 300));
+      await get().loadPlugins();
+    } catch (e: any) {
+      get().pushToast("error", "安装失败：" + (e?.message || e));
+    }
+  },
+  removePackage: async (source) => {
+    try {
+      await window.pi.plugins.removePackage(source);
+      await get().loadPlugins();
+    } catch (e: any) {
+      get().pushToast("error", "移除失败：" + (e?.message || e));
+    }
+  },
+  updatePackages: async (source) => {
+    const label = source ? "更新扩展" : "更新全部扩展";
+    try {
+      const res: any = await window.pi.plugins.updatePackages(source);
+      const raw = stripAnsi(res?.output || "");
+      const text = cleanOutput(raw);
+      const assertion = hasLibuvAssertion(raw);
+
+      if (res?.ok) {
+        if (extensionsAlreadyLatest(text)) {
+          get().pushToast("info", source ? "该扩展已是最新版本。" : "所有扩展已是最新版本。");
+        } else {
+          get().pushToast("success", source ? "扩展已更新到最新版本。" : "所有扩展已更新到最新版本。");
+        }
+      } else if (assertion) {
+        // The libuv assertion fires during process teardown on Windows — the
+        // actual update (npm) likely completed before the crash.
+        if (/Updated/i.test(text)) {
+          get().pushToast("success", source ? "扩展已更新。" : "扩展已更新。");
+        } else if (extensionsAlreadyLatest(text)) {
+          get().pushToast("info", source ? "该扩展已是最新版本。" : "所有扩展已是最新版本。");
+        } else {
+          get().pushToast("warning", "更新命令已执行，但进程退出异常。请检查扩展版本。");
+        }
+      } else {
+        get().pushToast("error", `${label}失败：` + (lastLine(text) || "未知错误"));
+      }
+      await get().loadPlugins();
+    } catch (e: any) {
+      get().pushToast("error", `${label}失败：` + (e?.message || e));
+    }
+  },
   toggleSkill: async (path, enabled) => {
     const before = get(), threadId = before.activeThreadId, thread = threadId ? before.threads[threadId] : undefined;
     try {

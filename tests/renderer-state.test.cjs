@@ -5,7 +5,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const Module = require("node:module");
 const root = path.resolve(__dirname, "..");
-const legacy = path.resolve(root, "desktop/node_modules");
+const legacy = path.resolve(root, "../BioMind_Studio_S2_S3_Implementation_20261008/candidate/pi-studio/node_modules");
 const ts = require(path.join(legacy, "typescript"));
 const originalResolve = Module._resolveFilename;
 Module._resolveFilename = function (request, parent, ...rest) {
@@ -27,9 +27,10 @@ for (const extension of [".ts", ".tsx"]) {
 global.requestAnimationFrame = (callback) => setImmediate(callback);
 const calls = { opened: [], closed: [], prompts: [], activated: [], uploads: [] };
 const snapshot = (id, cwd = "/remote/Project", extra = {}) => ({ threadId: id, sessionFile: id, cwd, sessionName: id, connected: true, messages: [], model: { provider: "server", id: "model" }, ...extra });
+const restoration = (snapshots = [], failures = []) => ({ schema: "biomind-restore-v1", snapshots, failures });
 global.window = { pi: {
   app: { getProjects: async () => [], stageClipboardFile: async (value) => { calls.uploads.push(value); return { abs: "/remote/Project/uploads/input.txt", name: value.name }; } },
-  biomind: { restoreThreads: async () => [], activateThread: async (id) => { assert.ok(useStore.getState().threads[id], "snapshot must exist before event activation"); calls.activated.push(id); }, finishInput: async () => {} },
+  biomind: { restoreThreads: async () => restoration(), activateThread: async (id) => { assert.ok(useStore.getState().threads[id], "snapshot must exist before event activation"); calls.activated.push(id); }, finishInput: async () => {} },
   thread: {
     open: async (args) => { calls.opened.push(args); await new Promise(setImmediate); return snapshot(args.sessionFile || `session-${calls.opened.length}`, args.cwd); },
     close: async (id) => calls.closed.push(id),
@@ -192,7 +193,7 @@ test("snapshot clears stale authorization before replaying authoritative pending
 test("restored window activates only saved existing session and restores original project", async () => {
   const prior = window.pi.biomind.restoreThreads;
   useStore.setState({ config: { language: "zh", lastThreadId: "B" }, activeThreadId: null });
-  window.pi.biomind.restoreThreads = async () => [snapshot("A", "/remote/Project"), snapshot("B", "/remote/project")];
+  window.pi.biomind.restoreThreads = async () => restoration([snapshot("A", "/remote/Project"), snapshot("B", "/remote/project")]);
   try { await useStore.getState().restoreRemoteThreads(); } finally { window.pi.biomind.restoreThreads = prior; }
   assert.deepEqual(useStore.getState().openThreadIds, ["A", "B"]);
   assert.equal(useStore.getState().activeThreadId, "B");
@@ -296,10 +297,101 @@ test("bootstrap finishing after a disconnect cannot overwrite it with ready", as
   window.pi.biomind.getStatus = async () => ({ status: "ready" });
   window.pi.biomind.restoreThreads = async () => {
     useStore.setState((state) => ({ connectionStatus: "disconnected", connectionRevision: state.connectionRevision + 1 }));
-    return [];
+    return restoration();
   };
   try { await useStore.getState().bootstrap(); } finally { window.pi.biomind.restoreThreads = previous; }
   assert.equal(useStore.getState().connectionStatus, "disconnected");
+});
+
+test("partial restore preserves failed history and allows only a verified new session to send manually", async () => {
+  const previous = { restore: window.pi.biomind.restoreThreads, config: window.pi.app.getConfig, runtime: window.pi.app.resolveRuntime,
+    status: window.pi.biomind.getStatus, prompt: window.pi.thread.prompt };
+  await useStore.getState().applyRemoteSnapshot(snapshot("old-A", "/remote/Project", { messages: [{ role: "user", content: "existing history" }], isStreaming: true }));
+  const oldMessages = useStore.getState().threads["old-A"].messages;
+  useStore.setState({ connectionStatus: "restoring" });
+  window.pi.app.resolveRuntime = async () => ({ ok: true });
+  window.pi.app.getConfig = async () => ({ language: "zh", lastThreadId: "old-A" });
+  window.pi.biomind.getStatus = async () => ({ status: "ready" });
+  window.pi.biomind.restoreThreads = async () => ({ schema: "biomind-restore-v1", snapshots: [snapshot("B")], failures: [{ threadId: "old-A", cwd: "/remote/Project", code: "SERVER_HTTP_404" }] });
+  window.pi.thread.prompt = async args => { calls.prompts.push(args); return { ok: true, receipt: { clientMessageId: "accepted-manual" } }; };
+  try {
+    await useStore.getState().bootstrap();
+    assert.equal(useStore.getState().connectionStatus, "ready");
+    assert.equal(useStore.getState().threads["old-A"].connected, false);
+    assert.equal(useStore.getState().threads["old-A"].messages, oldMessages);
+    assert.equal(useStore.getState().threads["old-A"].isStreaming, true, "failed restoration does not claim a running task ended");
+    assert.match(useStore.getState().threads["old-A"].error, /SERVER_HTTP_404/);
+    assert.equal(useStore.getState().threads.B.connected, true);
+    assert.ok(useStore.getState().openThreadIds.includes("old-A"));
+    assert.deepEqual(calls.prompts, []); assert.deepEqual(calls.opened, []);
+    assert.equal((await useStore.getState().sendPrompt("old-A", "must not send")).accepted, false);
+    const temp = await useStore.getState().openThread("/remote/New");
+    const newId = await useStore.getState().ensureConnected(temp);
+    assert.equal(useStore.getState().threads[newId].connected, true);
+    assert.equal((await useStore.getState().sendPrompt(newId, "one explicit request")).accepted, true);
+    assert.equal(calls.prompts.length, 1); assert.equal(calls.prompts[0].threadId, newId);
+    assert.equal(calls.opened.length, 1); assert.equal(calls.closed.length, 0);
+  } finally {
+    window.pi.biomind.restoreThreads = previous.restore; window.pi.app.getConfig = previous.config;
+    window.pi.app.resolveRuntime = previous.runtime; window.pi.biomind.getStatus = previous.status; window.pi.thread.prompt = previous.prompt;
+  }
+});
+
+test("malformed partial restore or changed scope commits no snapshot and cannot report ready", async () => {
+  await useStore.getState().applyRemoteSnapshot(snapshot("A"));
+  const previousThreads = useStore.getState().threads;
+  const previous = window.pi.biomind.restoreThreads;
+  const partial = failures => ({ schema: "biomind-restore-v1", snapshots: [snapshot("B")], failures });
+  const malformed = [
+    { schema: "other", snapshots: [], failures: [] },
+    partial({ threadId: "A" }),
+    partial([{ threadId: "A", cwd: "/remote/Project", code: {} }]),
+    partial([{ threadId: "B", cwd: "/remote/Project", code: "SERVER_HTTP_404" }]),
+    partial([{ threadId: "A", cwd: "/different", code: "SERVER_HTTP_404" }]),
+    { schema: "biomind-restore-v1", snapshots: [snapshot("B", "/remote/Project", { connected: "true" })], failures: [] },
+    { schema: "biomind-restore-v1", snapshots: [snapshot("B", "/remote/Project", { sessionFile: "different" })], failures: [] },
+  ];
+  try {
+    for (const value of malformed) {
+      window.pi.biomind.restoreThreads = async () => value;
+      await assert.rejects(useStore.getState().restoreRemoteThreads(), /SESSION_RESTORE_FAILED/);
+      assert.equal(useStore.getState().threads, previousThreads);
+    }
+    window.pi.app.resolveRuntime = async () => ({ ok: true }); window.pi.app.getConfig = async () => ({ language: "zh" });
+    window.pi.biomind.getStatus = async () => ({ status: "ready" });
+    await useStore.getState().bootstrap();
+    assert.equal(useStore.getState().connectionStatus, "error");
+    assert.deepEqual(calls.prompts, []); assert.deepEqual(calls.opened, []);
+  } finally { window.pi.biomind.restoreThreads = previous; }
+});
+
+test("obsolete array restoration is rejected without any store commit, activation, or prompt", async () => {
+  await useStore.getState().applyRemoteSnapshot(snapshot("A"));
+  const previousState = useStore.getState();
+  const previousRestore = window.pi.biomind.restoreThreads;
+  const previousActivated = [...calls.activated];
+  try {
+    for (const obsolete of [[], [snapshot("B")], [snapshot("../invalid", "/remote/Project", { connected: "true" })]]) {
+      window.pi.biomind.restoreThreads = async () => obsolete;
+      await assert.rejects(useStore.getState().restoreRemoteThreads(), /SESSION_RESTORE_FAILED/);
+      assert.equal(useStore.getState(), previousState);
+      assert.deepEqual(calls.activated, previousActivated);
+      assert.deepEqual(calls.prompts, []); assert.deepEqual(calls.opened, []); assert.deepEqual(calls.closed, []);
+    }
+  } finally { window.pi.biomind.restoreThreads = previousRestore; }
+});
+
+test("partial restore does not turn an actual disconnected transport into ready", async () => {
+  const previous = window.pi.biomind.restoreThreads;
+  window.pi.app.resolveRuntime = async () => ({ ok: true }); window.pi.app.getConfig = async () => ({ language: "zh" });
+  window.pi.biomind.getStatus = async () => ({ status: "disconnected" });
+  window.pi.biomind.restoreThreads = async () => ({ schema: "biomind-restore-v1", snapshots: [snapshot("B")], failures: [{ threadId: "A", cwd: "/remote/Project", code: "SERVER_HTTP_404" }] });
+  try {
+    await useStore.getState().bootstrap();
+    assert.equal(useStore.getState().connectionStatus, "disconnected");
+    assert.equal((await useStore.getState().sendPrompt("B", "must not send")).accepted, false);
+    assert.deepEqual(calls.prompts, []);
+  } finally { window.pi.biomind.restoreThreads = previous; }
 });
 
 test("server execution failure remains visible after settlement and null scientific success is not claimed", async () => {
@@ -350,7 +442,7 @@ test("bootstrap malformed metadata ends in a visible error and never creates or 
   window.pi.app.resolveRuntime = async () => ({ ok: true });
   window.pi.app.getConfig = async () => ({ pinnedProjects: { bad: true } });
   window.pi.app.getProjects = async () => [{ cwd: "/remote/Project", name: "Project", threads: null }];
-  window.pi.biomind.restoreThreads = async () => [];
+  window.pi.biomind.restoreThreads = async () => restoration();
   window.pi.biomind.getStatus = async () => ({ status: "ready" });
   try { await assert.doesNotReject(useStore.getState().bootstrap()); }
   finally { window.pi.app.getProjects = previous.getProjects; window.pi.app.getConfig = previous.getConfig; window.pi.biomind.restoreThreads = previous.restoreThreads; }

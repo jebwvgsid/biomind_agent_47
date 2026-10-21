@@ -31,7 +31,7 @@ for name in ('deployment/runtime.json','deployment/README.md','README-开始使�
 manifest=dict(schema='BioMindWorkbenchSourceManifestV1',version=version,createdAt=datetime.datetime.now(datetime.timezone.utc).isoformat(),
  uiUpstream={'repository':'https://github.com/flowflic/Pi-Studio','commit':'0fbc8178b80af55bf043465ef36d5bfe8373463c'},
  backendUpstream={'repository':'https://github.com/AACS111/pi-studio','commit':'70a6a1a9763d26778fd6def702eeea6994739d56','includesExistingBioMindAdaptations':True},
- main=json.loads((R.parent/'core-candidate.json').read_text()),
+ main='Existing BioMind_Studio_S2_S3_Implementation_20261008/candidate/Biomind_v1; Pi 0.87.1 unchanged; domain installRoot uses existing production BioMind. Not duplicated into this source archive.',
  omitted=['credentials','native sessions','memory','node_modules','compiled .next directories','Windows runtime binaries'],
  files=[dict(path=f.relative_to(R).as_posix(),bytes=f.stat().st_size,sha256=hashlib.sha256(f.read_bytes()).hexdigest()) for f in sorted(files)])
 manifest_raw=(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n').encode()

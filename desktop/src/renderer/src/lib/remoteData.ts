@@ -54,6 +54,30 @@ export function validateSnapshot(value: unknown): asserts value is Record<string
   if (value.model != null && (!record(value.model) || !text(value.model.id) || !text(value.model.provider))) invalid("SESSION_RESTORE_FAILED");
 }
 
+export function readRestoration(value: unknown): { snapshots: Record<string, any>[]; failures: { threadId: string; cwd: string; code: string }[] } {
+  if (!record(value) || value.schema !== "biomind-restore-v1" || !Array.isArray(value.snapshots) || !Array.isArray(value.failures)) invalid("SESSION_RESTORE_FAILED");
+  const { snapshots, failures } = value;
+  const identities = new Set<string>();
+  const nativeIdentity = (id: unknown, cwd: unknown) => {
+    if (!text(id) || !/^[A-Za-z0-9._:-]{1,256}$/.test(id) || !text(cwd) || !cwd.startsWith("/") || /[\0\r\n\\]/.test(cwd)) invalid("SESSION_RESTORE_FAILED");
+  };
+  for (const snapshot of snapshots) {
+    validateSnapshot(snapshot);
+    const id = snapshot.threadId || snapshot.sessionFile;
+    nativeIdentity(id, snapshot.cwd);
+    if (snapshot.threadId !== id || snapshot.sessionFile !== id || typeof snapshot.connected !== "boolean") invalid("SESSION_RESTORE_FAILED");
+    if (identities.has(id)) invalid("SESSION_RESTORE_FAILED");
+    identities.add(id);
+  }
+  for (const failure of failures) {
+    if (!record(failure)) invalid("SESSION_RESTORE_FAILED");
+    nativeIdentity(failure.threadId, failure.cwd);
+    if (!text(failure.code) || !/^[A-Z][A-Z0-9_]{0,127}$/.test(failure.code) || identities.has(failure.threadId)) invalid("SESSION_RESTORE_FAILED");
+    identities.add(failure.threadId);
+  }
+  return { snapshots, failures };
+}
+
 export function readRemoteDirectory(value: unknown): { path: string; parent: string | null; entries: { name: string; path: string; isDirectory: boolean }[] } {
   if (!record(value) || !nonempty(value.path)) return invalid("REMOTE_DIRECTORY_INVALID");
   const parent = value.parent ?? value.parentPath ?? null;

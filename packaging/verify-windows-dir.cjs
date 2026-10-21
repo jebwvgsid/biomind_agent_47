@@ -1,10 +1,10 @@
 "use strict";
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto'),assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..'),old=path.resolve(root,'../BioMind_Studio_S2_S3_Implementation_20261008');
-const asar=require(path.join(root,'backend/pi-studio/node_modules/@electron/asar'));
+const asar=require(path.join(old,'candidate/pi-studio/node_modules/@electron/asar'));
 const argv=process.argv.slice(2),named=argv[0]?.startsWith('--');
 const options=named?Object.fromEntries(Array.from({length:Math.floor(argv.length/2)},(_,i)=>[argv[i*2],argv[i*2+1]])):{};
-const stage=path.resolve(options['--stage']||path.join(root,'build/windows-input')),payload=path.resolve(options['--payload']||path.join(root,'build/windows/win-unpacked')),runtime=path.resolve(options['--runtime']||path.join(root,'../../BioMind_Studio_S2_S3_Implementation_20261008/delivery_correction_20261008/assets/electron-43.3.0/runtime'));
+const stage=path.resolve(options['--stage']||path.join(root,'build/windows-input')),payload=path.resolve(options['--payload']||path.join(root,'build/windows/win-unpacked')),runtime=path.join(old,'delivery_correction_20261008/assets/electron-43.3.0/runtime');
 const archive=path.join(payload,'resources/app.asar'),report=options['--evidence']||(!named&&argv[0])||path.join(root,'evidence/windows-dir/verification.json');
 const digest=data=>crypto.createHash('sha256').update(data).digest('hex');
 function walk(dir,prefix=''){let files=[];for(const name of fs.readdirSync(dir).sort()){const abs=path.join(dir,name),rel=prefix?`${prefix}/${name}`:name,stat=fs.lstatSync(abs);assert(!stat.isSymbolicLink(),`No symlinks allowed: ${abs}`);if(stat.isDirectory())files.push(...walk(abs,rel));else if(stat.isFile())files.push(rel);else throw Error(`Non-regular payload: ${abs}`);}return files;}

@@ -166,8 +166,6 @@ function registerWorkspace() {
   w("thread:getStats", async id => { const h = bridge.handles.get(id); return h ? (await bridge.state(id, h.cwd))?.stats || null : null; });
   w("thread:extuiResponse", args => bridge.extui(args));
   for (const name of ["thread:setPermission", "thread:delete", "thread:newSession", "thread:getBranchMessages", "thread:fork", "thread:clone", "thread:setName"]) w(name, unsupported);
-  w("plugins:getPackages", args => bridge.packages({ ...(args || {}), action: "list" }));
-  w("plugins:managePackages", args => bridge.packages(args));
   const skillOwner = args => {
     if (!args || typeof args.threadId !== "string" || !args.threadId || typeof args.cwd !== "string") throw new Error("SKILLS_REQUIRE_ACTIVE_NATIVE_SESSION");
     const h = bridge.handles.get(args.threadId);
@@ -193,7 +191,7 @@ function registerWorkspace() {
     const after = await bridge.control(h.id, { type: "get_resources" });
     return { skills: displayedSkills(h, after), effect: saved.effect, applied: saved.applied === true };
   });
-  for (const name of ["skillsHub:leaderboard", "skillsHub:search", "skillsHub:detail", "skillsHub:install", "automation:getTasks", "automation:saveTask", "automation:deleteTask", "automation:runNow", "remote:getStatus", "remote:createPairing", "remote:getTransportConfig", "remote:enableSignaling", "remote:disableSignaling", "remote:approvePairing", "remote:rejectPairing", "remote:revokeDevice", "remote:setConfig", "remote:transportOpen", "remote:transportClose", "remote:transportStatus", "remote:transportFrame", "remote:sendSignal"]) w(name, unsupported);
+  for (const name of ["plugins:getPackages", "plugins:setPackageEnabled", "plugins:installPackage", "plugins:removePackage", "plugins:updatePackages", "skillsHub:leaderboard", "skillsHub:search", "skillsHub:detail", "skillsHub:install", "automation:getTasks", "automation:saveTask", "automation:deleteTask", "automation:runNow", "remote:getStatus", "remote:createPairing", "remote:getTransportConfig", "remote:enableSignaling", "remote:disableSignaling", "remote:approvePairing", "remote:rejectPairing", "remote:revokeDevice", "remote:setConfig", "remote:transportOpen", "remote:transportClose", "remote:transportStatus", "remote:transportFrame", "remote:sendSignal"]) w(name, unsupported);
   for (const action of ["getUsagePricing", "saveUsagePricing", "getPlanQuotas", "getUsage", "getMcp", "saveMcp", "getCodemode", "saveCodemode", "mcpAction", "cancelMcpAction", "getModels", "discoverModels", "testModel", "saveModels", "getThinking", "saveThinking", "getDiagnostics", "getPaths", "openPath", "showItem", "openAgentDir"]) w(`settings:${action}`, unsupported);
   w("window:minimize", () => workbenchWindow.minimize()); w("window:maximize", () => workbenchWindow.isMaximized() ? workbenchWindow.unmaximize() : workbenchWindow.maximize());
   w("window:close", () => workbenchWindow.close()); w("window:isMaximized", () => workbenchWindow.isMaximized());

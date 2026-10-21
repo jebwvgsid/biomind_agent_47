@@ -59,39 +59,6 @@ class BioMindBridge {
     if (p.profile !== "biomind" || p.serverId !== this.controller.state.serverId || p.capabilities?.automaticReplay !== false) throw new Error("INVALID_SERVER_PROFILE");
     this.profile = p; return p;
   }
-  async packages(request = { action: "list" }) {
-    if (!request || typeof request !== "object" || Array.isArray(request)) throw new Error("INVALID_PACKAGE_REQUEST");
-    const allowed = new Set(["action", "scope", "cwd", "source", "declaration", "trusted", "expectedRevision"]);
-    if (Object.keys(request).some(key => !allowed.has(key))) throw new Error("INVALID_PACKAGE_REQUEST");
-    if (!this.profile) await this.identity();
-    if (this.profile.capabilities?.packages?.protocol !== "BioMindPluginsV1") throw new Error("PACKAGE_MANAGEMENT_UNAVAILABLE");
-    const body = { ...request, ...(request.cwd ? { cwd: remotePath(request.cwd) } : {}) };
-    const result = request.action === "list"
-      ? await this.json("/api/plugins" + (body.cwd ? "?cwd=" + encodeURIComponent(body.cwd) : ""))
-      : await this.json("/api/plugins", body, { signal: AbortSignal.timeout(930000) });
-    if (result?.schema !== "BioMindPluginsV1" || result.serverId !== this.profile.serverId ||
-      !["ok", "BUSY", "BLOCKED", "repair_required", "error"].includes(result.status) ||
-      (result.context && result.context.piVersion !== "0.87.1") ||
-      (result.packages !== undefined && (!Array.isArray(result.packages) || result.packages.some(p =>
-        !p || !["user", "project"].includes(p.scope) || typeof p.source !== "string" || typeof p.installed !== "boolean" ||
-        !p.declaration || (typeof p.declaration !== "string" && p.declaration.source !== p.source))))) throw new Error("PACKAGE_RECEIPT_INVALID");
-    // Mutations are never automatically retried, including an unknown HTTP outcome.
-    for (const id of result.resumedSessionIds || []) {
-      const h = this.handles.get(id);
-      if (h) {
-        // A resumed owner has a new generation; its old SSE subscription may
-        // remain open sending heartbeats after the old child exited.
-        clearTimeout(h.retry); h.stream?.abort(); h.stream = null;
-        h.queue = []; h.questions.clear(); h.uiRecovery = null; h.snapshotSequence = 0;
-        try { this.send("biomind:snapshot", await this.snapshot(h)); }
-        catch (error) {
-          result.viewRestoreFailures = [...(result.viewRestoreFailures || []), id];
-          this.send("pi:error", { threadId: id, message: error.message });
-        }
-      }
-    }
-    return result;
-  }
   async projects() {
     await this.identity();
     const d = await this.json("/api/sessions");
@@ -236,14 +203,26 @@ class BioMindBridge {
   }
   async restore() {
     await this.identity();
+    const stamp = this.connectionStamp();
     const ui = this.store.ui(this.controller.state.connectionId), refs = ui.openThreads || [];
-    const out = [], errors = [];
-    for (const ref of refs) {
-      try { out.push(await this.snapshot(this.handle(sessionId(ref.sessionFile), remotePath(ref.cwd)), { allowMissingHistory: true })); }
-      catch (e) { errors.push(ref.sessionFile); this.send("pi:error", { threadId: ref.sessionFile, message: e.message }); }
+    // Validate saved identities before restoring any of them. A failed old
+    // session remains visible without withholding unrelated valid snapshots.
+    const validated = refs.map(ref => ({ threadId: sessionId(ref.sessionFile), cwd: remotePath(ref.cwd) }));
+    const snapshots = [], failures = [];
+    const scopedFailures = new Set(["SERVER_HTTP_404", "HISTORY_SCOPE_MISMATCH", "REMOTE_SCOPE_MISMATCH", "OWNER_UNAVAILABLE", "OWNER_CHANGED_STATUS_UNKNOWN", "CONTROL_RECEIPT_INVALID"]);
+    for (const ref of validated) {
+      try { snapshots.push(await this.snapshot(this.handle(ref.threadId, ref.cwd), { allowMissingHistory: true })); }
+      catch (e) {
+        // Authentication, transport failures and connection changes are not
+        // partial session recovery. They still fail the whole operation.
+        this.assertConnection(stamp);
+        if (!scopedFailures.has(e?.message)) throw e;
+        failures.push({ ...ref, code: e.message });
+        this.send("pi:error", { threadId: ref.threadId, message: e.message });
+      }
     }
-    if (errors.length) throw new Error("SESSION_RESTORE_INCOMPLETE");
-    return out;
+    this.assertConnection(stamp);
+    return { schema: "biomind-restore-v1", snapshots, failures };
   }
   activate(id) {
     const h = this.handles.get(id); if (!h) return false;
@@ -370,10 +349,6 @@ class BioMindBridge {
       } catch (error) { this.send("pi:error", { threadId: h.id, message: error.message }); }
       return;
     }
-    if (event.type === "owner_unavailable") {
-      this.send("pi:error", { threadId: h.id, message: "OWNER_UNAVAILABLE" });
-      h.stream?.abort(); return;
-    }
     if (event.type === "resync_required") { h.stream?.abort(); return; }
     // BioMind completion, not an intermediate Pi agent_end, ends the request.
     if (event.type === "agent_end") return;
@@ -408,9 +383,8 @@ class BioMindBridge {
         } finally { reader.releaseLock(); }
       } catch { /* Recovery below is read-only. */ }
       finally {
-        const wasCurrent = h.stream === abort;
-        if (wasCurrent) h.stream = null;
-        if (wasCurrent && !this.closed && generation === this.generation && this.controller.state.status === "ready") {
+        if (h.stream === abort) h.stream = null;
+        if (!this.closed && generation === this.generation && this.controller.state.status === "ready") {
           h.watching = false;
           this.send("pi:error", { threadId: h.id, message: "EVENT_STREAM_RECONNECTING" });
           h.retry = setTimeout(async () => {

@@ -20,8 +20,9 @@ window.matchMedia = () => ({ matches: false });
 const React = require(path.join(desktop, "node_modules/react"));
 const { act } = React;
 const { createRoot } = require(path.join(desktop, "node_modules/react-dom/client"));
+const { Simulate } = require(path.join(desktop, "node_modules/react-dom/test-utils"));
 const compiled = require(path.join(desktop, "node_modules/esbuild")).buildSync({
-  stdin: { contents: 'export { Chat } from "./src/renderer/src/components/Chat"; export { useStore } from "./src/renderer/src/store";', resolveDir: desktop, loader: "ts" },
+  stdin: { contents: 'export { Chat } from "./src/renderer/src/components/Chat"; export { BioMindConnectionStatus } from "./src/renderer/src/components/BioMindConnectionStatus"; export { useStore } from "./src/renderer/src/store";', resolveDir: desktop, loader: "ts" },
   bundle: true, write: false, format: "cjs", platform: "node", target: "node22", jsx: "automatic",
   external: ["react", "react-dom", "react-dom/*"], loader: { ".png": "dataurl" },
 }).outputFiles[0].text;
@@ -29,7 +30,7 @@ const fixtureModule = new Module(path.join(desktop, "chat-lifecycle-fixture.cjs"
 fixtureModule.filename = fixtureModule.id;
 fixtureModule.paths = Module._nodeModulePaths(desktop);
 fixtureModule._compile(compiled, fixtureModule.filename);
-const { Chat, useStore } = fixtureModule.exports;
+const { Chat, BioMindConnectionStatus, useStore } = fixtureModule.exports;
 const calls = { opened: [], prompts: [], closed: [], aborted: [], activated: [] };
 const pending = [];
 const snapshot = (id, cwd, extra = {}) => ({ threadId: id, sessionFile: id, cwd, sessionName: id, connected: true,
@@ -50,10 +51,10 @@ beforeEach(() => {
     },
   };
   useStore.setState({ config: { language: "zh" }, projects: [], threads: {}, openThreadIds: [], activeThreadId: null,
-    activeProjectCwd: "/remote/A", extuiQueue: [], connectionStatus: "ready", toasts: [] });
+    activeProjectCwd: "/remote/A", extuiQueue: [], connectionStatus: "ready", connectionRevision: 0, toasts: [] });
 });
 
-async function renderChat(run) {
+async function renderChat(run, withConnectionStatus = false) {
   const container = document.createElement("div"); document.body.appendChild(container);
   const reactRoot = createRoot(container);
   const errors = [];
@@ -66,7 +67,8 @@ async function renderChat(run) {
   const previousError = console.error;
   console.error = (...args) => { if (!String(args[0]).includes("Warning:") && !String(args[0]).startsWith("The above error")) previousError(...args); };
   try {
-    await act(async () => reactRoot.render(React.createElement(Capture, null, React.createElement(Chat))));
+    await act(async () => reactRoot.render(React.createElement(Capture, null,
+      withConnectionStatus && React.createElement(BioMindConnectionStatus), React.createElement(Chat))));
     await run(container, () => assert.deepEqual(errors, [], "Chat must keep a stable hook order across lifecycle changes"));
   } finally {
     await act(async () => reactRoot.unmount()); container.remove(); console.error = previousError;
@@ -145,4 +147,90 @@ test("missing selection and restored snapshot can change in either direction in 
     assert.match(dom.textContent, /history-native-A/);
     assert.deepEqual([calls.opened, calls.prompts, calls.closed, calls.aborted], [[], [], [], []]);
   });
+});
+
+test("one failed old restore preserves its history while the real Composer can send once in a verified connected session", async () => {
+  window.pi.app.resolveRuntime = async () => ({ ok: true });
+  window.pi.app.getConfig = async () => ({ language: "zh" });
+  window.pi.biomind.getStatus = async () => ({ status: "ready" });
+  window.pi.biomind.restoreThreads = async () => ({
+    schema: "biomind-restore-v1",
+    snapshots: [snapshot("native-B", "/remote/B")],
+    failures: [{ threadId: "old-A", cwd: "/remote/A", code: "SERVER_HTTP_404" }],
+  });
+  await act(async () => {
+    await useStore.getState().applyRemoteSnapshot(snapshot("old-A", "/remote/A"));
+    await useStore.getState().bootstrap();
+    useStore.getState().setActiveThread("native-B");
+  });
+  assert.equal(useStore.getState().connectionStatus, "ready");
+  assert.equal(useStore.getState().threads["old-A"].connected, false);
+  assert.deepEqual(calls.prompts, [], "restore never submits or replays a prompt");
+  await renderChat(async (dom, noErrors) => {
+    const input = dom.querySelector("textarea");
+    assert.ok(input);
+    await act(async () => Simulate.change(input, { target: { value: "one explicit fixture request" } }));
+    const send = dom.querySelector('button[title="发送"]');
+    assert.ok(send && !send.disabled, "normal controlled input enables only the verified session");
+    await act(async () => { Simulate.click(send); await new Promise(setImmediate); });
+    noErrors();
+    assert.equal(calls.prompts.length, 1);
+    assert.equal(calls.prompts[0].threadId, "native-B");
+    assert.equal(calls.prompts[0].text, "one explicit fixture request");
+    await act(async () => useStore.getState().setActiveThread("old-A"));
+    assert.match(dom.textContent, /history-old-A/, "failed restore retains the known transcript");
+    await act(async () => Simulate.change(dom.querySelector("textarea"), { target: { value: "must not submit" } }));
+    assert.equal(dom.querySelector('button[title="发送"]').disabled, true);
+    await act(async () => Simulate.click(dom.querySelector('button[title="发送"]')));
+    assert.equal(calls.prompts.length, 1, "failed owner stays blocked by the original Composer/store guards");
+    assert.deepEqual([calls.opened, calls.closed, calls.aborted], [[], [], []]);
+  });
+});
+
+test("partial restore cannot enable the Composer when the actual transport is disconnected", async () => {
+  window.pi.app.resolveRuntime = async () => ({ ok: true });
+  window.pi.app.getConfig = async () => ({ language: "zh" });
+  window.pi.biomind.getStatus = async () => ({ status: "disconnected" });
+  window.pi.biomind.restoreThreads = async () => ({
+    schema: "biomind-restore-v1", snapshots: [snapshot("native-B", "/remote/B")],
+    failures: [{ threadId: "old-A", cwd: "/remote/A", code: "SERVER_HTTP_404" }],
+  });
+  await act(async () => {
+    await useStore.getState().bootstrap();
+    useStore.getState().setActiveThread("native-B");
+  });
+  assert.equal(useStore.getState().connectionStatus, "disconnected");
+  await renderChat(async (dom, noErrors) => {
+    await act(async () => Simulate.change(dom.querySelector("textarea"), { target: { value: "must not submit while offline" } }));
+    const send = dom.querySelector('button[title="发送"]');
+    assert.equal(send.disabled, true);
+    await act(async () => Simulate.click(send));
+    noErrors();
+    assert.deepEqual(calls.prompts, []);
+  });
+});
+
+test("mounted reconnect status rechecks transport after partial restore before enabling the Composer", async () => {
+  let statusListener;
+  let statusCalls = 0;
+  window.pi.biomind.getStatus = async () => ({ status: ++statusCalls === 1 ? "ready" : "disconnected" });
+  window.pi.biomind.onStatus = (listener) => { statusListener = listener; return () => {}; };
+  window.pi.biomind.restoreThreads = async () => ({
+    schema: "biomind-restore-v1", snapshots: [snapshot("native-B", "/remote/B")],
+    failures: [{ threadId: "old-A", cwd: "/remote/A", code: "SERVER_HTTP_404" }],
+  });
+  await act(async () => {
+    await useStore.getState().applyRemoteSnapshot(snapshot("native-B", "/remote/B"));
+    useStore.getState().setActiveThread("native-B");
+  });
+  await renderChat(async (dom, noErrors) => {
+    await act(async () => { statusListener({ status: "ready" }); await new Promise(setImmediate); });
+    assert.equal(statusCalls, 2, "ready event must be followed by an actual status check after restore");
+    assert.equal(useStore.getState().connectionStatus, "disconnected");
+    assert.match(dom.querySelector('[role="status"]').textContent, /已断开/);
+    await act(async () => Simulate.change(dom.querySelector("textarea"), { target: { value: "still offline" } }));
+    assert.equal(dom.querySelector('button[title="发送"]').disabled, true);
+    noErrors();
+    assert.deepEqual(calls.prompts, []);
+  }, true);
 });

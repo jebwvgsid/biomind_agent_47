@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "../store";
-import type { SkillHubDetail, SkillHubSkill, SkillInfo, PackageScope, PackageDeclaration, PluginPackage } from "../lib/types";
+import type { SkillHubDetail, SkillHubSkill, SkillInfo } from "../lib/types";
 import { Markdown } from "../lib/markdown";
 import { AppStore, Check, Close, Plus, At, Refresh, Search } from "./icons";
 
@@ -12,15 +12,7 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
   );
 }
 
-function packageSelection(declaration: PackageDeclaration, zh: boolean): string {
-  if (typeof declaration === "string") return zh ? "默认自动加载（配置）" : "Default autoload (configured)";
-  const selections = [declaration.extensions, declaration.skills, declaration.prompts, declaration.themes];
-  if (selections.every(value => Array.isArray(value) && value.length === 0)) return zh ? "未选择资源（配置）" : "No resources selected (configured)";
-  if (declaration.autoload === false) return selections.some(value => value?.length)
-    ? (zh ? "显式资源选择（配置）" : "Explicit resource selection (configured)")
-    : (zh ? "不自动加载（配置）" : "Autoload off (configured)");
-  return selections.some(value => value !== undefined) ? (zh ? "按 filters 加载（配置）" : "Filtered autoload (configured)") : (zh ? "默认自动加载（配置）" : "Default autoload (configured)");
-}
+const KIND_LABEL: Record<string, string> = { npm: "npm", git: "git", local: "Local" };
 
 function formatInstalls(value: number): string {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(value >= 10_000_000 ? 0 : 1)}M`;
@@ -267,12 +259,7 @@ export function PluginsPanel() {
   const packages = useStore((s) => s.packages);
   const skills = useStore((s) => s.skills);
   const loading = useStore((s) => s.pluginsLoading);
-  const configurePackage = useStore((s) => s.configurePackage);
-  const result = useStore((s) => s.packageResult);
-  const packageBusy = useStore((s) => s.packageBusy);
-  const manage = useStore((s) => s.managePackages);
-  const cwd = useStore((s) => s.activeProjectCwd);
-  const skillsStatus = useStore((s) => s.skillsStatus);
+  const togglePackage = useStore((s) => s.togglePackage);
   const installPackage = useStore((s) => s.installPackage);
   const removePackage = useStore((s) => s.removePackage);
   const updatePackages = useStore((s) => s.updatePackages);
@@ -282,21 +269,11 @@ export function PluginsPanel() {
   const zh = language === "zh";
 
   const [source, setSource] = useState("");
-  const [scope, setScope] = useState<PackageScope>("user");
-  const [declarations, setDeclarations] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [updatingAll, setUpdatingAll] = useState(false);
   const [updatingOne, setUpdatingOne] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [hubOpen, setHubOpen] = useState(false);
-  const activeThreadId = useStore(s => s.activeThreadId);
-  useEffect(() => {
-    setDeclarations({});
-    if (!cwd) setScope("user");
-    if (open) void loadPlugins();
-  }, [open, cwd, activeThreadId, loadPlugins]);
-
-  useEffect(() => { setDeclarations({}); }, [result?.revision]);
 
   const dismiss = () => {
     setHubOpen(false);
@@ -307,7 +284,7 @@ export function PluginsPanel() {
   const filteredPackages = useMemo(
     () =>
       packages.filter((p) =>
-        !normalizedQuery || [p.name || "", p.source, p.kind || "", p.scope].some((value) => value.toLowerCase().includes(normalizedQuery)),
+        !normalizedQuery || [p.name, p.source, p.kind].some((value) => value.toLowerCase().includes(normalizedQuery)),
       ),
     [packages, normalizedQuery],
   );
@@ -323,23 +300,14 @@ export function PluginsPanel() {
 
   const install = async () => {
     const s = source.trim();
-    if (!s || busy || packageBusy || loading || !result?.context || (scope === "project" && (!cwd || !result.context.trust?.trusted))) return;
+    if (!s) return;
     setBusy(true);
-    const saved = await installPackage(s, scope);
+    await installPackage(s);
     setBusy(false);
-    if (saved) setSource("");
+    setSource("");
   };
 
-  const updating = packageBusy || updatingAll || updatingOne !== null;
-  const editKey = (pkg: PluginPackage) => `${pkg.scope}:${pkg.source}`;
-  const saveDeclaration = async (pkg: PluginPackage) => {
-    try {
-      const declaration = JSON.parse(declarations[editKey(pkg)] ?? JSON.stringify(pkg.declaration)) as PackageDeclaration;
-      if (typeof declaration !== "string" && (!declaration || declaration.source !== pkg.source)) throw new Error("来源必须与当前包一致");
-      if (typeof declaration === "string" && declaration !== pkg.source) throw new Error("来源必须与当前包一致");
-      await configurePackage(pkg, declaration);
-    } catch (error: any) { useStore.getState().pushToast("error", "声明 JSON 无效：" + error.message); }
-  };
+  const updating = updatingAll || updatingOne !== null;
   const updateAll = async () => {
     if (updating) return;
     setUpdatingAll(true);
@@ -388,8 +356,8 @@ export function PluginsPanel() {
         {hubOpen ? <SkillsHubPanel installedSkills={skills} language={language} /> : <div className="plugins-body">
           <div className="muted plugins-note">
             {zh
-              ? "包管理使用服务器同一 BioMind / Pi 0.87.1 运行时。安装不需要模型会话；资源发现、当前 worker 加载与工具激活不会由安装成功推断。"
-              : "Packages use the server’s shared BioMind / Pi 0.87.1 runtime without a model session. Installation does not imply discovery, worker loading or tool activation."}
+              ? "此列表由服务器 BioMind 返回。Skills 配置与加载状态可在“设置 → Skills 与工具”读取；扩展安装、更新与上游 Skills Hub 需要另行迁移验收。"
+              : "Resources come from the BioMind server. Inspect configured and loaded skills in Settings. Extension installation, updates and upstream Skills Hub require separate migration acceptance."}
           </div>
 
           <div className="plugins-toolbar">
@@ -412,67 +380,70 @@ export function PluginsPanel() {
             </button>
           </div>
 
-          <section className="plugins-section">
+          <fieldset disabled className="plugins-section" style={{ border: 0, minWidth: 0 }}>
             <div className="plugins-section-head plugins-section-head-row">
-              <span>{zh ? "扩展包" : "Packages"}（{filteredPackages.length}{normalizedQuery ? ` / ${packages.length}` : ""}）</span>
-              <button className="set-btn" onClick={updateAll} disabled={updating || loading || !result?.context || packages.length === 0}
-                title={zh ? "按原生规则更新 user 与当前已信任 project 的匹配包；固定版本仍保留" : "Update matching user and trusted project packages using native rules; pins remain"}>
-                {updatingAll ? <span className="spinner" /> : <Refresh size={13} />}{zh ? "更新扩展" : "Update packages"}
+              <span>
+                {zh ? "扩展包" : "Extensions"}（{filteredPackages.length}
+                {normalizedQuery ? ` / ${packages.length}` : ""}）
+              </span>
+              <button className="set-btn" onClick={updateAll} disabled={updating || packages.length === 0} title={zh ? "检查并更新所有扩展（pi update --extensions）" : "Check and update all extensions (pi update --extensions)"}>
+                {updatingAll ? <span className="spinner" /> : <Refresh size={13} />}
+                {zh ? "更新全部" : "Update all"}
               </button>
             </div>
-            <div className="muted plugins-note">{zh ? "更新遵循原生 user + 当前可信 project 范围，不升级 Pi 引擎。固定版本、git ref 和资源 filters 保留。" : "Updates cover native user + current trusted project scopes, without upgrading Pi. Pins, git refs and filters remain."}</div>
+
             <div className="plugins-install">
-              <select className="set-input" aria-label="Package scope" value={scope} onChange={e => setScope(e.target.value as PackageScope)} disabled={packageBusy}>
-                <option value="user">{zh ? "用户级" : "User"}</option><option value="project" disabled={!cwd}>{zh ? "当前项目" : "Current project"}</option>
-              </select>
-              <input className="set-input" placeholder={zh ? "npm:包、git:仓库或服务器路径" : "npm:package, git:repository or server path"}
-                value={source} onChange={e => setSource(e.target.value)} disabled={packageBusy}
-                onKeyDown={e => { if (e.key === "Enter" && !packageBusy) void install(); }} />
-              {result?.repairRequired && <button className="set-btn" disabled={packageBusy || !source.trim() || (scope === "project" && !cwd)} onClick={() => {
-                if (window.confirm(`${zh ? "使用此来源按服务器配置修复所选作用域？修复完成前不会重新加载 worker。" : "Repair the selected scope using this source and server configuration? Workers remain unloaded until reconciliation succeeds."}\n[${scope}] ${source.trim()}`)) void manage({ action: "repair", source: source.trim(), scope });
-              }}>{zh ? "修复作用域" : "Repair scope"}</button>}
-              <button className="set-btn primary" onClick={install} disabled={busy || packageBusy || loading || !result?.context || !source.trim() || (scope === "project" && (!cwd || !result.context.trust?.trusted))}>
-                {busy ? <span className="spinner" /> : <Plus size={14} />}{zh ? "安装" : "Install"}
+              <input
+                className="set-input"
+                placeholder={zh ? "安装来源，如 npm:@foo/bar、git:github.com/user/repo 或本地路径" : "Package source, such as npm:@foo/bar, git:github.com/user/repo, or a local path"}
+                value={source}
+                onChange={(e) => setSource(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && install()}
+              />
+              <button className="set-btn primary" onClick={install} disabled={busy || !source.trim()}>
+                {busy ? <span className="spinner" /> : <Plus size={14} />} {zh ? "安装" : "Install"}
               </button>
             </div>
-            {cwd && <div className="muted plugins-note">
-              <span>{zh ? "当前项目：" : "Project: "}{cwd} · {result?.context?.trust?.trusted ? (zh ? "已信任" : "Trusted") : (zh ? "未确认信任" : "Trust not confirmed")}</span>
-              <button className="set-btn" disabled={packageBusy || !result?.context} onClick={() => {
-                const trusted = !result?.context?.trust?.trusted;
-                if (window.confirm(`${trusted ? "信任" : "撤销信任"}此项目的可执行扩展？\n${cwd}\n仅改变此项目，不设置全局 always。`)) void manage({ action: "trust", trusted });
-              }}>{result?.context?.trust?.trusted ? (zh ? "撤销项目信任" : "Revoke trust") : (zh ? "信任此项目" : "Trust this project")}</button>
-            </div>}
-            {result && <div className="muted plugins-note" role="status">
-              {result.status} · {result.code}{result.reloadRequired ? (zh ? " · 需要重新加载" : " · Reload required") : ""}
-              {result.repairRequired ? (zh ? " · 需修复，禁止继续加载" : " · Repair required; loading blocked") : ""}
-              {result.affectedScopes?.length ? ` · ${result.affectedScopes.join(" + ")}` : ""}
-              {result.viewRestoreFailures?.length ? ` · ${zh ? "窗口视图待恢复" : "Views need recovery"}: ${result.viewRestoreFailures.join(", ")}` : ""}
-              {result.reloadFailures?.length ? ` · ${zh ? "原会话待恢复" : "Original sessions need recovery"}: ${result.reloadFailures.join(", ")}` : ""}
-              {result.resumedSessionIds?.length ? ` · ${zh ? "已恢复原会话（未重发任务）" : "Original sessions restored without replay"}: ${result.resumedSessionIds.join(", ")}` : ""}
-            </div>}
-            {result?.context && <details className="muted plugins-note"><summary>{zh ? "服务器运行上下文" : "Server runtime context"}</summary>
-              <div>Pi {result.context.piVersion}</div><div>agentDir: {result.context.agentDir}</div><div>release: {result.context.releaseRoot || "unknown"}</div>
-              {result.context.scopeRoots?.map(root => <div key={`${root.scope}:${root.root}`}>{root.scope}: {root.root}{root.legacyUnverified ? " · LEGACY_OCCUPANCY_UNVERIFIED" : ""}{root.repairRequired ? " · repair_required" : ""}</div>)}
-            </details>}
-            {loading && <div className="set-empty-mini">{zh ? "读取服务器包状态…" : "Reading server packages…"}</div>}
-            {!loading && result?.status === "ok" && packages.length === 0 && <div className="set-empty-mini">{zh ? "此范围未配置扩展包。" : "No packages configured in this context."}</div>}
-            {filteredPackages.map(p => <div className="plugins-row" key={editKey(p)}>
-              <div className="plugins-row-main"><span className="plugins-row-name" title={p.source}>{p.name || p.source}</span><span className="plugins-kind">{p.scope}</span></div>
-              <div className="plugins-row-sub" title={p.source}>{p.source}</div>
-              <div className="plugins-row-sub">{packageSelection(p.declaration, zh)} · {p.installed ? (zh ? "已安装" : "Installed") : (zh ? "未安装" : "Not installed")} · {zh ? "发现" : "Discovered"}: {typeof p.discovered === "object" ? JSON.stringify(p.discovered) : "unknown"} · worker: {String(p.workerLoaded)} · {zh ? "激活" : "Active"}: {String(p.active)}</div>
-              <div className="plugins-row-actions">
-                <button className="set-iconbtn" title={zh ? "按原生 user + 当前可信 project 范围更新此来源" : "Update this source in native user + trusted project scopes"} disabled={updating} onClick={() => updateOne(p.source)}>{updatingOne === p.source ? <span className="spinner" /> : <Refresh size={13} />}</button>
-                <button className="set-iconbtn danger" title={zh ? "移除" : "Remove"} disabled={packageBusy} onClick={() => { if (window.confirm(`${zh ? "移除" : "Remove"} [${p.scope}] ${p.source}?`)) void removePackage(p); }}>×</button>
+
+            {loading && packages.length === 0 && <div className="set-empty-mini">{zh ? "加载中…" : "Loading…"}</div>}
+            {!loading && packages.length === 0 && <div className="set-empty-mini">{zh ? "当前连接未提供扩展包管理列表；实际服务器扩展见设置中的资源状态。" : "Extension package management is unavailable on this connection. Inspect actual server extensions in Settings resources."}</div>}
+            {packages.length > 0 && filteredPackages.length === 0 && <div className="set-empty-mini">{zh ? "没有匹配的扩展包。" : "No matching extension packages."}</div>}
+            {filteredPackages.map((p) => (
+              <div className="plugins-row" key={p.source}>
+                <div className="plugins-row-main">
+                  <span className="plugins-row-name" title={p.source}>
+                    {p.name}
+                  </span>
+                  <span className="plugins-kind">{p.kind === "local" ? (zh ? "本地" : KIND_LABEL[p.kind]) : KIND_LABEL[p.kind] || p.kind}</span>
+                  {!p.enabled && <span className="plugins-off">{zh ? "已停用" : "Disabled"}</span>}
+                </div>
+                <div className="plugins-row-sub" title={p.source}>
+                  {p.source}
+                </div>
+                <div className="plugins-row-actions">
+                  <button
+                    className="set-iconbtn"
+                    title={zh ? "检查并更新此扩展" : "Check and update this extension"}
+                    disabled={updating}
+                    onClick={() => updateOne(p.source)}
+                  >
+                    {updatingOne === p.source ? <span className="spinner" /> : <Refresh size={13} />}
+                  </button>
+                  <Toggle checked={p.enabled} onChange={(v) => togglePackage(p.source, v)} />
+                  <button
+                    className="set-iconbtn danger"
+                    title={zh ? "移除" : "Remove"}
+                    onClick={() => {
+                      const question = zh ? `移除包 “${p.name}”？` : `Remove package “${p.name}”?`;
+                      if (window.confirm(question)) removePackage(p.source);
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
-              <details className="muted plugins-note"><summary>{zh ? "资源选择 / 原生声明" : "Resource selection / native declaration"}</summary>
-                <p>{zh ? "autoload=false 仍可加载显式匹配的资源。保留 extensions / skills / prompts / themes 的原生 filters；保存只改配置，不宣称当前 worker 已加载。" : "autoload=false can still load explicitly matched resources. Keep native filters. Saving changes configuration, not the current worker’s loaded state."}</p>
-                <textarea className="set-input" aria-label={`Package declaration ${p.scope} ${p.source}`} rows={7} style={{ width: "100%" }} disabled={packageBusy}
-                  value={declarations[editKey(p)] ?? JSON.stringify(p.declaration, null, 2)} onChange={e => setDeclarations(current => ({ ...current, [editKey(p)]: e.target.value }))} />
-                <button className="set-btn" disabled={packageBusy} onClick={() => void saveDeclaration(p)}>{zh ? "保存资源声明" : "Save declaration"}</button>
-              </details>
-            </div>)}
-            <div className="muted plugins-note">{zh ? "服务器本地路径包属于开发模式：外部编辑可改变代码，无法保证运行中代码不变。自定义原生 TUI 界面在桌面端可能不受支持；注册不代表已被 Main 激活或授权。" : "Server local-path packages are development code and may change externally. Native TUI interactions may be unsupported on desktop; registration does not imply Main activation or authorization."}</div>
-          </section>
+            ))}
+          </fieldset>
 
           <section className="plugins-section">
             <div className="plugins-section-head">
@@ -480,7 +451,7 @@ export function PluginsPanel() {
               {normalizedQuery ? ` / ${skills.length}` : ""})
             </div>
             {loading && skills.length === 0 && <div className="set-empty-mini">{zh ? "加载中…" : "Loading…"}</div>}
-            {!loading && skills.length === 0 && <div className="set-empty-mini">{skillsStatus}</div>}
+            {!loading && skills.length === 0 && <div className="set-empty-mini">{zh ? "当前服务器尚未返回 Skills。" : "The server has not returned any skills."}</div>}
             {skills.length > 0 && filteredSkills.length === 0 && <div className="set-empty-mini">{zh ? "没有匹配的技能。" : "No matching skills."}</div>}
             {filteredSkills.map((sk) => (
               <div className="plugins-row" key={sk.path}>
@@ -500,8 +471,8 @@ export function PluginsPanel() {
             ))}
             <div className="muted plugins-note">
               {zh
-                ? "Skills 选择写入服务器真实配置；是否已在当前会话加载请查看设置中的资源状态。"
-                : "Skill selections update server configuration. Inspect Settings resources for the current worker’s loaded state."}
+                ? "停用技能会将其入口文件重命名为 *.disabled（可逆）；新增文件后可点击右上角刷新。"
+                : "Disabling a skill renames its entry file to *.disabled (reversible). Refresh after adding new files."}
             </div>
           </section>
         </div>}

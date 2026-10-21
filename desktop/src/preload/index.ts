@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from "electron";
-import type { SkillHubSkill, PluginManagementRequest, PluginManagementResult } from "../renderer/src/lib/types";
+import type { SkillHubSkill } from "../renderer/src/lib/types";
 
 /**
  * The renderer talks to the main process exclusively through this surface.
@@ -23,7 +23,7 @@ const api = {
     onSnapshot: (cb: (snapshot: any) => void) => on("biomind:snapshot", cb),
     showConnection: () => ipcRenderer.invoke("biomind:showConnection"),
     browseProjects: (path?: string) => ipcRenderer.invoke("biomind:browseProjects", path),
-    restoreThreads: () => ipcRenderer.invoke("biomind:restoreThreads") as Promise<any[]>,
+    restoreThreads: () => ipcRenderer.invoke("biomind:restoreThreads") as Promise<{ schema: "biomind-restore-v1"; snapshots: any[]; failures: { threadId: string; cwd: string; code: string }[] }>,
     activateThread: (id: string) => ipcRenderer.invoke("biomind:activateThread", id),
     focusThread: (id: string | null) => ipcRenderer.invoke("biomind:focusThread", id),
     finishInput: (receipt: any) => ipcRenderer.invoke("biomind:finishInput", receipt),
@@ -69,10 +69,13 @@ const api = {
     editAction: (action: "copy" | "cut" | "paste" | "delete" | "selectAll") => ipcRenderer.invoke("app:editAction", action),
   },
   plugins: {
-    getPackages: (args: { cwd?: string } = {}) => ipcRenderer.invoke("plugins:getPackages", args) as Promise<PluginManagementResult>,
-    managePackages: (args: PluginManagementRequest) => ipcRenderer.invoke("plugins:managePackages", args) as Promise<PluginManagementResult>,
+    getPackages: () => ipcRenderer.invoke("plugins:getPackages"),
+    setPackageEnabled: (source: string, enabled: boolean) => ipcRenderer.invoke("plugins:setPackageEnabled", { source, enabled }),
+    installPackage: (source: string) => ipcRenderer.invoke("plugins:installPackage", source),
+    removePackage: (source: string) => ipcRenderer.invoke("plugins:removePackage", source),
     getSkills: (args: { threadId: string; cwd: string }) => ipcRenderer.invoke("plugins:getSkills", args),
     setSkillEnabled: (args: { threadId: string; cwd: string; resourceId: string; path: string; enabled: boolean }) => ipcRenderer.invoke("plugins:setSkillEnabled", args),
+    updatePackages: (source?: string) => ipcRenderer.invoke("plugins:updatePackages", source),
     getSkillsHubLeaderboard: () => ipcRenderer.invoke("skillsHub:leaderboard"),
     searchSkillsHub: (query: string) => ipcRenderer.invoke("skillsHub:search", query),
     getSkillDetails: (skill: SkillHubSkill) => ipcRenderer.invoke("skillsHub:detail", skill),

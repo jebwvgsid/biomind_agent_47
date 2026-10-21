@@ -6,7 +6,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const Module = require("node:module");
-const ts = require("../node_modules/typescript");
+const ts = require("../../../BioMind_Studio_S1_Implementation_20261006/candidate/pi-studio/node_modules/typescript");
 const { BioMindBridge, remotePath, sessionId } = require("./biomind-bridge.cjs");
 const { ConnectionStore } = require("./connection-store.cjs");
 const sourcePath = path.resolve(__dirname, "../src/main/biomind-client.ts");
@@ -48,13 +48,7 @@ function fixture(t, storeOptions = {}) {
     assert.equal(init.redirect, "error");
     const body = typeof init.body === "string" ? JSON.parse(init.body) : init.body;
     requests.push({ route, method, body, query: parsed.searchParams });
-    if (route === "/api/agent/profile") return json({ profile: "biomind", serverId, capabilities: { automaticReplay: false, packages: { protocol: "BioMindPluginsV1" } }, allowedProjects: [projectA, projectB] });
-    if (route === "/api/plugins") {
-      if (nextFailure === "package") { nextFailure = null; throw new Error("SYNTHETIC_LOST_PACKAGE_RECEIPT"); }
-      return json({ schema: "BioMindPluginsV1", serverId, status: "ok", code: "OK", changed: method === "POST", reloadRequired: false, repairRequired: false,
-        context: { piVersion: "0.87.1", cwd: body?.cwd ?? parsed.searchParams.get("cwd"), agentDir: "/server/shared-agent" },
-        packages: [{ scope: "user", source: "npm:fixture", declaration: { source: "npm:fixture", autoload: false, extensions: ["only.ts"] }, configured: true, installed: true, workerLoaded: "unknown", active: "unknown" }] });
-    }
+    if (route === "/api/agent/profile") return json({ profile: "biomind", serverId, capabilities: { automaticReplay: false }, allowedProjects: [projectA, projectB] });
     if (route === "/api/sessions") return json({ historyAvailable: true, registeredProjects: [projectA, projectB], sessions: [...histories].map(([id, h]) => ({ id, cwd: h.info.cwd, name: h.info.name, messageCount: h.context.messages.length })) });
     if (route === "/api/agent/new") {
       assert.equal(method, "POST"); assert.equal(body.type, "ensure_session"); assert.equal(body.serverId, serverId);
@@ -166,7 +160,8 @@ test("restart restores both persisted native histories using read/control querie
   assert.equal(await f.store.flushUI(), true);
   f.bridge.close(); const offset = f.requests.length, replacement = f.construct(f.newStore());
   const restored = await replacement.restore();
-  assert.deepEqual(restored.map(s => [s.threadId, s.cwd]), [["A", projectA], ["B", projectB]]);
+  assert.equal(restored.schema, "biomind-restore-v1"); assert.deepEqual(restored.failures, []);
+  assert.deepEqual(restored.snapshots.map(s => [s.threadId, s.cwd]), [["A", projectA], ["B", projectB]]);
   assert(!f.requests.slice(offset).some(r => r.route === "/api/agent/new" || ["prompt", "steer", "follow_up", "resume_session"].includes(r.body?.type)));
 });
 test("permanent UI rename EPERM cannot hide a new native ID or repeat its creation on retry", async t => {
@@ -203,7 +198,7 @@ test("UI rename EPERM preserves existing history, running owner and focused A/B 
   assert.deepEqual(f.store.ui(connectionId).openThreads, [{ cwd: projectA, sessionFile: "native-A" }, { cwd: projectB, sessionFile: "native-B" }]);
   f.bridge.close(); const offset = f.requests.length, replacement = f.construct();
   const restored = await replacement.restore();
-  assert.deepEqual(restored.map(s => [s.threadId, s.cwd, s.messages[0].content, s.isStreaming]), [
+  assert.deepEqual(restored.snapshots.map(s => [s.threadId, s.cwd, s.messages[0].content, s.isStreaming]), [
     ["native-A", projectA, "existing A history", true], ["native-B", projectB, "existing B history", false],
   ]);
   assert.equal(f.store.ui(connectionId).lastThreadId, "native-A");
@@ -213,13 +208,42 @@ test("UI rename EPERM preserves existing history, running owner and focused A/B 
   assert.equal(posts(f).filter(r => r.route === "/api/agent/new").length, 0);
   assert(!posts(f).some(r => ["abort", "delete", "shutdown"].includes(r.body?.type)));
 });
-test("a failed saved history cannot be silently dropped while restoration reports success", async t => {
+test("a failed saved history is explicit while another session restores without replay or deleting refs", async t => {
   const f = fixture(t); await f.bridge.open({ cwd: projectA, clientOpenId: "opening-a" }); await f.bridge.open({ cwd: projectB, clientOpenId: "opening-b" });
   f.states.delete("A"); f.histories.delete("A"); f.bridge.detach();
-  await assert.rejects(f.bridge.restore());
+  const offset = f.requests.length;
+  const restored = await f.bridge.restore();
+  assert.deepEqual(restored.failures, [{ threadId: "A", cwd: projectA, code: "SERVER_HTTP_404" }]);
+  assert.deepEqual(restored.snapshots.map(s => s.threadId), ["B"]);
   assert(f.events.some(event => event.channel === "pi:error" && event.payload.threadId === "A"));
   assert.deepEqual(f.store.ui(connectionId).openThreads.map(ref => ref.sessionFile), ["A", "B"]);
   assert.equal(posts(f).filter(r => r.route === "/api/agent/new").length, 2);
+  assert(!f.requests.slice(offset).some(r => r.route === "/api/agent/new" || ["prompt", "steer", "follow_up", "resume_session"].includes(r.body?.type)));
+});
+test("restore transport, identity, and connection-change failures cannot become partial success", async t => {
+  const f = fixture(t); await f.bridge.open({ cwd: projectA, clientOpenId: "opening-a" });
+  const originalSnapshot = f.bridge.snapshot.bind(f.bridge);
+  f.bridge.snapshot = async () => { throw new TypeError("fetch failed"); };
+  await assert.rejects(f.bridge.restore(), /fetch failed/);
+  f.bridge.snapshot = async () => { throw new Error("SERVER_HTTP_401"); };
+  await assert.rejects(f.bridge.restore(), /SERVER_HTTP_401/);
+  f.bridge.snapshot = async () => { f.controller.generation++; throw new Error("SERVER_HTTP_404"); };
+  await assert.rejects(f.bridge.restore(), /CONNECTION_CHANGED/);
+  f.bridge.snapshot = originalSnapshot;
+  f.bridge.identity = async () => { throw new Error("INVALID_SERVER_PROFILE"); };
+  await assert.rejects(f.bridge.restore(), /INVALID_SERVER_PROFILE/);
+  assert.equal(inputs(f).length, 0);
+});
+test("malformed saved restore identity fails before opening any saved session", async t => {
+  const f = fixture(t); await f.bridge.open({ cwd: projectA, clientOpenId: "opening-a" });
+  const ui = f.store.ui(connectionId);
+  ui.openThreads.push({ sessionFile: "../unknown", cwd: projectB });
+  // Inject a malformed reader result; normal saveUI rejects it even earlier.
+  f.store.ui = () => ui;
+  const offset = f.requests.length;
+  await assert.rejects(f.bridge.restore(), /INVALID_SESSION_ID/);
+  assert.deepEqual(f.requests.slice(offset).map(r => r.route), ["/api/agent/profile"]);
+  assert.equal(inputs(f).length, 0);
 });
 test("lost prompt receipt survives restart and retry recovers admission without another POST", async t => {
   const f = fixture(t); await f.bridge.open({ cwd: projectA, clientOpenId: "opening-a" }); f.failNext("prompt");
@@ -518,55 +542,4 @@ test("server-only identity types, paths and implementation reject local alternat
   for (const value of ["C:\\project", "relative", "file:///tmp/a"]) assert.throws(() => remotePath(value), /REMOTE_LINUX_PATH_REQUIRED/);
   const source = fs.readFileSync(path.join(__dirname, "biomind-bridge.cjs"), "utf8");
   assert(!/require\([^)]*(?:pi-coding-agent|child_process|pi-bridge|session-store)/.test(source));
-});
-
-
-test("package HTTP uses the same authenticated server without creating an agent/session", async t => {
-  const f = fixture(t); const list = await f.bridge.packages({ action: "list" });
-  assert.equal(list.context.piVersion, "0.87.1"); assert.equal(f.bridge.handles.size, 0);
-  const declaration = list.packages[0].declaration;
-  await f.bridge.packages({ action: "config", scope: "user", source: "npm:fixture", declaration, expectedRevision: "rev" });
-  assert.deepEqual(posts(f).map(row => row.route), ["/api/plugins"]);
-  assert.deepEqual(posts(f)[0].body.declaration, declaration);
-  await assert.rejects(f.bridge.packages({ action: "list", agentDir: "/client/override" }), /INVALID_PACKAGE_REQUEST/);
-});
-test("package mutation lost receipt does not trigger automatic HTTP retry or task execution", async t => {
-  const f = fixture(t); f.failNext("package");
-  await assert.rejects(f.bridge.packages({ action: "install", source: "npm:fixture", scope: "user" }), /SYNTHETIC_LOST_PACKAGE_RECEIPT/);
-  assert.deepEqual(posts(f).map(row => row.route), ["/api/plugins"]); assert.equal(inputs(f).length, 0);
-});
-
-
-test("package idle-owner restart rebinds SSE to new generation, preserves native ID and never prompts", async t => {
-  const f = fixture(t); await f.bridge.open({ cwd: projectA, clientOpenId: "opening-package" });
-  const handle = f.bridge.handles.get("A"), oldStream = handle.stream; f.bridge.activate("A");
-  const originalFetch = f.bridge.fetcher;
-  f.bridge.fetcher = async (url, init) => {
-    const response = await originalFetch(url, init);
-    if (new URL(url).pathname === "/api/plugins" && init.method === "POST") {
-      const result = await response.json(); f.states.get("A").ownerGeneration = "replacement-owner-A";
-      return json({ ...result, resumedSessionIds: ["A"] });
-    }
-    return response;
-  };
-  await f.bridge.packages({ action: "update" });
-  assert.equal(oldStream.signal.aborted, true); assert.notEqual(handle.stream, oldStream);
-  assert.equal(handle.state.ownerGeneration, "replacement-owner-A");
-  assert.equal(f.events.filter(row => row.channel === "biomind:snapshot").at(-1).payload.threadId, "A");
-  assert.equal(posts(f).filter(row => row.route === "/api/agent/new").length, 1); assert.equal(inputs(f).length, 0);
-});
-
-
-test("successful package receipt survives a view-restoration failure without encouraging mutation replay", async t => {
-  const f = fixture(t); await f.bridge.open({ cwd: projectA, clientOpenId: "opening-package-view" });
-  const originalFetch = f.bridge.fetcher;
-  f.bridge.fetcher = async (url, init) => {
-    const response = await originalFetch(url, init);
-    if (new URL(url).pathname === "/api/plugins" && init.method === "POST") return json({ ...(await response.json()), resumedSessionIds: ["A"] });
-    return response;
-  };
-  f.bridge.snapshot = async () => { throw new Error("HISTORY_TEMPORARILY_UNAVAILABLE"); };
-  const receipt = await f.bridge.packages({ action: "update" });
-  assert.equal(receipt.status, "ok"); assert.deepEqual(receipt.viewRestoreFailures, ["A"]);
-  assert.equal(posts(f).filter(row => row.route === "/api/plugins").length, 1); assert.equal(inputs(f).length, 0);
 });

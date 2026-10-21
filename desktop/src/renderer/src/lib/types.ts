@@ -41,30 +41,15 @@ export interface ThreadSearchHit {
 /** Thread permission level. Sandbox auto-allows low-risk explicit operations and gates destructive, sensitive, external-code, subagent, and unclassified actions; full is unrestricted. */
 export type PermissionLevel = "sandbox" | "full";
 
-/** Native 0.87.1 declaration: preserve filters and autoload independently. */
-export type PackageDeclaration = string | { source: string; autoload?: boolean; extensions?: string[]; skills?: string[]; prompts?: string[]; themes?: string[] };
-export type PackageScope = "user" | "project";
+/** An installed pi package (from settings.json `packages`). */
 export interface PluginPackage {
-  source: string; scope: PackageScope; declaration: PackageDeclaration;
-  name?: string; kind?: "npm" | "git" | "local";
-  configured: boolean; installed: boolean; installedPath?: string;
-  discovered?: "unknown" | Record<string, unknown>;
-  workerLoaded: "unknown" | boolean; active: "unknown" | boolean;
-}
-export interface PluginManagementRequest {
-  action: "list" | "check" | "install" | "remove" | "update" | "config" | "trust" | "repair";
-  scope?: PackageScope; cwd?: string; source?: string; declaration?: PackageDeclaration;
-  trusted?: boolean | null; expectedRevision?: string;
-}
-export interface PluginManagementResult {
-  schema: "BioMindPluginsV1"; serverId?: string;
-  status: "ok" | "BUSY" | "BLOCKED" | "repair_required" | "error"; code: string;
-  revision?: string; packages?: PluginPackage[];
-  changed: boolean; reloadRequired: boolean; repairRequired: boolean; affectedScopes?: PackageScope[];
-  context?: { agentDir: string; cwd?: string | null; piVersion: string; releaseRoot?: string;
-    trust?: { trusted: boolean; saved: boolean | null; default: string };
-    scopeRoots?: { scope: PackageScope; root: string; legacyUnverified: boolean; repairRequired: boolean }[] };
-  resumedSessionIds?: string[]; reloadFailures?: string[]; viewRestoreFailures?: string[];
+  /** Raw source spec, e.g. "npm:foo", "git:host/repo@ref", or a local path. */
+  source: string;
+  /** Display name derived from the source. */
+  name: string;
+  kind: "npm" | "git" | "local";
+  /** True when the package loads its resources; false when disabled via autoload=false. */
+  enabled: boolean;
 }
 
 /** A standalone skill discovered in a skills directory. */

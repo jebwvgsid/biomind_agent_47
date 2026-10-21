@@ -27,7 +27,9 @@ export function BioMindConnectionStatus() {
       useStore.setState({ connectionStatus: "restoring" });
       try {
         await useStore.getState().restoreRemoteThreads();
-        if (alive && epoch === current) useStore.setState({ connectionStatus: "ready" });
+        const actual = await window.pi.biomind.getStatus();
+        if (!actual || typeof actual.status !== "string") throw new Error("SESSION_RESTORE_FAILED");
+        if (alive && epoch === current) useStore.setState({ connectionStatus: actual.status });
       } catch (error: any) {
         if (alive && epoch === current) { failed(error); useStore.getState().pushToast("error", "会话恢复失败；未自动重发任何任务。"); }
       }
