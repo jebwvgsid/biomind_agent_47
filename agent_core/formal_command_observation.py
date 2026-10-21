@@ -406,7 +406,7 @@ class FormalCommandObserver(InspectionOwnerMixin):
             return self._refusal('FORMAL_TIMEOUT_INVALID', execution_started=False)
         if monitoring is not None:
             self.validate_monitoring(monitoring)
-        started = time.monotonic()
+        started_epoch, started = time.time(), time.monotonic()
         scope = self._scope_key(request_scope)
         ref = self._identity(task_id, call_id, request_scope)
         directory = self._task_dir(task_id) / ref
@@ -418,7 +418,7 @@ class FormalCommandObserver(InspectionOwnerMixin):
         if not intent_path.is_file() and not native:
             from agent_core.execution_permissions import authorize_command
             await authorize_command(self.service, arguments, task_id=task_id, call_id=call_id)
-            started = time.monotonic()
+            started_epoch, started = time.time(), time.monotonic()
         with self._owner_lock:
             if intent_path.is_file():
                 try:
@@ -453,7 +453,7 @@ class FormalCommandObserver(InspectionOwnerMixin):
                 seconds = (float(arguments['timeout_ms'])/1000 if arguments.get('timeout_ms') else
                            _env_float(policy.wall_timeout_env, policy.wall_timeout_default_seconds))
                 deadline = started + seconds if seconds > 0 else float('inf')
-                deadline_at = datetime.fromtimestamp(time.time()+seconds, timezone.utc).isoformat() if seconds > 0 else None
+                deadline_at = self._iso(started_epoch + seconds) if seconds > 0 else None
                 task_deadline_at = self.task_deadline(task_id, request_scope)
                 if task_deadline_at:
                     sampled_wall, sampled_mono = time.time(), time.monotonic()
