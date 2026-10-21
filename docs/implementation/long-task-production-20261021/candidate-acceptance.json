@@ -1,0 +1,97 @@
+{
+  "sourceCommit": "fbe9355632f9447726d8d566ab737c16974c4b83",
+  "buildId": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+  "dependencies": "363ca233976e9593f32d8175fc450e4dfa1a03394ce691e2b8bab610ee8400f4",
+  "build": "PASS",
+  "mechanisms": [
+    {
+      "suite": "Python 真实进程/领域机制",
+      "passed": 26,
+      "evidence": "python-tests-final.log",
+      "expected": 26,
+      "failed": 0,
+      "status": "PASS"
+    },
+    {
+      "suite": "Pi 唤醒/收讫/恢复/提示词/输出/普通 bash",
+      "passed": 25,
+      "evidence": "pi-tests-final.log",
+      "expected": 25,
+      "failed": 0,
+      "status": "PASS"
+    },
+    {
+      "suite": "真实 JSON 宿主及原控制路径",
+      "passed": 5,
+      "evidence": "host-bridge-tests.log",
+      "expected": 5,
+      "failed": 0,
+      "status": "PASS"
+    },
+    {
+      "suite": "宿主原截止回归",
+      "passed": 9,
+      "evidence": "deadline-regressions-final.log",
+      "expected": 9,
+      "failed": 0,
+      "status": "PASS"
+    },
+    {
+      "suite": "真实日志与分页契约",
+      "passed": 3,
+      "evidence": "output-three-contracts.log",
+      "expected": 3,
+      "failed": 0,
+      "status": "PASS"
+    },
+    {
+      "suite": "原生命令回归",
+      "passed": 1,
+      "evidence": "python-regressions.log",
+      "expected": 1,
+      "failed": 0,
+      "status": "PASS"
+    }
+  ],
+  "natural": {
+    "N1": {
+      "status": "PARTIAL",
+      "conclusion": "缺少可信映射时停止了汇总和下游、未编造对应；但实际 bash 读取了限定 inputs/metadata 之外的 registry.json、preferences.md，并遍历 domain/ 与项目根，未严格遵守查找范围。工具实际执行累计0.086秒，整体16.596秒；时间通过不抵消范围偏离。",
+      "mapping_block": "PASS",
+      "scope": "FAIL",
+      "search_tool_seconds": 0.086,
+      "evidence": "natural-N1.json → events/tool_execution_start"
+    },
+    "N2": {
+      "status": "PARTIAL",
+      "conclusion": "同一 Main 在无新用户消息时读到运行中进展；wait 回执显示运行21.12秒、ETA超出6.115秒；随后 inspect_run 用 eta_seconds=10 写回预测且原硬截止不变，结束后真实回读并核对产物。但最终仍依据启动前 rate.txt=2 陈述6×2秒，没有核实控制器已将其改为7；实测约37秒的解释及ETA依据仍不可靠。",
+      "running_check": "PASS",
+      "ETA_writeback": "PASS",
+      "original_deadline": "PASS",
+      "artifact_read": "PASS",
+      "runtime_parameter_recheck": "NOT_EVIDENCED",
+      "timing_explanation": "FAIL",
+      "evidence": "natural-N2.json + run-records/N2/fixture/rate.txt"
+    },
+    "N3": {
+      "status": "PASS",
+      "conclusion": "实际发现日志停在错误分支、progress/result缺失和CPU忙等，读取实际脚本/标记定位无效运行；主动 cancel_run 于原硬截止前停止同一作业，terminal=true、cleanup_confirmed=true，未改参考或重提作业。PASS只覆盖该目标行为，不保证每句自然语言推断都正确。",
+      "evidence": "natural-N3.json → exec.status/exec.cancel 与实际文件读取"
+    },
+    "N4": {
+      "status": "PASS",
+      "conclusion": "进程退出0后实际回读产物，核对出 sX/TAIR9/999 与 s2/TAIR10/20 不符；明确拒绝合格交付，原因未确认时停止并保留证据，没有直接进入下游。PASS只覆盖该目标行为。",
+      "evidence": "natural-N4.json → artifact read/validation + finalText"
+    }
+  },
+  "candidate_auto_review": "PASS",
+  "candidate_same_Main_wake": "PASS",
+  "candidate_JSON_host_Studio_frames": "PASS",
+  "current_Studio_uses_candidate": false,
+  "Studio_GUI_candidate": "NOT_RUN",
+  "Windows": "NOT_RUN",
+  "Slurm_actual_scheduler": "NOT_RUN",
+  "independent_owner_or_node_failure_recovery": "NOT_RUN",
+  "scientific_validation_transport_default": "not_assessed",
+  "baseline_unrelated_failures": 4
+}

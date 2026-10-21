@@ -1,0 +1,112 @@
+{
+  "schema": "BioMindLongTaskProductionDeploymentV1",
+  "at_utc": "2026-10-21T04:39:38.638947+00:00",
+  "sourceCommit": "fbe9355632f9447726d8d566ab737c16974c4b83",
+  "buildId": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+  "releaseRoot": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12",
+  "sourceFingerprint": "68eecde13bf17a56d7d88b521221007fd86c9eb7a8ea3d6952ddf539126c70ba",
+  "branch": "release/submission-20261020",
+  "cli": {
+    "entries": [
+      {
+        "path": "/public/home/liusiqi/.local/bin/biomind",
+        "sha256": "4c71e5d67737a57d7cc05b032680d9023f675b2477c20a334e765ed9bbc30657",
+        "RELEASE": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12",
+        "CONFIG": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/delivery/long-task-20261021/94ddac30b6803e12/cli-shared-web-runtime.json",
+        "EXPECTED": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+        "usesNewBuild": true
+      },
+      {
+        "path": "/public/home/liusiqi/03.毕设/BioMind/bin/biomind",
+        "sha256": "4c71e5d67737a57d7cc05b032680d9023f675b2477c20a334e765ed9bbc30657",
+        "RELEASE": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12",
+        "CONFIG": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/delivery/long-task-20261021/94ddac30b6803e12/cli-shared-web-runtime.json",
+        "EXPECTED": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+        "usesNewBuild": true
+      }
+    ],
+    "bothUseNewBuild": true,
+    "loadChecks": {
+      "workspace-cli": {
+        "status": "PASS",
+        "exitCode": 0,
+        "modelRequests": 0
+      },
+      "official-cli": {
+        "status": "FAIL",
+        "exitCode": 2,
+        "modelRequests": 0
+      },
+      "official-cli-retry": {
+        "status": "PASS",
+        "exitCode": 0,
+        "modelRequests": 0
+      }
+    }
+  },
+  "studio": {
+    "entrypoint": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-d0cf979998965759/bio_agents.py",
+    "runtimeConfig": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/delivery/submission-20261020/d0cf979998965759/workbench-shared-web-runtime.json",
+    "configUsesNewBuild": false,
+    "deploymentReceipt": null,
+    "ownerVerificationStatus": "NOT_RUN",
+    "hostPreflight": {
+      "checkedAt": "2026-10-21T04:32:04.931398+00:00",
+      "userApprovedHostAccess": true,
+      "productionMutated": false,
+      "status": "BLOCKED",
+      "code": "LIVE_SERVICE_PID_NOT_VERIFIABLE_IN_THIS_EXECUTION_ENVIRONMENT",
+      "localNetworkSocket": {
+        "status": "BLOCKED",
+        "errno": 1,
+        "error_type": "PermissionError"
+      }
+    },
+    "hostAccessAfterUIChange": {
+      "checkedAt": "2026-10-21T04:35:05.573545+00:00",
+      "record": {
+        "pid": 3236718,
+        "host": "ln02",
+        "status": "ready",
+        "heartbeatAt": 1792557304.4505532
+      },
+      "hostPidMatch": false,
+      "processError": {
+        "type": "FileNotFoundError",
+        "errno": 2
+      },
+      "network": {
+        "type": "PermissionError",
+        "errno": 1
+      },
+      "currentProcess": "NSpid:\t3"
+    }
+  },
+  "candidateAcceptance": {
+    "targetedChecksPassed": 69,
+    "N1": "PARTIAL",
+    "N2": "PARTIAL",
+    "N3": "PASS",
+    "N4": "PASS"
+  },
+  "productionSourceEquivalence": {
+    "status": "PASS",
+    "sourceCommit": "fbe9355632f9447726d8d566ab737c16974c4b83",
+    "sourceFingerprint": "68eecde13bf17a56d7d88b521221007fd86c9eb7a8ea3d6952ddf539126c70ba",
+    "productionSourceFilesMatched": 791
+  },
+  "releaseVerification": {
+    "status": "PASS",
+    "validation": "core-release.py build completed its full verify(stage) before publishing",
+    "releaseRoot": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12",
+    "buildId": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+    "sourceCommit": "fbe9355632f9447726d8d566ab737c16974c4b83",
+    "sourceFiles": 791,
+    "artifactFiles": 268,
+    "dependencyEntries": 25916,
+    "entrypointReadOnly": true
+  },
+  "remotePushed": false,
+  "windowsGUI": "NOT_RUN",
+  "status": "PARTIAL_DEPLOYMENT"
+}

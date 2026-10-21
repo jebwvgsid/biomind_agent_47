@@ -1,0 +1,19 @@
+{
+  "checkedAt": "2026-10-21T04:35:05.573545+00:00",
+  "record": {
+    "pid": 3236718,
+    "host": "ln02",
+    "status": "ready",
+    "heartbeatAt": 1792557304.4505532
+  },
+  "hostPidMatch": false,
+  "processError": {
+    "type": "FileNotFoundError",
+    "errno": 2
+  },
+  "network": {
+    "type": "PermissionError",
+    "errno": 1
+  },
+  "currentProcess": "NSpid:\t3"
+}

@@ -1,0 +1,13 @@
+{
+  "status": "FAIL",
+  "launcher": "/public/home/liusiqi/.local/bin/biomind",
+  "modelRequests": 0,
+  "scientificRuns": 0,
+  "defaultRuntimeConfig": true,
+  "requiredTools": null,
+  "exitCode": 2,
+  "error": "CLI_EXITED_BEFORE_RESPONSE",
+  "error_type": "RuntimeError",
+  "loaded_build": null,
+  "rawEvidence": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/evidence/official-cli/receipt.json"
+}

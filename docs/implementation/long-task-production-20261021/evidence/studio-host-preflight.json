@@ -1,0 +1,12 @@
+{
+  "checkedAt": "2026-10-21T04:32:04.931398+00:00",
+  "userApprovedHostAccess": true,
+  "productionMutated": false,
+  "status": "BLOCKED",
+  "code": "LIVE_SERVICE_PID_NOT_VERIFIABLE_IN_THIS_EXECUTION_ENVIRONMENT",
+  "localNetworkSocket": {
+    "status": "BLOCKED",
+    "errno": 1,
+    "error_type": "PermissionError"
+  }
+}

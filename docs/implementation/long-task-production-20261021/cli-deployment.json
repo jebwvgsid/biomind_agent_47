@@ -1,0 +1,26 @@
+{
+  "status": "DEPLOYED",
+  "release": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12",
+  "build_id": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+  "source_commit": "fbe9355632f9447726d8d566ab737c16974c4b83",
+  "previous_release": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-d0cf979998965759",
+  "previous_config": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/delivery/submission-20261020/d0cf979998965759/cli-shared-web-runtime.json",
+  "config": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/delivery/long-task-20261021/94ddac30b6803e12/cli-shared-web-runtime.json",
+  "entries": [
+    {
+      "path": "/public/home/liusiqi/.local/bin/biomind",
+      "before_sha256": "12bf82eba6919563e288141f4e91782cdfeee0935f496192e797fb3385ad717f",
+      "after_sha256": "4c71e5d67737a57d7cc05b032680d9023f675b2477c20a334e765ed9bbc30657",
+      "backup": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/backups/cli-0.before"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind/bin/biomind",
+      "before_sha256": "12bf82eba6919563e288141f4e91782cdfeee0935f496192e797fb3385ad717f",
+      "after_sha256": "4c71e5d67737a57d7cc05b032680d9023f675b2477c20a334e765ed9bbc30657",
+      "backup": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/backups/cli-1.before"
+    }
+  ],
+  "settings_changed": false,
+  "tasks_stopped": false,
+  "at_utc": "2026-10-21T04:37:43.945684+00:00"
+}

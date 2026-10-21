@@ -1,0 +1,31 @@
+BioMind 长任务生产接入记录 — 2026-10-21
+状态：PARTIAL_DEPLOYMENT
+源码：fbe9355632f9447726d8d566ab737c16974c4b83
+构建：94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e
+固定发布目录：/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12
+生产分支：release/submission-20261020（候选8个提交已快进合入；本次交付文档另行本地提交）
+两个 CLI 均指向新构建：True
+CLI 实际加载检查：{"workspace-cli": {"status": "PASS", "exitCode": 0, "modelRequests": 0}, "official-cli": {"status": "FAIL", "exitCode": 2, "modelRequests": 0}, "official-cli-retry": {"status": "PASS", "exitCode": 0, "modelRequests": 0}}
+首次 official-cli 初始化返回 PI_INITIALIZATION_FAILED；工作区入口通过，官方入口在未改变配置的串行复验中通过。失败原始回执保留，未据此确定根因。生产加载验收不调用模型、不执行正式分析。
+Studio 配置指向新构建：False
+Studio 实际 owner 验证：NOT_RUN
+Studio 当前入口：/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-d0cf979998965759/bio_agents.py
+
+候选自动复查、同一 Main 唤醒及 JSON 宿主事件收尾已在候选测试接通；本次生产接入状态以 DEPLOYMENT.json 为准。
+69项定向检查通过；真实模型 N1、N2 仍为 PARTIAL（分别为查找范围偏离、耗时解释依据不足），N3、N4 为 PASS。部署不会把未通过项改成通过。
+生产源文件已按候选清单逐项校验791项一致；发布包由原 core-release.py 完整复制和验证。没有升级 Pi 或共享插件。
+完整候选验收报告：/public/home/liusiqi/03.毕设/BioMind_Long_Task_Reuse_20261021/FINAL_REPORT.txt
+最终 Main 正文：/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/MAIN_PROMPT.txt
+
+执行脚本（使用宿主终端，原有锁/空闲检查保留）：
+/public/home/liusiqi/anaconda3/envs/biomind/bin/python3.12 /public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/scripts/deploy_cli.py --release /public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12 --apply
+/public/home/liusiqi/anaconda3/envs/biomind/bin/python3.12 /public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/scripts/deploy_studio.py --apply
+/public/home/liusiqi/anaconda3/envs/biomind/bin/python3.12 /public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/scripts/verify_studio.py
+CLI 已部署时不要重复运行 deploy_cli.py；cli-deployment.json 是既有应用回执。
+
+回退：CLI 用同一 deploy_cli.py --rollback，先验证当前入口校验和，再恢复精确备份。
+Studio 仅在 studio-rebind.json 存在且状态 APPLIED 时可回退：在真实宿主先用原 server-service.py stop 对明确实例执行空闲关闭，再用同目录 rollback-managed-service-rebind.py --receipt /public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/studio-rebind.json --output-receipt <新的绝对路径> --apply，最后 ensure。旧发布目录和用户资源保留。
+
+部署期间曾受执行环境限制：会话看不到宿主 PID，本机网络 socket 返回 EPERM，申请提升权限及用户切换权限后复检仍如此。没有绕过 backend/configure/service 锁。当前是否已解除，以 DEPLOYMENT.json 的 Studio 实际 owner 验证为准。
+Studio尚未接入；在真实宿主终端运行 bash /public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/scripts/complete_on_host.sh，脚本执行现有重绑定、实际Main加载验证、清理验收会话并提交部署记录。
+Git：仅本地提交；本次未请求远端推送。Windows 桌面 GUI 未验收。

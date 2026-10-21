@@ -1,0 +1,26 @@
+{
+  "schema": "BioMindLongTaskProductionPlanV1",
+  "authorizedBy": "User requested production including BioMind Studio and Git commit on 2026-10-21",
+  "sourceCommit": "fbe9355632f9447726d8d566ab737c16974c4b83",
+  "buildId": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+  "sourceFingerprint": "68eecde13bf17a56d7d88b521221007fd86c9eb7a8ea3d6952ddf539126c70ba",
+  "releaseRoot": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12",
+  "gitBranch": "release/submission-20261020",
+  "cliEntries": [
+    "/public/home/liusiqi/.local/bin/biomind",
+    "/public/home/liusiqi/03.毕设/BioMind/bin/biomind"
+  ],
+  "studioConfig": "/public/home/liusiqi/03.毕设/BioMind_Studio_Workbench_20261009/deployment/private/service.json",
+  "previousStudioEntrypoint": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-d0cf979998965759/bio_agents.py",
+  "candidateAcceptance": {
+    "targetedChecksPassed": 69,
+    "natural": {
+      "N1": "PARTIAL",
+      "N2": "PARTIAL",
+      "N3": "PASS",
+      "N4": "PASS"
+    }
+  },
+  "studioState": "NOT_SWITCHED_HOST_ACCESS_REQUIRED",
+  "remotePushRequested": false
+}

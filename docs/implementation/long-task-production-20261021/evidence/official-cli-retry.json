@@ -1,0 +1,37 @@
+{
+  "status": "PASS",
+  "launcher": "/public/home/liusiqi/.local/bin/biomind",
+  "modelRequests": 0,
+  "scientificRuns": 0,
+  "defaultRuntimeConfig": true,
+  "requiredTools": [
+    "cancel_run",
+    "fetch_content",
+    "get_search_content",
+    "inspect_run",
+    "run_command",
+    "wait_run",
+    "web_search"
+  ],
+  "exitCode": 0,
+  "error": null,
+  "error_type": null,
+  "loaded_build": {
+    "buildId": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+    "sourceFingerprint": "68eecde13bf17a56d7d88b521221007fd86c9eb7a8ea3d6952ddf539126c70ba",
+    "dependencyFingerprint": "363ca233976e9593f32d8175fc450e4dfa1a03394ce691e2b8bab610ee8400f4",
+    "manifestSha256": "e9c2ec6f749abdb9eb306017e7530b55218fa049a86e9b1bb8a27271fc08b9c2",
+    "entrypoint": "json",
+    "extensionPath": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12/integrations/pi_runtime/dist/extensions/biomind.js",
+    "extensionSha256": "eab00406e620daecad7aa2155f4c2d4b31ed1399ef503713dc6d86a0ac318e28",
+    "jsonExtensionSha256": "eab00406e620daecad7aa2155f4c2d4b31ed1399ef503713dc6d86a0ac318e28",
+    "nativeExtensionSha256": "512724ab39ba2a007bcd84d761de12537d061ed0ce5e358376d74fae34843231",
+    "releaseRoot": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12",
+    "releaseId": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+    "sourceCommit": "fbe9355632f9447726d8d566ab737c16974c4b83",
+    "piVersion": "0.87.1",
+    "piPatch": "0.87.1+biomind-observer.6; 0.87.1+biomind-observer.6+plugin-guard.1",
+    "piPackageRealpath": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12/integrations/pi_runtime/node_modules/@earendil-works/pi-coding-agent"
+  },
+  "rawEvidence": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/evidence/official-cli-retry/receipt.json"
+}

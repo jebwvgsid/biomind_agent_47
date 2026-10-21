@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "validation": "core-release.py build completed its full verify(stage) before publishing",
+  "releaseRoot": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12",
+  "buildId": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+  "sourceCommit": "fbe9355632f9447726d8d566ab737c16974c4b83",
+  "sourceFiles": 791,
+  "artifactFiles": 268,
+  "dependencyEntries": 25916,
+  "entrypointReadOnly": true
+}
