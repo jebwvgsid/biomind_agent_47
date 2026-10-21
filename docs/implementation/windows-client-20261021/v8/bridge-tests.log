@@ -1,0 +1,232 @@
+TAP version 13
+# Subtest: A/B opens use authoritative owner IDs and retain each project/history/running state
+ok 1 - A/B opens use authoritative owner IDs and retain each project/history/running state
+  ---
+  duration_ms: 158.511641
+  type: 'test'
+  ...
+# Subtest: uncertain new-session timeout is retained and cannot create a replacement on retry
+ok 2 - uncertain new-session timeout is retained and cannot create a replacement on retry
+  ---
+  duration_ms: 3.243296
+  type: 'test'
+  ...
+# Subtest: existing inactive history resumes exactly its ID and never allocates an alternate session
+ok 3 - existing inactive history resumes exactly its ID and never allocates an alternate session
+  ---
+  duration_ms: 6.555856
+  type: 'test'
+  ...
+# Subtest: restart restores both persisted native histories using read/control queries, without prompt or new
+ok 4 - restart restores both persisted native histories using read/control queries, without prompt or new
+  ---
+  duration_ms: 32.391228
+  type: 'test'
+  ...
+# Subtest: permanent UI rename EPERM cannot hide a new native ID or repeat its creation on retry
+ok 5 - permanent UI rename EPERM cannot hide a new native ID or repeat its creation on retry
+  ---
+  duration_ms: 4.883373
+  type: 'test'
+  ...
+# Subtest: UI rename EPERM preserves existing history, running owner and focused A/B refs for RAM restoration
+ok 6 - UI rename EPERM preserves existing history, running owner and focused A/B refs for RAM restoration
+  ---
+  duration_ms: 8.705482
+  type: 'test'
+  ...
+# Subtest: a failed saved history is explicit while another session restores without replay or deleting refs
+ok 7 - a failed saved history is explicit while another session restores without replay or deleting refs
+  ---
+  duration_ms: 6.280041
+  type: 'test'
+  ...
+# Subtest: restore transport, identity, and connection-change failures cannot become partial success
+ok 8 - restore transport, identity, and connection-change failures cannot become partial success
+  ---
+  duration_ms: 4.010973
+  type: 'test'
+  ...
+# Subtest: malformed saved restore identity fails before opening any saved session
+ok 9 - malformed saved restore identity fails before opening any saved session
+  ---
+  duration_ms: 3.272045
+  type: 'test'
+  ...
+# Subtest: lost prompt receipt survives restart and retry recovers admission without another POST
+ok 10 - lost prompt receipt survives restart and retry recovers admission without another POST
+  ---
+  duration_ms: 8.518228
+  type: 'test'
+  ...
+# Subtest: owner replacement after uncertain prompt is query-only and cannot replay it
+ok 11 - owner replacement after uncertain prompt is query-only and cannot replay it
+  ---
+  duration_ms: 4.371591
+  type: 'test'
+  ...
+# Subtest: model selection applies to the scoped remote owner and exposes its returned models
+ok 12 - model selection applies to the scoped remote owner and exposes its returned models
+  ---
+  duration_ms: 3.372142
+  type: 'test'
+  ...
+# Subtest: attachments upload exact bytes and only returned Linux paths may reach the owner
+ok 13 - attachments upload exact bytes and only returned Linux paths may reach the owner
+  ---
+  duration_ms: 12.930487
+  type: 'test'
+  ...
+# Subtest: images carry base64 bytes and respect the real remote model/input limits
+ok 14 - images carry base64 bytes and respect the real remote model/input limits
+  ---
+  duration_ms: 9.204982
+  type: 'test'
+  ...
+# Subtest: cross-project history/state cannot replace an existing handle
+ok 15 - cross-project history/state cannot replace an existing handle
+  ---
+  duration_ms: 3.01044
+  type: 'test'
+  ...
+# Subtest: Pi agent_end is intermediate; only BioMind prompt_done ends the displayed task
+ok 16 - Pi agent_end is intermediate; only BioMind prompt_done ends the displayed task
+  ---
+  duration_ms: 3.68378
+  type: 'test'
+  ...
+# Subtest: event scope mismatches are rejected for server, project, session and owner
+ok 17 - event scope mismatches are rejected for server, project, session and owner
+  ---
+  duration_ms: 2.691257
+  type: 'test'
+  ...
+# Subtest: SSE without displayPendingUI preserves normalized approval/editor metadata when pending IDs match
+ok 18 - SSE without displayPendingUI preserves normalized approval/editor metadata when pending IDs match
+  ---
+  duration_ms: 2.926902
+  type: 'test'
+  ...
+# Subtest: missing both optional lists never means an empty authorization set
+ok 19 - missing both optional lists never means an empty authorization set
+  ---
+  duration_ms: 2.566042
+  type: 'test'
+  ...
+# Subtest: raw-ID mismatch queries once, coalesces GET-induced SSE state and restores full HTTP-owned question
+ok 20 - raw-ID mismatch queries once, coalesces GET-induced SSE state and restores full HTTP-owned question
+  ---
+  duration_ms: 3.556894
+  type: 'test'
+  ...
+# Subtest: HTTP refresh cannot resurrect a question already resolved by a newer event
+ok 21 - HTTP refresh cannot resurrect a question already resolved by a newer event
+  ---
+  duration_ms: 3.008929
+  type: 'test'
+  ...
+# Subtest: HTTP refresh racing a newer missing question performs one bounded follow-up
+ok 22 - HTTP refresh racing a newer missing question performs one bounded follow-up
+  ---
+  duration_ms: 3.21767
+  type: 'test'
+  ...
+# Subtest: disconnect and scope replacement discard delayed HTTP authorization snapshots
+ok 23 - disconnect and scope replacement discard delayed HTTP authorization snapshots
+  ---
+  duration_ms: 15.714597
+  type: 'test'
+  ...
+# Subtest: continuously stale HTTP recovery is bounded and reports that authorization state is unresolved
+ok 24 - continuously stale HTTP recovery is bounded and reports that authorization state is unresolved
+  ---
+  duration_ms: 3.243782
+  type: 'test'
+  ...
+# Subtest: invalid or foreign normalized HTTP rows cannot partially replace the current question set
+ok 25 - invalid or foreign normalized HTTP rows cannot partially replace the current question set
+  ---
+  duration_ms: 15.443705
+  type: 'test'
+  ...
+# Subtest: authorization HTTP watermark does not discard delayed task and tool events
+ok 26 - authorization HTTP watermark does not discard delayed task and tool events
+  ---
+  duration_ms: 3.026324
+  type: 'test'
+  ...
+# Subtest: failed or cross-scope HTTP reconciliation preserves known questions and reports failure
+ok 27 - failed or cross-scope HTTP reconciliation preserves known questions and reports failure
+  ---
+  duration_ms: 4.545598
+  type: 'test'
+  ...
+# Subtest: empty authoritative HTTP snapshot resolves stale questions without replying to them
+ok 28 - empty authoritative HTTP snapshot resolves stale questions without replying to them
+  ---
+  duration_ms: 3.088201
+  type: 'test'
+  ...
+# Subtest: newer complete SSE snapshot outranks delayed HTTP recovery and retains full proposal
+ok 29 - newer complete SSE snapshot outranks delayed HTTP recovery and retains full proposal
+  ---
+  duration_ms: 3.050801
+  type: 'test'
+  ...
+# Subtest: reconnect snapshots replay active tools once and drop events at the recovered sequence boundary
+ok 30 - reconnect snapshots replay active tools once and drop events at the recovered sequence boundary
+  ---
+  duration_ms: 3.925698
+  type: 'test'
+  ...
+# Subtest: detached SSE cannot queue a frame whose reader continuation was already scheduled
+ok 31 - detached SSE cannot queue a frame whose reader continuation was already scheduled
+  ---
+  duration_ms: 2.660268
+  type: 'test'
+  ...
+# Subtest: response arriving after transport generation changes is rejected even for same loopback origin
+ok 32 - response arriving after transport generation changes is rejected even for same loopback origin
+  ---
+  duration_ms: 0.560454
+  type: 'test'
+  ...
+# Subtest: slow JSON body is also rejected when transport generation changes after headers
+ok 33 - slow JSON body is also rejected when transport generation changes after headers
+  ---
+  duration_ms: 0.602538
+  type: 'test'
+  ...
+# Subtest: upload response received across reconnect cannot grant attachment authority
+ok 34 - upload response received across reconnect cannot grant attachment authority
+  ---
+  duration_ms: 1.041704
+  type: 'test'
+  ...
+# Subtest: binary artifact preview from a stale transport generation is rejected
+ok 35 - binary artifact preview from a stale transport generation is rejected
+  ---
+  duration_ms: 0.899499
+  type: 'test'
+  ...
+# Subtest: opening a project validates and registers its Linux path on the remote server
+ok 36 - opening a project validates and registers its Linux path on the remote server
+  ---
+  duration_ms: 0.782196
+  type: 'test'
+  ...
+# Subtest: server-only identity types, paths and implementation reject local alternatives
+ok 37 - server-only identity types, paths and implementation reject local alternatives
+  ---
+  duration_ms: 0.607074
+  type: 'test'
+  ...
+1..37
+# tests 37
+# suites 0
+# pass 37
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1176.014301

@@ -125,7 +125,16 @@ class BioMindBridge {
   async history(id, cwd) {
     const d = await this.json(`/api/sessions/${sessionId(id)}`);
     if (d.sessionId !== id || d.info?.cwd !== cwd || !Array.isArray(d.context?.messages)) throw new Error("HISTORY_SCOPE_MISMATCH");
-    return d;
+    // HTTP history uses the server's canonical ToolCallContent fields; the
+    // renderer consumes Pi AgentMessage fields, as do the native live events.
+    const messages = d.context.messages.map(message => message.role !== "assistant" || !Array.isArray(message.content) ? message : {
+      ...message, content: message.content.map(block => {
+        if (block.type !== "toolCall") return block;
+        const { toolCallId, toolName, input, ...content } = block;
+        return { ...content, id: toolCallId, name: toolName, arguments: input };
+      }),
+    });
+    return { ...d, context: { ...d.context, messages } };
   }
   async snapshot(h, { allowMissingHistory = false } = {}) {
     h.watching = false;

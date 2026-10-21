@@ -1,0 +1,280 @@
+TAP version 13
+# Subtest: new remote thread: loading to native identity renders the real Chat and Composer
+ok 1 - new remote thread: loading to native identity renders the real Chat and Composer
+  ---
+  duration_ms: 46.039818
+  type: 'test'
+  ...
+# Subtest: visible A to loading B and back preserves both projects, transcripts and A running state
+ok 2 - visible A to loading B and back preserves both projects, transcripts and A running state
+  ---
+  duration_ms: 33.236533
+  type: 'test'
+  ...
+# Subtest: failed initialization leaves the chat usable for inspection without resubmitting or replacing a session
+ok 3 - failed initialization leaves the chat usable for inspection without resubmitting or replacing a session
+  ---
+  duration_ms: 8.421838
+  type: 'test'
+  ...
+# Subtest: missing selection and restored snapshot can change in either direction in the same mounted Chat
+ok 4 - missing selection and restored snapshot can change in either direction in the same mounted Chat
+  ---
+  duration_ms: 12.179547
+  type: 'test'
+  ...
+# Subtest: one failed old restore preserves its history while the real Composer can send once in a verified connected session
+ok 5 - one failed old restore preserves its history while the real Composer can send once in a verified connected session
+  ---
+  duration_ms: 21.616396
+  type: 'test'
+  ...
+# Subtest: partial restore cannot enable the Composer when the actual transport is disconnected
+ok 6 - partial restore cannot enable the Composer when the actual transport is disconnected
+  ---
+  duration_ms: 8.140864
+  type: 'test'
+  ...
+# Subtest: mounted reconnect status rechecks transport after partial restore before enabling the Composer
+ok 7 - mounted reconnect status rechecks transport after partial restore before enabling the Composer
+  ---
+  duration_ms: 12.507965
+  type: 'test'
+  ...
+# Subtest: actual React child render failure leaves visible recovery and reload never submits/opens/closes a task
+ok 8 - actual React child render failure leaves visible recovery and reload never submits/opens/closes a task
+  ---
+  duration_ms: 31.996437
+  type: 'test'
+  ...
+# Subtest: diagnostics retain only bounded program locations even for hostile thrown values
+ok 9 - diagnostics retain only bounded program locations even for hostile thrown values
+  ---
+  duration_ms: 0.652977
+  type: 'test'
+  ...
+# Subtest: focus persistence rejection and synchronous failure resolve safely with no task operation
+ok 10 - focus persistence rejection and synchronous failure resolve safely with no task operation
+  ---
+  duration_ms: 0.764918
+  type: 'test'
+  ...
+# Subtest: local unsaved banner renders alongside child workbench and clears on saved event
+ok 11 - local unsaved banner renders alongside child workbench and clears on saved event
+  ---
+  duration_ms: 10.605476
+  type: 'test'
+  ...
+# Subtest: project and directory metadata rejects invalid React children before changing a view
+ok 12 - project and directory metadata rejects invalid React children before changing a view
+  ---
+  duration_ms: 1.052562
+  type: 'test'
+  ...
+# Subtest: Linux paths remain case-sensitive and preserve literal backslashes
+ok 13 - Linux paths remain case-sensitive and preserve literal backslashes
+  ---
+  duration_ms: 4.028463
+  type: 'test'
+  ...
+# Subtest: new A and B keep server identities; closing and reopening a view does not terminate or replace A
+ok 14 - new A and B keep server identities; closing and reopening a view does not terminate or replace A
+  ---
+  duration_ms: 10.265413
+  type: 'test'
+  ...
+# Subtest: late history response cannot steal focus from a newer session selection
+ok 15 - late history response cannot steal focus from a newer session selection
+  ---
+  duration_ms: 1.440099
+  type: 'test'
+  ...
+# Subtest: uncertain prompt leaves execution status unknown; snapshot recovery does not replay it
+ok 16 - uncertain prompt leaves execution status unknown; snapshot recovery does not replay it
+  ---
+  duration_ms: 2.004861
+  type: 'test'
+  ...
+# Subtest: disconnected window refuses prompt without a backend POST
+ok 17 - disconnected window refuses prompt without a backend POST
+  ---
+  duration_ms: 4.073998
+  type: 'test'
+  ...
+# Subtest: Windows attachment path is ignored; bytes upload to selected Linux project
+ok 18 - Windows attachment path is ignored; bytes upload to selected Linux project
+  ---
+  duration_ms: 2.110774
+  type: 'test'
+  ...
+# Subtest: snapshot projects full live messages and tool progress once before newer SSE activates
+ok 19 - snapshot projects full live messages and tool progress once before newer SSE activates
+  ---
+  duration_ms: 1.962366
+  type: 'test'
+  ...
+# Subtest: resolved extension question closes only its matching thread dialog
+ok 20 - resolved extension question closes only its matching thread dialog
+  ---
+  duration_ms: 0.404741
+  type: 'test'
+  ...
+# Subtest: queued input with unknown outcome survives recovery but never auto-retries
+ok 21 - queued input with unknown outcome survives recovery but never auto-retries
+  ---
+  duration_ms: 0.999923
+  type: 'test'
+  ...
+# Subtest: pending questions deduplicate per session and do not steal active thread
+ok 22 - pending questions deduplicate per session and do not steal active thread
+  ---
+  duration_ms: 0.693363
+  type: 'test'
+  ...
+# Subtest: authorization reply waits for receipt, retains failure, and removes only matching session
+ok 23 - authorization reply waits for receipt, retains failure, and removes only matching session
+  ---
+  duration_ms: 0.557085
+  type: 'test'
+  ...
+# Subtest: snapshot clears stale authorization before replaying authoritative pending questions
+ok 24 - snapshot clears stale authorization before replaying authoritative pending questions
+  ---
+  duration_ms: 0.421715
+  type: 'test'
+  ...
+# Subtest: restored window activates only saved existing session and restores original project
+ok 25 - restored window activates only saved existing session and restores original project
+  ---
+  duration_ms: 1.188112
+  type: 'test'
+  ...
+# Subtest: connection error retains last execution state and permissions remain server managed
+ok 26 - connection error retains last execution state and permissions remain server managed
+  ---
+  duration_ms: 0.490999
+  type: 'test'
+  ...
+# Subtest: server skills load even when extension package management is unsupported
+ok 27 - server skills load even when extension package management is unsupported
+  ---
+  duration_ms: 0.504611
+  type: 'test'
+  ...
+# Subtest: Skills load and toggle stay bound to active native B while busy A exists
+ok 28 - Skills load and toggle stay bound to active native B while busy A exists
+  ---
+  duration_ms: 0.729718
+  type: 'test'
+  ...
+# Subtest: late A Skills cannot replace B; stale A toggle never targets B
+ok 29 - late A Skills cannot replace B; stale A toggle never targets B
+  ---
+  duration_ms: 0.784307
+  type: 'test'
+  ...
+# Subtest: no session and read-only history cannot load or mutate another owner's Skills
+ok 30 - no session and read-only history cannot load or mutate another owner's Skills
+  ---
+  duration_ms: 0.811382
+  type: 'test'
+  ...
+# Subtest: Linux artifact identity preserves case, backslashes, and one-letter root directories
+ok 31 - Linux artifact identity preserves case, backslashes, and one-letter root directories
+  ---
+  duration_ms: 21.562228
+  type: 'test'
+  ...
+# Subtest: failed project refresh rejects restoration instead of reporting ready
+ok 32 - failed project refresh rejects restoration instead of reporting ready
+  ---
+  duration_ms: 1.997576
+  type: 'test'
+  ...
+# Subtest: bootstrap finishing after a disconnect cannot overwrite it with ready
+ok 33 - bootstrap finishing after a disconnect cannot overwrite it with ready
+  ---
+  duration_ms: 1.181057
+  type: 'test'
+  ...
+# Subtest: partial restore preserves failed history and allows only a verified new session to send manually
+ok 34 - partial restore preserves failed history and allows only a verified new session to send manually
+  ---
+  duration_ms: 7.622116
+  type: 'test'
+  ...
+# Subtest: malformed partial restore or changed scope commits no snapshot and cannot report ready
+ok 35 - malformed partial restore or changed scope commits no snapshot and cannot report ready
+  ---
+  duration_ms: 1.653833
+  type: 'test'
+  ...
+# Subtest: obsolete array restoration is rejected without any store commit, activation, or prompt
+ok 36 - obsolete array restoration is rejected without any store commit, activation, or prompt
+  ---
+  duration_ms: 36.302632
+  type: 'test'
+  ...
+# Subtest: partial restore does not turn an actual disconnected transport into ready
+ok 37 - partial restore does not turn an actual disconnected transport into ready
+  ---
+  duration_ms: 25.4727
+  type: 'test'
+  ...
+# Subtest: server execution failure remains visible after settlement and null scientific success is not claimed
+ok 38 - server execution failure remains visible after settlement and null scientific success is not claimed
+  ---
+  duration_ms: 2.560108
+  type: 'test'
+  ...
+# Subtest: malformed project refresh leaves native A/B and the existing project list intact
+ok 39 - malformed project refresh leaves native A/B and the existing project list intact
+  ---
+  duration_ms: 0.760966
+  type: 'test'
+  ...
+# Subtest: invalid snapshot cannot poison an existing native session or activate another owner
+ok 40 - invalid snapshot cannot poison an existing native session or activate another owner
+  ---
+  duration_ms: 0.430135
+  type: 'test'
+  ...
+# Subtest: bootstrap malformed metadata ends in a visible error and never creates or replays a task
+ok 41 - bootstrap malformed metadata ends in a visible error and never creates or replays a task
+  ---
+  duration_ms: 1.042671
+  type: 'test'
+  ...
+# Subtest: focus EPERM retains A/B native identity, active project, history, and running state
+ok 42 - focus EPERM retains A/B native identity, active project, history, and running state
+  ---
+  duration_ms: 0.828854
+  type: 'test'
+  ...
+# Subtest: explicit sidebar selection loads a restored idle session once without replay
+ok 43 - explicit sidebar selection loads a restored idle session once without replay
+  ---
+  duration_ms: 2.193507
+  type: 'test'
+  ...
+# Subtest: sidebar selection preserves a live busy owner and does not load offline
+ok 44 - sidebar selection preserves a live busy owner and does not load offline
+  ---
+  duration_ms: 0.594804
+  type: 'test'
+  ...
+# Subtest: canonical HTTP history tool fields render completed results with exact identities
+ok 45 - canonical HTTP history tool fields render completed results with exact identities
+  ---
+  duration_ms: 2.53705
+  type: 'test'
+  ...
+1..45
+# tests 45
+# suites 0
+# pass 45
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 11589.206481

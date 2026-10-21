@@ -496,3 +496,30 @@ test("sidebar selection preserves a live busy owner and does not load offline", 
   await useStore.getState().goToThread("/remote/Project", "offline");
   assert.deepEqual(calls.opened, []); assert.deepEqual(calls.prompts, []); assert.deepEqual(calls.closed, []);
 });
+
+test("canonical HTTP history tool fields render completed results with exact identities", async () => {
+  const { BioMindBridge } = require(path.join(root, "desktop/electron/biomind-bridge.cjs"));
+  const messages = [
+    { role: "assistant", content: [{ type: "toolCall", toolCallId: "history-bash", toolName: "bash", input: { command: "synthetic command" } }] },
+    { role: "toolResult", toolCallId: "history-bash", toolName: "bash", content: [{ type: "text", text: "synthetic output; exit 17" }], isError: true },
+    { role: "assistant", content: [{ type: "toolCall", toolCallId: "history-read", toolName: "read", input: { path: "/synthetic/file" } }] },
+    { role: "toolResult", toolCallId: "history-read", toolName: "read", content: [{ type: "text", text: "synthetic file result" }], isError: false },
+    { role: "assistant", content: [{ type: "text", text: "finished" }] },
+  ];
+  const original = JSON.stringify(messages);
+  const history = await BioMindBridge.prototype.history.call({ json: async () => ({ sessionId: "history", info: { cwd: "/remote/Project" }, context: { messages } }) }, "history", "/remote/Project");
+  assert.deepEqual(history.context.messages[0].content[0], { type: "toolCall", id: "history-bash", name: "bash", arguments: { command: "synthetic command" } });
+  assert.equal(JSON.stringify(messages), original, "the stored history is not rewritten");
+  await useStore.getState().applyRemoteSnapshot(snapshot("history", "/remote/Project", { messages: history.context.messages }));
+  const thread = useStore.getState().threads.history;
+  assert.deepEqual(Object.keys(thread.toolRuns).sort(), ["history-bash", "history-read"]);
+  assert.equal(thread.toolRuns["history-bash"].name, "bash");
+  assert.equal(thread.toolRuns["history-bash"].completed, true);
+  assert.equal(thread.toolRuns["history-bash"].running, false);
+  assert.equal(thread.toolRuns["history-bash"].isError, true);
+  assert.equal(thread.toolRuns["history-bash"].resultText, "synthetic output; exit 17");
+  assert.equal(thread.toolRuns["history-read"].completed, true);
+  assert.equal(thread.toolRuns["history-read"].isError, false);
+  assert.equal(thread.isStreaming, false);
+  assert.deepEqual(calls.prompts, []); assert.deepEqual(calls.opened, []); assert.deepEqual(calls.closed, []);
+});

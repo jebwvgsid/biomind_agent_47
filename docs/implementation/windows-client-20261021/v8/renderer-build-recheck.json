@@ -1,0 +1,5 @@
+{
+  "status": "PASS",
+  "reuseReason": "Only unbundled CommonJS bridge and package version changed; renderer TypeScript and every compiled output are copied byte-for-byte from verified v7.",
+  "originalEvidence": "/public/home/liusiqi/03.\u6bd5\u8bbe/BioMind_Production_LongTask_20261021/windows-client-v7/evidence/renderer-build-recheck.json"
+}

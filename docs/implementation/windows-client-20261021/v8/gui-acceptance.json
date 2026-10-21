@@ -1,0 +1,32 @@
+{
+  "status": "PASS",
+  "checkedAtUTC": "2026-10-21T05:45:23.247Z",
+  "method": "Windows Computer Use via @oai/sky; observed native BioMind Studio window",
+  "clientVersion": "1.2.0-rc.20261009.8",
+  "window": {
+    "app": "process:D:\\研究生\\项目\\biomind桌面端\\BioMind Studio Workbench\\BioMind Studio.exe",
+    "id": 332936,
+    "title": "BioMind Studio"
+  },
+  "originalSessionId": "01a145a0-3a8e-703c-913f-a6867ee491f9",
+  "checks": {
+    "noConnectingIndicator": true,
+    "composerPresent": true,
+    "modelLabelPresent": true,
+    "historicalBashCardPresent": true,
+    "historicalOutputVisible": true,
+    "noHistoricalPlaceholder": true,
+    "noErrorToast": true
+  },
+  "actions": [
+    "Normal client launch using existing saved connection",
+    "Explicit selection of original idle session in v7 caused actual owner resume",
+    "Normal close and relaunch after v8 update reattached same owner",
+    "Expanded existing historical bash card; no replay"
+  ],
+  "promptTextTyped": false,
+  "promptSent": false,
+  "historyExitCode": 17,
+  "historyExitCodeContext": "Expected original 2026-10-17 acceptance result, not a newly run command",
+  "applicationLeftOpen": true
+}

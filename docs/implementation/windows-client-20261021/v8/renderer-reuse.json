@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "sourceVersion": "1.2.0-rc.20261009.7",
+  "targetVersion": "1.2.0-rc.20261009.8",
+  "comparisons": [
+    {
+      "path": "source/desktop/src",
+      "fileCount": 92,
+      "sameBytes": true
+    },
+    {
+      "path": "source/desktop/out",
+      "fileCount": 88,
+      "sameBytes": true
+    }
+  ]
+}

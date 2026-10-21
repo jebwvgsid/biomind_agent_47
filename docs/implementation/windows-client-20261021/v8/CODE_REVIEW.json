@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "reviewedAt": "2026-10-21T05:48:24.883679+00:00",
+  "findings": [],
+  "scope": "Both restored-session selection and canonical-history normalization; native Windows GUI verified by local Codex, existing Main and bytes independently verified on server.",
+  "rationale": [
+    "Sidebar selection invokes the existing deduplicated ensureConnected only for ready, disconnected restored sessions; busy owners and offline selection remain unchanged.",
+    "HTTP history ToolCallContent is mapped to Pi renderer fields without changing stored messages or live event protocol. Exact tool IDs pair completed and failed results correctly.",
+    "Regression test reproduced the pre-fix completed-tool placeholder, covers successful and failed results, and asserts no prompt, open, close or history mutation."
+  ],
+  "regressionTestsPassed": 82,
+  "independentReviewChecksPassed": 17,
+  "knownLimitations": [
+    "Real-model N1 and N2 remain PARTIAL; N3 and N4 remain PASS from FOLLOWUP_REPORT.txt.",
+    "The previously recorded initial CLI PI_INITIALIZATION_FAILED root cause remains unresolved; this GUI acceptance does not claim to resolve it.",
+    "Branch/clone capabilities and new model execution were not part of this load-only acceptance."
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "recordedAt": "2026-10-21T05:43:58.0667299Z",
+  "version": "1.2.0-rc.20261009.8",
+  "replacesVersion": "1.2.0-rc.20261009.7",
+  "installation": "D:\\研究生\\项目\\biomind桌面端\\BioMind Studio Workbench",
+  "archiveSha256": "450fdc571ad901540c0e7d472f453d74ca45c206f6ca055a2010837baafe81d0",
+  "replacedFiles": [
+    "BUILD-IDENTITY.json",
+    "README-WINDOWS.txt",
+    "resources/app.asar"
+  ],
+  "backupDirectory": "C:\\Users\\73115\\Documents\\New project 2\\windows-gui-20261021\\v8\\program-backup-v7",
+  "unchangedRuntimeFiles": 75,
+  "executableUnchanged": true,
+  "connectionFileBytesUnchanged": true,
+  "uiFileBytesUnchanged": true,
+  "normalClientExitRequired": true,
+  "backendDeployment": false,
+  "credentialDecryptionPerformed": false
+}

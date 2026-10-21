@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "recordedAt": "2026-10-21T05:45:11.9579888Z",
+  "version": "1.2.0-rc.20261009.8",
+  "savedProfilesUnchanged": true,
+  "selectedConnectionUnchanged": true,
+  "credentialPresenceUnchanged": true,
+  "credentialDecryptionPerformed": false,
+  "selectedSessionId": "01a145a0-3a8e-703c-913f-a6867ee491f9",
+  "openThreadReferenceCount": 7,
+  "executableSha256": "31a0176b7c1a81cf379e55e109c57a56493a4d4a9e9b0d2475a678fd7df234dc",
+  "asarSha256": "958e4c3ec6390e9ed265caefdd7465e84f95f4a81131e350e1354bda1ab0e462"
+}

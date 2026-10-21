@@ -1,0 +1,46 @@
+{
+  "status": "PASS",
+  "path": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/windows-client-v8/delivery/BioMind-Studio-1.2.0-rc.20261009.8-client-replacement.zip",
+  "sha256": "450fdc571ad901540c0e7d472f453d74ca45c206f6ca055a2010837baafe81d0",
+  "bytes": 4514609,
+  "members": 4,
+  "manifest": {
+    "schema": "BioMindClientColdReplacementV1",
+    "status": "PASS",
+    "version": "1.2.0-rc.20261009.8",
+    "replacesVersion": "1.2.0-rc.20261009.7",
+    "installedDirectory": "D:\\研究生\\项目\\biomind桌面端\\BioMind Studio Workbench",
+    "unchangedExecutableSha256": "31a0176b7c1a81cf379e55e109c57a56493a4d4a9e9b0d2475a678fd7df234dc",
+    "files": [
+      {
+        "path": "BUILD-IDENTITY.json",
+        "bytes": 19356,
+        "sha256": "3622093946355c0bcf8505b89be40496751b33cdcf24696d8813d482b72234fa",
+        "expectedOldSha256": "252b9c73b2248f70dab1ad6d0a971cf505f103024fae3b4a470de921c7b3b881"
+      },
+      {
+        "path": "README-WINDOWS.txt",
+        "bytes": 1995,
+        "sha256": "85f463e44a7db1e355a63410123b39925b657ca501027458e075925d82c74987",
+        "expectedOldSha256": "0a7448291fe1925b64665fc51ce63b59ead1f4657ad79452654dd3932ca0f349"
+      },
+      {
+        "path": "resources/app.asar",
+        "bytes": 22915541,
+        "sha256": "958e4c3ec6390e9ed265caefdd7465e84f95f4a81131e350e1354bda1ab0e462",
+        "expectedOldSha256": "917f4f2c560430a5523698923bcf755f0a685076cc837ebd1cda90959968601c"
+      }
+    ],
+    "scope": "Replace only these three program files after normal application exit; preserve APPDATA, saved connections, sessions, active tasks and all server deployments.",
+    "backendDeployment": false,
+    "runtimeUpgrade": false,
+    "dependencyInstallation": false,
+    "createdAtUTC": "2026-10-21T05:43:28.542166+00:00"
+  },
+  "totalPayloadFiles": 78,
+  "unchangedRuntimeFiles": 75,
+  "asarInventoryAndHashes": "PASS",
+  "replacementZipCRCAndHashes": "PASS",
+  "windowsRuntimeAcceptance": "NOT_RUN",
+  "productionWrites": false
+}
