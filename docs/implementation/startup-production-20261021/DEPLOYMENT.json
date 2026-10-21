@@ -1,0 +1,163 @@
+{
+  "schema": "BioMindProductionDeploymentV1",
+  "status": "PASS",
+  "atUTC": "2026-10-21T08:27:02.259845+00:00",
+  "core": {
+    "sourceCommit": "15c301f7c1b25ca2a353445f8c40ca1801cec778",
+    "buildId": "735bacc48c20ff8bf18ffe80b2d1ff8632380865d1960b72fc5b0c71223a93af",
+    "root": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-735bacc48c20ff8b"
+  },
+  "studioBackend": {
+    "sourceCommit": "aad973863840a9a8319574113326b4bf2f91cff8",
+    "buildId": "G6ChSLwETBW_siXT1tOHG",
+    "root": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/delivery/backend/startup-production-20261021/aad973863840a9a8319574113326b4bf2f91cff8/pi-studio",
+    "dependencyBoundary": "Retain the same pinned external dependency directory as the prior production backend."
+  },
+  "windowsClient": {
+    "version": "1.2.0-rc.20261009.8",
+    "sourceCommit": "617114d8abd4500c546b402115a43a6b78a1c5c5",
+    "binaryChangedThisRollout": false,
+    "freshGUIAcceptance": false,
+    "reason": "This rollout did not modify Windows client binaries; rc8 is the previously accepted version. The server/backend and original Main were updated."
+  },
+  "acceptance": {
+    "cli": [
+      {
+        "launcher": "/public/home/liusiqi/.local/bin/biomind",
+        "status": "PASS",
+        "exitCode": 0,
+        "buildId": "735bacc48c20ff8bf18ffe80b2d1ff8632380865d1960b72fc5b0c71223a93af",
+        "requiredTools": [
+          "cancel_run",
+          "fetch_content",
+          "get_search_content",
+          "inspect_run",
+          "run_command",
+          "wait_run",
+          "web_search"
+        ]
+      },
+      {
+        "launcher": "/public/home/liusiqi/03.毕设/BioMind/bin/biomind",
+        "status": "PASS",
+        "exitCode": 0,
+        "buildId": "735bacc48c20ff8bf18ffe80b2d1ff8632380865d1960b72fc5b0c71223a93af",
+        "requiredTools": [
+          "cancel_run",
+          "fetch_content",
+          "get_search_content",
+          "inspect_run",
+          "run_command",
+          "wait_run",
+          "web_search"
+        ]
+      }
+    ],
+    "studio": {
+      "serverId": "biomind-c8b9c760c4064a40bdae3a717785e2b3",
+      "instanceId": "69e6e76e44d34380a9ce7d8a905bab63",
+      "port": 40475,
+      "sessionId": "01a145a0-3a8e-703c-913f-a6867ee491f9",
+      "ownerGeneration": "ee6868bc-ef96-4c2e-af19-6fc70705fef5",
+      "backendBuildId": "G6ChSLwETBW_siXT1tOHG",
+      "requiredTools": [
+        "run_command",
+        "inspect_run",
+        "wait_run",
+        "cancel_run",
+        "web_search",
+        "fetch_content",
+        "get_search_content"
+      ],
+      "originalOwnerAlreadyReconnectedBeforeProbe": false,
+      "resumedByProbe": true
+    },
+    "coreRegressionChecks": 57,
+    "studioRegressionChecks": 67,
+    "testEvidence": "53 core checks reused with source/artifact identity verification; PC1 4 checks and Studio 67 checks ran for this change.",
+    "backendArtifactFilesVerified": 1680,
+    "coreArtifactFilesVerified": 270,
+    "modelRequests": 0
+  },
+  "preservation": {
+    "originalHistories": 30,
+    "changedOrMissingOriginalHistories": [],
+    "sharedMetadataUnchanged": true,
+    "sameAgentDir": true,
+    "sameHistoryRoot": true,
+    "newHistoryFiles": [],
+    "serverIdUnchanged": true,
+    "runtimeChangedKeys": [
+      "installRoot"
+    ],
+    "cliRuntimeChangedKeys": [
+      "installRoot"
+    ],
+    "oldRuntimeUnchanged": true,
+    "nativeIdleShutdown": true,
+    "tasksCancelled": 0,
+    "tasksReplayed": 0
+  },
+  "limitations": [
+    "The historical initialization exception was suppressed; the matching reproduced defect is fixed without claiming unique retrospective causality.",
+    "Prior real-model natural behavior N1/N2 remain PARTIAL; N3/N4 retain their prior PASS. This rollout made no model requests.",
+    "The separate Windows latency audit/v9 draft was not released. No new Windows GUI or end-to-end latency acceptance is claimed."
+  ],
+  "git": {
+    "remote": "https://github.com/jebwvgsid/biomind_agent_47.git",
+    "coreBranch": "release/submission-20261020",
+    "studioBackendBranch": "studio/startup-production-20261021",
+    "windowsClientBranch": "studio/windows-client-20261021",
+    "finalPushReceipt": "/public/home/liusiqi/03.毕设/BioMind_Startup_Production_20261021/GIT_RESULT.json"
+  },
+  "evidence": [
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Startup_Production_20261021/build-result.json",
+      "sha256": "2c438de9df8ebfe3c460553090a2c22e424e9df934024d89046a68d88b9d92eb"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Startup_Production_20261021/backend-result.json",
+      "sha256": "9ae6ad0933d0fc9c54884101b748f0d19dbac7b6781a8955d7019f0cc5e9fd97"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Startup_Production_20261021/cli-deployment.json",
+      "sha256": "f28f9ac37336bce88318fa2fcf2e6d87a34f0652724191b6aa0b8543a3fd81b6"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Startup_Production_20261021/studio-deployment.json",
+      "sha256": "08b64d636b82d208da8374058d685661eed885716b15703c47199b27a61292ff"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Startup_Production_20261021/studio-owner-verification.json",
+      "sha256": "f4cc8a91873df6f6acbbb8a7fa3f20c050d2f39e62cc3f6082c7fcbd68c4ac9c"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Startup_Production_20261021/studio-rebind.json",
+      "sha256": "d4b63a6ca4b0c2c0c9fbf99bc338166618055d1150c6a2e8ea812bb55f8da5c1"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Startup_Production_20261021/evidence/production-before.json",
+      "sha256": "d94dde13fe119277f9a57434b31a2d07b4fd39ef4a7be81bdf4981f424f4ec4a"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Startup_Production_20261021/evidence/production-after.json",
+      "sha256": "62b13d06302a94494a7ba31e2cc5042452a41eafb0d925c4abc4379f10914c21"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Startup_Production_20261021/evidence/tested-artifacts.json",
+      "sha256": "9821eb457e78526eeaf1c1c24723c9189b5eaccda2c91f00660784bc46137c96"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Startup_Production_20261021/evidence/audit-summary.json",
+      "sha256": "003557e92694c902a680a15376c3e7165b37abe9bea28b08ed1009cfcbf0e518"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Startup_Production_20261021/evidence/official-cli/receipt.json",
+      "sha256": "384020fb3e43b197bd78854f190008e26724fe9e7f887aa233176d69dbcffb0d"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Startup_Production_20261021/evidence/project-cli/receipt.json",
+      "sha256": "c65659765835d07dbd45bf9cd9ac9f6d3ce8f197a6b8db11f814748535ae2a89"
+    }
+  ]
+}

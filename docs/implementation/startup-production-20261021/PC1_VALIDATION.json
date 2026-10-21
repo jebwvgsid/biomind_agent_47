@@ -1,0 +1,39 @@
+{
+  "status": "PASS",
+  "atUTC": "2026-10-21T07:50:57.196603+00:00",
+  "originalCommit": "6d0d011d2db9b52e382e200c765922156fe1e47b",
+  "integratedCommit": "15c301f7c1b25ca2a353445f8c40ca1801cec778",
+  "command": [
+    "/public/home/liusiqi/anaconda3/envs/biomind/bin/python",
+    "-B",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "tests",
+    "-p",
+    "test_pc1_compartment_orientation.py",
+    "-v"
+  ],
+  "elapsedSeconds": 96.623,
+  "exitCode": 0,
+  "testCount": 4,
+  "scope": [
+    "mixed valid and invalid PC1 output labels preserve coordinates and scores",
+    "NA bins and base-pair lengths counted separately",
+    "invalid bins excluded from A/B direction comparison",
+    "all-invalid input remains entirely NA",
+    "coordinate-matched direction check accepts correct orientation and rejects reversed orientation"
+  ],
+  "sourceSha256": {
+    "skills/3d-dna/compartment-calling/SKILL.md": "5700fda8315e29d7fe676897e956c4a0ce7a18181631c007ebae69be81360825",
+    "skills/3d-dna/compartment-calling/scripts/call_ab_compartments_pc1.py": "46531b90504236ade798cba6c9c58d041fee34ad681499b7fa156ed03eaed38a",
+    "tests/test_pc1_compartment_orientation.py": "f935a53d3db11d12f880681a56842eb530823935f961f75e0e56856d8378d2c2"
+  },
+  "log": "/public/home/liusiqi/03.毕设/BioMind_Startup_Production_20261021/evidence/pc1-tests.log",
+  "logSha256": "424641b4886bfe55b51efc1d645e759077afba999c0d24d2fb44574a795a9045",
+  "newDependenciesInstalled": false,
+  "buildPerformed": false,
+  "deploymentPerformed": false,
+  "pushPerformed": false
+}

@@ -1,0 +1,283 @@
+{
+  "schema": "BioMindStartupProductionAuditSummaryV1",
+  "status": "PASS_SOURCE_AND_VALIDATION_AUDIT",
+  "atUTC": "2026-10-21T08:21:03.364773+00:00",
+  "deployment": {
+    "status": "NOT_ASSERTED_BY_THIS_AUDIT",
+    "productionSuccessClaimed": false,
+    "note": "This file inventories reviewed source, test and candidate-build evidence only. Production CLI/Studio rebinding, actual Main loading, session preservation and final Git synchronization require separate deployment receipts."
+  },
+  "sourceCommits": {
+    "priorProductionCore": "fbe9355632f9447726d8d566ab737c16974c4b83",
+    "startupFix": "2e98f87f33a5260187e49bebcc128562a824e474",
+    "pc1Original": "6d0d011d2db9b52e382e200c765922156fe1e47b",
+    "pc1IntegratedAndCandidateCore": "15c301f7c1b25ca2a353445f8c40ca1801cec778",
+    "studioBackendBase": "573432a7e5f7d1099aacd2b29fcb5e2385be8793",
+    "studioBackendCandidate": "aad973863840a9a8319574113326b4bf2f91cff8",
+    "windowsClientAlreadyAccepted": "617114d8abd4500c546b402115a43a6b78a1c5c5"
+  },
+  "coreValidation": {
+    "status": "PASS",
+    "totalTests": 57,
+    "breakdown": {
+      "pythonGuard": 15,
+      "pythonAdoption": 13,
+      "pythonCombined": 28,
+      "nodeRuntime": 25,
+      "pc1": 4
+    },
+    "failed": 0,
+    "skipped": 0,
+    "reuseBasis": "The earlier 53 startup/adoption/runtime tests remain applicable: every recorded modified source hash matches current source, and tested-artifacts.json records all 270 compiled artifacts unchanged. The PC1 integration changes only its script, skill and test and was tested separately with four output-level regressions. These are 57 verified test results, not 57 newly rerun tests in this deployment step.",
+    "receipts": [
+      {
+        "path": "/public/home/liusiqi/03.毕设/BioMind-worktrees/submission-production-20261020/docs/implementation/cli-startup-admission-20261021/VALIDATION.json",
+        "sha256": "03f22ac2d7262d2a04864653a6ca694e3b87859ad3b46cf07c3f41a6b5e213fe"
+      },
+      {
+        "path": "/public/home/liusiqi/03.毕设/BioMind-worktrees/submission-production-20261020/docs/implementation/cli-startup-admission-20261021/evidence/python-tests.log",
+        "sha256": "6d522896cd16d1d1e5e3b7641c8ca312ece3be3c7e694eb7c0df6f49b51b6c5c"
+      },
+      {
+        "path": "/public/home/liusiqi/03.毕设/BioMind-worktrees/submission-production-20261020/docs/implementation/cli-startup-admission-20261021/evidence/node-tests.log",
+        "sha256": "182602dcf14791d8911cff8a6a12f8e38fa5a8594c27cd6d292d6043e94e79fa"
+      },
+      {
+        "path": "/public/home/liusiqi/03.毕设/BioMind_Startup_Production_20261021/evidence/pc1-tests.json",
+        "sha256": "d864e32c1f2683402109d7532cfa9bc691263d8dca6abbcf7fee2057aaa3ca58"
+      },
+      {
+        "path": "/public/home/liusiqi/03.毕设/BioMind_Startup_Production_20261021/evidence/pc1-tests.log",
+        "sha256": "424641b4886bfe55b51efc1d645e759077afba999c0d24d2fb44574a795a9045"
+      },
+      {
+        "path": "/public/home/liusiqi/03.毕设/BioMind_Startup_Production_20261021/evidence/tested-artifacts.json",
+        "sha256": "9821eb457e78526eeaf1c1c24723c9189b5eaccda2c91f00660784bc46137c96"
+      }
+    ],
+    "sourceReceiptMatches": [
+      {
+        "path": "agent_core/pi_plugin_guard.py",
+        "sha256": "3baadb67e61bb2888f3e14199653221bbc37716ba684e47f8170cb407a4dc8c5",
+        "matchesTestReceipt": true
+      },
+      {
+        "path": "integrations/pi_runtime/plugin-lease.ts",
+        "sha256": "c8773b0953f6dd1768604d9e9e9e9f57f7ac45310e4edd8a959a8af2d31bc3f7",
+        "matchesTestReceipt": true
+      },
+      {
+        "path": "integrations/pi_runtime/host.ts",
+        "sha256": "4499984f103518255dea4a265a6a74ba813db369553f1ea2476ffdf649202274",
+        "matchesTestReceipt": true
+      },
+      {
+        "path": "tests/test_pi_plugin_guard.py",
+        "sha256": "d6e73e3d5876436d99f9eb1b3b1add75bd24510bcec146b03fb05d4c51bf6e7e",
+        "matchesTestReceipt": true
+      },
+      {
+        "path": "integrations/pi_runtime/tests/plugin-management.test.ts",
+        "sha256": "86f80046c0efeb542baf1e3a715b640cc1a9ed3c7838446309d9a973d7c7a243",
+        "matchesTestReceipt": true
+      },
+      {
+        "path": "integrations/pi_runtime/tests/plugin-admission-host.test.ts",
+        "sha256": "5b9e5a7cd027d3b7757de95af1bfe495fb9c8d5bdd4baaeb663ddd1ef388ccd3",
+        "matchesTestReceipt": true
+      },
+      {
+        "path": "skills/3d-dna/compartment-calling/SKILL.md",
+        "sha256": "5700fda8315e29d7fe676897e956c4a0ce7a18181631c007ebae69be81360825",
+        "matchesTestReceipt": true
+      },
+      {
+        "path": "skills/3d-dna/compartment-calling/scripts/call_ab_compartments_pc1.py",
+        "sha256": "46531b90504236ade798cba6c9c58d041fee34ad681499b7fa156ed03eaed38a",
+        "matchesTestReceipt": true
+      },
+      {
+        "path": "tests/test_pc1_compartment_orientation.py",
+        "sha256": "f935a53d3db11d12f880681a56842eb530823935f961f75e0e56856d8378d2c2",
+        "matchesTestReceipt": true
+      }
+    ],
+    "candidateManifestBuildId": "735bacc48c20ff8bf18ffe80b2d1ff8632380865d1960b72fc5b0c71223a93af"
+  },
+  "studioValidation": {
+    "status": "PASS",
+    "totalTests": 67,
+    "breakdown": {
+      "sessionAdapter": 32,
+      "resumeControlsPackagesRpc": 35
+    },
+    "failed": 0,
+    "skipped": 0,
+    "lint": {
+      "fullErrors": 0,
+      "fullWarnings": 21,
+      "finalChangedFileErrors": 0,
+      "finalChangedFileWarnings": 1
+    },
+    "typecheckExitCode": 0,
+    "build": {
+      "status": "PASS",
+      "buildId": "G6ChSLwETBW_siXT1tOHG",
+      "sourceFiles": 516,
+      "artifacts": 1680,
+      "sourceUnchangedDuringBuild": true,
+      "dependenciesUpgraded": false
+    },
+    "receipts": [
+      {
+        "path": "/public/home/liusiqi/03.毕设/BioMind-worktrees/studio-startup-20261021/docs/implementation/startup-admission-20261021/VALIDATION.json",
+        "sha256": "9559b180cb266660b450c2d42eee6fafd9ac0b3b310a1ae3e8e590e3801351b5"
+      },
+      {
+        "path": "/public/home/liusiqi/03.毕设/BioMind-worktrees/studio-startup-20261021/evidence/startup-admission/adapter-tests-terminal-final.log",
+        "sha256": "c8c98845975455393faa2dd2e5c411bb9e7092a8a3fc926bcaa881b40f939952"
+      },
+      {
+        "path": "/public/home/liusiqi/03.毕设/BioMind-worktrees/studio-startup-20261021/evidence/startup-admission/adjacent-tests-final.log",
+        "sha256": "8cb3fbff7b200b32b447e57a7f04ab4adfb1e288bb13edf5cd1fa7be533cc4ed"
+      },
+      {
+        "path": "/public/home/liusiqi/03.毕设/BioMind_Startup_Production_20261021/backend-result.json",
+        "sha256": "9ae6ad0933d0fc9c54884101b748f0d19dbac7b6781a8955d7019f0cc5e9fd97"
+      }
+    ],
+    "sourceReceiptHashesMatch": true,
+    "evidenceHashesMatch": true,
+    "scopeNote": "Adapter tests use the actual adapter with simulated child streams. This is not a new Windows GUI or real-model acceptance."
+  },
+  "omittedChangeAudit": {
+    "scope": "Current production lineage plus identified local feature, maintenance and benchmark branches; historical rescue/audit/WIP branches are not blanket-merged.",
+    "newlyIncluded": [
+      {
+        "commit": "2e98f87f33a5260187e49bebcc128562a824e474",
+        "reason": "Shared startup admission had immediate BUSY and masked initialization errors; candidate preserves a bounded wait and public diagnostics."
+      },
+      {
+        "originalCommit": "6d0d011d2db9b52e382e200c765922156fe1e47b",
+        "integratedCommit": "15c301f7c1b25ca2a353445f8c40ca1801cec778",
+        "reason": "PC1 missing/non-finite values were incorrectly assigned A/B; the already committed branch was absent from production and is now included."
+      },
+      {
+        "commit": "aad973863840a9a8319574113326b4bf2f91cff8",
+        "reason": "Studio discarded unscoped startup BUSY and replaced it with owner-exited; candidate preserves safe startup codes and terminal state."
+      }
+    ],
+    "notMergedAsWhole": [
+      {
+        "branch": "prompt/common-rules-20261015",
+        "commit": "65f3fb6a48a188ca182760114743e25f41779b9d",
+        "disposition": "ALREADY_PRESENT",
+        "reason": "All 23 changed skill files are byte-identical to the production candidate. Its Main extension has later production changes and must not be overwritten.",
+        "evidence": {
+          "matchingSkillFiles": [
+            "skills/crop-breeding/_shared/gp-audit-and-data-validation.md",
+            "skills/crop-breeding/crop-cnn-attention-genomic-prediction/SKILL.md",
+            "skills/crop-breeding/crop-dnngp-multiomics-prediction/SKILL.md",
+            "skills/crop-breeding/crop-genomic-prediction/SKILL.md",
+            "skills/crop-breeding/crop-gp-waiter-transformer/SKILL.md",
+            "skills/crop-breeding/crop-gxe-environmental-index-prediction/SKILL.md",
+            "skills/crop-breeding/crop-pangenome-sv-genomic-selection/SKILL.md",
+            "skills/databases/ensembl/ensembl-database/SKILL.md",
+            "skills/databases/ncbi/entrez-fetch/SKILL.md",
+            "skills/databases/ncbi/entrez-fetch/examples/fetch_pubmed.py",
+            "skills/databases/ncbi/entrez-fetch/examples/fetch_records.py",
+            "skills/databases/ncbi/entrez-link/SKILL.md",
+            "skills/databases/ncbi/entrez-search/SKILL.md",
+            "skills/databases/ncbi/entrez-search/examples/search_entrez.py",
+            "skills/databases/ncbi/geo-data/SKILL.md",
+            "skills/databases/ncbi/geo-data/examples/geo_from_pubmed.py",
+            "skills/databases/ncbi/geo-data/examples/geo_to_sra.py",
+            "skills/databases/ncbi/geo-data/examples/search_geo.py",
+            "skills/databases/references/network-and-structured-retrieval.md",
+            "skills/population-genetics/gwas-emmax-association/SKILL.md",
+            "skills/population-genetics/gwas-emmax-association/scripts/emmax_to_manhattan.py",
+            "skills/population-genetics/gwas-vcf-prep-qc/SKILL.md",
+            "skills/population-genetics/gwas-vcf-prep-qc/references/input-identity.md"
+          ],
+          "productionDeltaReceipt": "/public/home/liusiqi/03.毕设/BioMind-worktrees/submission-production-20261020/docs/implementation/submission-20261020/exact-production-delta.json"
+        }
+      },
+      {
+        "branch": "fix/ui/native-footer-session-20260930",
+        "commit": "8cdee2604f4d7833f31c702f2b9e192609f27a00",
+        "disposition": "ALREADY_PRESENT",
+        "reason": "Current product-ui.ts displays the final eight session-ID characters and current tests distinguish the two sample suffixes.",
+        "evidencePaths": [
+          "/public/home/liusiqi/03.毕设/BioMind-worktrees/submission-production-20261020/integrations/pi_runtime/product-ui.ts",
+          "/public/home/liusiqi/03.毕设/BioMind-worktrees/submission-production-20261020/integrations/pi_runtime/tests/product-ui.test.ts"
+        ]
+      },
+      {
+        "branch": "codex/compaction-reserve-700k",
+        "commit": "0420bc7784c05c080a893aafc8af06054e9ead09",
+        "disposition": "RUNTIME_CONFIG_ALREADY_APPLIED",
+        "reason": "The production shared settings already contain reserveTokens=700000. This branch primarily preserves an example/configuration record; merging it is unnecessary to activate the setting.",
+        "evidence": {
+          "settingsPath": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/settings.json",
+          "jsonField": "compaction.modelOverrides.deepseek/deepseek-flash.reserveTokens",
+          "observedValue": 700000,
+          "originalApplicationRecord": "/public/home/liusiqi/03.毕设/BioMind-worktrees/compaction-reserve-700k-20261019/docs/preservation/20261019-compaction-reserve-700k.md"
+        }
+      },
+      {
+        "branch": "codex/long-task-checks-20261017",
+        "commit": "e40aae9843be2fedfacde33f48e4b5325b839117",
+        "disposition": "SUPERSEDED_BY_CURRENT_IMPLEMENTATION",
+        "reason": "The fbe9355 production lineage already contains the subsequent long-task integration and follow-up fixes. Applying the earlier branch wholesale would reintroduce older implementations.",
+        "evidencePaths": [
+          "/public/home/liusiqi/03.毕设/BioMind-worktrees/submission-production-20261020/docs/implementation/long-task-production-20261021/candidate-acceptance.json",
+          "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/DEPLOYMENT.json"
+        ]
+      },
+      {
+        "branch": "fix/benchmark-review-f1-f5-20261021",
+        "commit": "08923f8b3ea1d76af73881a4a8637869e877e710",
+        "disposition": "SEPARATE_BENCHMARK_DELIVERY",
+        "reason": "No commits unique to this benchmark branch change agent_core, integrations, skills, execution or bio_agents.py relative to the production candidate. Benchmark inputs and scoring are separate from deployed runtime code.",
+        "evidenceCommand": "git log --format=%H HEAD..fix/benchmark-review-f1-f5-20261021 -- agent_core integrations skills execution bio_agents.py",
+        "evidenceUniqueRuntimeCommitCount": 0
+      },
+      {
+        "branches": "Historical audit, rescue and WIP branches",
+        "disposition": "NOT_RELEASE_CANDIDATES",
+        "reason": "These preserve investigations or partial work and have no established pending production release status; they are not merged merely because their tips differ."
+      }
+    ],
+    "documentationOnlyProductionCommits": [
+      "b0f9b88",
+      "eaf955b",
+      "f65d5c1",
+      "5614747",
+      "3a8df49"
+    ],
+    "documentationOnlyReason": "Between fbe9355 and the startup fix, these commits only add or revise docs/implementation deployment records and archived scripts, not the runtime source."
+  },
+  "gitEvidence": {
+    "sourcePushReceipt": {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Startup_Production_20261021/evidence/git-source-push.json",
+      "sha256": "32669a2f26804c191dd35beafe3c3edc0dae6547fe4f3ad7429c94e3133b6be5"
+    },
+    "studioContentReview": {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Startup_Production_20261021/evidence/studio-git-review.json",
+      "sha256": "4ff4f19ea656b1bc6e0499708c6bd1b9260695f75a1055e10b42359a9034f0d6"
+    },
+    "note": "The source-push receipt covers core 15c301f and Windows client 617114d. Later Studio backend and final deployment commits must be verified separately."
+  },
+  "remainingAcceptanceBoundaries": [
+    "No deployment success is inferred from candidate builds or test counts.",
+    "Earlier natural-behavior N1/N2 PARTIAL results are not upgraded by these source and packaging checks.",
+    "Earlier Windows rc8 GUI acceptance is historical evidence and is not added to the new 67 Studio tests.",
+    "The original CLI failure hid its exception; the matching reproduced lock-admission defect is fixed without retrospective certainty."
+  ],
+  "mutationsByThisAudit": {
+    "sourceChanged": false,
+    "gitCommitPerformed": false,
+    "deploymentPerformed": false,
+    "apiKeysFileRead": false
+  }
+}
