@@ -1,0 +1,26 @@
+BioMind 生产部署回执复核 — 2026-10-21（北京时间）
+
+已核对本地 Codex 的 WINDOWS_CODEX_RESULT.json、原始验收回执、当前生产绑定及 Git 记录。两个生产 CLI 与 Studio 均绑定到同一长任务构建。
+构建：94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e
+源码提交：fbe9355632f9447726d8d566ab737c16974c4b83
+部署验收提交：f65d5c1e3920057f2303b7c4d0f459a31010facf
+本次复核提交号：见共享交付目录 GIT.json。
+
+本次复核
+1. 2026-10-21 13:01:22 通过直接认证 HTTP GET 读取 Studio 健康、profile 和运行会话接口。服务 ready，serverId/instanceId 与宿主回执一致，运行会话列表为空。
+2. 审阅宿主实际 Main 的 get_state/get_tools 原始回执：loaded_build 与目标完整构建一致，4 个长任务工具及 3 个指定联网工具均已注册。Main 加载验收发生在测试实例 211e4ce49c8545f8b889396fabb6c8f3；原生清理后恢复的当前实例为 7036581efb414b259343c0d1f57a06de。本次未重新创建 Main owner。
+3. 两个 CLI 启动器、Studio 配置及运行配置的字节摘要均与部署回执一致；实际加载的扩展字节与 owner 回执一致。生产分支在候选提交之后仅增加本次部署的交付记录，业务代码未变化。
+4. 逐项比较部署前清单：33 个会话相关文件的大小、修改时间、inode 与 mode 均未变化，其中包含 29 个会话 JSONL 及 4 个 writer 状态文件。共享 agent 目录绑定和顶层元数据保持一致。验收会话文件不存在，验收项目已归档，原配置备份与旧发布包仍在。
+5. 复核开始时生产工作树干净，部署提交和源码祖先关系正确；交付脚本、原始 owner 回执与已提交副本一致。本次未推送远端。
+6. 既有 scripts/core-release.py verify 全量复验通过：791 个源文件、268 个构建产物、25,916 项依赖一致。本次共 21 项交叉核对通过；完整结果见 FOLLOWUP_REVIEW.json。
+
+未决项
+- Windows GUI 为 NOT_RUN；尚未验证桌面端重新发现服务及加载会话。
+- 真实模型 N1、N2 保持 PARTIAL，分别涉及查找范围偏离、耗时解释依据不足；N3、N4 保持 PASS。
+- 首次官方 CLI 的 PI_INITIALIZATION_FAILED 根因仍未确定；未改配置的串行复验已通过，原始失败回执保留。
+
+生产接入及加载验收不等于自然行为、真实长任务或生物学验收全部通过。本次复核不重启服务、不改生产代码或配置、不取消任务、不发送模型请求，也未读取 .env.api_keys。
+
+完整复核：FOLLOWUP_REVIEW.json
+实时服务证据：evidence/followup-live-health.json
+历史宿主交接回执：/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/WINDOWS_CODEX_RESULT.json

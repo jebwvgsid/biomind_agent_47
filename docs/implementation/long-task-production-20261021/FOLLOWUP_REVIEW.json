@@ -1,0 +1,192 @@
+{
+  "schema": "BioMindProductionFollowupReviewV1",
+  "checkedAt": "2026-10-21T05:10:03.669806+00:00",
+  "status": "PASS",
+  "deploymentCommit": "f65d5c1e3920057f2303b7c4d0f459a31010facf",
+  "sourceCommit": "fbe9355632f9447726d8d566ab737c16974c4b83",
+  "buildId": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+  "checks": {
+    "buildIdentity": {
+      "status": "PASS"
+    },
+    "liveServiceHealth": {
+      "status": "PASS",
+      "details": {
+        "instanceId": "7036581efb414b259343c0d1f57a06de",
+        "runningSessionCount": 0,
+        "checkedAt": "2026-10-21T05:01:22.731702+00:00"
+      }
+    },
+    "studioConfigBinding": {
+      "status": "PASS"
+    },
+    "ownerRawEvidence": {
+      "status": "PASS",
+      "details": {
+        "ownerVerifiedBy": "Windows Codex via Studio HTTP at deployment; reviewed raw state/get_tools replies",
+        "ownerVerifiedInstanceId": "211e4ce49c8545f8b889396fabb6c8f3",
+        "currentInstanceId": "7036581efb414b259343c0d1f57a06de",
+        "currentOwnerReloaded": false
+      }
+    },
+    "registeredToolsEvidence": {
+      "status": "PASS",
+      "details": {
+        "required": [
+          "cancel_run",
+          "fetch_content",
+          "get_search_content",
+          "inspect_run",
+          "run_command",
+          "wait_run",
+          "web_search"
+        ],
+        "registeredCount": 28
+      }
+    },
+    "loadedExtensionBytes": {
+      "status": "PASS"
+    },
+    "productionCliEntries": {
+      "status": "PASS",
+      "details": [
+        {
+          "path": "/public/home/liusiqi/.local/bin/biomind",
+          "matchesReceipt": true,
+          "matchesRelease": true,
+          "runtimeConfig": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/delivery/long-task-20261021/94ddac30b6803e12/cli-shared-web-runtime.json"
+        },
+        {
+          "path": "/public/home/liusiqi/03.毕设/BioMind/bin/biomind",
+          "matchesReceipt": true,
+          "matchesRelease": true,
+          "runtimeConfig": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/delivery/long-task-20261021/94ddac30b6803e12/cli-shared-web-runtime.json"
+        }
+      ]
+    },
+    "workspace-cliRawLoadEvidence": {
+      "status": "PASS"
+    },
+    "official-cli-retryRawLoadEvidence": {
+      "status": "PASS"
+    },
+    "originalSessionsPreserved": {
+      "status": "PASS",
+      "details": {
+        "originalFileCount": 33,
+        "currentFileCount": 33,
+        "originalJsonlSessions": 29,
+        "originalWriterSidecars": 4,
+        "originalMetadataChanges": [],
+        "additionalCount": 0
+      }
+    },
+    "sharedAgentAndSessionBinding": {
+      "status": "PASS",
+      "details": {
+        "topLevelMetadataChanges": []
+      }
+    },
+    "testSessionCleanup": {
+      "status": "PASS"
+    },
+    "rollbackBackupPreserved": {
+      "status": "PASS"
+    },
+    "rebindPatchIdentity": {
+      "status": "PASS"
+    },
+    "gitArchivedEvidenceMatches": {
+      "status": "PASS",
+      "details": [
+        "DEPLOYMENT.json",
+        "studio-owner-verification.json",
+        "studio-rebind.json",
+        "MAIN_PROMPT.txt",
+        "scripts/rebind-managed-services.py",
+        "scripts/test_rebind_managed_services.py"
+      ]
+    },
+    "gitArchivedAcceptance": {
+      "status": "PASS"
+    },
+    "deploymentGitCommit": {
+      "status": "PASS",
+      "details": {
+        "head": "f65d5c1e3920057f2303b7c4d0f459a31010facf",
+        "cleanBeforeReviewRecords": true,
+        "aheadBehindLocalRemoteTracking": "11\t0"
+      }
+    },
+    "sourceCommitIsAncestor": {
+      "status": "PASS"
+    },
+    "knownLimitationsPreserved": {
+      "status": "PASS"
+    },
+    "productionCodeUnchangedSinceCandidate": {
+      "status": "PASS",
+      "details": {
+        "command": "git diff fbe9355..f65d5c1 --name-only -- . :!docs/implementation/long-task-production-20261021",
+        "changedPaths": []
+      }
+    },
+    "fullReleaseIntegrity": {
+      "status": "PASS",
+      "details": {
+        "result": "PASS",
+        "releaseId": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+        "root": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12",
+        "sourceFingerprint": "68eecde13bf17a56d7d88b521221007fd86c9eb7a8ea3d6952ddf539126c70ba",
+        "sourceCommit": "fbe9355632f9447726d8d566ab737c16974c4b83",
+        "sourceFiles": 791,
+        "artifactFiles": 268,
+        "dependencyEntries": 25916,
+        "modelStarted": false
+      }
+    }
+  },
+  "remainingIssues": [
+    {
+      "code": "WINDOWS_GUI_NOT_RUN",
+      "detail": "No accessible existing Windows Studio window; reconnect/discovery and desktop session loading remain unverified."
+    },
+    {
+      "code": "N1_PARTIAL",
+      "detail": "Candidate real-model lookup scope deviation remains PARTIAL."
+    },
+    {
+      "code": "N2_PARTIAL",
+      "detail": "Candidate real-model elapsed-time explanation evidence remains insufficient; PARTIAL."
+    },
+    {
+      "code": "INITIAL_OFFICIAL_CLI_FAILURE_ROOT_CAUSE_UNRESOLVED",
+      "detail": "Earlier PI_INITIALIZATION_FAILED remains recorded; unchanged serial retry passed."
+    }
+  ],
+  "scope": {
+    "productionChanges": false,
+    "serviceRestarted": false,
+    "newOwnerCreated": false,
+    "modelRequests": 0,
+    "formalAnalysisRuns": 0,
+    "apiKeysFileRead": false,
+    "remotePushed": false
+  },
+  "evidenceFiles": [
+    "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/WINDOWS_CODEX_RESULT.json",
+    "studio-owner-verification.json",
+    "evidence/followup-live-health.json",
+    "evidence/followup-release-verification.json",
+    "evidence/followup-review-initial-file-count.json"
+  ],
+  "reviewMethodCorrection": "Baseline sessions inventory contains 29 JSONL sessions plus 4 writer sidecar files. Initial follow-up glob only included JSONL; complete file inventory confirms all 33 original files unchanged.",
+  "evidenceProvenance": {
+    "deploymentOwnerVerification": "Reviewed existing raw get_state/get_tools replies; no new owner created during follow-up",
+    "currentServiceHealth": "Direct authenticated HTTP GET in current follow-up; no service lifecycle command invoked",
+    "fullReleaseVerification": "Existing scripts/core-release.py verify; current result is stored separately",
+    "sharedResourcePreservation": "Current filesystem metadata compared with the Windows Codex pre-deployment inventory",
+    "candidateBehaviorAcceptance": "Historical candidate acceptance only; N1/N2 were not rerun or promoted"
+  },
+  "checksPassed": 21
+}

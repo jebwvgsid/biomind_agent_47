@@ -1,0 +1,146 @@
+{
+  "checkedAt": "2026-10-21T05:01:22.731702+00:00",
+  "source": "direct authenticated GET; no service discover/ensure/stop",
+  "readOnly": true,
+  "record": {
+    "serverId": "biomind-c8b9c760c4064a40bdae3a717785e2b3",
+    "instanceId": "7036581efb414b259343c0d1f57a06de",
+    "status": "ready",
+    "host": "ln02",
+    "port": 46625,
+    "pid": 4131735,
+    "startedAt": 1792558301.239546,
+    "heartbeatAt": 1792558881.9031363
+  },
+  "heartbeatAgeSeconds": 0.829,
+  "hostPidVisible": false,
+  "health": {
+    "schema": "BioMindStudioHealthV1",
+    "instanceId": "7036581efb414b259343c0d1f57a06de",
+    "serverId": "biomind-c8b9c760c4064a40bdae3a717785e2b3",
+    "status": "ready",
+    "profile": "biomind",
+    "ownerStatus": "not_checked",
+    "idleStopProtocol": 1
+  },
+  "profile": {
+    "profile": "biomind",
+    "serverId": "biomind-c8b9c760c4064a40bdae3a717785e2b3",
+    "protocolVersion": 1,
+    "allowedProjects": [
+      "/public/home/liusiqi/03.毕设/benchmarks"
+    ],
+    "capabilities": {
+      "getState": true,
+      "images": true,
+      "imageInputEnabled": false,
+      "modelCapabilitySource": "owner_ready",
+      "packages": {
+        "supported": true,
+        "available": true,
+        "scope": [
+          "user",
+          "project"
+        ],
+        "protocol": "BioMindPluginsV1",
+        "runtimeVersion": "0.87.1"
+      },
+      "newSession": true,
+      "reconnectOwnedSession": true,
+      "historyReadOnly": true,
+      "historyAvailable": true,
+      "automaticReplay": false,
+      "clearQueue": false,
+      "getModels": {
+        "supported": true,
+        "available": false,
+        "reason": "OWNER_NOT_LOADED",
+        "scope": "session"
+      },
+      "setModel": {
+        "supported": true,
+        "available": false,
+        "reason": "OWNER_NOT_LOADED",
+        "scope": "session"
+      },
+      "setThinking": {
+        "supported": true,
+        "available": false,
+        "reason": "OWNER_NOT_LOADED",
+        "scope": "session"
+      },
+      "getTools": {
+        "supported": true,
+        "available": false,
+        "reason": "OWNER_NOT_LOADED",
+        "scope": "session"
+      },
+      "setTools": {
+        "supported": true,
+        "available": false,
+        "reason": "OWNER_NOT_LOADED",
+        "scope": "session"
+      },
+      "getCommands": {
+        "supported": true,
+        "available": false,
+        "reason": "OWNER_NOT_LOADED",
+        "scope": "session"
+      },
+      "instructions": {
+        "supported": true,
+        "available": false,
+        "reason": "OWNER_NOT_LOADED",
+        "scope": "session"
+      },
+      "promptSnapshot": {
+        "supported": true,
+        "available": false,
+        "reason": "OWNER_NOT_LOADED",
+        "scope": "session"
+      },
+      "resources": {
+        "supported": true,
+        "available": false,
+        "reason": "OWNER_NOT_LOADED",
+        "scope": "session"
+      },
+      "setSkill": {
+        "supported": true,
+        "available": false,
+        "reason": "OWNER_NOT_LOADED",
+        "scope": "session"
+      },
+      "autoCompaction": {
+        "supported": true,
+        "available": false,
+        "reason": "OWNER_NOT_LOADED",
+        "scope": "session"
+      },
+      "memorySettings": {
+        "supported": true,
+        "available": false,
+        "reason": "OWNER_NOT_LOADED",
+        "scope": "session"
+      },
+      "planTools": false,
+      "team": false,
+      "bash": false,
+      "autoName": false,
+      "historyExport": false,
+      "reload": true,
+      "compact": true,
+      "settings": [
+        "history_enabled",
+        "memory_mode"
+      ],
+      "jobs": true,
+      "desktopDetach": true,
+      "transparentProcessRecovery": false
+    }
+  },
+  "running": {
+    "runningSessionIds": []
+  },
+  "status": "PASS"
+}

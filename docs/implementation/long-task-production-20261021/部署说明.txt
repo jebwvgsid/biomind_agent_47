@@ -38,3 +38,10 @@ Windows Codex 宿主验收补充 — 2026-10-21
 Windows GUI 为 NOT_RUN：当前没有可访问的现有 Studio 窗口；这不影响服务器 Main 加载验收，但不能视为桌面交互已通过。
 N1、N2 保持 PARTIAL，N3、N4 为 PASS。生产加载验收没有发起模型请求或正式生信分析，不能替代真实长任务或生物学验收。
 本次补充证据见 WINDOWS_CODEX_ACCEPTANCE.json。最终提交号回写共享交接目录的 WINDOWS_CODEX_RESULT.json；未推送 Git。
+
+服务器回执复核收尾 — 2026-10-21
+21项交叉核对通过，包括当前Studio直接HTTP健康/身份检查，以及791个源文件、268个构建产物、25916项依赖的完整性复验。原始Main加载及工具注册回执与Git归档一致。
+原有33个会话相关文件（29个JSONL会话及4个writer状态文件）元数据保持一致；共享资源、旧发布包及回退备份保留。
+本次没有重启服务、创建新owner、调用模型或修改生产代码/配置。Windows GUI未验收，N1/N2仍为PARTIAL，首次CLI初始化失败根因仍未确定。
+部署验收提交为f65d5c1；本次复核提交号见共享交付目录GIT.json。仅本地提交，未推送。
+本次详细结论及证据见FOLLOWUP_REPORT.txt、FOLLOWUP_REVIEW.json和evidence/followup-*.json。

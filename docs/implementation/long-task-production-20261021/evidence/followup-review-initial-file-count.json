@@ -1,0 +1,164 @@
+{
+  "schema": "BioMindProductionFollowupReviewV1",
+  "checkedAt": "2026-10-21T05:02:28.595616+00:00",
+  "status": "FAIL",
+  "deploymentCommit": "f65d5c1e3920057f2303b7c4d0f459a31010facf",
+  "sourceCommit": "fbe9355632f9447726d8d566ab737c16974c4b83",
+  "buildId": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+  "checks": {
+    "buildIdentity": {
+      "status": "PASS"
+    },
+    "liveServiceHealth": {
+      "status": "PASS",
+      "details": {
+        "instanceId": "7036581efb414b259343c0d1f57a06de",
+        "runningSessionCount": 0,
+        "checkedAt": "2026-10-21T05:01:22.731702+00:00"
+      }
+    },
+    "studioConfigBinding": {
+      "status": "PASS"
+    },
+    "ownerRawEvidence": {
+      "status": "PASS",
+      "details": {
+        "ownerVerifiedBy": "Windows Codex via Studio HTTP at deployment; reviewed raw state/get_tools replies",
+        "ownerVerifiedInstanceId": "211e4ce49c8545f8b889396fabb6c8f3",
+        "currentInstanceId": "7036581efb414b259343c0d1f57a06de",
+        "currentOwnerReloaded": false
+      }
+    },
+    "registeredToolsEvidence": {
+      "status": "PASS",
+      "details": {
+        "required": [
+          "cancel_run",
+          "fetch_content",
+          "get_search_content",
+          "inspect_run",
+          "run_command",
+          "wait_run",
+          "web_search"
+        ],
+        "registeredCount": 28
+      }
+    },
+    "loadedExtensionBytes": {
+      "status": "PASS"
+    },
+    "productionCliEntries": {
+      "status": "PASS",
+      "details": [
+        {
+          "path": "/public/home/liusiqi/.local/bin/biomind",
+          "matchesReceipt": true,
+          "matchesRelease": true,
+          "runtimeConfig": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/delivery/long-task-20261021/94ddac30b6803e12/cli-shared-web-runtime.json"
+        },
+        {
+          "path": "/public/home/liusiqi/03.毕设/BioMind/bin/biomind",
+          "matchesReceipt": true,
+          "matchesRelease": true,
+          "runtimeConfig": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/delivery/long-task-20261021/94ddac30b6803e12/cli-shared-web-runtime.json"
+        }
+      ]
+    },
+    "workspace-cliRawLoadEvidence": {
+      "status": "PASS"
+    },
+    "official-cli-retryRawLoadEvidence": {
+      "status": "PASS"
+    },
+    "originalSessionsPreserved": {
+      "status": "FAIL",
+      "details": {
+        "originalCount": 33,
+        "currentCount": 29,
+        "originalMetadataChanges": [
+          "--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9--/2026-10-14T06-37-41-452Z_01a13921-88c5-71eb-9272-3b230afea464.jsonl.biomind-writer.closed",
+          "--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9--/2026-10-14T06-54-14-808Z_01a13930-b116-757e-accb-7fd7b2ba5792.jsonl.biomind-writer.lock",
+          "--public-home-liusiqi-03.毕设-benchmarks-BioMind_Plugin_Acceptance_20261016--/2026-10-16T14-32-02-547Z_01a14520-88f2-7086-8544-74ee6321289c.jsonl.biomind-writer.closed",
+          "--public-home-liusiqi-03.毕设-benchmarks-BioMind_Windows_Chat_20261017--/2026-10-16T16-51-31-103Z_01a145a0-3a8e-703c-913f-a6867ee491f9.jsonl.biomind-writer.closed"
+        ],
+        "additionalCount": 0
+      }
+    },
+    "sharedAgentAndSessionBinding": {
+      "status": "PASS",
+      "details": {
+        "topLevelMetadataChanges": []
+      }
+    },
+    "testSessionCleanup": {
+      "status": "PASS"
+    },
+    "rollbackBackupPreserved": {
+      "status": "PASS"
+    },
+    "rebindPatchIdentity": {
+      "status": "PASS"
+    },
+    "gitArchivedEvidenceMatches": {
+      "status": "PASS",
+      "details": [
+        "DEPLOYMENT.json",
+        "studio-owner-verification.json",
+        "studio-rebind.json",
+        "MAIN_PROMPT.txt",
+        "scripts/rebind-managed-services.py",
+        "scripts/test_rebind_managed_services.py"
+      ]
+    },
+    "gitArchivedAcceptance": {
+      "status": "PASS"
+    },
+    "deploymentGitCommit": {
+      "status": "PASS",
+      "details": {
+        "head": "f65d5c1e3920057f2303b7c4d0f459a31010facf",
+        "cleanBeforeReviewRecords": true,
+        "aheadBehindLocalRemoteTracking": "11\t0"
+      }
+    },
+    "sourceCommitIsAncestor": {
+      "status": "PASS"
+    },
+    "knownLimitationsPreserved": {
+      "status": "PASS"
+    }
+  },
+  "remainingIssues": [
+    {
+      "code": "WINDOWS_GUI_NOT_RUN",
+      "detail": "No accessible existing Windows Studio window; reconnect/discovery and desktop session loading remain unverified."
+    },
+    {
+      "code": "N1_PARTIAL",
+      "detail": "Candidate real-model lookup scope deviation remains PARTIAL."
+    },
+    {
+      "code": "N2_PARTIAL",
+      "detail": "Candidate real-model elapsed-time explanation evidence remains insufficient; PARTIAL."
+    },
+    {
+      "code": "INITIAL_OFFICIAL_CLI_FAILURE_ROOT_CAUSE_UNRESOLVED",
+      "detail": "Earlier PI_INITIALIZATION_FAILED remains recorded; unchanged serial retry passed."
+    }
+  ],
+  "scope": {
+    "productionChanges": false,
+    "serviceRestarted": false,
+    "newOwnerCreated": false,
+    "modelRequests": 0,
+    "formalAnalysisRuns": 0,
+    "apiKeysFileRead": false,
+    "remotePushed": false
+  },
+  "evidenceFiles": [
+    "WINDOWS_CODEX_RESULT.json",
+    "studio-owner-verification.json",
+    "evidence/followup-live-health.json",
+    "evidence/followup-release-verification.json"
+  ]
+}
