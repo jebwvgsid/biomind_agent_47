@@ -1,0 +1,14 @@
+{
+  "schema": "BioMindClientGitDeliveryV1",
+  "recordedAt": "2026-10-21T05:49:56.225194+00:00",
+  "worktree": "/public/home/liusiqi/03.毕设/BioMind-worktrees/windows-client-20261021",
+  "branch": "release/windows-client-20261021",
+  "commit": "617114d8abd4500c546b402115a43a6b78a1c5c5",
+  "baselineCommit": "1a370464c8bf4e4c716f34cefbb90bfbf14f4a16",
+  "resumeFixCommit": "91e5bb229e6891ab74f35477115276a67425a782",
+  "version": "1.2.0-rc.20261009.8",
+  "sourceFilesMatched": 133,
+  "pushed": false,
+  "gitSourceRecordedAfterBuild": true,
+  "sourceEquivalencePath": "/public/home/liusiqi/03.毕设/BioMind-worktrees/windows-client-20261021/docs/implementation/windows-client-20261021/v8/SOURCE_EQUIVALENCE.json"
+}

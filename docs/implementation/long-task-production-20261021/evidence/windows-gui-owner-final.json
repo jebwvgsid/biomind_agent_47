@@ -1,0 +1,259 @@
+{
+  "status": "PASS",
+  "checkedAtUTC": "2026-10-21T05:44:14.693123+00:00",
+  "evidenceClass": "READ_ONLY_VERIFICATION_OF_EXISTING_OWNER_RESUMED_BY_WINDOWS_GUI",
+  "checks": {
+    "serviceReady": true,
+    "serviceIdentityUnchanged": true,
+    "serviceConfigBytesUnchanged": true,
+    "runtimeConfigBytesUnchanged": true,
+    "sharedAgentBindingUnchanged": true,
+    "sharedTopLevelMetadataUnchanged": true,
+    "original29SessionHistoryBytesUnchanged": true,
+    "originalSessionJsonlMetadataUnchanged": true,
+    "sameOriginalSessionId": true,
+    "sameOriginalSessionFile": true,
+    "targetProductionBuildLoaded": true,
+    "targetProductionReleaseRootLoaded": true,
+    "allSevenRequiredToolsRegistered": true,
+    "ownerIdle": true,
+    "sameOwnerAfterClientRestart": true,
+    "noAdmissions": true,
+    "noActiveRunsBeforeOrAfter": true
+  },
+  "health": {
+    "schema": "BioMindStudioHealthV1",
+    "instanceId": "7036581efb414b259343c0d1f57a06de",
+    "serverId": "biomind-c8b9c760c4064a40bdae3a717785e2b3",
+    "status": "ready",
+    "profile": "biomind",
+    "ownerStatus": "not_checked",
+    "idleStopProtocol": 1
+  },
+  "service": {
+    "host": "ln02",
+    "port": 46625,
+    "pid": 4131735,
+    "startTicks": "744701086",
+    "instanceId": "7036581efb414b259343c0d1f57a06de",
+    "startedAt": 1792558301.239546
+  },
+  "scope": {
+    "serverId": "biomind-c8b9c760c4064a40bdae3a717785e2b3",
+    "sessionId": "01a145a0-3a8e-703c-913f-a6867ee491f9",
+    "ownerGeneration": "e91ad20b-9040-46d3-8a94-a40f532955ab",
+    "project": "/public/home/liusiqi/03.毕设/benchmarks/BioMind_Windows_Chat_20261017"
+  },
+  "loadedBuild": {
+    "buildId": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+    "sourceFingerprint": "68eecde13bf17a56d7d88b521221007fd86c9eb7a8ea3d6952ddf539126c70ba",
+    "dependencyFingerprint": "363ca233976e9593f32d8175fc450e4dfa1a03394ce691e2b8bab610ee8400f4",
+    "manifestSha256": "e9c2ec6f749abdb9eb306017e7530b55218fa049a86e9b1bb8a27271fc08b9c2",
+    "entrypoint": "json",
+    "extensionPath": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12/integrations/pi_runtime/dist/extensions/biomind.js",
+    "extensionSha256": "eab00406e620daecad7aa2155f4c2d4b31ed1399ef503713dc6d86a0ac318e28",
+    "jsonExtensionSha256": "eab00406e620daecad7aa2155f4c2d4b31ed1399ef503713dc6d86a0ac318e28",
+    "nativeExtensionSha256": "512724ab39ba2a007bcd84d761de12537d061ed0ce5e358376d74fae34843231",
+    "releaseRoot": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12",
+    "releaseId": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+    "sourceCommit": "fbe9355632f9447726d8d566ab737c16974c4b83",
+    "piVersion": "0.87.1",
+    "piPatch": "0.87.1+biomind-observer.6; 0.87.1+biomind-observer.6+plugin-guard.1",
+    "piPackageRealpath": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12/integrations/pi_runtime/node_modules/@earendil-works/pi-coding-agent"
+  },
+  "sessionFile": "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.biomind/pi-agent/sessions/--public-home-liusiqi-03.毕设-benchmarks-BioMind_Windows_Chat_20261017--/2026-10-16T16-51-31-103Z_01a145a0-3a8e-703c-913f-a6867ee491f9.jsonl",
+  "ownerState": {
+    "active": false,
+    "activeRequestId": null,
+    "admissions": [],
+    "queue": {
+      "pendingAssociationCount": 0,
+      "actualHasQueuedMessages": false,
+      "nativeDisplayCounts": {
+        "steering": 0,
+        "followUp": 0,
+        "limitation": "Pi 0.87.1 may retain consumed empty-text entries; these are not execution queue counts"
+      },
+      "associations": "bounded_exact_content_only; transformed_unmatched_inputs_unknown; no_replay"
+    },
+    "jobs": {
+      "status": "unknown",
+      "reason": "use_job_list_or_status"
+    },
+    "pendingMessageCount": 0,
+    "isStreaming": false,
+    "isPromptRunning": false,
+    "isBashRunning": false,
+    "isCompacting": false,
+    "sessionSaved": true,
+    "sessionPersistence": "persistent",
+    "writerOwnership": {
+      "supported": true,
+      "acquired": true,
+      "ownerGeneration": "e91ad20b-9040-46d3-8a94-a40f532955ab",
+      "pid": 948077,
+      "scope": "session",
+      "temporary": false
+    },
+    "capabilities": {
+      "sessionResume": "startup_exact_id_or_file",
+      "continueSession": "explicit_same_project",
+      "sessionSwitch": "restart_with_explicit_session",
+      "temporarySession": "explicit",
+      "persistenceOwner": "Pi SessionManager",
+      "jobOwnerTakeover": "not_implied_by_session_resume",
+      "images": true,
+      "imageInputEnabled": false,
+      "getState": true,
+      "admissionReceipts": "same_owner_bounded_no_eviction",
+      "maxAdmissionReceipts": 1024,
+      "automaticReplay": false,
+      "clearQueue": false,
+      "getModels": {
+        "supported": true,
+        "available": true,
+        "scope": "session"
+      },
+      "setModel": {
+        "supported": true,
+        "available": true,
+        "scope": "session"
+      },
+      "setThinking": {
+        "supported": true,
+        "available": true,
+        "scope": "session"
+      },
+      "getTools": {
+        "supported": true,
+        "available": true,
+        "scope": "session"
+      },
+      "setTools": {
+        "supported": true,
+        "available": true,
+        "scope": "session"
+      },
+      "getCommands": {
+        "supported": true,
+        "available": true,
+        "scope": "session"
+      },
+      "instructions": {
+        "supported": true,
+        "available": true,
+        "scope": "target/project"
+      },
+      "promptSnapshot": {
+        "supported": true,
+        "available": true,
+        "scope": "session"
+      },
+      "resources": {
+        "supported": true,
+        "available": true,
+        "scope": "target/project"
+      },
+      "setSkill": {
+        "supported": true,
+        "available": true,
+        "scope": "target/project"
+      },
+      "autoCompaction": {
+        "supported": true,
+        "available": true,
+        "scope": "session"
+      },
+      "compact": {
+        "supported": true,
+        "available": true,
+        "scope": "operation"
+      },
+      "reload": {
+        "supported": true,
+        "available": true,
+        "scope": "owner"
+      },
+      "memorySettings": {
+        "supported": true,
+        "available": true,
+        "scope": "session"
+      },
+      "maxPendingInputs": 16,
+      "historyExport": false,
+      "settings": [
+        "history_enabled",
+        "memory_mode"
+      ],
+      "serviceDetach": false,
+      "remoteServerBinding": false
+    }
+  },
+  "registeredTools": [
+    "ask_user",
+    "bash",
+    "cancel_run",
+    "edit",
+    "fetch_content",
+    "file_stat",
+    "find",
+    "get_search_content",
+    "grep",
+    "inspect_run",
+    "install_tool",
+    "ls",
+    "maintenance_submit",
+    "memory_read",
+    "memory_search",
+    "memory_write",
+    "probe_command",
+    "read",
+    "read_run_log",
+    "register_environment",
+    "run_command",
+    "select_environment",
+    "source_check",
+    "update_plan",
+    "wait_run",
+    "web_enable",
+    "web_search",
+    "write"
+  ],
+  "requiredTools": [
+    "cancel_run",
+    "fetch_content",
+    "get_search_content",
+    "inspect_run",
+    "run_command",
+    "wait_run",
+    "web_search"
+  ],
+  "runningSessionIds": [],
+  "preservation": {
+    "originalFileCount": 33,
+    "originalJsonlCount": 29,
+    "changedOriginalMetadataFiles": [],
+    "missingOriginalFiles": [],
+    "changedOriginalHistoryFiles": [],
+    "addedFiles": {
+      "--public-home-liusiqi-03.毕设-benchmarks-BioMind_Windows_Chat_20261017--/2026-10-16T16-51-31-103Z_01a145a0-3a8e-703c-913f-a6867ee491f9.jsonl.biomind-writer.lock": {
+        "size": 531,
+        "mtimeNs": 1792561091000000000,
+        "inode": 33060459599,
+        "mode": 33152
+      }
+    },
+    "sharedMetadataChanged": []
+  },
+  "requestsIssued": [
+    "GET health",
+    "GET running",
+    "GET existing session",
+    "POST get_tools"
+  ],
+  "mutationCommandsIssued": [],
+  "promptRequestsIssued": 0,
+  "modelRequestsIssued": 0,
+  "apiKeysFileRead": false,
+  "productionServiceRestarted": false
+}

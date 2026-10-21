@@ -1,0 +1,40 @@
+BioMind 生产接入与 Windows Studio 最终交付
+核对时间：2026-10-21T05:49:56.225194+00:00
+结论：生产 CLI、Studio 服务、Windows 客户端更新及实际 Main 加载验收均已完成。
+
+实际运行
+- 两个生产 CLI 保持指向构建 94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e。
+- Studio 服务在 ln02:46625 保持同一实例 7036581efb414b259343c0d1f57a06de；Windows 本轮没有重复部署或重启服务器。
+- Windows 客户端已安装 1.2.0-rc.20261009.8，路径 D:\研究生\项目\biomind桌面端\BioMind Studio Workbench。
+- 原会话 01a145a0-3a8e-703c-913f-a6867ee491f9 已实际加载目标构建；客户端重启后重新接入同一个 Main owner e91ad20b-9040-46d3-8a94-a40f532955ab。7 个指定工具齐全，owner 空闲。
+
+修复与验收
+- 修复点击已恢复历史会话时未调用 ensureConnected，导致 Main 不加载的问题。
+- 修复历史接口工具字段与实时渲染字段不一致，导致已完成工具卡片显示“排队中”的问题。原 bash 结果及原退出码 17 已在真实 Windows 窗口中正确显示；没有重放命令。
+- 45 项界面状态测试和 37 项桥接测试通过。v7 TypeScript/构建通过；v8 的 92 份渲染源码和 88 份编译产物与 v7 字节一致，已独立核实复用依据。
+- 本地 Codex 使用真实 Windows 界面验收；服务器端独立复核 17 项全部通过，核实回执的 22 份证据哈希、安装包与已安装程序哈希、现存 Main、两个 CLI 入口及历史文件。
+- 核心发布文件的完整校验已通过：791 份源码、268 份产物、25916 个依赖项。此前 69 项定向检查结论不变。
+
+保留情况
+- 原连接配置和凭据保留，75 份客户端运行时文件未改；仅替换 BUILD-IDENTITY.json、README-WINDOWS.txt、resources/app.asar，旧版本已备份。
+- 原 33 份文件元数据和 29 份会话历史内容保留。原会话恢复后正常取得的 writer lock 保留，Main 与客户端保持打开。
+- 未取消任务、未重放任务、未新增持久会话、未发送模型请求；未读取 .env.api_keys，未自动推送 Git。
+
+Git
+- 核心源提交：fbe9355632f9447726d8d566ab737c16974c4b83。
+- 生产部署记录：f65d5c1e3920057f2303b7c4d0f459a31010facf；此前服务器复核：5614747bade62cb7b2e27fb3e58737fb34687770。
+- 客户端独立分支 release/windows-client-20261021：1a37046 归档已部署 rc6 源码；91e5bb2 修复会话加载；617114d8abd4500c546b402115a43a6b78a1c5c5 修复历史工具显示并保存最终验收。
+- 客户端 133 份所选 desktop/tests/packaging 文件与实际验收候选逐字节一致；未改写原打包身份信息。未覆盖 Studio 主分支或服务维护分支。
+- 最终生产归档提交与工作树状态见同目录 GIT.json；WINDOWS_GUI_RESULT.json 保留本地验收时的旧 HEAD，不改写原始回执。
+
+保留的限制与观察
+- 自然模型行为 N1、N2 仍为 PARTIAL，N3、N4 为 PASS；本轮验证实际加载与历史显示，没有重新运行真实长任务行为验收。
+- 原首次 CLI 的 PI_INITIALIZATION_FAILED 原因仍未解决；原样串行重试已通过，本轮 GUI 通过不代表该原因已修复。
+- 恢复保存的会话引用时曾出现两次 SERVER_HTTP_404 提示，最终窗口无错误提示；原引用未删除。
+
+证据
+WINDOWS_GUI_RESULT.json：本地最终回执（原文保留）。
+evidence/windows-gui-final-independent-review.json：服务器独立复核。
+windows-client-v8/delivery/：最终客户端包、完整补丁和来源清单。
+delivery-manifest.json：本次交付文件哈希索引。
+本地会话已正常完成；本轮通过其共享证据和会话状态核对进展，没有可用的直接跨聊天发送工具，未宣称向另一聊天发送消息。

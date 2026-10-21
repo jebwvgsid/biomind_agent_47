@@ -107,7 +107,16 @@
         "errno": 1
       },
       "currentProcess": "NSpid:\t3"
-    }
+    },
+    "latestGuiOwnerScope": {
+      "serverId": "biomind-c8b9c760c4064a40bdae3a717785e2b3",
+      "sessionId": "01a145a0-3a8e-703c-913f-a6867ee491f9",
+      "ownerGeneration": "e91ad20b-9040-46d3-8a94-a40f532955ab",
+      "project": "/public/home/liusiqi/03.毕设/benchmarks/BioMind_Windows_Chat_20261017"
+    },
+    "latestGuiServiceInstanceId": "7036581efb414b259343c0d1f57a06de",
+    "latestGuiServicePort": 46625,
+    "latestGuiLoadedBuildId": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e"
   },
   "candidateAcceptance": {
     "targetedChecksPassed": 69,
@@ -134,6 +143,22 @@
     "entrypointReadOnly": true
   },
   "remotePushed": false,
-  "windowsGUI": "NOT_RUN",
-  "status": "DEPLOYED_AND_VERIFIED"
+  "windowsGUI": "PASS",
+  "status": "DEPLOYED_AND_GUI_VERIFIED",
+  "updatedAtUTC": "2026-10-21T05:49:56.225194+00:00",
+  "windowsClient": {
+    "version": "1.2.0-rc.20261009.8",
+    "clientSourceCommit": "617114d8abd4500c546b402115a43a6b78a1c5c5",
+    "clientBranch": "release/windows-client-20261021",
+    "clientWorktree": "/public/home/liusiqi/03.毕设/BioMind-worktrees/windows-client-20261021",
+    "receipt": "WINDOWS_GUI_RESULT.json",
+    "independentReview": "evidence/windows-gui-final-independent-review.json",
+    "asarSha256": "958e4c3ec6390e9ed265caefdd7465e84f95f4a81131e350e1354bda1ab0e462",
+    "packageSha256": "450fdc571ad901540c0e7d472f453d74ca45c206f6ca055a2010837baafe81d0",
+    "testsPassed": 82,
+    "actualOriginalMainLoaded": true,
+    "sameOwnerAcrossClientRestart": true,
+    "newModelExecution": false
+  },
+  "receiptHistoryNote": "Earlier deployment and follow-up receipts preserve their original timestamps and NOT_RUN GUI status. WINDOWS_GUI_RESULT.json is the later native Windows acceptance; its Git HEAD is the pre-closeout HEAD, retained verbatim."
 }

@@ -1,0 +1,271 @@
+{
+  "schema": "BioMindWindowsGUIAcceptanceV1",
+  "status": "PASS",
+  "completedAtUTC": "2026-10-21T05:46:24.829443+00:00",
+  "acceptanceScope": "Existing Windows connection, service rediscovery, actual Main owner loading and historical tool rendering; no new model execution.",
+  "summaryZh": "Windows 原连接、服务重新发现、实际 Main 会话加载及历史工具结果显示验收通过。客户端从 v6 更新为 v8；生产服务未重复部署或重启。",
+  "client": {
+    "previousVersion": "1.2.0-rc.20261009.6",
+    "version": "1.2.0-rc.20261009.8",
+    "installation": "D:\\研究生\\项目\\biomind桌面端\\BioMind Studio Workbench",
+    "executableSha256": "31a0176b7c1a81cf379e55e109c57a56493a4d4a9e9b0d2475a678fd7df234dc",
+    "asarSha256": "958e4c3ec6390e9ed265caefdd7465e84f95f4a81131e350e1354bda1ab0e462",
+    "changedProgramFiles": [
+      "BUILD-IDENTITY.json",
+      "README-WINDOWS.txt",
+      "resources/app.asar"
+    ],
+    "unchangedRuntimeFiles": 75,
+    "runtimeUpgrade": false,
+    "dependencyInstallation": false,
+    "backups": [
+      "C:\\Users\\73115\\Documents\\New project 2\\windows-gui-20261021\\program-backup-v6",
+      "C:\\Users\\73115\\Documents\\New project 2\\windows-gui-20261021\\v8\\program-backup-v7"
+    ],
+    "source": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/windows-client-v8/source",
+    "patch": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/windows-client-v8/delivery/windows-client-fixes.patch",
+    "package": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/windows-client-v8/delivery/BioMind-Studio-1.2.0-rc.20261009.8-client-replacement.zip",
+    "packageSha256": "450fdc571ad901540c0e7d472f453d74ca45c206f6ca055a2010837baafe81d0"
+  },
+  "fixes": [
+    {
+      "problem": "Selecting a restored, unloaded session returned early without loading its native owner.",
+      "change": "When connection is ready and the selected restored thread is disconnected, call existing ensureConnected; existing deduplication preserves exact session identity and prevents replay."
+    },
+    {
+      "problem": "Canonical HTTP history toolCallId/toolName/input fields were passed directly to a renderer expecting Pi AgentMessage id/name/arguments.",
+      "change": "Convert canonical history tool fields once in BioMindBridge.history. Preserve stored messages, exact tool IDs, results and live-event protocol; no legacy fallback path added."
+    }
+  ],
+  "connection": {
+    "status": "PASS",
+    "sshAlias": "yongjiusuo",
+    "host": "ln02",
+    "selectedProfileId": "008af2465ee777fe3a0ac0d1",
+    "localPort": 30142,
+    "discoveredRemotePort": 46625,
+    "originalProfilesUnchanged": true,
+    "credentialPresenceUnchanged": true,
+    "savedThreadReferenceCount": 7,
+    "serviceId": "biomind-c8b9c760c4064a40bdae3a717785e2b3",
+    "instanceId": "7036581efb414b259343c0d1f57a06de",
+    "actualClientSshTunnelVerified": true,
+    "serviceRediscoveredAfterNormalClientRestart": true
+  },
+  "main": {
+    "status": "PASS",
+    "serverId": "biomind-c8b9c760c4064a40bdae3a717785e2b3",
+    "sessionId": "01a145a0-3a8e-703c-913f-a6867ee491f9",
+    "ownerGeneration": "e91ad20b-9040-46d3-8a94-a40f532955ab",
+    "project": "/public/home/liusiqi/03.毕设/benchmarks/BioMind_Windows_Chat_20261017",
+    "loadedBuild": {
+      "buildId": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+      "sourceFingerprint": "68eecde13bf17a56d7d88b521221007fd86c9eb7a8ea3d6952ddf539126c70ba",
+      "dependencyFingerprint": "363ca233976e9593f32d8175fc450e4dfa1a03394ce691e2b8bab610ee8400f4",
+      "manifestSha256": "e9c2ec6f749abdb9eb306017e7530b55218fa049a86e9b1bb8a27271fc08b9c2",
+      "entrypoint": "json",
+      "extensionPath": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12/integrations/pi_runtime/dist/extensions/biomind.js",
+      "extensionSha256": "eab00406e620daecad7aa2155f4c2d4b31ed1399ef503713dc6d86a0ac318e28",
+      "jsonExtensionSha256": "eab00406e620daecad7aa2155f4c2d4b31ed1399ef503713dc6d86a0ac318e28",
+      "nativeExtensionSha256": "512724ab39ba2a007bcd84d761de12537d061ed0ce5e358376d74fae34843231",
+      "releaseRoot": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12",
+      "releaseId": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+      "sourceCommit": "fbe9355632f9447726d8d566ab737c16974c4b83",
+      "piVersion": "0.87.1",
+      "piPatch": "0.87.1+biomind-observer.6; 0.87.1+biomind-observer.6+plugin-guard.1",
+      "piPackageRealpath": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12/integrations/pi_runtime/node_modules/@earendil-works/pi-coding-agent"
+    },
+    "sessionFile": "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.biomind/pi-agent/sessions/--public-home-liusiqi-03.毕设-benchmarks-BioMind_Windows_Chat_20261017--/2026-10-16T16-51-31-103Z_01a145a0-3a8e-703c-913f-a6867ee491f9.jsonl",
+    "sameOwnerAcrossFinalClientRestart": true,
+    "active": false,
+    "admissions": [],
+    "requiredTools": [
+      "cancel_run",
+      "fetch_content",
+      "get_search_content",
+      "inspect_run",
+      "run_command",
+      "wait_run",
+      "web_search"
+    ],
+    "registeredToolCount": 28,
+    "ownerRemainsLoaded": true,
+    "applicationLeftOpen": true
+  },
+  "gui": {
+    "status": "PASS",
+    "checks": {
+      "noConnectingIndicator": true,
+      "composerPresent": true,
+      "modelLabelPresent": true,
+      "historicalBashCardPresent": true,
+      "historicalOutputVisible": true,
+      "noHistoricalPlaceholder": true,
+      "noErrorToast": true
+    },
+    "historicalExitCode": 17,
+    "historicalExitCodeMeaning": "Original intentional exit 17 from the 2026-10-17 test; terminal error styling now correctly reflects that saved result. No command was re-executed.",
+    "startupObservation": "During saved-reference restoration, two SERVER_HTTP_404 notices were observed. Existing references were retained; restoration completed and final GUI has no error toast. No session was deleted to suppress these notices."
+  },
+  "preservation": {
+    "originalFileCount": 33,
+    "originalJsonlCount": 29,
+    "changedOriginalMetadataFiles": [],
+    "missingOriginalFiles": [],
+    "changedOriginalHistoryFiles": [],
+    "addedFiles": {
+      "--public-home-liusiqi-03.毕设-benchmarks-BioMind_Windows_Chat_20261017--/2026-10-16T16-51-31-103Z_01a145a0-3a8e-703c-913f-a6867ee491f9.jsonl.biomind-writer.lock": {
+        "size": 531,
+        "mtimeNs": 1792561091000000000,
+        "inode": 33060459599,
+        "mode": 33152
+      }
+    },
+    "sharedMetadataChanged": [],
+    "allOriginal33FilesMetadataUnchanged": true,
+    "original29JsonlBytesUnchanged": true,
+    "sharedTopLevelMetadataUnchanged": true,
+    "serviceAndRuntimeConfigBytesUnchanged": true,
+    "servicePidAndStartTicksUnchanged": true,
+    "savedConnectionProfilesUnchanged": true,
+    "savedCredentialPresenceUnchanged": true,
+    "userDataBytesUnchangedDuringEachFileReplacement": true,
+    "tasksCancelled": 0,
+    "tasksReplayed": 0,
+    "newPersistentSessionsCreated": 0,
+    "addedWriterLockExplanation": "The original session acquired its native writer lock on explicit GUI resume; the owner and lock remain intact."
+  },
+  "validation": {
+    "tests": {
+      "renderer-tests-recheck": {
+        "status": "PASS",
+        "passed": 45,
+        "evidence": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/windows-client-v8/evidence/renderer-tests-recheck.log"
+      },
+      "bridge-tests": {
+        "status": "PASS",
+        "passed": 37,
+        "evidence": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/windows-client-v8/evidence/bridge-tests.log"
+      }
+    },
+    "totalTestsPassed": 82,
+    "typecheck": "PASS (v7; 92 renderer source files unchanged in v8)",
+    "rendererBuild": "PASS (v7; all 88 compiled files unchanged in v8)",
+    "packageInventoryAndHashes": "PASS",
+    "all75RuntimeFilesComparedBeforeEachReplacement": true,
+    "priorFailedBuild": "Initial isolated build hit the explicitly configured 1 GB V8 heap limit. A 3 GB bounded retry passed; failure log retained."
+  },
+  "constraints": {
+    "serverRedeployed": false,
+    "serverRestarted": false,
+    "sharedConfigurationModified": false,
+    "modelRequestsIssued": 0,
+    "promptRequestsIssued": 0,
+    "realLongTaskAcceptance": "NOT_RUN",
+    "apiKeysFileRead": false,
+    "savedCredentialDecryptionPerformed": false,
+    "gitPushed": false
+  },
+  "git": {
+    "productionHead": "5614747bade62cb7b2e27fb3e58737fb34687770",
+    "productionWorktreeClean": true,
+    "newCommitCreated": false,
+    "reason": "This follow-up delivered isolated Windows client source, patch, package and receipts; the production Git worktree was not modified.",
+    "pushed": false
+  },
+  "unchangedLimitations": [
+    "Real-model N1 and N2 remain PARTIAL; N3 and N4 remain PASS from FOLLOWUP_REPORT.txt.",
+    "The previously recorded initial CLI PI_INITIALIZATION_FAILED root cause remains unresolved; this GUI acceptance does not claim to resolve it.",
+    "Branch/clone capabilities and new model execution were not part of this load-only acceptance."
+  ],
+  "evidence": [
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/FOLLOWUP_REPORT.txt",
+      "sha256": "8085b17b153dd840912f8270b1d08e79dadcaed6a01c46957ea1c278b396dd57"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/evidence/windows-gui-before.json",
+      "sha256": "c49f634be6ac0ca62313ed7ba494cfa7bb7ce9fb6f357cbf9d35612620fcaeeb"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/evidence/windows-gui-history-before-load.json",
+      "sha256": "de343257f95a58e1ec22a5688aea788a6b5a46da76840d3957eaa82cb4396746"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/evidence/windows-gui-owner.json",
+      "sha256": "b7634d01f98b9d8da9c13212db5e5be5ffca916bbd9c49ff266cfd1c1a67ce0b"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/evidence/windows-gui-owner-final.json",
+      "sha256": "6c4845dbbf9b17cf43e0daa9d2e88356deb263d70854d16a4eb51c4294ce2d6a"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/windows-client-v8/evidence/gui-acceptance.json",
+      "sha256": "18ecc0c9c800ad8d4940c482fc67ca7785f59736850b7c0a5c4163e4407fe501"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/windows-client-v8/evidence/local-final.json",
+      "sha256": "98e44e67de7dc7d681fa377ec0b72cf5a5828ba4b1f4fa63fcf1115fb1209bf4"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/windows-client-v8/evidence/local-runtime.json",
+      "sha256": "e0ea6f9dd9913d7b6c0c1a2c604010fa181376e8f8afbe0c80106d484205a84d"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/windows-client-v8/evidence/windows-client-replacement.json",
+      "sha256": "618fc7dae81d057c2aaed5cd62aedb3105c5f1ea5d9c5f34cfb7a74e5d712ef9"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/windows-client-v8/evidence/renderer-tests-recheck.log",
+      "sha256": "7614bd7fac1f6f3de2ed50496f2dceb90071a50489e136cc3f368724f1d29c09"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/windows-client-v8/evidence/bridge-tests.log",
+      "sha256": "f128ec1bed82c9087398576e46b719f9f4b657b9205f321f3cf29ac189f3611c"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/windows-client-v8/evidence/history-before-fix.log",
+      "sha256": "fb023041f5dcde040d527f9e9ffecbabc77236538ad9d111a1dc722f6464e96b"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/windows-client-v8/evidence/history-field-fix.diff",
+      "sha256": "2ce21d89309859237f1a150a9abeb3529415bac204c32ba306dd567c6fd654ef"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/windows-client-v8/evidence/renderer-reuse.json",
+      "sha256": "e593d0c2422e337440c17464afed209a94dccb9e0eab3e51a6d2e6c485496cf8"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/windows-client-v8/evidence/v7-v8-payload-comparison.json",
+      "sha256": "053efed293c75910321388c9bdac066a8ad0ceb37d5b70da4ffe63eaf86040e6"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/windows-client-v8/evidence/windows-dir-verification.json",
+      "sha256": "ffdb6a67be9d32eac4a0eb59ccf487ac1c779637022d34fb9d157206c53006db"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/windows-client-v8/delivery/client-replacement.json",
+      "sha256": "0029f3322ec233dbc93d577fb35ab8cac1a2befbe67f7c46e79d53ddf8a1e78c"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/windows-client-v8/delivery/windows-client-fixes.patch",
+      "sha256": "302ab37694e219c3d81a00985c4a6d8021dfefa751b13989fbc5d838680e74af"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/windows-client-v7/evidence/renderer-resume-fix.diff",
+      "sha256": "f529a07c15a45214a1f085de301dafd1439d597210ec7cda1760f2f7930348cb"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/windows-client-v7/evidence/regression-before-fix-recheck.log",
+      "sha256": "2ce3de3dc448480b4cc97afb704661493ef0051cb219391dd4e8691427a11eaa"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/windows-client-v7/evidence/typecheck.json",
+      "sha256": "660b645967bf9ffd9614c33a695ce5bed25b293afaea3c7b0d0b568e3a643dc2"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/windows-client-v7/evidence/renderer-build-recheck.json",
+      "sha256": "c57bd3ac418a08260c922a6c336045bb8675ee3d07b9060d4c76b9ae23156d26"
+    }
+  ]
+}

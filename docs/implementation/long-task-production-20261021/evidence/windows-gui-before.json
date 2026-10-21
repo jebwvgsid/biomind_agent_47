@@ -1,0 +1,282 @@
+{
+  "checkedAt": "2026-10-21T05:23:16.264413+00:00",
+  "health": {
+    "schema": "BioMindStudioHealthV1",
+    "instanceId": "7036581efb414b259343c0d1f57a06de",
+    "serverId": "biomind-c8b9c760c4064a40bdae3a717785e2b3",
+    "status": "ready",
+    "profile": "biomind",
+    "ownerStatus": "not_checked",
+    "idleStopProtocol": 1
+  },
+  "runningSessionIds": [],
+  "service": {
+    "host": "ln02",
+    "port": 46625,
+    "pid": 4131735,
+    "startTicks": "744701086",
+    "instanceId": "7036581efb414b259343c0d1f57a06de",
+    "startedAt": 1792558301.239546
+  },
+  "serviceConfigSha256": "9c6009593ef9ce506da5efb64f8359342936fb58259dab1597d172a3f215d25e",
+  "runtimeConfigPath": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/delivery/long-task-20261021/94ddac30b6803e12/workbench-shared-web-runtime.json",
+  "runtimeConfigSha256": "e008b2bffc690e51b71fef15d3673c5ab3ecf8b4f405dfea83d41e2d15149129",
+  "agentDir": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020",
+  "sessionRoot": "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.biomind/pi-agent/sessions",
+  "sessionMetadata": {
+    "--public-home-liusiqi-03.毕设--/2026-09-29T02-13-08-912Z_01a0eaef-f2af-758d-a96e-eafd553eb2cc.jsonl": {
+      "size": 226796,
+      "mtimeNs": 1790649666000000000,
+      "inode": 30243372037,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9--/2026-09-29T12-23-18-445Z_01a0ed1e-90aa-736f-850a-9a5141e56d7c.jsonl": {
+      "size": 59695,
+      "mtimeNs": 1790684809000000000,
+      "inode": 33279586320,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9--/2026-09-29T15-59-38-888Z_01a0ede4-a186-72d6-b883-f50a056f65c1.jsonl": {
+      "size": 247678,
+      "mtimeNs": 1790697773000000000,
+      "inode": 33299175440,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9--/2026-10-01T01-06-45-035Z_01a0f4ff-e09c-7117-81a7-2b57d1297660.jsonl": {
+      "size": 107726,
+      "mtimeNs": 1790816902000000000,
+      "inode": 33494318096,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9--/2026-10-01T08-02-03-487Z_01a0f67c-1a5d-779d-8a0b-9542b5a26c76.jsonl": {
+      "size": 204565,
+      "mtimeNs": 1790842249000000000,
+      "inode": 33498483216,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9--/2026-10-02T02-32-09-439Z_01a0fa74-6ddd-74ee-9c48-5191ca0db62e.jsonl": {
+      "size": 526446,
+      "mtimeNs": 1790909269000000000,
+      "inode": 33502196240,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9--/2026-10-08T02-35-31-517Z_01a1195d-ab22-738a-ac04-5d2d38ae6714.jsonl": {
+      "size": 173803,
+      "mtimeNs": 1791427248000000000,
+      "inode": 33583849744,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9--/2026-10-08T08-14-33-997Z_01a11a94-1204-754d-aacb-11f767505919.jsonl": {
+      "size": 435108,
+      "mtimeNs": 1791447680000000000,
+      "inode": 33592239376,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9--/2026-10-08T08-37-16-211Z_01a11aa8-db1d-754d-aacb-11f8499ae20b.jsonl": {
+      "size": 428803,
+      "mtimeNs": 1791449344000000000,
+      "inode": 33592509456,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9--/2026-10-09T03-01-14-880Z_01a11e9b-93f4-713f-8e5c-1b60c4455b2a.jsonl": {
+      "size": 430161,
+      "mtimeNs": 1791528716000000000,
+      "inode": 33611928848,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9--/2026-10-14T06-54-14-808Z_01a13930-b116-757e-accb-7fd7b2ba5792.jsonl": {
+      "size": 81638,
+      "mtimeNs": 1791960869000000000,
+      "inode": 33702521360,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9--/2026-10-14T06-37-41-452Z_01a13921-88c5-71eb-9272-3b230afea464.jsonl": {
+      "size": 97811,
+      "mtimeNs": 1791959917000000000,
+      "inode": 33702329104,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9--/2026-10-14T06-37-41-452Z_01a13921-88c5-71eb-9272-3b230afea464.jsonl.biomind-writer.closed": {
+      "size": 521,
+      "mtimeNs": 1791959921000000000,
+      "inode": 33702329872,
+      "mode": 33152
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9--/2026-10-01T08-19-56-956Z_01a0f68c-7b84-70ca-bfcd-d234aa37b81b.jsonl": {
+      "size": 273751,
+      "mtimeNs": 1790843222000000000,
+      "inode": 30009448474,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9--/2026-10-04T10-47-28-069Z_01a10686-9e44-70a2-8ea2-a6e950ac1cc1.jsonl": {
+      "size": 474473,
+      "mtimeNs": 1791111581000000000,
+      "inode": 30040811546,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9--/2026-10-06T06-57-00-681Z_01a11000-5905-7639-a18b-d94f8a559921.jsonl": {
+      "size": 357844,
+      "mtimeNs": 1791270028000000000,
+      "inode": 30061062170,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9--/2026-10-08T03-11-22-066Z_01a1197e-7bcd-754d-aacb-11f05e3aec7f.jsonl": {
+      "size": 259219,
+      "mtimeNs": 1791429176000000000,
+      "inode": 30088672282,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9--/2026-10-08T07-38-44-663Z_01a11a73-462f-754d-aacb-11f24a566e04.jsonl": {
+      "size": 397148,
+      "mtimeNs": 1791445393000000000,
+      "inode": 30094773274,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9--/2026-10-08T07-44-13-053Z_01a11a78-48dd-754d-aacb-11f5ea096106.jsonl": {
+      "size": 398967,
+      "mtimeNs": 1791446696000000000,
+      "inode": 30095205146,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9--/2026-10-08T14-15-02-595Z_01a11bde-18c1-713f-8e5c-1b5c7e0b5de0.jsonl": {
+      "size": 256607,
+      "mtimeNs": 1791469213000000000,
+      "inode": 30104750106,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9--/2026-10-09T02-54-12-176Z_01a11e95-20af-713f-8e5c-1b5f79630fd5.jsonl": {
+      "size": 356890,
+      "mtimeNs": 1791514819000000000,
+      "inode": 30110803482,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9--/2026-10-14T06-54-14-808Z_01a13930-b116-757e-accb-7fd7b2ba5792.jsonl.biomind-writer.lock": {
+      "size": 500,
+      "mtimeNs": 1791960859000000000,
+      "inode": 30178992922,
+      "mode": 33152
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9-01.三维基因组-BM-3DDNA-LOOP-MEDIUM-020--/2026-09-29T16-23-09-730Z_01a0edfa-28a0-7219-8b14-8c08d9c25648.jsonl": {
+      "size": 240562,
+      "mtimeNs": 1790729676000000000,
+      "inode": 31513479435,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9-01.三维基因组-BM-3DDNA-LOOP-MEDIUM-020--/2026-09-30T01-08-28-645Z_01a0efdb-1961-7099-a5a1-ac7f0f198317.jsonl": {
+      "size": 448193,
+      "mtimeNs": 1790730907000000000,
+      "inode": 31570269707,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-02.测试26.9-01.三维基因组-BM-3DDNA-LOOP-MEDIUM-020--/2026-09-30T12-31-24-347Z_01a0f24c-56b8-74f6-a095-dc1772e9cb15.jsonl": {
+      "size": 180557,
+      "mtimeNs": 1790771647000000000,
+      "inode": 31606984459,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-BioMind_Plugin_Acceptance_20261016--/2026-10-16T14-32-02-547Z_01a14520-88f2-7086-8544-74ee6321289c.jsonl": {
+      "size": 138087,
+      "mtimeNs": 1792161756000000000,
+      "inode": 31716360480,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-BioMind_Plugin_Acceptance_20261016--/2026-10-16T14-32-02-547Z_01a14520-88f2-7086-8544-74ee6321289c.jsonl.biomind-writer.closed": {
+      "size": 564,
+      "mtimeNs": 1792163671000000000,
+      "inode": 30286096699,
+      "mode": 33152
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-BioMind_Windows_Chat_20261017--/2026-10-16T16-51-31-103Z_01a145a0-3a8e-703c-913f-a6867ee491f9.jsonl": {
+      "size": 87566,
+      "mtimeNs": 1792171969000000000,
+      "inode": 32667340623,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-BioMind_Windows_Chat_20261017--/2026-10-16T16-51-31-103Z_01a145a0-3a8e-703c-913f-a6867ee491f9.jsonl.biomind-writer.closed": {
+      "size": 553,
+      "mtimeNs": 1792417282000000000,
+      "inode": 32970276175,
+      "mode": 33152
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-biomind_agent_benchmark-runs--/2026-09-28T02-54-01-236Z_01a0e5ef-020b-76e1-876f-b2119539c687.jsonl": {
+      "size": 168788,
+      "mtimeNs": 1790564393000000000,
+      "inode": 33075037456,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-biomind_agent_benchmark-runs--/2026-09-28T03-20-39-694Z_01a0e607-6606-7685-8d2d-93f4a7491f5a.jsonl": {
+      "size": 176573,
+      "mtimeNs": 1790565907000000000,
+      "inode": 33087918352,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-biomind_agent_benchmark-runs--/2026-09-28T02-29-26-166Z_01a0e5d8-800e-76fc-a8c4-d1fe153b7b62.jsonl": {
+      "size": 70234,
+      "mtimeNs": 1790562685000000000,
+      "inode": 31715444528,
+      "mode": 33188
+    },
+    "--public-home-liusiqi-03.毕设-benchmarks-biomind_agent_benchmark-runs-99.test26.9--/2026-09-28T13-04-51-364Z_01a0e81e-3ea0-7480-9fb1-5979da0ddf7a.jsonl": {
+      "size": 132180,
+      "mtimeNs": 1790602359000000000,
+      "inode": 32120803919,
+      "mode": 33188
+    }
+  },
+  "sharedTopLevelMetadata": {
+    ".biomind-resource-locks": {
+      "size": 8192,
+      "mtimeNs": 1792482473000000000,
+      "inode": 32722476849,
+      "mode": 16832
+    },
+    "tmp": {
+      "size": 8192,
+      "mtimeNs": 1792482473000000000,
+      "inode": 32246912821,
+      "mode": 16877
+    },
+    "models-store.json": {
+      "size": 2380,
+      "mtimeNs": 1792482473000000000,
+      "inode": 36197433407,
+      "mode": 33152
+    },
+    "extensions": {
+      "size": 4096,
+      "mtimeNs": 1792482473000000000,
+      "inode": 34740924217,
+      "mode": 16832
+    },
+    ".biomind-resource-guard.json": {
+      "size": 173,
+      "mtimeNs": 1792482455000000000,
+      "inode": 32497059876,
+      "mode": 33152
+    },
+    "settings.json": {
+      "size": 612,
+      "mtimeNs": 1792482473000000000,
+      "inode": 32497060388,
+      "mode": 33188
+    },
+    "web-search.json": {
+      "size": 108,
+      "mtimeNs": 1792482455000000000,
+      "inode": 32497060644,
+      "mode": 33188
+    },
+    "auth.json": {
+      "size": 95,
+      "mtimeNs": 1792482473000000000,
+      "inode": 32497508900,
+      "mode": 33152
+    },
+    "bin": {
+      "size": 8192,
+      "mtimeNs": 1792482473000000000,
+      "inode": 32318589956,
+      "mode": 16832
+    }
+  }
+}
