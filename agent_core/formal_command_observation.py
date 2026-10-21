@@ -139,7 +139,7 @@ class FormalCommandObserver(InspectionOwnerMixin):
         return True
 
     def _monitor_timing(self, row, now, terminal, owner):
-        started = owner.metrics.get('process_started_at') if owner is not None else None
+        started = owner.metrics.get('process_started_monotonic') if owner is not None else None
         eta = self._deadline_timestamp(row['eta_at']) if row.get('eta_at') else None
         return {'running_elapsed_seconds': round(max(0, time.monotonic() - started), 3) if started is not None else None,
                 'eta_overdue_seconds': round(max(0, now - eta), 3) if eta is not None and not terminal else None}

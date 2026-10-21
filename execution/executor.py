@@ -660,8 +660,9 @@ async def _run_command(
         _ACTIVE_PROCESS_GROUPS.add(process.pid)
         identity = _process_identity(process.pid)
         process._biomind_creation_identity = identity
+        process_started_epoch, process_started_monotonic = time.time(), time.monotonic()
         observation.update(identity, pid=process.pid, process_alive=True, phase='running', process_started_at=started_at,
-                           process_started_epoch=time.time())
+                           process_started_epoch=process_started_epoch, process_started_monotonic=process_started_monotonic)
         if not short_check:
             from execution.resource_evidence import ProcessResourceEvidence
             try:
