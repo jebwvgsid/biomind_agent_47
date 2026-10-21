@@ -138,6 +138,12 @@ class FormalCommandObserver(InspectionOwnerMixin):
             row['eta_at'] = self._iso(started + row['eta_seconds'])
         return True
 
+    def _monitor_timing(self, row, now, terminal):
+        started = self._deadline_timestamp(row['process_started_at']) if row.get('process_started_at') else None
+        eta = self._deadline_timestamp(row['eta_at']) if row.get('eta_at') else None
+        return {'running_elapsed_seconds': round(max(0, now - started), 3) if started is not None else None,
+                'eta_overdue_seconds': round(max(0, now - eta), 3) if eta is not None and not terminal else None}
+
     def prepare_check(self, run_ref, task_id, scope, result, *, next_check_seconds=None, eta_seconds=None, review=True):
         """Issue bounded snapshot evidence, without consuming events or logs."""
         values = {k: v for k, v in {'next_check_seconds': next_check_seconds, 'eta_seconds': eta_seconds}.items() if v is not None}
@@ -166,6 +172,7 @@ class FormalCommandObserver(InspectionOwnerMixin):
         row['snapshots'] = dict(list(snapshots.items())[-16:])
         self._save_monitor(task_id, run_ref, row)
         return {**result, **{k: row.get(k) for k in ('next_check_at', 'eta_at', 'last_check_at')},
+                **self._monitor_timing(row, now, bool(result.get('terminal'))),
                 'check_receipt': {'run_ref': run_ref, 'snapshot_id': snapshot_id, 'scope_key': row['scope_key'],
                                   'event_ids': snapshot['event_ids'], 'review': review},
                 'task_deadline_at': self.task_deadline(task_id, scope)}
@@ -236,6 +243,7 @@ class FormalCommandObserver(InspectionOwnerMixin):
             status = result.get('status', metrics.get('phase', 'unknown'))
             self._schedule_started_monitor(owner, row)
             summary = {'run_ref': ref, 'status': status, 'terminal': terminal,
+                **self._monitor_timing(row, now, terminal),
                 'hostname': socket.gethostname(), 'execution_backend': 'local_owned_process',
                 'exit_code': result.get('exit_code'), 'error': result.get('error'),
                 'owner_available': not owner_unavailable, 'process_alive': metrics.get('process_alive'),

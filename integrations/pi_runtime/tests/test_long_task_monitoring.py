@@ -148,8 +148,13 @@ class LongTaskMonitoring(unittest.IsolatedAsyncioTestCase):
         await asyncio.sleep(.08)
         event = (await self.monitor())['events'][0]
         self.assertEqual(event['reason'], 'eta_due')
+        self.assertGreater(event['eta_overdue_seconds'], 0)
+        overdue = await self.s.call('exec.status', {'run_ref': result['run_ref']})
+        self.assertGreater(overdue['eta_overdue_seconds'], 0)
+        self.assertFalse(overdue['terminal'], 'ETA overrun is a review signal, never a hard timeout')
         checked = await self.s.call('exec.status', {'run_ref': result['run_ref'], 'next_check_seconds': .2, 'eta_seconds': .5})
         self.assertFalse(checked['terminal'])
+        self.assertEqual(checked['eta_overdue_seconds'], 0)
         self.assertEqual(checked['original_deadline_at'], result['original_deadline_at'])
         self.assertIsNotNone(checked['next_check_at'])
         await self.receive(checked)
