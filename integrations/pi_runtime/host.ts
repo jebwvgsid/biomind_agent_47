@@ -29,7 +29,7 @@ import { verifyObserverBytes } from './compatibility-check.js';
 
 
 const runtime = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const extensionPath = path.join(runtime, 'dist/extensions/biomind.js');
+const extensionPath = path.join(runtime, 'dist/biomind-extension.ts');
 const nativeExtensionPath = path.join(runtime, 'dist/biomind-extension.ts');
 type Json = Record<string, any>;
 interface Config extends NativeSessionSelection {

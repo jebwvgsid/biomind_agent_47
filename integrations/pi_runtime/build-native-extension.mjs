@@ -48,3 +48,79 @@ await build({
   target: 'node22',
   banner: { js: 'import { createRequire as _historyRequire } from "node:module"; const require = _historyRequire(import.meta.url);' },
 });
+
+// Pi 0.87.1 supplies its public SDK through virtual modules in bundled mode.
+// Match its Node bundle's lazy Jiti/native dependency boundaries. Preserve each
+// installed module's URL so package assets and variable imports stay in that
+// immutable installed tree when this release is moved.
+const fs = await import('node:fs');
+const { createHash } = await import('node:crypto');
+const { isBuiltin } = await import('node:module');
+const ts = (await import('typescript')).default;
+const hashes = new Map(), relocated = [];
+const hash = bytes => createHash('sha256').update(bytes).digest('hex');
+const relative = file => path.relative(runtime, file).split(path.sep).join('/');
+const external = ['@earendil-works/chord', '@earendil-works/chord/*', '@silvia-odwyer/photon-node', 'bufferutil', 'utf-8-validate', 'kerberos', 'supports-color'];
+const options = {
+  absWorkingDir: runtime, entryPoints: ['dist/host.js'], outfile: 'dist/host.js',
+  allowOverwrite: true, bundle: true, platform: 'node', format: 'esm', target: 'node22.19',
+  define: { PI_BUNDLED_NODE: 'true' }, external, metafile: true,
+  tsconfigRaw: { compilerOptions: {} }, sourcemap: false,
+  banner: { js: 'import { createRequire as __hostRequire } from "node:module"; const require = __hostRequire(import.meta.url);' },
+};
+const result = await build({ ...options, plugins: [{
+  name: 'installed-pi-bundle', setup(b) {
+    b.onResolve({ filter: /^jiti\/static$/ }, () => ({ path: 'jiti/static', namespace: 'pi-jiti' }));
+    b.onLoad({ filter: /.*/, namespace: 'pi-jiti' }, () => ({ loader: 'js', contents:
+      'import {createRequire} from "node:module"; const r=createRequire(new URL("../node_modules/@earendil-works/pi-coding-agent/package.json",import.meta.url)); let impl; export function createJiti(...args){impl??=r("jiti").createJiti;return impl(...args);}' }));
+    b.onResolve({ filter: /^https-proxy-agent$/ }, args => args.kind === 'dynamic-import' ? { path: args.path, namespace: 'pi-proxy' } : undefined);
+    b.onLoad({ filter: /.*/, namespace: 'pi-proxy' }, () => ({ loader: 'js', resolveDir: runtime,
+      contents: 'export { HttpsProxyAgent } from "https-proxy-agent";' }));
+    b.onLoad({ filter: /\.(?:[cm]?js|json)$/ }, async args => {
+      const real = fs.realpathSync(args.path);
+      if (!real.startsWith(runtime + path.sep)) throw Error('BUNDLE_INPUT_OUTSIDE_RUNTIME: ' + relative(real));
+      const bytes = await readFile(args.path); hashes.set(relative(args.path), hash(bytes));
+      let contents = bytes.toString('utf8');
+      if (args.path.endsWith('.json')) return { contents, loader: 'json' };
+      if (contents.includes('import.meta.url') && args.path !== path.join(runtime, 'dist/host.js')) {
+        const source = ts.createSourceFile(args.path, contents, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+        const edits = [];
+        const visit = node => {
+          if (ts.isPropertyAccessExpression(node) && node.name.text === 'url' && ts.isMetaProperty(node.expression)
+              && node.expression.keywordToken === ts.SyntaxKind.ImportKeyword) edits.push([node.getStart(source), node.end]);
+          ts.forEachChild(node, visit);
+        };
+        visit(source);
+        for (const [start, end] of edits.reverse()) contents = contents.slice(0, start) + '__biomindSourceURL' + contents.slice(end);
+        if (edits.length) {
+          const target = path.relative(path.join(runtime, 'dist'), args.path).split(path.sep).join('/');
+          contents = `const __biomindSourceURL=new URL(${JSON.stringify(target)},import.meta.url).href;\n` + contents;
+          relocated.push({ path: relative(args.path), references: edits.length, relativeURL: target });
+        }
+      }
+      return { contents, loader: 'js' };
+    });
+  }
+}] });
+const allowed = name => isBuiltin(name) || external.includes(name) || name.startsWith('@earendil-works/chord/');
+for (const item of Object.values(result.metafile.inputs)) for (const imported of item.imports) {
+  if (imported.external && !allowed(imported.path)) throw Error('UNEXPECTED_BUNDLE_EXTERNAL: ' + imported.path);
+}
+const inputs = Object.keys(result.metafile.inputs).filter(name => !name.startsWith('pi-jiti:') && !name.startsWith('pi-proxy:')).sort()
+  .map(name => { const sha256 = hashes.get(name); if (!sha256) throw Error('UNRECORDED_BUNDLE_INPUT: ' + name); return { path: name, sha256 }; });
+const patchInputs = [];
+for (const filename of ['compat/pi-0.87.1-observer.patch.json','compat/pi-0.87.1-plugin-guard.patch.json']) {
+  const compat = JSON.parse(await readFile(path.join(runtime, filename), 'utf8'));
+  for (const file of compat.files) {
+    const name = 'node_modules/@earendil-works/pi-coding-agent/' + file.path;
+    const actual = hash(await readFile(path.join(runtime, name)));
+    const embedded = inputs.find(item => item.path === name);
+    if (embedded && embedded.sha256 !== actual) throw Error('COMPAT_BUNDLE_INPUT_CHANGED');
+    patchInputs.push({ manifest: filename, runtimeLabel: compat.runtimeLabel, path: name, sha256: actual, embedded: !!embedded });
+  }
+}
+await writeFile(path.join(runtime, 'dist/host-bundle.metafile.json'), JSON.stringify(result.metafile, null, 2) + '\n');
+await writeFile(path.join(runtime, 'dist/host-bundle-inputs.json'), JSON.stringify({ schemaVersion: 1,
+  options, plugins: ['Pi bundled virtual modules', 'lazy public Jiti', 'named proxy export', 'source module URL relocation'],
+  inputs, patchInputs, relocated,
+  artifacts: ['dist/host.js','dist/biomind-extension.ts'].map(name => ({ path: name, sha256: hash(fs.readFileSync(path.join(runtime, name))) })) }, null, 2) + '\n');

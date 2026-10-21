@@ -94,7 +94,7 @@ export function loadBuildIdentity(runtime: string, entrypoint: 'json' | 'native'
   // Full source/artifact/dependency integrity is checked by build and release
   // verification. Workers read bounded metadata and verify only their entry.
   // A published release is never overwritten, including its Python/scripts.
-  for (const name of ['dist/host.js', 'dist/extensions/biomind.js', 'dist/biomind-extension.ts']) {
+  for (const name of ['dist/host.js', 'dist/biomind-extension.ts', 'dist/startup-preload.js', 'dist/startup-diagnostics.js']) {
     const item = manifest.artifacts.find(item => item.path === name);
     if (!item) return fail('ARTIFACT_MISSING');
     hashFile(runtime, item, 'ARTIFACT_MISMATCH');
@@ -103,7 +103,7 @@ export function loadBuildIdentity(runtime: string, entrypoint: 'json' | 'native'
   const piPackage = JSON.parse(fs.readFileSync(path.join(piRoot, 'package.json'), 'utf8'));
   if (piPackage.version !== manifest.compat.version) fail('COMPAT_MISMATCH');
   if (!piRoot.startsWith(fs.realpathSync(path.join(runtime, 'node_modules')) + path.sep)) fail('DEPENDENCY_OUTSIDE_RUNTIME');
-  const json = manifest.artifacts.find(item => item.path === 'dist/extensions/biomind.js');
+  const json = manifest.artifacts.find(item => item.path === 'dist/biomind-extension.ts');
   const native = manifest.artifacts.find(item => item.path === 'dist/biomind-extension.ts');
   if (!json || !native || !manifest.artifacts.some(item => item.path === 'dist/host.js')) return fail('ARTIFACT_MISSING');
   const selected = entrypoint === 'json' ? json : native;
