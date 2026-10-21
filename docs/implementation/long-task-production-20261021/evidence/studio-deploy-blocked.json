@@ -1,6 +1,6 @@
 {
   "status": "BLOCKED",
   "error_type": "RuntimeError",
-  "code": "LIVE_SERVICE_PID_NOT_VERIFIABLE_IN_THIS_EXECUTION_ENVIRONMENT",
-  "at_utc": "2026-10-21T04:38:03.122301+00:00"
+  "code": "studio-rebind-check_REFUSED_SEE_EVIDENCE",
+  "at_utc": "2026-10-21T04:45:42.677536+00:00"
 }

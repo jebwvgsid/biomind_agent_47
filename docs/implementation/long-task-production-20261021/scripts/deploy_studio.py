@@ -85,7 +85,7 @@ def main():
                                                 '--instance', current['instanceId']])
         assert stopped['status'] == 'stopped' and stopped.get('nativeIdleShutdown') is True
         native_stopped = True
-    argv = [SERVICE.parent / 'rebind-managed-services.py', '--service-config', CONFIG,
+    argv = [O / 'scripts/rebind-managed-services.py', '--service-config', CONFIG,
             '--release', release, '--backend-root', config['cwd'],
             '--runtime-output', plan['runtime_output']]
     try:

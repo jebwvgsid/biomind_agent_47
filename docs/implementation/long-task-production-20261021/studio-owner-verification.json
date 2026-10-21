@@ -1,0 +1,667 @@
+{
+  "status": "PASS",
+  "modelRequests": 0,
+  "formalAnalysisRuns": 0,
+  "connected": {
+    "schema": "BioMindConnectedCoreCheckV1",
+    "result": "PASS",
+    "checks": {
+      "serviceReady": true,
+      "healthIdentity": true,
+      "bioMindProfile": true,
+      "nativePackageProtocol": true,
+      "coreBuild": true,
+      "coreCommit": true,
+      "piPinned": true,
+      "mainEntrypoint": true,
+      "agentDir": true
+    },
+    "serverId": "biomind-c8b9c760c4064a40bdae3a717785e2b3",
+    "instanceId": "211e4ce49c8545f8b889396fabb6c8f3",
+    "core": {
+      "buildId": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+      "sourceCommit": "fbe9355632f9447726d8d566ab737c16974c4b83",
+      "releaseRoot": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12",
+      "piVersion": "0.87.1",
+      "agentDir": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020",
+      "cwd": "/public/home/liusiqi/03.毕设/benchmarks/.biomind-production-load-check-20261021"
+    },
+    "ownerMainExecution": "NOT_RUN",
+    "realModel": "NOT_RUN",
+    "windowsInteraction": "NOT_RUN",
+    "readOnly": true,
+    "automaticReplay": false
+  },
+  "testProject": "/public/home/liusiqi/03.毕设/benchmarks/.biomind-production-load-check-20261021",
+  "testSessionRemoved": true,
+  "new": {
+    "success": true,
+    "sessionId": "01a15ccc-c71c-70cb-ac7d-51f9d1e61b25",
+    "data": null,
+    "profile": "biomind",
+    "serverId": "biomind-c8b9c760c4064a40bdae3a717785e2b3",
+    "ownerGeneration": "cbd6bd3f-aa97-423a-98fc-9ebc67a1a014",
+    "project": "/public/home/liusiqi/03.毕设/benchmarks/.biomind-production-load-check-20261021",
+    "protocolVersion": 1,
+    "capabilities": {
+      "sessionResume": "startup_exact_id_or_file",
+      "continueSession": "explicit_same_project",
+      "sessionSwitch": "restart_with_explicit_session",
+      "temporarySession": "explicit",
+      "persistenceOwner": "Pi SessionManager",
+      "jobOwnerTakeover": "not_implied_by_session_resume",
+      "images": true,
+      "imageInputEnabled": false,
+      "getState": true,
+      "admissionReceipts": "same_owner_bounded_no_eviction",
+      "maxAdmissionReceipts": 1024,
+      "automaticReplay": false,
+      "clearQueue": false,
+      "getModels": {
+        "supported": true,
+        "available": true,
+        "scope": "session"
+      },
+      "setModel": {
+        "supported": true,
+        "available": true,
+        "scope": "session"
+      },
+      "setThinking": {
+        "supported": true,
+        "available": true,
+        "scope": "session"
+      },
+      "getTools": {
+        "supported": true,
+        "available": true,
+        "scope": "session"
+      },
+      "setTools": {
+        "supported": true,
+        "available": true,
+        "scope": "session"
+      },
+      "getCommands": {
+        "supported": true,
+        "available": true,
+        "scope": "session"
+      },
+      "instructions": {
+        "supported": true,
+        "available": true,
+        "scope": "target/project"
+      },
+      "promptSnapshot": {
+        "supported": true,
+        "available": true,
+        "scope": "session"
+      },
+      "resources": {
+        "supported": true,
+        "available": true,
+        "scope": "target/project"
+      },
+      "setSkill": {
+        "supported": true,
+        "available": true,
+        "scope": "target/project"
+      },
+      "autoCompaction": {
+        "supported": true,
+        "available": true,
+        "scope": "session"
+      },
+      "compact": {
+        "supported": true,
+        "available": true,
+        "scope": "operation"
+      },
+      "reload": {
+        "supported": true,
+        "available": true,
+        "scope": "owner"
+      },
+      "memorySettings": {
+        "supported": true,
+        "available": true,
+        "scope": "session"
+      },
+      "maxPendingInputs": 16,
+      "historyExport": false,
+      "settings": [
+        "history_enabled",
+        "memory_mode"
+      ],
+      "serviceDetach": false,
+      "remoteServerBinding": false
+    },
+    "inputLimits": {
+      "acceptedMimeTypes": [
+        "image/png",
+        "image/jpeg"
+      ],
+      "animatedImages": false,
+      "maxCount": 4,
+      "maxImageBytes": 2097152,
+      "maxTotalBytes": 6291456,
+      "maxFrameBytes": 10485760,
+      "maxDimension": 8192,
+      "maxPixels": 16777216,
+      "maxOutputDimension": 2000,
+      "decoderTimeoutMs": 8000,
+      "decoderHeapMiB": 96,
+      "decoderWasmPages": 4096
+    },
+    "model": {
+      "provider": "deepseek",
+      "id": "deepseek-v4-flash",
+      "input": [
+        "text"
+      ],
+      "blockImages": false,
+      "autoResize": true,
+      "providerInputLimits": null,
+      "modelId": "deepseek-v4-flash"
+    }
+  },
+  "state": {
+    "type": "state",
+    "id": "ead02869-a939-4098-a596-5de786d176ca",
+    "resourceOwnership": {
+      "protocol": "linux_flock_v1",
+      "mode": "shared",
+      "roots": [
+        "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/git",
+        "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/npm",
+        "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/tmp/extensions",
+        "/public/home/liusiqi/03.毕设/benchmarks/.biomind-production-load-check-20261021/.pi/git",
+        "/public/home/liusiqi/03.毕设/benchmarks/.biomind-production-load-check-20261021/.pi/npm"
+      ],
+      "releaseOn": "last_actual_process_exit"
+    },
+    "loaded_build": {
+      "buildId": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+      "sourceFingerprint": "68eecde13bf17a56d7d88b521221007fd86c9eb7a8ea3d6952ddf539126c70ba",
+      "dependencyFingerprint": "363ca233976e9593f32d8175fc450e4dfa1a03394ce691e2b8bab610ee8400f4",
+      "manifestSha256": "e9c2ec6f749abdb9eb306017e7530b55218fa049a86e9b1bb8a27271fc08b9c2",
+      "entrypoint": "json",
+      "extensionPath": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12/integrations/pi_runtime/dist/extensions/biomind.js",
+      "extensionSha256": "eab00406e620daecad7aa2155f4c2d4b31ed1399ef503713dc6d86a0ac318e28",
+      "jsonExtensionSha256": "eab00406e620daecad7aa2155f4c2d4b31ed1399ef503713dc6d86a0ac318e28",
+      "nativeExtensionSha256": "512724ab39ba2a007bcd84d761de12537d061ed0ce5e358376d74fae34843231",
+      "releaseRoot": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12",
+      "releaseId": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+      "sourceCommit": "fbe9355632f9447726d8d566ab737c16974c4b83",
+      "piVersion": "0.87.1",
+      "piPatch": "0.87.1+biomind-observer.6; 0.87.1+biomind-observer.6+plugin-guard.1",
+      "piPackageRealpath": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12/integrations/pi_runtime/node_modules/@earendil-works/pi-coding-agent"
+    },
+    "build_id": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+    "python": {
+      "path": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python3.12",
+      "source": "config"
+    },
+    "execution_profile": "native",
+    "profile_source": "product-default",
+    "extension_sha256": "eab00406e620daecad7aa2155f4c2d4b31ed1399ef503713dc6d86a0ac318e28",
+    "sessionId": "01a15ccc-c71c-70cb-ac7d-51f9d1e61b25",
+    "sessionFile": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/sessions/--public-home-liusiqi-03.毕设-benchmarks-.biomind-production-load-check-20261021--/2026-10-21T04-51-26-621Z_01a15ccc-c71c-70cb-ac7d-51f9d1e61b25.jsonl",
+    "sessionPersistence": "persistent",
+    "sessionSaved": false,
+    "writerOwnership": {
+      "supported": true,
+      "acquired": true,
+      "ownerGeneration": "cbd6bd3f-aa97-423a-98fc-9ebc67a1a014",
+      "pid": 4124740,
+      "scope": "session",
+      "temporary": false
+    },
+    "ownerGeneration": "cbd6bd3f-aa97-423a-98fc-9ebc67a1a014",
+    "cwd": "/public/home/liusiqi/03.毕设/benchmarks/.biomind-production-load-check-20261021",
+    "active": false,
+    "activeRequestId": null,
+    "controlBusy": null,
+    "model": {
+      "provider": "deepseek",
+      "id": "deepseek-v4-flash",
+      "input": [
+        "text"
+      ],
+      "blockImages": false,
+      "autoResize": true,
+      "providerInputLimits": null
+    },
+    "pendingUI": [],
+    "admissions": [],
+    "queue": {
+      "pendingAssociationCount": 0,
+      "actualHasQueuedMessages": false,
+      "nativeDisplayCounts": {
+        "steering": 0,
+        "followUp": 0,
+        "limitation": "Pi 0.87.1 may retain consumed empty-text entries; these are not execution queue counts"
+      },
+      "associations": "bounded_exact_content_only; transformed_unmatched_inputs_unknown; no_replay"
+    },
+    "jobs": {
+      "status": "unknown",
+      "reason": "use_job_list_or_status"
+    },
+    "output": {
+      "pendingBytes": 0,
+      "pendingCount": 0,
+      "dropped": 0,
+      "resyncRequired": false,
+      "resyncPending": false,
+      "detached": false,
+      "callbackErrors": 0
+    },
+    "safeToRelease": false,
+    "packagesIdle": false,
+    "packagesQuiescing": false,
+    "pendingDomainControlCount": 0,
+    "thinkingLevel": "off",
+    "availableThinkingLevels": [
+      "off",
+      "high"
+    ],
+    "autoCompactionEnabled": true,
+    "autoCompactionScope": "target_default",
+    "capabilities": {
+      "sessionResume": "startup_exact_id_or_file",
+      "continueSession": "explicit_same_project",
+      "sessionSwitch": "restart_with_explicit_session",
+      "temporarySession": "explicit",
+      "persistenceOwner": "Pi SessionManager",
+      "jobOwnerTakeover": "not_implied_by_session_resume",
+      "images": true,
+      "imageInputEnabled": false,
+      "getState": true,
+      "admissionReceipts": "same_owner_bounded_no_eviction",
+      "maxAdmissionReceipts": 1024,
+      "automaticReplay": false,
+      "clearQueue": false,
+      "getModels": {
+        "supported": true,
+        "available": true,
+        "scope": "session"
+      },
+      "setModel": {
+        "supported": true,
+        "available": true,
+        "scope": "session"
+      },
+      "setThinking": {
+        "supported": true,
+        "available": true,
+        "scope": "session"
+      },
+      "getTools": {
+        "supported": true,
+        "available": true,
+        "scope": "session"
+      },
+      "setTools": {
+        "supported": true,
+        "available": true,
+        "scope": "session"
+      },
+      "getCommands": {
+        "supported": true,
+        "available": true,
+        "scope": "session"
+      },
+      "instructions": {
+        "supported": true,
+        "available": true,
+        "scope": "target/project"
+      },
+      "promptSnapshot": {
+        "supported": true,
+        "available": true,
+        "scope": "session"
+      },
+      "resources": {
+        "supported": true,
+        "available": true,
+        "scope": "target/project"
+      },
+      "setSkill": {
+        "supported": true,
+        "available": true,
+        "scope": "target/project"
+      },
+      "autoCompaction": {
+        "supported": true,
+        "available": true,
+        "scope": "session"
+      },
+      "compact": {
+        "supported": true,
+        "available": true,
+        "scope": "operation"
+      },
+      "reload": {
+        "supported": true,
+        "available": true,
+        "scope": "owner"
+      },
+      "memorySettings": {
+        "supported": true,
+        "available": true,
+        "scope": "session"
+      },
+      "maxPendingInputs": 16,
+      "historyExport": false,
+      "settings": [
+        "history_enabled",
+        "memory_mode"
+      ],
+      "serviceDetach": false,
+      "remoteServerBinding": false
+    },
+    "memory": {
+      "history_enabled": false,
+      "memory_mode": "ask",
+      "revision": "826fc4e2d9e21bff6c4bdddb1f329332d1b534bff47b936bfa818c6ceaa7c393"
+    },
+    "profile": "biomind",
+    "serverId": "biomind-c8b9c760c4064a40bdae3a717785e2b3",
+    "project": "/public/home/liusiqi/03.毕设/benchmarks/.biomind-production-load-check-20261021",
+    "protocolVersion": 1,
+    "inputLimits": {
+      "acceptedMimeTypes": [
+        "image/png",
+        "image/jpeg"
+      ],
+      "animatedImages": false,
+      "maxCount": 4,
+      "maxImageBytes": 2097152,
+      "maxTotalBytes": 6291456,
+      "maxFrameBytes": 10485760,
+      "maxDimension": 8192,
+      "maxPixels": 16777216,
+      "maxOutputDimension": 2000,
+      "decoderTimeoutMs": 8000,
+      "decoderHeapMiB": 96,
+      "decoderWasmPages": 4096
+    },
+    "liveSnapshot": {
+      "sessionId": "01a15ccc-c71c-70cb-ac7d-51f9d1e61b25",
+      "ownerGeneration": "cbd6bd3f-aa97-423a-98fc-9ebc67a1a014",
+      "sequence": 2,
+      "active": false,
+      "truncated": false,
+      "events": []
+    },
+    "isStreaming": false,
+    "isPromptRunning": false,
+    "isBashRunning": false,
+    "isCompacting": false,
+    "pendingMessageCount": 0,
+    "displayPendingUI": [],
+    "extensionStatuses": [],
+    "extensionWidgets": []
+  },
+  "tools": {
+    "type": "tools_result",
+    "data": {
+      "registered": [
+        {
+          "name": "read",
+          "description": "Read the contents of a file. Supports text files and images (jpg, png, gif, webp, bmp). Images are sent as attachments. For text files, output is truncated to 2000 lines or 50KB (whichever is hit first). Use offset/limit for large files. When you need the full file, continue with offset until complete."
+        },
+        {
+          "name": "bash",
+          "description": "Execute a bash command in the current working directory. Returns stdout and stderr. Output is truncated to last 2000 lines or 50KB (whichever is hit first). If truncated, full output is saved to a temp file. Optionally provide a timeout in seconds. Omitted timeout uses a finite host default (60 seconds unless configured). This synchronous tool blocks Main until completion; use run_command for long, uncertain or resource-heavy work so it can be inspected and cancelled. The timeout terminates execution; it is not a review interval. Explicit longer budgets are preserved. Use binding_ref for selected scientific software; select_environment does not globally activate anything."
+        },
+        {
+          "name": "edit",
+          "description": "Edit a single file using exact text replacement. Every edits[].oldText must match a unique, non-overlapping region of the original file. If two changes affect the same block or nearby lines, merge them into one edit instead of emitting overlapping edits. Do not include large unchanged regions just to connect distant changes."
+        },
+        {
+          "name": "write",
+          "description": "Write content to a file. Creates the file if it doesn't exist, overwrites if it does. Automatically creates parent directories."
+        },
+        {
+          "name": "grep",
+          "description": "Search file contents for a pattern. Returns matching lines with file paths and line numbers. Respects .gitignore. Output is truncated to 100 matches or 50KB (whichever is hit first). Long lines are truncated to 500 chars."
+        },
+        {
+          "name": "find",
+          "description": "Search for files by glob pattern. Returns matching file paths relative to the search directory. Respects .gitignore. Output is truncated to 1000 results or 50KB (whichever is hit first)."
+        },
+        {
+          "name": "ls",
+          "description": "List directory contents. Returns entries sorted alphabetically, with '/' suffix for directories. Includes dotfiles. Output is truncated to 500 entries or 50KB (whichever is hit first)."
+        },
+        {
+          "name": "file_stat",
+          "description": "按当前账号权限核对文件路径与元数据。"
+        },
+        {
+          "name": "ask_user",
+          "description": "询问关键选择并等待真实用户回答；method=editor 可请求多行编辑回答，不猜测答案。"
+        },
+        {
+          "name": "update_plan",
+          "description": "可选的当前分支工作笔记，不是执行许可或必须产物合同。"
+        },
+        {
+          "name": "select_environment",
+          "description": "需要外部生信软件时优先调用，先查登记再定位；可一次查询多个 tools。返回 AVAILABLE/UNKNOWN、冲突/失效/注册源错误及真实来源和 binding_ref；未命中不表示服务器未安装。已有适用登记不重复探测。mode=locate 仅在明确 prefix 或已知环境清单做有界定位，单次15秒、request累计60秒，同查询复用结果。命中后 run_command 使用绑定；环境相关 bash 必须显式传 binding_ref，不能依赖全局激活。"
+        },
+        {
+          "name": "register_environment",
+          "description": "先用 probe_command 验证确切入口再登记已有软件；verification_runs 关联当前请求真实探针回执及辨识输出。写入与查询相同权威，幂等保留多环境。安装工具已自动登记则不重复调用。本工具不执行安装或探针；无 verification_runs 时仅保存声明，source_note/evidence_refs 不能升级为验证事实。"
+        },
+        {
+          "name": "inspect_run",
+          "description": "读取已有 run_ref 的快照与新增日志；结果入会话后由宿主确认收讫，Main仍须据证据判断和核验产物；eta_overdue_seconds>0 表示仍运行且已超过预测，须核对实际参数和吞吐后更新预测，不能把超时差异直接归因为开销。eta_seconds 是从本次查询起的预计剩余秒数，next_check_seconds 是下一复查延迟；二者都不延长硬截止。失败作业不等于查询失败。按需用 record=command 读取已记录命令/cwd/环境引用，record=script 和 script_index 读取实际冻结脚本；offset/max_chars 分页，遵守当前请求范围。不启动或重跑计算。"
+        },
+        {
+          "name": "wait_run",
+          "description": "最多等待 max_wait_ms（0–30000毫秒）后归还控制权；到期不终止计算、不改变作业或任务硬截止。使用返回的同一 run_ref 继续检查；界面心跳不需要模型轮询。"
+        },
+        {
+          "name": "read_run_log",
+          "description": "分页读取真实日志；游标是服务返回的原始不透明字符串，完整日志留在原文件。"
+        },
+        {
+          "name": "cancel_run",
+          "description": "请求取消指定 run_ref 的本地进程组，并在有界收尾内核实；只有 terminal=true 且 cleanup_confirmed=true 才能报告已停止，否则保留停止未确认。"
+        },
+        {
+          "name": "memory_search",
+          "description": "按当前历史读取开关和项目 scope 查询长期记忆。"
+        },
+        {
+          "name": "memory_read",
+          "description": "读取可用来源；关闭历史时不能读取旧项目历史。"
+        },
+        {
+          "name": "probe_command",
+          "description": "有时限的本地程序核查；保留观察取消，不提供强制只读或网络隔离。默认15秒/64 KiB输出；用户明确检查或QC可用timeout_ms，不设置environment_diagnostic。仅环境故障定点诊断设environment_diagnostic=true，单次15秒、每request累计30秒；正式计算和安装不受诊断短预算影响。"
+        },
+        {
+          "name": "run_command",
+          "description": "快速启动本地托管长任务并返回稳定 run_ref；timeout_ms是执行硬预算，不能用复查间隔代替。到复查点/终态由后台事件在本会话可执行边界触发Main；保留持久日志、观察、取消与重连对账，无 BioMind 目录或命令审批。支持 shell 或 argv，计划可选。显式 binding_ref/env_name 使用准确目标；否则复用本请求和 scope 的唯一适用绑定，多绑定须明确指定。无绑定且无运行时要求时保持宿主执行。"
+        },
+        {
+          "name": "install_tool",
+          "description": "提出安装方案并等待原意图确认。验证必须检查目标 prefix 内的准确工具；结构化 executable/python_import/r_package 检查不能由任意 echo 成功替代。安装完成但登记失败时只恢复登记。"
+        },
+        {
+          "name": "memory_write",
+          "description": "按原策略写 Wiki 或显式偏好；不把偏好当安装授权。"
+        },
+        {
+          "name": "maintenance_submit",
+          "description": "仅在已启用的记忆维护窗口提交当前证据支持的patch；空operations表示无可保存事实。"
+        },
+        {
+          "name": "web_search",
+          "description": "Search the web and return source-linked results or provider answers. Full results are stored for retrieval with get_search_content using the returned responseId. For research, prefer queries with 2-4 varied angles over a single query. Omit provider to use the configured default; set it only to override that."
+        },
+        {
+          "name": "source_check",
+          "description": "Gather web sources for a claim and return a bounded machine-readable research artifact with exact passage citations for manual review."
+        },
+        {
+          "name": "fetch_content",
+          "description": "Fetch URL(s). Available modes: readable (default): extract readable content as markdown; raw: return the exact textual body using direct HTTP only; answer: answer a prompt using only fetched content. Direct image URLs return resized image content when supported by the selected mode. Supports YouTube transcripts, GitHub repositories, PDFs, and local videos when supported by the selected mode. Full original content is stored for retrieval with get_search_content."
+        },
+        {
+          "name": "get_search_content",
+          "description": "Retrieve bounded pages of full stored search results or fetched content, or find matching passages, from a previous web_search, source_check, or fetch_content call."
+        },
+        {
+          "name": "web_enable",
+          "description": "Enable configured pi-web-access tools for web research and content retrieval. Does not search or fetch. Enabled tools are available on the next model request; disabled capabilities remain unavailable."
+        }
+      ],
+      "allowed": [
+        "ask_user",
+        "bash",
+        "cancel_run",
+        "edit",
+        "file_stat",
+        "find",
+        "grep",
+        "inspect_run",
+        "install_tool",
+        "ls",
+        "memory_read",
+        "memory_search",
+        "memory_write",
+        "probe_command",
+        "read",
+        "read_run_log",
+        "register_environment",
+        "run_command",
+        "select_environment",
+        "update_plan",
+        "wait_run",
+        "write",
+        "web_search",
+        "source_check",
+        "fetch_content",
+        "get_search_content",
+        "web_enable"
+      ],
+      "denied": [],
+      "pluginExecution": "native_account_permissions",
+      "selected": null,
+      "effective": [
+        "ask_user",
+        "bash",
+        "cancel_run",
+        "edit",
+        "file_stat",
+        "find",
+        "grep",
+        "inspect_run",
+        "install_tool",
+        "ls",
+        "memory_read",
+        "memory_search",
+        "memory_write",
+        "probe_command",
+        "read",
+        "read_run_log",
+        "register_environment",
+        "run_command",
+        "select_environment",
+        "update_plan",
+        "wait_run",
+        "write",
+        "web_search",
+        "source_check",
+        "fetch_content",
+        "get_search_content"
+      ],
+      "scope": "session"
+    },
+    "id": "f0a2667c-c224-4340-a91e-58ffc6ef4c52",
+    "resourceOwnership": {
+      "protocol": "linux_flock_v1",
+      "mode": "shared",
+      "roots": [
+        "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/git",
+        "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/npm",
+        "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/tmp/extensions",
+        "/public/home/liusiqi/03.毕设/benchmarks/.biomind-production-load-check-20261021/.pi/git",
+        "/public/home/liusiqi/03.毕设/benchmarks/.biomind-production-load-check-20261021/.pi/npm"
+      ],
+      "releaseOn": "last_actual_process_exit"
+    },
+    "loaded_build": {
+      "buildId": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+      "sourceFingerprint": "68eecde13bf17a56d7d88b521221007fd86c9eb7a8ea3d6952ddf539126c70ba",
+      "dependencyFingerprint": "363ca233976e9593f32d8175fc450e4dfa1a03394ce691e2b8bab610ee8400f4",
+      "manifestSha256": "e9c2ec6f749abdb9eb306017e7530b55218fa049a86e9b1bb8a27271fc08b9c2",
+      "entrypoint": "json",
+      "extensionPath": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12/integrations/pi_runtime/dist/extensions/biomind.js",
+      "extensionSha256": "eab00406e620daecad7aa2155f4c2d4b31ed1399ef503713dc6d86a0ac318e28",
+      "jsonExtensionSha256": "eab00406e620daecad7aa2155f4c2d4b31ed1399ef503713dc6d86a0ac318e28",
+      "nativeExtensionSha256": "512724ab39ba2a007bcd84d761de12537d061ed0ce5e358376d74fae34843231",
+      "releaseRoot": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12",
+      "releaseId": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+      "sourceCommit": "fbe9355632f9447726d8d566ab737c16974c4b83",
+      "piVersion": "0.87.1",
+      "piPatch": "0.87.1+biomind-observer.6; 0.87.1+biomind-observer.6+plugin-guard.1",
+      "piPackageRealpath": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12/integrations/pi_runtime/node_modules/@earendil-works/pi-coding-agent"
+    },
+    "build_id": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+    "python": {
+      "path": "/public/home/liusiqi/anaconda3/envs/biomind/bin/python3.12",
+      "source": "config"
+    },
+    "execution_profile": "native",
+    "profile_source": "product-default",
+    "extension_sha256": "eab00406e620daecad7aa2155f4c2d4b31ed1399ef503713dc6d86a0ac318e28",
+    "sessionId": "01a15ccc-c71c-70cb-ac7d-51f9d1e61b25",
+    "sessionFile": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020/sessions/--public-home-liusiqi-03.毕设-benchmarks-.biomind-production-load-check-20261021--/2026-10-21T04-51-26-621Z_01a15ccc-c71c-70cb-ac7d-51f9d1e61b25.jsonl",
+    "sessionPersistence": "persistent",
+    "sessionSaved": false,
+    "writerOwnership": {
+      "supported": true,
+      "acquired": true,
+      "ownerGeneration": "cbd6bd3f-aa97-423a-98fc-9ebc67a1a014",
+      "pid": 4124740,
+      "scope": "session",
+      "temporary": false
+    },
+    "ownerGeneration": "cbd6bd3f-aa97-423a-98fc-9ebc67a1a014"
+  },
+  "requiredTools": [
+    "cancel_run",
+    "fetch_content",
+    "get_search_content",
+    "inspect_run",
+    "run_command",
+    "wait_run",
+    "web_search"
+  ],
+  "archivedTestProject": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/evidence/studio-load-project",
+  "finalDiscovery": {
+    "schema": "BioMindStudioServiceV1",
+    "serviceId": "biomind-studio",
+    "serverId": "biomind-c8b9c760c4064a40bdae3a717785e2b3",
+    "status": "ready",
+    "serviceMode": "local",
+    "transport": "direct",
+    "user": "liusiqi",
+    "automaticReplay": false,
+    "desktopDetach": true,
+    "instanceId": "7036581efb414b259343c0d1f57a06de",
+    "jobName": "bm-biomind-studio-7036581efb41",
+    "host": "ln02",
+    "port": 46625,
+    "startedAt": 1792558301.239546,
+    "heartbeatAt": 1792558337.6491454,
+    "remoteAddress": "127.0.0.1",
+    "tunnelMode": "ssh-to-service-host"
+  }
+}

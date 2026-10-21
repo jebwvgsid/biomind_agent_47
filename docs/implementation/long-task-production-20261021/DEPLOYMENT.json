@@ -1,6 +1,6 @@
 {
   "schema": "BioMindLongTaskProductionDeploymentV1",
-  "at_utc": "2026-10-21T04:39:38.638947+00:00",
+  "at_utc": "2026-10-21T04:52:18.904727+00:00",
   "sourceCommit": "fbe9355632f9447726d8d566ab737c16974c4b83",
   "buildId": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
   "releaseRoot": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12",
@@ -45,22 +45,49 @@
     }
   },
   "studio": {
-    "entrypoint": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-d0cf979998965759/bio_agents.py",
-    "runtimeConfig": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/delivery/submission-20261020/d0cf979998965759/workbench-shared-web-runtime.json",
-    "configUsesNewBuild": false,
-    "deploymentReceipt": null,
-    "ownerVerificationStatus": "NOT_RUN",
+    "entrypoint": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12/bio_agents.py",
+    "runtimeConfig": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/delivery/long-task-20261021/94ddac30b6803e12/workbench-shared-web-runtime.json",
+    "configUsesNewBuild": true,
+    "deploymentReceipt": {
+      "status": "DEPLOYED",
+      "release": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12",
+      "build_id": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+      "old_entrypoint": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-d0cf979998965759/bio_agents.py",
+      "agentDir": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020",
+      "sessionRoot": "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.biomind/pi-agent/sessions",
+      "runtime_output": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/delivery/long-task-20261021/94ddac30b6803e12/workbench-shared-web-runtime.json",
+      "native_idle_stop_required": true,
+      "discovery": {
+        "schema": "BioMindStudioServiceV1",
+        "serviceId": "biomind-studio",
+        "serverId": "biomind-c8b9c760c4064a40bdae3a717785e2b3",
+        "status": "ready",
+        "serviceMode": "local",
+        "transport": "direct",
+        "user": "liusiqi",
+        "automaticReplay": false,
+        "desktopDetach": true,
+        "instanceId": "211e4ce49c8545f8b889396fabb6c8f3",
+        "jobName": "bm-biomind-studio-211e4ce49c85",
+        "host": "ln02",
+        "port": 39913,
+        "startedAt": 1792558206.6597922,
+        "heartbeatAt": 1792558251.307981,
+        "remoteAddress": "127.0.0.1",
+        "tunnelMode": "ssh-to-service-host"
+      },
+      "source_commit": "fbe9355632f9447726d8d566ab737c16974c4b83",
+      "native_idle_shutdown": true,
+      "at_utc": "2026-10-21T04:50:53.001487+00:00",
+      "user_tasks_cancelled": false,
+      "settings_changed": false,
+      "rebind_receipt": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/studio-rebind.json"
+    },
+    "ownerVerificationStatus": "PASS",
     "hostPreflight": {
-      "checkedAt": "2026-10-21T04:32:04.931398+00:00",
-      "userApprovedHostAccess": true,
-      "productionMutated": false,
-      "status": "BLOCKED",
-      "code": "LIVE_SERVICE_PID_NOT_VERIFIABLE_IN_THIS_EXECUTION_ENVIRONMENT",
-      "localNetworkSocket": {
-        "status": "BLOCKED",
-        "errno": 1,
-        "error_type": "PermissionError"
-      }
+      "status": "PASS",
+      "host": "ln02",
+      "checkedAt": "2026-10-21T04:50:04.026446+00:00"
     },
     "hostAccessAfterUIChange": {
       "checkedAt": "2026-10-21T04:35:05.573545+00:00",
@@ -108,5 +135,5 @@
   },
   "remotePushed": false,
   "windowsGUI": "NOT_RUN",
-  "status": "PARTIAL_DEPLOYMENT"
+  "status": "DEPLOYED_AND_VERIFIED"
 }
