@@ -112,6 +112,43 @@ async function launch(steps: any[] | ((cwd: string) => any[] | Promise<any[]>), 
     } };
 }
 
+test('JSON host observes autonomous Pi checks as active turns, emits final results and forwards existing Studio status frames', async () => {
+  const h = await launch(cwd => [
+    tool('managed-host-job', 'run_command', { argv: ['/public/home/liusiqi/anaconda3/envs/biomind/bin/python', '-u', '-c',
+      'import time;print("host-worker-started",flush=True);time.sleep(21)'], workdir: cwd, timeout_ms: 40000, next_check_seconds: .1 }),
+    text('作业已启动，等待自动复查。'),
+    { ...tool('host-running-check', 'inspect_run', { run_ref: 'from-real-receipt' }), resolve_last_run_ref: true },
+    { ...text('仍在处理中，保留原预算。'), delay_ms: 1500 },
+    { ...tool('host-terminal-check', 'inspect_run', { run_ref: 'from-real-receipt' }), resolve_last_run_ref: true },
+    text('计算结束，产物尚未进行科学验收。'),
+  ], false, () => ({ executionProfile: 'native' }));
+  try {
+    await h.wait(frame => frame.type === 'ready', 60000);
+    h.send({ type: 'prompt', id: 'one-user-input', text: '运行夹具并在后台复查同一作业。' });
+    const initial = await h.wait(frame => frame.type === 'result' && frame.requestId === 'one-user-input', 30000);
+    assert.equal(initial.runtime_status, 'completed');
+    await h.wait(frame => frame.type === 'event' && frame.event.type === 'tool_execution_start'
+      && frame.event.toolCallId === 'host-running-check', 30000);
+    h.send({ type: 'get_state', id: 'autonomous-active' });
+    assert.equal((await h.wait(frame => frame.type === 'state' && frame.id === 'autonomous-active')).active, true);
+    const running = await h.wait(frame => frame.type === 'result' && frame.trigger === 'extension'
+      && frame.model_conclusion.includes('仍在处理中'));
+    assert.equal(running.runtime_status, 'completed'); assert.equal(running.scientific_success, null);
+    assert.equal(running.execution_facts[0].terminal, false);
+    h.send({ type: 'get_state', id: 'autonomous-idle' });
+    assert.equal((await h.wait(frame => frame.type === 'state' && frame.id === 'autonomous-idle')).active, false);
+    const terminal = await h.wait(frame => frame.type === 'result' && frame.trigger === 'extension'
+      && frame.model_conclusion.includes('计算结束'), 30000);
+    assert.equal(terminal.execution_facts[0].terminal, true); assert.equal(terminal.scientific_success, null);
+    assert.equal(terminal.requestId, running.requestId, 'background checks retain the same business request');
+    const events = h.frames.filter(frame => frame.type === 'event').map(frame => frame.event);
+    assert.equal(events.filter(event => event.type === 'message_start' && event.message.role === 'user').length, 1);
+    assert.equal(events.filter(event => event.type === 'tool_execution_start' && event.toolName === 'run_command').length, 1);
+    assert(h.frames.some(frame => frame.type === 'extension_ui_request' && frame.method === 'setStatus'
+      && frame.statusKey === 'biomind-long-task' && /待复查|待验证/.test(frame.statusText)));
+  } finally { await h.close('long-task-json-host'); }
+});
+
 test('JSON reload revokes admission before another frame from the same input chunk', async () => {
   const h = await launch([text('only explicitly resubmitted input')]);
   try {

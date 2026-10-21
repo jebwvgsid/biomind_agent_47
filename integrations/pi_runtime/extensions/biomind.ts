@@ -794,6 +794,16 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
     };
     const checkReceipts = (ctx: ExtensionContext): Record<string, any> =>
       Object.fromEntries(checkEntries(ctx, CHECK_RECEIPT).map(row => [row.receipt.snapshot_id, row]));
+    let lastLongTaskStatus = '';
+    function setLongTaskStatus(ctx: ExtensionContext, status: string | undefined) {
+      ctx.ui.setStatus('biomind-long-task', status);
+      const key = JSON.stringify([sessionId(ctx), status]);
+      if (key === lastLongTaskStatus) return;
+      lastLongTaskStatus = key;
+      // Native UI consumes setStatus; the JSON host forwards the same status
+      // through Studio's existing extension UI protocol, only when it changes.
+      pi.events.emit('biomind:long_task_status', { sessionId: sessionId(ctx), statusText: status ?? null });
+    }
     let acknowledgingChecks = false;
     async function flushCheckReceipts(ctx: ExtensionContext, signal?: AbortSignal) {
       if (acknowledgingChecks) return;
@@ -823,7 +833,7 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
               run_ref: row.receipt.run_ref, snapshot_id: row.receipt.snapshot_id, event_ids: row.receipt.event_ids,
               toolCallId: row.toolCallId, entryId: row.entryId, decisionEntryId: row.decisionEntryId, phase });
           } catch {
-            ctx.ui.setStatus('biomind-long-task', '自动复查收讫待恢复；作业继续受原截止约束');
+            setLongTaskStatus(ctx, '自动复查收讫待恢复；作业继续受原截止约束');
             if (pending.attempts[phase] >= 3) pi.events.emit('biomind:diagnostic', { code: 'LONG_TASK_ACK_RETRY_EXHAUSTED', run_ref: row.receipt.run_ref });
           }
         }
@@ -877,7 +887,7 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
         const active = Array.isArray(result.active_runs) ? result.active_runs : [];
         const exhausted = checkEntries(ctx, CHECK_DELIVERY).some(row => row.value.exhausted && events.some((e: any) => e.check_key === row.key))
           || Object.values(checkReceipts(ctx)).some(row => !row.done && (row.attempts?.[row.received ? 'judged' : 'received'] ?? 0) >= 3);
-        ctx.ui.setStatus('biomind-long-task', exhausted ? '自动复查连接异常；待检查事项已保留'
+        setLongTaskStatus(ctx, exhausted ? '自动复查连接异常；待检查事项已保留'
           : events.some((e: any) => e.cleanup_confirmed === false && e.owner_available === false)
           ? '停止状态未确认；请核对作业' : events.some((e: any) => e.terminal)
           ? '作业结束；结果待验证' : events.length ? '作业待复查' : active.length ? '作业运行中；自动复查已连接' : undefined);
@@ -903,7 +913,7 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
       },
       diagnostic: code => {
         pi.events.emit('biomind:diagnostic', { code, sessionId: activeContext ? sessionId(activeContext) : undefined });
-        activeContext?.ui.setStatus('biomind-long-task', '自动复查连接不可用；作业状态待核对');
+        if (activeContext) setLongTaskStatus(activeContext, '自动复查连接不可用；作业状态待核对');
       },
     });
     async function withApproval(ctx: ExtensionContext, method: string, params: Record<string, unknown>, toolCallId: string, signal?: AbortSignal,

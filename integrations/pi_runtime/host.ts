@@ -256,6 +256,7 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
   session.agent.toolExecution = 'sequential';
   let detached = false; let active: Promise<void> | undefined;
   let exitCode = 0; let usageAccountingFailed = false; let profileBindingFailed = false; let backendReady = false;
+  let promptEntering = false; let lastBusinessRequestId: string | undefined;
   let activeInputId: string | undefined; let outcome: string = 'unknown'; let settledReceipt: Json = {};
   let controlBusy: 'reload' | 'compact' | undefined;
   const executionFacts: Json[] = [];
@@ -315,7 +316,16 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
     write({ type: request.kind, ...request, requestId: activeInputId,
       businessRequestId: request.requestId, type_alias: 'ui_request', payload: request.proposal });
   });
-  events.on('biomind:state', (data: unknown) => write({ type: 'biomind_state', data, inputId: activeInputId }));
+  events.on('biomind:state', (data: unknown) => {
+    lastBusinessRequestId = (data as Json).requestId;
+    write({ type: 'biomind_state', data, inputId: activeInputId });
+  });
+  events.on('biomind:long_task_status', (raw: unknown) => {
+    const status = raw as Json;
+    if (status.sessionId !== session.sessionManager.getSessionId()) return;
+    write({ type: 'extension_ui_request', method: 'setStatus', statusKey: 'biomind-long-task',
+      statusText: status.statusText, sessionId: status.sessionId, ownerGeneration });
+  });
   events.on('biomind:backend', (raw: unknown) => {
     const data = raw as Json;
     backendReady = data.state === 'ready';
@@ -344,7 +354,32 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
     }
   });
   events.on('biomind:settled', (raw: unknown) => { settledReceipt = raw as Json; outcome = settledReceipt.outcome; write({ type: 'biomind_settled', data: raw }); });
+  const writeResult = (requestId: string | undefined, failed = false, autonomous = false) => {
+    write({ type: 'result', ...sessionIdentity(), requestId, ...(autonomous ? { trigger: 'extension' } : {}),
+      runtime_status: failed || usageAccountingFailed || !backendReady ? 'error' : outcome,
+      model_conclusion: failed ? '' : session.getLastAssistantText() ?? '', execution_facts: [...executionFacts],
+      scientific_success: failed ? null : settledReceipt.scientificSuccess ?? null,
+      usage_scope: projectObservedUsage(session.sessionManager.getEntries()).scope,
+      usage: projectObservedUsage(session.sessionManager.getEntries()), pi_entry_usage: session.getSessionStats() });
+  };
   session.subscribe(event => {
+    if (event.type === 'agent_start' && !active && !promptEntering) {
+      // Pi has actually started an extension-triggered turn. Observe its idle
+      // boundary with the same host lifecycle; do not create a second agent loop.
+      activeInputId = lastBusinessRequestId;
+      const inputId = activeInputId;
+      outcome = 'unknown'; settledReceipt = {}; executionFacts.splice(0);
+      active = (async () => {
+        try {
+          // agent_start is emitted inside Pi's run setup; wait until it returns
+          // before observing the run promise installed by that setup.
+          await new Promise<void>(resolve => setImmediate(resolve));
+          await session.waitForIdle();
+          writeResult(inputId, false, true);
+        } catch { writeResult(inputId, true, true); }
+        finally { waiting.clear(); active = undefined; activeInputId = undefined; }
+      })();
+    }
     if (event.type === 'message_start' && event.message.role === 'user') {
       if (promptUserPending) { if (promptAdmission) promptAdmission.status = 'consumed'; promptAdmission = undefined; promptUserPending = false; }
       else {
@@ -514,22 +549,21 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
       }
       activeInputId = String(frame.requestId ?? frame.taskId ?? frame.id ?? randomUUID());
       const inputId = activeInputId; outcome = 'unknown'; settledReceipt = {}; executionFacts.splice(0);
+      promptEntering = true;
       active = (async () => {
         try {
           await session.prompt(frame.text, { images: validated.images, preflightResult: success => {
             if (success && outcome !== 'error') { promptUserPending = true; promptAdmission = admission; accept(); }
             else fail('PI_INPUT_NOT_ACCEPTED');
           } }); await session.waitForIdle();
-          write({ type: 'result', ...sessionIdentity(), requestId: inputId, runtime_status: usageAccountingFailed || !backendReady ? 'error' : outcome,
-            model_conclusion: session.getLastAssistantText() ?? '', execution_facts: [...executionFacts], scientific_success: settledReceipt.scientificSuccess ?? null,
-            usage_scope: projectObservedUsage(session.sessionManager.getEntries()).scope, usage: projectObservedUsage(session.sessionManager.getEntries()), pi_entry_usage: session.getSessionStats() });
+          writeResult(inputId);
         } catch {
           if (admission?.status === 'pending') fail('PI_INPUT_NOT_ACCEPTED');
           write({ type: 'error', requestId: inputId, code: 'PI_RUN_FAILED' });
-          write({ type: 'result', ...sessionIdentity(), requestId: inputId, runtime_status: 'error', model_conclusion: '', execution_facts: [...executionFacts], scientific_success: null,
-            usage_scope: projectObservedUsage(session.sessionManager.getEntries()).scope, usage: projectObservedUsage(session.sessionManager.getEntries()), pi_entry_usage: session.getSessionStats() });
+          writeResult(inputId, true);
         } finally { waiting.clear(); promptUserPending = false; promptAdmission = undefined; active = undefined; activeInputId = undefined; }
       })();
+      promptEntering = false;
     } else if (frame.type === 'get_state') {
       if ((frame.ownerGeneration !== undefined && frame.ownerGeneration !== ownerGeneration)
           || (frame.sessionId !== undefined && frame.sessionId !== identity.sessionId)
