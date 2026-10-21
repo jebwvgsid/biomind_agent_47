@@ -506,18 +506,19 @@ class LongTaskMonitoring(unittest.IsolatedAsyncioTestCase):
             return original(pid)
         try:
             with patch.dict(os.environ, {'BIOMIND_EXEC_CLEANUP_OBSERVATION_SECONDS': '.3'}), patch.object(executor, '_short_check_cleanup_facts', measured):
-                result = await self.start(code, timeout_ms=700)
+                result = await self.start(code, timeout_ms=2000)
                 owner = self.s.formal._owners[result['run_ref']]
-                until = time.monotonic() + .4
+                until = time.monotonic() + 1.3
                 while not (self.root / 'child-pid').exists() and time.monotonic() < until:
                     await asyncio.sleep(.01)
+                self.assertTrue((self.root / 'child-pid').exists(), 'wait for actual child startup before testing root exit')
                 child = int((self.root / 'child-pid').read_text())
                 await asyncio.sleep(.1)
                 live = await self.s.call('exec.status', {'run_ref': result['run_ref']})
                 self.assertFalse(live['terminal'])
                 self.assertFalse(owner.task.done(), 'root exit must retain original owner')
                 self.assertEqual(live['original_deadline_at'], result['original_deadline_at'])
-                await asyncio.wait({owner.task}, timeout=2)
+                await asyncio.wait({owner.task}, timeout=3)
                 self.assertTrue(owner.task.done())
                 try:
                     child_state = (Path('/proc') / str(child) / 'stat').read_text().rsplit(')', 1)[1].split()[0]
