@@ -223,7 +223,7 @@ async def _read_stream_chunks(
             limit_reached = True
 
 
-async def _terminate_process_tree(process: asyncio.subprocess.Process, *, short_check=False) -> None:
+async def _terminate_process_tree(process: asyncio.subprocess.Process, *, short_check=False, cleanup_deadline=None) -> None:
     # The spawn used start_new_session. Keep that owned PGID even if its shell
     # leader has exited; querying os.getpgid on a recycled PID is not authority.
     if os.name != 'nt':
@@ -234,7 +234,13 @@ async def _terminate_process_tree(process: asyncio.subprocess.Process, *, short_
             raise RuntimeError('PROCESS_CREATION_IDENTITY_CHANGED; no signal sent')
         with contextlib.suppress(ProcessLookupError):
             os.killpg(process.pid, signal.SIGTERM)
-        deadline = time.monotonic() + (1.0 if short_check else 5.0)
+        now = time.monotonic()
+        deadline = now + (1.0 if short_check else 5.0)
+        if cleanup_deadline is not None:
+            # Reserve half the remaining window (up to 2s) for KILL, reaping,
+            # stream drain and group confirmation, all under the same bound.
+            remaining = max(0, cleanup_deadline - now)
+            deadline = min(deadline, cleanup_deadline - min(2.0, remaining / 2))
         while process.returncode is None and time.monotonic() < deadline:
             await asyncio.sleep(.025)
         with contextlib.suppress(ProcessLookupError):
@@ -242,6 +248,8 @@ async def _terminate_process_tree(process: asyncio.subprocess.Process, *, short_
     elif process.returncode is None:
         process.kill()
     deadline = time.monotonic() + 2
+    if cleanup_deadline is not None:
+        deadline = min(deadline, cleanup_deadline)
     while process.returncode is None and time.monotonic() < deadline:
         await asyncio.sleep(.025)
 
@@ -580,26 +588,37 @@ async def _run_command(
     resource_evidence = {}
     resource_sampling_task = None
 
+    def cleanup_deadline():
+        # Termination, process reaping and pipe drain share one total bound.
+        return observation.setdefault('cleanup_deadline_monotonic', time.monotonic() + cleanup_limit)
+
+    async def terminate_owned():
+        observation['termination_requested'] = True
+        await _terminate_process_tree(process, short_check=short_check, cleanup_deadline=cleanup_deadline())
+
     async def drain_streams(tasks):
         pending = {task for task in tasks if task is not None}
-        drain_started = time.monotonic()
+        until = cleanup_deadline()
         while pending:
-            done, pending = await asyncio.wait(pending, timeout=min(.05, cleanup_limit))
+            done, pending = await asyncio.wait(pending, timeout=max(0, min(.05, until-time.monotonic())))
             for task in done:
                 if not task.cancelled() and task.exception() is not None:
                     log_observation_errors.append({'stage': 'execution.stream_drain', 'error': repr(task.exception())})
-            if pending and time.monotonic()-drain_started >= cleanup_limit:
+            if pending and time.monotonic() >= until:
                 observation.update(cleanup_unconfirmed=True, cleanup_reason='owned_stream_drain_pending', phase='finalizing')
-        observation['cleanup_unconfirmed'] = False
+                for task in pending:
+                    task.cancel()
+                await asyncio.wait(pending, timeout=.05)
+                return
 
     async def retain_until_reaped(process):
-        # A bounded observer may return unknown, but the executor retains its
-        # streams/transport until the actual process has exited. No second kill
-        # policy or detached background cleanup is introduced here.
-        since = time.monotonic()
+        # Stop confirmation is bounded too. A surviving process remains unknown
+        # in the original owner record; it must never become a success receipt.
+        until = cleanup_deadline()
         while process.returncode is None:
-            if time.monotonic()-since >= cleanup_limit:
+            if time.monotonic() >= until:
                 observation.update(cleanup_unconfirmed=True, cleanup_reason='process_exit_unconfirmed', phase='finalizing')
+                return
             await asyncio.sleep(.05)
         observation.update(process_alive=False, process_exit_code=process.returncode)
 
@@ -641,7 +660,8 @@ async def _run_command(
         _ACTIVE_PROCESS_GROUPS.add(process.pid)
         identity = _process_identity(process.pid)
         process._biomind_creation_identity = identity
-        observation.update(identity, pid=process.pid, process_alive=True, phase='running', process_started_at=started_at)
+        observation.update(identity, pid=process.pid, process_alive=True, phase='running', process_started_at=started_at,
+                           process_started_epoch=time.time())
         if not short_check:
             from execution.resource_evidence import ProcessResourceEvidence
             try:
@@ -733,16 +753,20 @@ async def _run_command(
         root_exited_at = None
         last_health_at = start_monotonic
         while True:
+            if observation.get('hard_deadline_monotonic') is not None:
+                original_deadline = min(original_deadline or float('inf'), observation['hard_deadline_monotonic'])
             if cancel_event is not None and cancel_event.is_set():
                 raise asyncio.CancelledError()
             if process.returncode is not None:
-                observation.update(process_alive=False, process_exit_code=process.returncode, phase='finalizing')
+                group = _short_check_cleanup_facts(process.pid)
+                observation.update(process_alive=group['group_reaped'] is not True,
+                    process_exit_code=process.returncode, phase='running_owned_group', **group)
                 root_exited_at = root_exited_at or time.monotonic()
-                if time.monotonic()-root_exited_at >= cleanup_limit:
-                    observation.update(cleanup_unconfirmed=True, cleanup_reason='parent_exited_inherited_pipes')
             observation['last_output_monotonic'] = progress['last_output_at']
             observation['stream_bytes_live'] = {'stdout': stdout_capture.total_bytes, 'stderr': stderr_capture.total_bytes}
-            watched_tasks = {process_wait_task, output_limit_task, *pending_stream_tasks}
+            watched_tasks = {output_limit_task, *pending_stream_tasks}
+            if not process_wait_task.done():
+                watched_tasks.add(process_wait_task)
             wait_timeout = health_interval if pending_stream_tasks else min(health_interval, 0.2)
             if cancel_event is not None:
                 wait_timeout = min(wait_timeout, .2)
@@ -767,12 +791,10 @@ async def _run_command(
                     limit=stream_output_limit,
                     observed=progress.get("output_limit_bytes") or stream_output_limit,
                 )
-                await (_terminate_process_tree(process, short_check=True) if short_check
-                       else _terminate_process_tree(process))
+                await terminate_owned()
                 break
             if process_wait_task in done:
                 await process_wait_task
-                break
             pending_stream_tasks.difference_update(done)
             if not pending_stream_tasks and process.returncode is not None:
                 # Python's subprocess transport can reap a process and set its
@@ -781,7 +803,10 @@ async def _run_command(
                 # and cancel only that stale future.
                 if not process_wait_task.done():
                     process_wait_task.cancel()
-                break
+                group = _short_check_cleanup_facts(process.pid)
+                observation.update(group)
+                if group['group_reaped'] is True:
+                    break
             now = time.monotonic()
             if now - last_health_at >= health_interval:
                 await _notify_lifecycle(lifecycle_callback, "HEARTBEAT", {
@@ -821,13 +846,13 @@ async def _run_command(
                 stderr_reason = f"TIMEOUT after {wall_timeout:g} seconds"
                 if original_deadline is not None:
                     stderr_reason += " (original deadline includes preparation)"
-                await (_terminate_process_tree(process, short_check=True) if short_check
-                       else _terminate_process_tree(process))
+                await terminate_owned()
                 break
             if (
                 command_class
                 and suspect_stall_seconds > 0
                 and idle_for >= suspect_stall_seconds
+                and not observation.get('managed_semantic_monitoring')
             ):
                 stderr_reason = (
                     "SUSPECT_STALL: policy found no observable stdout/stderr or process-tree "
@@ -835,17 +860,21 @@ async def _run_command(
                     "by BioMind watchdog. Regenerate a bounded, local check or record a truthful blocked "
                     "state instead of retrying the same probe."
                 ).format(kind=command_class, idle=idle_for, elapsed=elapsed, activity=observation.get('cpu_activity', 'unknown'))
-                await (_terminate_process_tree(process, short_check=True) if short_check
-                       else _terminate_process_tree(process))
+                await terminate_owned()
                 break
             if stall_timeout > 0 and now - last_progress_at >= stall_timeout:
+                if observation.get('managed_semantic_monitoring'):
+                    observation['diagnostic_due'] = {'reason': 'no_observable_progress',
+                        'observed_at': timestamp_now(), 'idle_seconds': round(idle_for, 3),
+                        'activity': observation.get('cpu_activity', 'unknown'),
+                        'instruction': 'Inspect task-specific progress. Silence or low/unknown CPU does not prove failure; the original hard deadline still applies.'}
+                    continue
                 stderr_reason = (
                     "STALLED: no observable stdout/stderr or process-tree CPU progress "
                     f"for {idle_for:.1f} seconds; CPU observation={observation.get('cpu_activity', 'unknown')}; "
                     "terminated by configured BioMind policy, not proof of deadlock."
                 )
-                await (_terminate_process_tree(process, short_check=True) if short_check
-                       else _terminate_process_tree(process))
+                await terminate_owned()
                 break
 
         await drain_streams([stdout_task, stderr_task, follow_task])
@@ -866,8 +895,7 @@ async def _run_command(
             if callable(uncancel):
                 uncancel()
             try:
-                await (_terminate_process_tree(process, short_check=True) if short_check
-                       else _terminate_process_tree(process))
+                await terminate_owned()
             except Exception as exc:
                 observation['termination_error'] = type(exc).__name__ + ': ' + str(exc)
             await retain_until_reaped(process)
@@ -880,8 +908,7 @@ async def _run_command(
             raise
         if "process" in locals():
             try:
-                await (_terminate_process_tree(process, short_check=True) if short_check
-                       else _terminate_process_tree(process))
+                await terminate_owned()
             except Exception as cleanup_error:
                 observation['termination_error'] = type(cleanup_error).__name__ + ': ' + str(cleanup_error)
             await retain_until_reaped(process)
@@ -890,6 +917,18 @@ async def _run_command(
         result = "", str(e), process.returncode
         return result
     finally:
+        if 'process' in locals():
+            group = _short_check_cleanup_facts(process.pid)
+            while group.get('group_reaped') is False and time.monotonic() < cleanup_deadline():
+                await asyncio.sleep(min(.025, max(0, cleanup_deadline()-time.monotonic())))
+                group = _short_check_cleanup_facts(process.pid)
+            observation.update(group)
+            if group.get('group_reaped') is not True:
+                observation.update(cleanup_unconfirmed=True, cleanup_reason='owned_process_group_exit_unconfirmed')
+            elif process.returncode is not None and all(t is None or t.done() and not t.cancelled()
+                    for t in (locals().get('stdout_task'), locals().get('stderr_task'), locals().get('follow_task'))):
+                observation['cleanup_unconfirmed'] = False
+                observation.pop('cleanup_reason', None)
         for handle in (stdout_log_handle, stderr_log_handle):
             if handle is not None:
                 with contextlib.suppress(Exception):

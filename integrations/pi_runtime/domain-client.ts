@@ -62,9 +62,9 @@ const MAX_FRAME_BYTES = 1024 * 1024;
 export const DOMAIN_TRANSPORT_LIMITS = Object.freeze({ frameBytes: MAX_FRAME_BYTES, diagnosticBytes: 65536,
   pendingRequests: 64, reservedControlRequests: 4, queuedWrites: 64, queuedBytes: 5 * 1024 * 1024,
   reservedControlBytes: 1024 * 1024 });
-const CONTROL_METHODS = new Set(['hello', 'request.cancel', 'request.pause', 'request.resume', 'request.revise', 'request.status', 'permissions.mode', 'shutdown', 'approval.decide', 'exec.cancel',
+const CONTROL_METHODS = new Set(['hello', 'exec.check_ack', 'exec.monitor', 'request.cancel', 'request.pause', 'request.resume', 'request.revise', 'request.status', 'permissions.mode', 'shutdown', 'approval.decide', 'exec.cancel',
   'exec.status', 'session.lifecycle', 'archive.status', 'permissions.status', 'permissions.revoke']);
-const HOST_METHODS = new Set(['output.configure', 'environments.launch', 'environments.register_observed', 'files.list', 'files.read_authorize', 'files.mutation_snapshot', 'files.mutation_replay', 'request.begin', 'request.cancel', 'request.pause', 'request.resume', 'request.revise', 'request.status', 'permissions.mode', 'exec.probe', 'shutdown', 'approval.decide', 'settings.update',
+const HOST_METHODS = new Set(['exec.monitor', 'exec.check_ack', 'output.configure', 'environments.launch', 'environments.register_observed', 'files.list', 'files.read_authorize', 'files.mutation_snapshot', 'files.mutation_replay', 'request.begin', 'request.cancel', 'request.pause', 'request.resume', 'request.revise', 'request.status', 'permissions.mode', 'exec.probe', 'shutdown', 'approval.decide', 'settings.update',
   'memory.maintenance.prepare', 'memory.maintenance.apply', 'archive.append', 'archive.status', 'permissions.status', 'permissions.revoke']);
 interface Pending { method: string; resolve(value: unknown): void; reject(error: Error): void; cleanup(): void }
 
@@ -139,6 +139,7 @@ export class DomainClient extends EventEmitter {
         ...Object.fromEntries(['XDG_CACHE_HOME','XDG_DATA_HOME','XDG_STATE_HOME','TMPDIR','TMP','TEMP']
           .flatMap(key => process.env[key] ? [[key,process.env[key]!]] : [])),
         ...(process.env.BIOMIND_PI_PREFERENCES_SOURCE ? { BIOMIND_PI_PREFERENCES_SOURCE: process.env.BIOMIND_PI_PREFERENCES_SOURCE } : {}),
+        ...(process.env.BIOMIND_PI_TASK_DEADLINE_AT ? { BIOMIND_PI_TASK_DEADLINE_AT: process.env.BIOMIND_PI_TASK_DEADLINE_AT } : {}),
         PYTHONDONTWRITEBYTECODE: '1', PYTHONUNBUFFERED: '1' } }) as ChildProcessWithoutNullStreams;
     this.#child.on('error', error => {
       this.#diagnostics.spawnCode = (error as NodeJS.ErrnoException).code;

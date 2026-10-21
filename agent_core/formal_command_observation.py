@@ -9,7 +9,9 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import math
 import re
+import socket
 import time
 import uuid
 from datetime import datetime, timezone
@@ -33,6 +35,243 @@ class FormalCommandObserver(InspectionOwnerMixin):
 
     def __getattr__(self, name):
         return getattr(self.service, name)
+
+    @staticmethod
+    def _deadline_timestamp(value):
+        if not isinstance(value, str):
+            raise ValueError('TASK_DEADLINE_ISO_REQUIRED')
+        try:
+            date = datetime.fromisoformat(value.replace('Z', '+00:00'))
+            if date.tzinfo is None:
+                raise ValueError()
+            stamp = date.timestamp()
+            if not math.isfinite(stamp):
+                raise ValueError()
+            return stamp
+        except (ValueError, OverflowError):
+            raise ValueError('TASK_DEADLINE_ISO_REQUIRED') from None
+
+    @staticmethod
+    def _iso(stamp):
+        return datetime.fromtimestamp(stamp, timezone.utc).isoformat()
+
+    def task_deadline(self, task_id, scope):
+        from agent_core.plan_tracker import load_plan_state
+        task = load_plan_state(self.data_path, task_id).get('task_state', {})
+        row = task.get('pi_execution_budget') or {}
+        if row.get('request_key') != (scope or {}).get('request_key'):
+            return None
+        return row.get('original_deadline_at')
+
+    def tighten_task_deadline(self, task_id, scope, value):
+        """An absolute request budget survives new calls, replay and reconnect."""
+        from agent_core.pending_input import mutate
+        from agent_core.request_state import request_scope
+        stamp = self._deadline_timestamp(value)
+        def update(state):
+            if request_scope(state) != scope:
+                raise ValueError('TOOL_CONTEXT_STALE')
+            task = state.setdefault('task_state', {})
+            row = task.get('pi_execution_budget') or {}
+            if row.get('request_key') == scope.get('request_key') and row.get('original_deadline_at'):
+                stamp_before = self._deadline_timestamp(row['original_deadline_at'])
+                effective = min(stamp, stamp_before)
+            else:
+                effective = stamp
+            task['pi_execution_budget'] = {'request_key': scope.get('request_key'),
+                'original_deadline_at': self._iso(effective)}
+            return effective
+        effective = mutate(self.data_path, task_id, update)
+        for owner in self._select_owners(task_id, scope):
+            if owner.result and owner.result.get('terminal'):
+                continue
+            deadline = time.monotonic() + effective - time.time()
+            if owner.deadline_at is None or deadline < owner.deadline:
+                owner.deadline = deadline
+                owner.deadline_at = self._iso(effective)
+                owner.metrics['hard_deadline_monotonic'] = deadline
+        return self._iso(effective)
+
+    @staticmethod
+    def validate_monitoring(value):
+        result = dict(value or {})
+        for key in ('next_check_seconds', 'review_interval_seconds', 'eta_seconds'):
+            if key in result and (type(result[key]) not in (int, float) or not math.isfinite(result[key])
+                                  or not 0.01 <= result[key] <= (31536000 if key == 'eta_seconds' else 86400)):
+                raise ValueError('RUN_MONITOR_INTERVAL_INVALID:' + key)
+        return result
+
+    def _monitor_row(self, task_id, run_ref):
+        from agent_core.plan_tracker import load_plan_state
+        return (load_plan_state(self.data_path, task_id).get('task_state', {}).get('pi_run_monitor') or {}).get(run_ref, {})
+
+    def _save_monitor(self, task_id, run_ref, row):
+        from agent_core.pending_input import mutate
+        def update(state):
+            state.setdefault('task_state', {}).setdefault('pi_run_monitor', {})[run_ref] = row
+        mutate(self.data_path, task_id, update)
+
+    def _init_monitor(self, owner, config):
+        if config is None:
+            return
+        config = self.validate_monitoring(config)
+        if self._monitor_row(owner.task_id, owner.run_ref):
+            return
+        self._save_monitor(owner.task_id, owner.run_ref, {
+            'scope_key': owner.scope_key, 'run_ref': owner.run_ref,
+            'first_check_seconds': config.get('next_check_seconds', 180),
+            'review_interval_seconds': config.get('review_interval_seconds', 180),
+            'eta_seconds': config.get('eta_seconds'), 'next_check_at': None, 'eta_at': None,
+            'last_check_at': None, 'log_cursor': None, 'events': [], 'checked_terminal': False,
+            'check_sequence': 0, 'snapshots': {}, 'receipt_sequence': 0,
+            'original_deadline_at': owner.deadline_at, 'created_at': self._iso(time.time())})
+
+    def _schedule_started_monitor(self, owner, row):
+        """Expose the actual-start schedule before the first background sample."""
+        started = owner.metrics.get('process_started_epoch') if owner is not None else None
+        if not row or started is None or row.get('process_started_at') is not None:
+            return False
+        row['process_started_at'] = self._iso(started)
+        first = started + row['first_check_seconds']
+        row['next_check_at'] = self._iso(min(first, self._deadline_timestamp(row['next_check_at']))) if row.get('next_check_at') else self._iso(first)
+        if row.get('eta_seconds') is not None:
+            row['eta_at'] = self._iso(started + row['eta_seconds'])
+        return True
+
+    def prepare_check(self, run_ref, task_id, scope, result, *, next_check_seconds=None, eta_seconds=None, review=True):
+        """Issue bounded snapshot evidence, without consuming events or logs."""
+        values = {k: v for k, v in {'next_check_seconds': next_check_seconds, 'eta_seconds': eta_seconds}.items() if v is not None}
+        self.validate_monitoring(values)
+        row = self._monitor_row(task_id, run_ref)
+        if not row or row.get('scope_key') != self._scope_key(scope):
+            return result
+        now = time.time()
+        if eta_seconds is not None:
+            row['eta_at'] = self._iso(now + eta_seconds)
+            row['eta_notified'] = False
+        # A prestart read must not stand in for the first running check.
+        running = bool(row.get('process_started_at'))
+        if next_check_seconds is not None and running:
+            row['next_check_at'] = self._iso(now + next_check_seconds)
+        row['receipt_sequence'] = row.get('receipt_sequence', 0) + 1
+        snapshot = {'sequence': row['receipt_sequence'], 'event_ids': [e['event_id'] for e in row['events']] if review else [],
+            'next_cursor': result.get('next_cursor'), 'terminal': bool(result.get('terminal')),
+            'review': review, 'running': running, 'read_at': self._iso(now),
+            'next_check_seconds': next_check_seconds, 'received': False, 'judged': False}
+        snapshot_id = uuid.uuid4().hex
+        snapshots = row.setdefault('snapshots', {})
+        snapshots[snapshot_id] = snapshot
+        # A stale acknowledgement cannot consume new events. Retain a small
+        # window in the existing task record, not another job database.
+        row['snapshots'] = dict(list(snapshots.items())[-16:])
+        self._save_monitor(task_id, run_ref, row)
+        return {**result, **{k: row.get(k) for k in ('next_check_at', 'eta_at', 'last_check_at')},
+                'check_receipt': {'run_ref': run_ref, 'snapshot_id': snapshot_id, 'scope_key': row['scope_key'],
+                                  'event_ids': snapshot['event_ids'], 'review': review},
+                'task_deadline_at': self.task_deadline(task_id, scope)}
+
+    def acknowledge_check(self, run_ref, task_id, scope, receipt, *, phase, entry_id, tool_call_id, decision_entry_id=None):
+        """Host-only idempotent ACK of actual Pi entries; never scientific PASS."""
+        row = self._monitor_row(task_id, run_ref)
+        if not row or row.get('scope_key') != self._scope_key(scope):
+            raise ValueError('RUN_CHECK_SCOPE_MISMATCH')
+        snapshot = row.get('snapshots', {}).get(receipt.get('snapshot_id'))
+        if (not snapshot or receipt.get('run_ref') != run_ref or receipt.get('scope_key') != row['scope_key']
+                or receipt.get('event_ids') != snapshot['event_ids'] or not entry_id or not tool_call_id
+                or phase not in {'received', 'judged'}):
+            raise ValueError('RUN_CHECK_RECEIPT_INVALID')
+        if snapshot.get('entry_id') and (snapshot['entry_id'] != entry_id or snapshot['tool_call_id'] != tool_call_id):
+            raise ValueError('RUN_CHECK_ENTRY_MISMATCH')
+        if phase == 'received' and not snapshot['received']:
+            snapshot.update(received=True, entry_id=entry_id, tool_call_id=tool_call_id, received_at=self._iso(time.time()))
+            if snapshot['sequence'] > row.get('received_sequence', 0):
+                row['received_sequence'] = snapshot['sequence']
+                # Cursor snapshots are monotone only for forward reads. A
+                # diagnostic read of old bytes must never move Main backwards.
+                owner, _ = self._lookup(run_ref, task_id, scope)
+                cursor = snapshot.get('next_cursor')
+                if owner is not None and cursor:
+                    old = self._offsets(owner, row.get('log_cursor'))
+                    new = self._offsets(owner, cursor)
+                    row['log_cursor'] = self._cursor(owner, {k: max(old[k], new[k]) for k in old})
+            row['result_received_at'] = snapshot['received_at']
+            if snapshot['review']:
+                row['judgment_pending'] = True
+        if phase == 'judged' and not snapshot['judged']:
+            if not snapshot['received'] or not decision_entry_id:
+                raise ValueError('RUN_CHECK_DECISION_WITHOUT_RECEIPT')
+            snapshot.update(judged=True, decision_entry_id=decision_entry_id, judged_at=self._iso(time.time()))
+            covered = set(snapshot['event_ids'])
+            row['events'] = [e for e in row['events'] if e['event_id'] not in covered]
+            if snapshot['review'] and (snapshot['running'] or snapshot['terminal']):
+                row['last_check_at'] = snapshot['judged_at']
+                row['check_sequence'] = row.get('check_sequence', 0) + 1
+                if snapshot['terminal']:
+                    row['checked_terminal'] = True
+                    row['next_check_at'] = None
+                elif not row.get('checked_terminal'):
+                    row['next_check_at'] = self._iso(time.time() + (snapshot['next_check_seconds'] or row['review_interval_seconds']))
+            row['judgment_pending'] = any(s['received'] and s['review'] and not s['judged'] for s in row['snapshots'].values())
+            row['decision_entry_id'] = decision_entry_id
+        self._save_monitor(task_id, run_ref, row)
+        return {'status': 'acknowledged', 'phase': phase, 'run_ref': run_ref,
+                'snapshot_id': receipt['snapshot_id'], 'scientific_validation': 'not_assessed'}
+
+    def monitor_due(self, task_id, scope):
+        """Low-cost state sampling. Reading never consumes a semantic event."""
+        from agent_core.plan_tracker import load_plan_state
+        rows = load_plan_state(self.data_path, task_id).get('task_state', {}).get('pi_run_monitor') or {}
+        events, active = [], []
+        now = time.time()
+        for ref, stored in rows.items():
+            if stored.get('scope_key') != self._scope_key(scope):
+                continue
+            row = dict(stored)
+            row['events'] = list(row.get('events', []))
+            owner, saved = self._lookup(ref, task_id, scope)
+            result = owner.result or {} if owner is not None else saved or {}
+            metrics = owner.metrics if owner is not None else {}
+            terminal = bool(result.get('terminal'))
+            owner_unavailable = owner is None or bool(owner.task is not None and owner.task.done() and not terminal)
+            status = result.get('status', metrics.get('phase', 'unknown'))
+            self._schedule_started_monitor(owner, row)
+            summary = {'run_ref': ref, 'status': status, 'terminal': terminal,
+                'hostname': socket.gethostname(), 'execution_backend': 'local_owned_process',
+                'exit_code': result.get('exit_code'), 'error': result.get('error'),
+                'owner_available': not owner_unavailable, 'process_alive': metrics.get('process_alive'),
+                'activity': metrics.get('cpu_activity', 'unknown'),
+                'cleanup_confirmed': result.get('cleanup_confirmed', False),
+                'original_deadline_at': owner.deadline_at if owner is not None else result.get('original_deadline_at'),
+                'task_deadline_at': self.task_deadline(task_id, scope),
+                'next_check_at': row.get('next_check_at'), 'eta_at': row.get('eta_at'),
+                'last_check_at': row.get('last_check_at'), 'log_cursor': row.get('log_cursor'),
+                'result_received_at': row.get('result_received_at'), 'judgment_pending': row.get('judgment_pending', False),
+                'log_refs': {n: str(self._task_dir(task_id) / ref / (n + '.log')) for n in ('stdout', 'stderr')},
+                'scientific_validation': 'not_assessed',
+                'diagnostic_due': metrics.get('diagnostic_due')}
+            reason = None
+            if terminal and not row.get('checked_terminal'):
+                reason = 'terminal'
+                row['events'] = [event for event in row['events'] if event['reason'] == 'terminal']
+            elif not terminal and not row.get('events'):
+                if owner_unavailable and (not row.get('last_check_at') or row.get('next_check_at') and now >= self._deadline_timestamp(row['next_check_at'])):
+                    reason = 'owner_unavailable'
+                elif row.get('eta_at') and not row.get('eta_notified') and now >= self._deadline_timestamp(row['eta_at']):
+                    reason = 'eta_due'
+                    row['eta_notified'] = True
+                elif row.get('next_check_at') and now >= self._deadline_timestamp(row['next_check_at']):
+                    reason = 'review_due' if row.get('last_check_at') else 'first_check'
+            if reason and not any(e['reason'] == reason for e in row['events']):
+                event_id = hashlib.sha256(_canonical([ref, reason, row.get('last_check_at'), row.get('eta_at')]).encode()).hexdigest()[:24]
+                row['events'].append({'event_id': event_id, 'run_ref': ref, 'reason': reason,
+                    'check_key': ref + (':terminal' if terminal else ':review:' + str(row.get('check_sequence', 0))),
+                    'observed_at': self._iso(now)})
+            if row != stored:
+                self._save_monitor(task_id, ref, row)
+            events.extend({**summary, **event} for event in row['events'])
+            if not terminal:
+                active.append(summary)
+        return {'events': events, 'active_runs': active, 'sampled_at': self._iso(now)}
 
     def _task_dir(self, task_id):
         # Reuse validated task naming without routing formal evidence to inspections.
@@ -137,6 +376,10 @@ class FormalCommandObserver(InspectionOwnerMixin):
             return None, self._unknown(run_ref, {})
         if record.get('scope_key') != scope or record.get('task_id') != str(task_id):
             raise ValueError('FORMAL_RUN_SCOPE_MISMATCH')
+        task_deadline = self.task_deadline(task_id, request_scope)
+        if task_deadline and (not record.get('original_deadline_at')
+                or self._deadline_timestamp(task_deadline) < self._deadline_timestamp(record['original_deadline_at'])):
+            record['original_deadline_at'] = task_deadline
         result, unknown = self._read_terminal(directory, record)
         if unknown:
             return None, unknown
@@ -151,13 +394,18 @@ class FormalCommandObserver(InspectionOwnerMixin):
         self._owners[run_ref] = owner
         return owner, None
 
-    async def start(self, arguments, *, task_id='', stage='', request_scope=None, call_id='', yield_time_ms=None):
+    async def start(self, arguments, *, task_id='', stage='', request_scope=None, call_id='', yield_time_ms=None, monitoring=None):
         from execution.runtime_contract import EXECUTION_RUNTIME_POLICY
         from execution.executor import _env_float
         from agent_core.plan_tracker import load_plan_state
         from agent_core.request_state import request_scope as current_scope
         if not isinstance(arguments, dict) or not call_id:
             return self._refusal('FORMAL_INTENT_ARGUMENTS_INVALID')
+        timeout_ms = arguments.get('timeout_ms')
+        if timeout_ms is not None and (type(timeout_ms) is not int or timeout_ms <= 0):
+            return self._refusal('FORMAL_TIMEOUT_INVALID', execution_started=False)
+        if monitoring is not None:
+            self.validate_monitoring(monitoring)
         started = time.monotonic()
         scope = self._scope_key(request_scope)
         ref = self._identity(task_id, call_id, request_scope)
@@ -206,22 +454,35 @@ class FormalCommandObserver(InspectionOwnerMixin):
                            _env_float(policy.wall_timeout_env, policy.wall_timeout_default_seconds))
                 deadline = started + seconds if seconds > 0 else float('inf')
                 deadline_at = datetime.fromtimestamp(time.time()+seconds, timezone.utc).isoformat() if seconds > 0 else None
+                task_deadline_at = self.task_deadline(task_id, request_scope)
+                if task_deadline_at:
+                    sampled_wall, sampled_mono = time.time(), time.monotonic()
+                    task_remaining = self._deadline_timestamp(task_deadline_at) - sampled_wall
+                    if task_remaining <= 0:
+                        return self._refusal('TASK_HARD_DEADLINE_EXPIRED', execution_started=False,
+                                             original_deadline_at=task_deadline_at)
+                    if sampled_mono + task_remaining < deadline:
+                        deadline, deadline_at = sampled_mono + task_remaining, task_deadline_at
                 owner = _InspectionRun(str(task_id), scope, str(call_id), dict(arguments), stage,
                     ref, directory, started, deadline, deadline_at, uuid.uuid4().hex)
                 owner.metrics = {'phase': 'preparing', 'last_output_monotonic': started,
                                  'expected_request_scope': current_scope(load_plan_state(self.data_path, task_id)),
-                                 'process_alive': None, 'formal_wall_timeout_disabled': seconds <= 0}
+                                 'process_alive': None, 'formal_wall_timeout_disabled': deadline_at is None,
+                                 'hard_deadline_monotonic': deadline if deadline_at else None,
+                                 'managed_semantic_monitoring': monitoring is not None}
                 record = {'task_id': str(task_id), 'scope_key': scope, 'call_id': str(call_id),
                     'runtime_scope_key': self._scope_key(current_scope(load_plan_state(self.data_path, task_id))),
                     'run_ref': ref, 'arguments_sha256': digest, 'original_deadline_at': deadline_at,
                     'arguments_hash': hashlib.sha256(json.dumps(arguments, sort_keys=True, ensure_ascii=False).encode()).hexdigest(),
                     'cursor_key': owner.cursor_key, 'max_output_chars': arguments.get('max_output_chars', 12000),
+                    'monitoring': monitoring, 'task_deadline_at': task_deadline_at,
                     'created_at': datetime.now(timezone.utc).isoformat()}
                 try:
                     _once(intent_path, record)
                 except OSError as exc:
                     return self._refusal('FORMAL_INTENT_PERSIST_FAILED', detail=str(exc))
                 self._owners[ref] = owner
+                self._init_monitor(owner, monitoring)
                 owner.task = asyncio.create_task(self._drive_formal(owner), name='formal-observer-' + ref)
         wait = self.first_yield_ms if yield_time_ms is None else max(0, min(120000, int(yield_time_ms)))
         await self._wait_owner(owner, wait/1000)
@@ -238,9 +499,11 @@ class FormalCommandObserver(InspectionOwnerMixin):
                 call_id=owner.call_id, stage=owner.stage, runtime_observation=owner.metrics,
                 cancel_event=owner.cancelled,
                 original_deadline=owner.deadline if owner.deadline_at else None)
-            terminal = result.get('status') not in {'running', 'reconciliation_required', 'reconciliation_unknown'}
+            terminal = (result.get('status') not in {'running', 'reconciliation_required', 'reconciliation_unknown'}
+                        and result.get('cleanup_confirmed') is not False)
             if not terminal:
-                result = {**result, 'status': 'reconciliation_unknown', 'error': 'FORMAL_EXECUTOR_OWNER_NOT_ATTACHED'}
+                result = {**result, 'status': 'reconciliation_unknown',
+                          'error': result.get('error') or 'FORMAL_EXECUTOR_OWNER_NOT_ATTACHED'}
             if result.get('status') == 'not_run' and result.get('execution_started') is False and owner.metrics.get('launch_delegated') is False:
                 self._persist_not_run(owner, result)
                 return
@@ -362,6 +625,15 @@ class FormalCommandObserver(InspectionOwnerMixin):
                 result.setdefault('output_projection', {})[name] = {'kind': 'head_and_tail', 'full_source_ref': result['log_refs'][name]}
 
         result['activity'] = owner.metrics.get('cpu_activity', 'unknown')
+        result['diagnostic_due'] = owner.metrics.get('diagnostic_due')
+        result['termination_reason'] = owner.metrics.get('termination_reason')
+        result['task_deadline_at'] = self.task_deadline(owner.task_id, self._request_scope(owner))
+        row = self._monitor_row(owner.task_id, owner.run_ref)
+        if self._schedule_started_monitor(owner, row):
+            self._save_monitor(owner.task_id, owner.run_ref, row)
+        for key in ('next_check_at', 'eta_at', 'last_check_at'):
+            if row:
+                result[key] = row.get(key)
         if owner.deadline_at is None:
             result['remaining_seconds'] = None
             result['original_deadline_at'] = None

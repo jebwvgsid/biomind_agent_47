@@ -68,6 +68,8 @@ export class FakeDomain implements DomainConnection {
   close(options: { disconnectOnly: true }) { assert.equal(options.disconnectOnly, true); this.closed++; }
 }
 export interface HarnessOptions {
+  monitorIntervalMs?: number;
+  monitorRetryIntervalMs?: number;
   sessionStartEvent?: SessionStartEvent;
   executionProfile?: BioMindExtensionOptions['executionProfile'];
   name?: string;
@@ -103,7 +105,7 @@ export async function createHarness(options: HarnessOptions = {}) {
     noExtensions: true, additionalSkillPaths: options.skillPaths ?? [], noPromptTemplates: true, noThemes: true, noContextFiles: false,
     agentsFilesOverride: ({ agentsFiles }) => ({ agentsFiles: filterNativeContextFiles(agentsFiles, cwd, cwd) }),
     systemPrompt: options.nativePrompt ? undefined : 'Isolated BioMind integration test.', appendSystemPrompt: [],
-    extensionFactories: [{ name: 'production-biomind', factory: createBioMindExtension({ executionProfile: options.executionProfile, domainFactory: domainOptions => {
+    extensionFactories: [{ name: 'production-biomind', factory: createBioMindExtension({ executionProfile: options.executionProfile, monitorIntervalMs: options.monitorIntervalMs, monitorRetryIntervalMs: options.monitorRetryIntervalMs, domainFactory: domainOptions => {
       domainCreations++; return options.domainFactory ? options.domainFactory(domainOptions) : domain;
     } }) },...(options.pluginFactories??[])],
   });

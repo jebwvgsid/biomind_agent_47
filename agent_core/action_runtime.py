@@ -1840,12 +1840,18 @@ async def execute_formal_command(service, arguments, *, task_id, call_id, stage=
                 'description','title','tool','purpose','action','skill_ids',
                 'workflow_stage_ids','execution_capability_id','operation','validation') if key in step},
             'finished_at': time.time(), 'runtime_metadata': dict(observation) or get_last_execution_metadata()}
-        result['cleanup_confirmed'] = bool(result['runtime_metadata'].get('cleanup_confirmed', True))
+        result['cleanup_confirmed'] = bool(result['runtime_metadata'].get('cleanup_confirmed'))
         if arguments.get('_runtime_binding'):
             result['runtime_binding']=deepcopy(arguments['_runtime_binding'])
         from agent_core.command_inspection_owner import _once
-        _once(receipt_path, result)
-        _record_formal_receipt(service.data_path, task_id, result)
+        if result['cleanup_confirmed']:
+            _once(receipt_path, result)
+            _record_formal_receipt(service.data_path, task_id, result)
+        else:
+            result.update(status='reconciliation_unknown', terminal=False, error='EXECUTION_CLEANUP_UNCONFIRMED',
+                          receipt_ref=str(attempt_dir/'cleanup_observation.json'))
+            if not (attempt_dir/'cleanup_observation.json').exists():
+                _once(attempt_dir/'cleanup_observation.json', result)
         return result
     except Exception as exc:
         from agent_core.execution_permissions import PermissionPending, PermissionDenied

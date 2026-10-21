@@ -10,6 +10,7 @@ import { homedir } from 'node:os';
 import { readFileSync } from 'node:fs';
 import { executionProfile, sessionProfile, type ExecutionProfile } from '../execution-profile.js';
 import { NATIVE_TOOLS, NATIVE_RULES, nativeTools } from '../native-workflow.js';
+import { LONG_TASK_RULES } from '../long-task-rules.js';
 import { realpath, stat } from 'node:fs/promises';
 import { createReadToolDefinition, createWriteToolDefinition, createEditToolDefinition, getAgentDir } from '@earendil-works/pi-coding-agent';
 import { randomUUID } from 'node:crypto';
@@ -28,6 +29,7 @@ import { readEditableFile, saveEditableFile, memoryDefault, saveMemoryDefault, a
 import { listProjects, createProject, restartProjectCommand } from '../project-launcher.js';
 import { readTargetSessionRoot } from '../native-session.js';
 import { loadCompactionInstructions } from '../compaction-addendum.js';
+import { LongTaskMonitor, persistedCheckResults } from '../long-task-monitor.js';
 import { controlInstructions, InstructionControlError } from '../studio-instructions.js';
 import {acquireSessionWriter,SessionWriterError} from '../session-writer.js';
 import {borrowNativeWriter,writerHeader} from '../session-writer-host.js';
@@ -44,6 +46,9 @@ export interface DomainConnection {
 export interface BioMindExtensionOptions {
   domainFactory?: (options: DomainOptions) => DomainConnection;
   executionProfile?: ExecutionProfile;
+  /** Test clock acceleration; production sampling remains 15 seconds. */
+  monitorIntervalMs?: number;
+  monitorRetryIntervalMs?: number;
 }
 export interface BioMindUIRequest {
   id: string;
@@ -160,7 +165,8 @@ const COMMON_RULES = `你是运行在 Pi 中的 BioMind 生物信息学助手，
 
 【结果与交付】
 - 关键计算阶段结束、复用旧产物或汇报计算结论前，回读对应运行记录与真实产物，从产物重新提取关键数量、比较方向和显著性，必要时独立复算，并核对图文一致性。对话、记忆、压缩摘要和旧报告不能替代产物证据；仅核查相关内容，不默认重跑或全量扫描。
-- 复用结果须确认来源及输入、版本、方法和参数仍适用；相关条件变化只重做受影响部分。分开判断作业完成与结果有效，结合真实运行记录、产物内容和必要质控，不只看文件存在或退出码；区分合法空结果、未执行与失败。
+- 复用结果须确认来源及输入、版本、方法和参数仍适用；相关条件变化只重做受影响部分。每个关键步骤结束及整体分析完成后，都要核验产物完整性、关键质控指标与生物学合理性，不能仅凭程序正常退出或生成文件判定分析成功；区分合法空结果、未执行与失败。
+- 比对率等指标须结合物种、实验类型、参考版本和分析目的判断；缺少可靠指标时明确暂无法判断，不套用统一阈值，也不把不符合预期直接视为错误。
 - 区分设计声明、静态代码和本次已执行行为；设计疑点不能写成已发生的错误，证据不足不能写成已验证通过。数量、去重、特征选择及各阶段完成状态须与实际数据和产物对账，不预填成功结论。结论对应已核验的统计和图表，区分相关、候选与因果；未显著不等于无效应，同源、邻近或重叠不单独证明功能。外部知识标明可核查来源，证据不足明确保留不确定性。
 - 在现有项目记录中保留可复现的输入输出、实际命令或脚本、软件与参考版本、关键参数及适用的随机种子。简明交付发现、限制、真实路径和未完成项；未验证就明确说明，不沿用旧结论。`;
 const PROTECTED_RULES = `当前 execution:protected。文件读取、写入及命令继续经过原权限账本与执行保护，不能因工具可见或环境 prefix 已解析而视为目录已授权。项目外路径通过原工具申请缺失范围，已有授权可复用；用 request_path_access 汇总真实输入/输出范围，不能用 ask_user 重复代替宿主审批，拒绝后不能换工具、call id 或别名绕过。
@@ -613,12 +619,13 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
       if (!['list', 'status', 'logs', 'cancel'].includes(action)) throw new Error('Unknown job action');
       const requestId = state(ctx)?.requestId;
       if (action === 'cancel' && !requestId) throw new Error('Job cancellation requires a BioMind request on the current branch');
-      if (action === 'list') return client(ctx).call('session.lifecycle', { action: 'inspect' }, { requestId });
+      if (action === 'list') return client(ctx).call('session.lifecycle', { action: 'inspect' }, { requestId, signal: AbortSignal.timeout(10000) });
       if (typeof input.run_ref !== 'string' || !input.run_ref.trim()) throw new Error('run_ref is required');
       if (input.after_cursor !== undefined && typeof input.after_cursor !== 'string') throw new Error('after_cursor must be an opaque string');
       const method = action === 'status' ? 'exec.status' : action === 'logs' ? 'exec.read_log' : 'exec.cancel';
       return client(ctx).call(method, { run_ref: input.run_ref, ...(action === 'logs' && input.after_cursor ? { after_cursor: input.after_cursor } : {}),
-        ...(action === 'cancel' ? { reason: typeof input.reason === 'string' ? input.reason : 'Explicit user job cancellation' } : {}) }, { requestId });
+        ...(action === 'cancel' ? { reason: typeof input.reason === 'string' ? input.reason : 'Explicit user job cancellation' }
+          : { acknowledge_check: false }) }, { requestId, signal: AbortSignal.timeout(action === 'cancel' ? 45000 : 10000) });
     };
     pi.registerCommand('biomind-job', {
       description: '不调用模型直接观察作业：list | status <run_ref> | logs <run_ref> [cursor] | cancel <run_ref>',
@@ -648,7 +655,7 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
       const projected = outputProjection && name && ctx ? outputProjection.projectReceipt(publicReceipt, name, ctx.cwd) : publicReceipt;
       const object = asObject(projected);
       const execution_facts = Object.fromEntries(['run_ref', 'status', 'exit_code', 'log_path', 'log_cursor', 'next_cursor', 'request_scope', 'call_id',
-        'returncode', 'terminal', 'log_refs', 'receipt_ref', 'cancel_requested', 'stop_requested', 'task_cancelled', 'approval', 'approval_id',
+        'returncode', 'terminal', 'log_refs', 'receipt_ref', 'check_receipt', 'original_deadline_at', 'task_deadline_at', 'next_check_at', 'eta_at', 'monitor', 'cleanup_confirmed', 'scientific_validation', 'cancel_requested', 'stop_requested', 'task_cancelled', 'approval', 'approval_id',
         'error', 'reason', 'phase', 'protection_phase', 'execution_started', 'count', 'unique_inode_count', 'affected_capability', 'host_boundary',
         'current_project_root', 'requested_workdir', 'instruction', 'runtime_binding', 'runtime_launch', 'binding_ref', 'binding_scope', 'registration_sources', 'healthcheck_status',
         'path', 'path_samples', 'backend', 'errno', 'probe_exit_code', 'permission_status']
@@ -755,11 +762,150 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
     }
     const invoke = async (ctx: ExtensionContext, method: string, params: Record<string, unknown>, signal?: AbortSignal) => {
       const request = current(ctx); signal?.throwIfAborted();
-      const value = await client(ctx).call(method, params, { signal, requestId: request.requestId });
+      const bounded = ['exec.start', 'exec.status', 'exec.read_log', 'exec.wait', 'exec.cancel'].includes(method)
+        ? AbortSignal.any([...(signal ? [signal] : []), AbortSignal.timeout(method === 'exec.wait' ? 35000 : method === 'exec.cancel' ? 45000 : 10000)]) : signal;
+      let value: unknown;
+      try { value = await client(ctx).call(method, params, { signal: bounded, requestId: request.requestId }); }
+      catch (error) {
+        if (method !== 'exec.start' || signal?.aborted || state(ctx)?.requestId !== request.requestId) throw error;
+        // Reuse the existing intent owner, never submit a new call after an
+        // ambiguous transport timeout. A late reservation remains monitored.
+        let reconciled: Record<string, any> = {};
+        try {
+          const found = asObject(await client(ctx).hostCall('exec.monitor', { call_id: params.call_id },
+            { requestId: request.requestId, signal: AbortSignal.timeout(5000) }));
+          reconciled = asObject(found.reconciliation);
+        } catch { /* Unknown is preserved below, without a second submission. */ }
+        value = reconciled.run_ref ? { ...reconciled, submission_reconciled: true } : {
+          status: 'submission_unknown', terminal: false, call_id: params.call_id, error: 'SUBMISSION_OUTCOME_UNCONFIRMED',
+          instruction: '提交回执未确认；已按原call查询，不能重复提交。保留本会话等待已有作业事件，或说明当前无法确认。',
+        };
+      }
       signal?.throwIfAborted();
       if (state(ctx)?.requestId !== request.requestId) throw new Error('Late result belongs to an inactive request');
       return value;
     };
+    const CHECK_RECEIPT = 'biomind.long_task_receipt';
+    const CHECK_DELIVERY = 'biomind.long_task_delivery';
+    const checkEntries = (ctx: ExtensionContext, customType: string) => {
+      const value = state(ctx);
+      return ctx.sessionManager.getBranch().filter(entry => entry.type === 'custom' && entry.customType === customType)
+        .map(entry => asObject((entry as any).data)).filter(row => row.sessionId === sessionId(ctx) && row.requestId === value?.requestId);
+    };
+    const checkReceipts = (ctx: ExtensionContext): Record<string, any> =>
+      Object.fromEntries(checkEntries(ctx, CHECK_RECEIPT).map(row => [row.receipt.snapshot_id, row]));
+    let acknowledgingChecks = false;
+    async function flushCheckReceipts(ctx: ExtensionContext, signal?: AbortSignal) {
+      if (acknowledgingChecks) return;
+      acknowledgingChecks = true;
+      try {
+        for (const row of Object.values(checkReceipts(ctx)).slice(-16)) {
+          if (row.done || row.nextAttempt > Date.now()) continue;
+          const phase = row.received ? 'judged' : 'received';
+          if (phase === 'judged' && !row.decisionEntryId) continue;
+          const attempts = row.attempts ?? {};
+          if ((attempts[phase] ?? 0) >= 3) continue;
+          const pending = { ...row, attempts: { ...attempts, [phase]: (attempts[phase] ?? 0) + 1 },
+            nextAttempt: Date.now() + (options.monitorRetryIntervalMs ?? 30000) };
+          pi.appendEntry(CHECK_RECEIPT, pending);
+          try {
+            const result = asObject(await client(ctx).hostCall('exec.check_ack', {
+              run_ref: row.receipt.run_ref, receipt: row.receipt, phase,
+              entry_id: row.entryId, tool_call_id: row.toolCallId, decision_entry_id: row.decisionEntryId,
+            }, { requestId: row.requestId, signal: AbortSignal.any([...(signal ? [signal] : []), AbortSignal.timeout(2000)]) }));
+            if (result.status !== 'acknowledged' || result.snapshot_id !== row.receipt.snapshot_id) throw new Error('Invalid check ACK');
+            if (state(ctx)?.requestId !== row.requestId || sessionId(ctx) !== row.sessionId) continue;
+            const latest = checkReceipts(ctx)[row.receipt.snapshot_id];
+            if (!latest) continue; // The result's branch may have been abandoned.
+            pi.appendEntry(CHECK_RECEIPT, { ...latest, nextAttempt: 0,
+              received: true, done: phase === 'judged' || !row.receipt.review });
+            pi.events.emit('biomind:check_receipt', { sessionId: row.sessionId, requestId: row.requestId,
+              run_ref: row.receipt.run_ref, snapshot_id: row.receipt.snapshot_id, event_ids: row.receipt.event_ids,
+              toolCallId: row.toolCallId, entryId: row.entryId, decisionEntryId: row.decisionEntryId, phase });
+          } catch {
+            ctx.ui.setStatus('biomind-long-task', '自动复查收讫待恢复；作业继续受原截止约束');
+            if (pending.attempts[phase] >= 3) pi.events.emit('biomind:diagnostic', { code: 'LONG_TASK_ACK_RETRY_EXHAUSTED', run_ref: row.receipt.run_ref });
+          }
+        }
+      } finally { acknowledgingChecks = false; }
+    }
+    async function recordCheckTurn(event: import('@earendil-works/pi-coding-agent').TurnEndEvent, ctx: ExtensionContext) {
+      const value = state(ctx);
+      if (!value || value.status !== 'active' || value.maintenance || event.outcome !== 'completed') return;
+      const branch = ctx.sessionManager.getBranch();
+      const messageIndex = branch.findIndex(entry => entry.id === event.messageEntryId && entry.type === 'message' && entry.message.role === 'assistant');
+      // A subsequent completed answer is a pointer to Main's judgment, not a
+      // natural-language classifier or scientific acceptance assertion.
+      if (messageIndex >= 0 && event.message.role === 'assistant' && event.message.stopReason === 'stop' && textOf(event.message).trim()) {
+        for (const row of Object.values(checkReceipts(ctx))) {
+          if (!row.done && row.receipt.review && !row.decisionEntryId && branch.slice(0, messageIndex).some(entry => entry.id === row.entryId))
+            pi.appendEntry(CHECK_RECEIPT, { ...row, decisionEntryId: event.messageEntryId });
+        }
+      }
+      const existing = checkReceipts(ctx);
+      // The ID array can omit missing entries. Resolve by the real entry ID,
+      // then match toolCallId and snapshot identity; never zip by array index.
+      for (const { entryId, toolCallId, receipt } of persistedCheckResults(event, branch)) {
+        if (existing[receipt.snapshot_id]) continue;
+        pi.appendEntry(CHECK_RECEIPT, { sessionId: sessionId(ctx), requestId: value.requestId, receipt,
+          entryId, toolCallId, received: false, done: false });
+      }
+      await flushCheckReceipts(ctx, ctx.signal);
+    }
+    const longTaskMonitor = new LongTaskMonitor({
+      intervalMs: options.monitorIntervalMs,
+      retryIntervalMs: options.monitorRetryIntervalMs,
+      restore: () => Object.fromEntries(checkEntries(activeContext!, CHECK_DELIVERY).map(row => [row.key, row.value])),
+      persist: (owner, key, value) => pi.appendEntry(CHECK_DELIVERY, { ...owner, key, value }),
+      owner: () => {
+        const ctx = activeContext;
+        if (!ctx || !readySessions.has(sessionId(ctx)) || pendingUI.size || inputQueue.length) return;
+        // A non-idle session without an agent signal may be compacting or
+        // navigating history; never start a competing run in that boundary.
+        if (!ctx.isIdle() && (!ctx.signal || ctx.signal.aborted)) return;
+        const value = state(ctx);
+        if (!value || !['active', 'settled', 'error'].includes(value.status)
+          || value.status === 'settled' && !ctx.isIdle()
+          || value.maintenance?.outboxId && !value.maintenance.applied) return;
+        return { sessionId: sessionId(ctx), requestId: value.requestId };
+      },
+      sample: async (owner, signal) => {
+        const ctx = activeContext!;
+        await flushCheckReceipts(ctx, signal);
+        const result = asObject(await client(ctx).hostCall('exec.monitor', {}, { signal, requestId: owner.requestId }));
+        const events = Array.isArray(result.events) ? result.events : [];
+        const active = Array.isArray(result.active_runs) ? result.active_runs : [];
+        const exhausted = checkEntries(ctx, CHECK_DELIVERY).some(row => row.value.exhausted && events.some((e: any) => e.check_key === row.key))
+          || Object.values(checkReceipts(ctx)).some(row => !row.done && (row.attempts?.[row.received ? 'judged' : 'received'] ?? 0) >= 3);
+        ctx.ui.setStatus('biomind-long-task', exhausted ? '自动复查连接异常；待检查事项已保留'
+          : events.some((e: any) => e.cleanup_confirmed === false && e.owner_available === false)
+          ? '停止状态未确认；请核对作业' : events.some((e: any) => e.terminal)
+          ? '作业结束；结果待验证' : events.length ? '作业待复查' : active.length ? '作业运行中；自动复查已连接' : undefined);
+        return result;
+      },
+      deliver: (owner, events) => {
+        const ctx = activeContext!;
+        const value = state(ctx);
+        if (!value || value.requestId !== owner.requestId || sessionId(ctx) !== owner.sessionId
+          || !['active', 'settled', 'error'].includes(value.status)) return;
+        // A continuation retains the original request, budget and execution
+        // identity. sendMessage uses Pi's serialized loop, never another Main.
+        const idle = ctx.isIdle();
+        if (!idle && (!ctx.signal || ctx.signal.aborted)) return;
+        if (idle) {
+          publish(ctx, { ...value, status: 'active', maintenance: undefined });
+          lastOutcome = 'completed'; setActiveTools(MAIN_TOOLS);
+        }
+        pi.events.emit('biomind:long_task_check', { ...owner, events, delivery: idle ? 'trigger_turn' : 'steer', delivered_at: new Date().toISOString() });
+        pi.sendMessage({ customType: 'biomind.long_task_check', display: true,
+          content: '已有作业到达复查点或终态。请用 inspect_run 核对这些 run_ref，按游标读取必要新增日志并判断进展、继续/调整/停止；退出0仍须验证产物。保留原截止，不重新提交已有作业。以下是运行状态数据：\n' + JSON.stringify(events),
+          details: { ...owner, event_ids: events.map(event => event.event_id) } }, { triggerTurn: true, deliverAs: 'steer' });
+      },
+      diagnostic: code => {
+        pi.events.emit('biomind:diagnostic', { code, sessionId: activeContext ? sessionId(activeContext) : undefined });
+        activeContext?.ui.setStatus('biomind-long-task', '自动复查连接不可用；作业状态待核对');
+      },
+    });
     async function withApproval(ctx: ExtensionContext, method: string, params: Record<string, unknown>, toolCallId: string, signal?: AbortSignal,
       dispatch?: (method: string, params: Record<string, unknown>) => Promise<unknown>) {
       const ownerSession = sessionId(ctx), ownerRequest = current(ctx).requestId;
@@ -987,10 +1133,10 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
         return native ? invoke(ctx, 'environments.register', params, signal) : withApproval(ctx, 'environments.register', params, id, signal);
       });
     const mapping: Array<[string, string, string, TSchema]> = [
-      ['inspect_run', 'exec.status', '查询已有 run_ref 的真实状态；失败作业不等于查询失败。按需用 record=command 读取已记录命令/cwd/环境引用，record=script 和 script_index 读取实际冻结脚本；offset/max_chars 分页，遵守当前请求范围。不触发检查或重跑。', OBJECT({ run_ref: nonempty(), record: Type.Optional(Type.Union([Type.Literal('command'), Type.Literal('script')])), script_index: Type.Optional(Type.Integer({ minimum: 0 })), offset: Type.Optional(Type.Integer({ minimum: 0 })), max_chars: Type.Optional(Type.Integer({ minimum: 1, maximum: 20000 })) })],
-      ['wait_run', 'exec.wait', '等待已有作业的有限状态变化；界面心跳不需要模型重复调用。', OBJECT({ run_ref: nonempty(), after_cursor: optionalString(), max_wait_ms: Type.Optional(Type.Integer({ minimum: 0, maximum: 30000 })) })],
+      ['inspect_run', 'exec.status', '读取已有 run_ref 的快照与新增日志；结果入会话后由宿主确认收讫，Main仍须据证据判断和核验产物；可用 next_check_seconds/eta_seconds 更新复查点/预测，不延长硬截止。失败作业不等于查询失败。按需用 record=command 读取已记录命令/cwd/环境引用，record=script 和 script_index 读取实际冻结脚本；offset/max_chars 分页，遵守当前请求范围。不启动或重跑计算。', OBJECT({ run_ref: nonempty(), next_check_seconds: Type.Optional(Type.Number({ minimum: 0.01, maximum: 86400 })), eta_seconds: Type.Optional(Type.Number({ minimum: 0.01, maximum: 31536000 })), record: Type.Optional(Type.Union([Type.Literal('command'), Type.Literal('script')])), script_index: Type.Optional(Type.Integer({ minimum: 0 })), offset: Type.Optional(Type.Integer({ minimum: 0 })), max_chars: Type.Optional(Type.Integer({ minimum: 1, maximum: 20000 })) })],
+      ['wait_run', 'exec.wait', '最多等待 max_wait_ms（0–30000毫秒）后归还控制权；到期不终止计算、不改变作业或任务硬截止。使用返回的同一 run_ref 继续检查；界面心跳不需要模型轮询。', OBJECT({ run_ref: nonempty(), after_cursor: optionalString(), max_wait_ms: Type.Optional(Type.Integer({ minimum: 0, maximum: 30000 })) })],
       ['read_run_log', 'exec.read_log', '分页读取真实日志；游标是服务返回的原始不透明字符串，完整日志留在原文件。', OBJECT({ run_ref: nonempty(), after_cursor: optionalString() })],
-      ['cancel_run', 'exec.cancel', '明确取消指定科学作业；与中断当前对话不同。', OBJECT({ run_ref: nonempty(), reason: nonempty() })],
+      ['cancel_run', 'exec.cancel', '请求取消指定 run_ref 的本地进程组，并在有界收尾内核实；只有 terminal=true 且 cleanup_confirmed=true 才能报告已停止，否则保留停止未确认。', OBJECT({ run_ref: nonempty(), reason: nonempty() })],
       ['memory_search', 'memory.search', '按当前历史读取开关和项目 scope 查询长期记忆。', OBJECT({ query: nonempty(), source: Type.Optional(Type.Union([Type.Literal('wiki'), Type.Literal('projects'), Type.Literal('archive'), Type.Literal('current')])), scope: optionalString() })],
       ['memory_read', 'memory.read', '读取可用来源；关闭历史时不能读取旧项目历史。', OBJECT({ source_ref: nonempty(), scope: optionalString(), historical: Type.Optional(Type.Boolean()), offset: Type.Optional(Type.Integer({ minimum: 0 })), max_chars: Type.Optional(Type.Integer({ minimum: 1, maximum: 20000 })) })],
     ];
@@ -998,14 +1144,14 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
     const pathSchema=OBJECT({paths:Type.Array(OBJECT({path:nonempty(),access:Type.Union([Type.Literal('read'),Type.Literal('read_write')]),target_kind:Type.Union([Type.Literal('file'),Type.Literal('directory')]),recursive:Type.Boolean()}),{minItems:1,maxItems:16}),purpose:nonempty(),lifetime:Type.Optional(Type.Union([Type.Literal('request'),Type.Literal('session')]))});
     if (!native) register('request_path_access','申请数据文件/目录的读取或读写范围。宿主选择最终子集与有效期；不改变项目、输出要求或自动审批模式。',pathSchema,
       async(id,args,signal,ctx)=>withApproval(ctx,'permissions.propose',{...args,call_id:id},id,signal));
-    const commandSchema = OBJECT({ cmd: optionalString(), argv: Type.Optional(Type.Array(Type.String(), { minItems: 1 })), workdir: nonempty(), env_name: optionalString(), binding_ref: optionalString(), runtime_scope: optionalString(), requirements: Type.Optional(runtimeRequirements), timeout_ms: Type.Optional(Type.Integer({ minimum: 1 })), description: optionalString(),
+    const commandSchema = OBJECT({ cmd: optionalString(), argv: Type.Optional(Type.Array(Type.String(), { minItems: 1 })), workdir: nonempty(), env_name: optionalString(), binding_ref: optionalString(), runtime_scope: optionalString(), requirements: Type.Optional(runtimeRequirements), timeout_ms: Type.Optional(Type.Integer({ minimum: 1, description: '作业执行硬预算（毫秒），到期终止；不是等待返回时限。正式作业必须提供此值或已有任务截止。' })), task_deadline_at: Type.Optional(Type.String({ description: '任务原始绝对截止，含时区ISO时间；后续提交/重试只能收紧，不能延长。' })), next_check_seconds: Type.Optional(Type.Number({ minimum: 0.01, maximum: 86400, description: '首次复查延迟，默认实际启动后180秒；触发检查而非终止。' })), review_interval_seconds: Type.Optional(Type.Number({ minimum: 0.01, maximum: 86400, description: 'Main判断后的复查间隔，默认180秒。' })), eta_seconds: Type.Optional(Type.Number({ minimum: 0.01, maximum: 31536000, description: '预计耗时，仅有证据时设置；到点复查，不终止。' })), description: optionalString(),
       write_paths: Type.Optional(Type.Array(nonempty(),{description:native ? '可选写入意图记录，不授予权限或限制目录视图。' : '本次动作使用的写入文件/目录，相对 workdir；外部范围仍需宿主批准，不改变任务输出要求。'})),
       read_paths: Type.Optional(Type.Array(nonempty(), { description: native ? '可选输入来源记录，不构造沙箱目录视图。' : '只读输入文件/小目录，相对项目；URI 仅对 :: 前文件授权。目录每次最多 256 项、2 秒、总 512 挂载，private 排除、链接拒绝；启动后新增文件不可见。' })) });
     const probeSchema = OBJECT({ ...asObject(asObject(commandSchema).properties), environment_diagnostic: Type.Optional(Type.Boolean({ description: '仅环境故障定点诊断设 true：单次 15 秒、当前 request 累计 30 秒。用户明确检查及科学输入 QC 不设置此标志。' })) });
     register('probe_command', (native ? '有时限的本地程序核查；保留观察取消，不提供强制只读或网络隔离。' : '用户要求或实际错误需要的短程序核查：项目和输入只读、隔离网络、仅临时区可写，仍使用宿主授权和原作业观察取消。') + '默认15秒/64 KiB输出；用户明确检查或QC可用timeout_ms，不设置environment_diagnostic。仅环境故障定点诊断设environment_diagnostic=true，单次15秒、每request累计30秒；正式计算和安装不受诊断短预算影响。', probeSchema,
       async (id, args, signal, ctx) => withApproval(ctx, 'exec.probe', { call_id: id, arguments: args }, id, signal,
         (method, params) => client(ctx).hostCall(method, params, { signal, requestId: current(ctx).requestId })));
-    register('run_command', (native ? '启动本地托管命令并返回 run_ref；保留持久日志、观察、取消与重连对账，无 BioMind 目录或命令审批。' : '通过领域执行服务启动受控命令并返回 run_ref，保留持久日志、观察和取消。') + '支持 shell 或 argv，计划可选。显式 binding_ref/env_name 使用准确目标；否则复用本请求和 scope 的唯一适用绑定，多绑定须明确指定。无绑定且无运行时要求时保持宿主执行。', commandSchema,
+    register('run_command', (native ? '快速启动本地托管长任务并返回稳定 run_ref；timeout_ms是执行硬预算，不能用复查间隔代替。到复查点/终态由后台事件在本会话可执行边界触发Main；保留持久日志、观察、取消与重连对账，无 BioMind 目录或命令审批。' : '通过领域执行服务启动受控命令并返回 run_ref，保留持久日志、观察和取消。') + '支持 shell 或 argv，计划可选。显式 binding_ref/env_name 使用准确目标；否则复用本请求和 scope 的唯一适用绑定，多绑定须明确指定。无绑定且无运行时要求时保持宿主执行。', commandSchema,
       async (id, args, signal, ctx) => withApproval(ctx, 'exec.start', { call_id: id, arguments: args }, id, signal));
     register('install_tool', '提出安装方案并等待原意图确认。验证必须检查目标 prefix 内的准确工具；结构化 executable/python_import/r_package 检查不能由任意 echo 成功替代。安装完成但登记失败时只恢复登记。', OBJECT({ cmd: nonempty(), env_name: nonempty(), description: nonempty(), packages: Type.Optional(Type.Array(Type.String())), prefix: nonempty(),
       verification_checks: Type.Array(OBJECT({ kind: Type.Union(['executable','python_import','r_package'].map(v => Type.Literal(v))), tool: nonempty(), entry: optionalString(), args: Type.Optional(Type.Array(Type.String())), modules: Type.Optional(Type.Array(nonempty())), packages: Type.Optional(Type.Array(nonempty())) }), { minItems: 1 }),
@@ -1024,6 +1170,7 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
       });
 
     pi.on('session_start', async (event, ctx) => {
+      longTaskMonitor.stop();
       writerReady=false;
       try{await claimWriter(ctx,event.reason,event.previousSessionFile);writerReady=true;}
       catch(error){pi.events.emit('biomind:diagnostic',{code:'SESSION_WRITER_BINDING_FAILED'});setActiveTools([]);ctx.abort();ctx.ui.notify(error instanceof SessionWriterError?error.code:'SESSION_WRITER_CLAIM_FAILED','error');ctx.shutdown();return;}
@@ -1059,6 +1206,7 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
           if (live.execution_profile && live.execution_profile !== profile) throw new Error('EXECUTION_PROFILE_RESTART_REQUIRED');
           readySessions.add(sessionId(ctx));
           updateBackend(ctx, { state: 'ready', stage: 'startup' });
+          longTaskMonitor.start();
         } catch (error) {
           if (initialization !== backendEpoch || id !== sessionId(ctx)) return;
           pi.events.emit('biomind:diagnostic', { code: 'EXECUTION_PROFILE_BINDING_FAILED',
@@ -1198,6 +1346,7 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
           value = { ...value, boundary: { ...value.boundary, committed: true } };
           entries.push({ type: 'custom', customType: REQUEST, data: value });
         }
+        longTaskMonitor.resetDelivery();
         preparedInputRequestId = value.requestId; lastOutcome = 'completed';
         await refreshApprovalStatus(ctx);
         setActiveTools(MAIN_TOOLS);
@@ -1241,6 +1390,7 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
         await pause(ctx, 'user_aborted'); return;
       }
       if (!value || value.status !== 'active' || event.outcome !== 'completed' || ctx.signal?.aborted) return;
+      await recordCheckTurn(event, ctx);
       {
         // Ask while the active agent run still owns a cancellable signal. At
         // agent_before_settle that signal can already be gone in Pi 0.87.1.
@@ -1304,7 +1454,7 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
           ? { prompt: value.maintenance.prompt, sources: value.maintenance.sources, instruction: '用户任务已答复。这是一次受限记忆维护；仅可提交有当前公开证据支持的patch或空operations，不运行新分析、不新增任务。' } : undefined };
       const messages = currentNativeProjectContext(event.messages).map(message => message.role === 'system' && message.sections?.['biomind-current']
         ? { ...message, sections: Object.fromEntries(Object.entries(message.sections).filter(([key]) => key !== 'biomind-current')) } : message);
-      const rules = value?.maintenance?.outboxId ? MAINTENANCE_RULES : `${COMMON_RULES}\n${native ? NATIVE_RULES : PROTECTED_RULES}`;
+      const rules = value?.maintenance?.outboxId ? MAINTENANCE_RULES : `${COMMON_RULES}\n${LONG_TASK_RULES}\n${native ? NATIVE_RULES : PROTECTED_RULES}`;
       messages.push({ role: 'system', content: '', sections: { 'biomind-current': `${rules}\n当前有效状态与偏好：\n${JSON.stringify({ ...currentContext, execution_profile: profile, ...(native ? { approval_mode: 'not_applicable', authorization_refs: [] } : {}) })}` }, timestamp: Date.now() });
       const sections=messages.filter(message=>message.role==='system').map(message=>({content:message.content,sections:message.sections}));
       const projection=JSON.stringify(sections);
@@ -1348,6 +1498,7 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
       }
     });
     pi.on('agent_settled', (_event, ctx) => {
+      longTaskMonitor.resetDelivery();
       const value = state(ctx); if (!value) return;
       if (value.status === 'paused') {
         // The permission/request remains paused, but the host still needs the
@@ -1414,11 +1565,13 @@ export function createBioMindExtension(options: BioMindExtensionOptions = {}) {
       }
     });
     pi.on('session_tree', async (_event, ctx) => {
+      longTaskMonitor.stop(); longTaskMonitor.start();
       if (!readySessions.has(sessionId(ctx))) return;
       restoreToolSelection(ctx);publishToolPolicy();setActiveTools(MAIN_TOOLS);
       await refreshApprovalStatus(ctx);
     });
     pi.on('session_shutdown', async (event, ctx) => {
+      longTaskMonitor.stop();
       welcomeEpoch++;
       backendEpoch++;
       unobserveBackend(sessionId(ctx));

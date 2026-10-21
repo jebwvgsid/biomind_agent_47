@@ -16,7 +16,7 @@ const PRIORITY = ['status', 'error', 'reason', 'phase', 'execution_started', 're
   'host_boundary', 'affected_capability', 'run_status', 'terminal', 'exit_code', 'returncode',
   'cancel_requested', 'stop_requested', 'task_cancelled', 'cleanup_confirmed', 'approval_id',
   'request_id', 'action_hash', 'request_scope', 'allowed_decisions', 'log_refs',
-  'next_cursor', 'delta_byte_ranges', 'unread_log_bytes'];
+  'next_cursor', 'original_deadline_at', 'task_deadline_at', 'next_check_at', 'eta_at', 'scientific_validation', 'monitor', 'delta_byte_ranges', 'unread_log_bytes'];
 
 /** UTF-8 prefix, never split a code point; terminal controls are data, not instructions. */
 export function boundedDisplayText(input: string, bytes: number = TOOL_DISPLAY_LIMITS.textBytes,

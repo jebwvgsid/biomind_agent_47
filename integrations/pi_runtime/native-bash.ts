@@ -27,7 +27,7 @@ export function runtimeBash(resolve: RuntimeBashResolver,
   const definition = createBashToolDefinition(process.cwd());
   return {
     ...definition,
-    description: definition.description + ' Omitted timeout uses a finite host default (60 seconds unless configured). Explicit longer budgets are preserved. Use binding_ref for selected scientific software; select_environment does not globally activate anything.',
+    description: definition.description + ' Omitted timeout uses a finite host default (60 seconds unless configured). This synchronous tool blocks Main until completion; use run_command for long, uncertain or resource-heavy work so it can be inspected and cancelled. The timeout terminates execution; it is not a review interval. Explicit longer budgets are preserved. Use binding_ref for selected scientific software; select_environment does not globally activate anything.',
     parameters: Type.Object({ ...definition.parameters.properties,
       timeout: Type.Optional(Type.Number({ minimum: 0.001, maximum: 2147483.647, description: 'Seconds; omitted = finite host default, normally 60. Set an explicit appropriate budget for longer work, or use run_command.' })),
       binding_ref: Type.Optional(Type.String({ minLength: 1, description: 'Current-request binding_ref returned by select_environment.' })) }),

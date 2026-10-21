@@ -152,12 +152,18 @@ async def execute_native_command(service, arguments, *, task_id, call_id, stage=
                 'runtime_metadata':dict(observation)}
             if complete: _once(receipt,result)
             raise
-        result = {**base,'status':'exited','terminal':True,'exit_code':rc,'returncode':rc,'stdout':stdout,'stderr':stderr,
+        complete = bool(observation.get('cleanup_confirmed'))
+        result = {**base,'status':'exited' if complete else 'reconciliation_unknown','terminal':complete,'exit_code':rc,'returncode':rc,'stdout':stdout,'stderr':stderr,
                   'execution_started':bool(observation.get('process_started_at')),
-                  'cleanup_confirmed':bool(observation.get('cleanup_confirmed',True)),
+                  'cleanup_confirmed':complete,
                   'finished_at':time.time(),'runtime_metadata':dict(observation)}
-        _once(receipt,result)
-        _record_formal_receipt(service.data_path,task_id,result)
+        if complete:
+            _once(receipt,result)
+            _record_formal_receipt(service.data_path,task_id,result)
+        else:
+            result.update(error='EXECUTION_CLEANUP_UNCONFIRMED', receipt_ref=str(directory/'cleanup_observation.json'))
+            if not (directory/'cleanup_observation.json').exists():
+                _once(directory/'cleanup_observation.json', result)
         return result
     except Exception as exc:
         if observation['preparation_settlement']['safe_to_release'] and not observation.get('launch_delegated'):

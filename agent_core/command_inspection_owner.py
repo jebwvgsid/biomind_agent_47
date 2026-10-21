@@ -319,8 +319,8 @@ class InspectionOwnerMixin:
         # asyncio.wait does not cancel its input if this waiter is cancelled.
         stop = time.monotonic() + max(0, seconds)
         while owner.task is not None and not owner.task.done():
-            if owner.metrics.get('cleanup_unconfirmed'):
-                break
+            # A previous observation timeout is not the executor's final fact.
+            # Keep this wait bounded, but let the live owner finish/reconcile.
             remaining = stop - time.monotonic()
             if remaining <= 0:
                 break
@@ -564,6 +564,9 @@ class InspectionOwnerMixin:
                 owner.metrics['stop_requested'] = True
                 owner.cancelled.set()
                 await self._wait_owner(owner, self.cleanup_timeout_seconds)
+                if not (owner.result and owner.result.get('terminal')):
+                    owner.metrics['cleanup_unconfirmed'] = True
+                    owner.metrics.setdefault('cleanup_reason', 'stop_confirmation_deadline')
             return {**self._snapshot(owner), 'tool': 'stop_command',
                     'stop_requested': bool(owner.metrics.get('stop_requested')),
                     'task_cancelled': self.request_is_cancelled(task_id, request_scope),

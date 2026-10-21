@@ -90,7 +90,7 @@ def execution_runtime_contract() -> Dict[str, Any]:
                 f"{policy.wall_timeout_env}; zero disables the wall timeout"
             ),
             "stall_timeout": policy.stall_timeout_env,
-            "unknown_activity_policy": "unknown is not zero; existing no-observable-progress timeout remains a policy, not proof of deadlock",
+            "unknown_activity_policy": "unknown is not zero; managed Pi jobs request semantic review on idle evidence and stop only at their original execution deadline or explicit cancellation; legacy probe watchdogs retain their configured policy",
             "cleanup_observation_bound": policy.cleanup_timeout_env,
         },
         "failure_semantics": {

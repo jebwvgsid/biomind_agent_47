@@ -33,7 +33,7 @@ from .registry import RegistryView, registry_path as resolve_registry_path
 from .discovery import list_directory
 from .output_page import page_text
 
-HOST_METHODS = frozenset({'output.configure','files.list','files.read_authorize','files.mutation_snapshot','files.mutation_replay','request.begin','request.cancel','approval.decide','settings.update','shutdown',
+HOST_METHODS = frozenset({'exec.monitor','exec.check_ack','output.configure','files.list','files.read_authorize','files.mutation_snapshot','files.mutation_replay','request.begin','request.cancel','approval.decide','settings.update','shutdown',
                          'request.pause','request.resume','request.revise','request.status','exec.probe',
                          'memory.maintenance.prepare','memory.maintenance.apply','archive.append','archive.status',
                          'permissions.status','permissions.revoke','permissions.mode','environments.launch','environments.register_observed'})
@@ -74,6 +74,11 @@ class DomainService:
         self.commands.install_dir=self.install_root
         self.commands.runtime_registry=self.registry
         self.formal=FormalCommandObserver(self.commands)
+        # Host-only startup configuration, never a model argument or refreshed
+        # relative duration. Every request in this host inherits the same cap.
+        self._host_task_deadline_at=os.environ.get('BIOMIND_PI_TASK_DEADLINE_AT') or None
+        if self._host_task_deadline_at:
+            self.formal._deadline_timestamp(self._host_task_deadline_at)
         self.output_limits=None
         self.files=WorkspaceFileService(self.commands)
         self._skills=None; self._wiki=None; self._core=None
@@ -168,8 +173,9 @@ class DomainService:
         keys={'request_executed','status','terminal','execution_started','run_ref','attempt_id','action_id','task_id',
               'exit_code','returncode','stdout','stderr','stdout_delta','stderr_delta','next_cursor',
               'delta_byte_ranges','unread_log_bytes','log_refs','log_errors','receipt_ref','error','detail','replayed',
-              'cleanup_confirmed','cleanup_reason','owner_available','process_alive','activity',
+              'cleanup_confirmed','cleanup_reason','owner_available','process_alive','activity','hostname',
               'elapsed_seconds','output_idle_seconds','original_deadline_at','remaining_seconds',
+              'task_deadline_at','next_check_at','eta_at','last_check_at','diagnostic_due','termination_reason',
               'scientific_validation','cancel_requested','stop_requested','task_cancelled','instruction',
               'wall_timeout_disabled','run_status','run_terminal','truncated','output_projection','observation_only',
               'capability_missing','filesystem_protection','runtime_binding','runtime_diagnostic'}
@@ -679,6 +685,19 @@ class DomainService:
         # Pi's tool description is presentation metadata, not an executable
         # argument supported by the existing strict formal action contract.
         original.pop('description',None)
+        monitoring = {key: original.pop(key) for key in ('next_check_seconds','review_interval_seconds','eta_seconds') if key in original}
+        self.formal.validate_monitoring(monitoring)
+        task_deadline = original.pop('task_deadline_at', None)
+        if task_deadline is not None:
+            self.formal.tighten_task_deadline(self.task_id, self.scope(), task_deadline)
+        # A relative action timeout is not a task-wide budget. A task deadline,
+        # when supplied, is absolute and cannot be renewed by another call.
+        if (not probe and original.get('timeout_ms') is None
+                and not self.formal.task_deadline(self.task_id, self.scope())
+                and not self.formal.has_intent(self.task_id, self.scope(), call_id)):
+            return {'status':'not_run','terminal':True,'execution_started':False,
+                    'error':'FINITE_RUN_BUDGET_REQUIRED',
+                    'instruction':'Choose and explain an appropriate finite execution budget, then provide timeout_ms or an absolute task_deadline_at. Waiting and review intervals do not terminate execution.'}
         diagnostic=original.pop('environment_diagnostic',False)
         if type(diagnostic) is not bool or (diagnostic and not probe):
             raise DomainError('ENVIRONMENT_DIAGNOSTIC_REQUIRES_PROBE')
@@ -698,7 +717,7 @@ class DomainService:
             # Select before any legacy permission payload, projection or output ACL.
             async with self._dispatch_lock:
                 if diagnostic:self._reserve_diagnostic_budget(call_id,arguments)
-                result=self._run_view(await self.formal.start(arguments,task_id=self.task_id,stage='pi_native_probe' if probe else 'pi_native',request_scope=self.scope(),call_id=call_id,yield_time_ms=50))
+                result=self._run_view(await self.formal.start(arguments,task_id=self.task_id,stage='pi_native_probe' if probe else 'pi_native',request_scope=self.scope(),call_id=call_id,yield_time_ms=50,monitoring=None if probe else monitoring))
                 return {**result,'vantage':'host','profile':'native','execution_profile':'native'}
         command_id=permissions.derive_permission_call_id(call_id,'command')
         row=self._permission(command_id,permissions.command_payload(self.commands,arguments,self.task_id,call_id=command_id))
@@ -707,7 +726,7 @@ class DomainService:
         # Owner reservation itself is short. Long work lives in the real observer.
         async with self._dispatch_lock:
             if diagnostic:self._reserve_diagnostic_budget(call_id,arguments)
-            result=self._run_view(await self.formal.start(arguments,task_id=self.task_id,stage='pi_probe' if probe else 'pi_main',request_scope=self.scope(),call_id=call_id,yield_time_ms=50))
+            result=self._run_view(await self.formal.start(arguments,task_id=self.task_id,stage='pi_probe' if probe else 'pi_main',request_scope=self.scope(),call_id=call_id,yield_time_ms=50,monitoring=None if probe else monitoring))
             return {**result,'vantage':'sandbox','profile':'consult-probe-ro-v1' if probe else 'formal-input-ro-v1'}
 
     async def call(self,method,p,*,host_token=None):
@@ -748,7 +767,7 @@ class DomainService:
                     'execution_profile':self.execution_profile,
                     'host_token':self.host_token,'methods':['request.begin','context.snapshot','environments.select',
                     'environments.locate','environments.register','environments.launch','environments.register_observed',
-                    'exec.start','exec.status','exec.wait','exec.read_log','exec.cancel','approval.decide','files.read','files.write','files.stat',
+                    'exec.start','exec.status','exec.wait','exec.read_log','exec.cancel','exec.monitor','approval.decide','files.read','files.write','files.stat',
                     'memory.search','memory.read','memory.write','install.propose','install.execute','settings.update',
                     'archive.append','archive.status','permissions.status','permissions.propose','permissions.mode','permissions.revoke']}
         if method=='request.begin':
@@ -783,7 +802,11 @@ class DomainService:
                 permissions._permissions(state).setdefault('owner',{'task_id':self.task_id,
                     'session_id':self.session_id,'project':str(self.cwd),'storage':str(self.data_root)})
                 return {'status':'ready','request_scope':request_scope(state),'task_id':self.task_id}
-            return mutate(self.data_root,self.task_id,update)
+            result=mutate(self.data_root,self.task_id,update)
+            if self._host_task_deadline_at:
+                result['task_deadline_at']=self.formal.tighten_task_deadline(
+                    self.task_id,self.scope(),self._host_task_deadline_at)
+            return result
         if method=='request.status':
             task=self._state().get('task_state',{})
             return {'request_id':task.get('pi_request_id'),'paused':task.get('pi_pause'),
@@ -887,10 +910,34 @@ class DomainService:
         if method=='environments.locate':return await self.locate_environment(p)
         if method=='exec.start': return await self._exec_start(p)
         if method=='exec.probe': return await self._exec_start(p,probe=True)
+        if method=='exec.monitor':
+            if p:
+                if set(p) != {'call_id'} or not isinstance(p['call_id'], str) or not p['call_id']:
+                    raise DomainError('RUN_MONITOR_ARGUMENTS_INVALID')
+                result = self.formal.reconcile_call(task_id=self.task_id,request_scope=self.scope(),call_id=p['call_id'])
+                return {'reconciliation': self._run_view(result) if result else None, 'call_id': p['call_id']}
+            return self.formal.monitor_due(self.task_id,self.scope())
+        if method=='exec.check_ack':
+            return self.formal.acknowledge_check(p['run_ref'],self.task_id,self.scope(),p['receipt'],
+                phase=p['phase'],entry_id=p['entry_id'],tool_call_id=p['tool_call_id'],decision_entry_id=p.get('decision_entry_id'))
         if method in {'exec.status','exec.wait','exec.read_log'}:
+            acknowledge = p.get('acknowledge_check', True)
+            if type(acknowledge) is not bool:
+                raise DomainError('RUN_CHECK_ACKNOWLEDGEMENT_INVALID')
             args={k:p[k] for k in ('run_ref','after_cursor','max_wait_ms') if k in p}
+            if method=='exec.status':
+                self.formal.validate_monitoring({k:p[k] for k in ('next_check_seconds','eta_seconds') if k in p})
+                previous=self.formal._monitor_row(self.task_id,p.get('run_ref',''))
+                if acknowledge and previous.get('log_cursor') and 'after_cursor' not in args:
+                    args['after_cursor']=previous['log_cursor']
             if method!='exec.wait': args['max_wait_ms']=0
             result=self._run_view(await self.formal.wait_command(args,task_id=self.task_id,request_scope=self.scope()))
+            if acknowledge and result.get('request_executed') is not False:
+                if method=='exec.status' and p.get('record') is None:
+                    result=self.formal.prepare_check(p['run_ref'],self.task_id,self.scope(),result,
+                        next_check_seconds=p.get('next_check_seconds'),eta_seconds=p.get('eta_seconds'))
+                elif method!='exec.status' and result.get('next_cursor'):
+                    result=self.formal.prepare_check(p['run_ref'],self.task_id,self.scope(),result,review=False)
             if method=='exec.status' and p.get('record') is not None:
                 result['execution_record']=self.execution_record(p)
                 if self.output_limits:

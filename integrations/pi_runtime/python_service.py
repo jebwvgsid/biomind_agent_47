@@ -61,7 +61,7 @@ async def serve(service, initial_raw=None):
     write_lock=asyncio.Lock(); pending=set();seen=set();recent=deque();limit=asyncio.Semaphore(64)
     controls=asyncio.Semaphore(64)
     control_methods={'hello','request.begin','request.cancel','request.pause','request.resume','request.revise','request.status','permissions.mode','approval.decide','exec.cancel',
-                     'exec.status','session.lifecycle','context.snapshot','settings.update','shutdown','archive.status',
+                     'exec.status','exec.monitor','exec.check_ack','session.lifecycle','context.snapshot','settings.update','shutdown','archive.status',
                      'permissions.status','permissions.revoke'}
     loop=asyncio.get_running_loop()
     reader=asyncio.StreamReader(limit=MAX_FRAME)

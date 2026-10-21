@@ -8,6 +8,10 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import math
+import os
+import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Sequence
 
@@ -23,6 +27,32 @@ async def run_with_pi(*, command: Sequence[str], task_id: str, prompt: dict[str,
                       action_probe: Callable[[], list[str]] | None = None,
                       timeout_seconds: float | None = None) -> dict[str, Any]:
     """Exchange JSONL with Pi; a settled event alone is never a science result."""
+    # Freeze the host budget before startup. Relative waits below consume this
+    # same interval; the domain runner receives its absolute cutoff as well.
+    started_monotonic, started_epoch = time.monotonic(), time.time()
+    child_environment = dict(os.environ)
+    deadline_epoch = None
+    inherited = child_environment.get('BIOMIND_PI_TASK_DEADLINE_AT')
+    if inherited:
+        parsed = datetime.fromisoformat(inherited.replace('Z', '+00:00'))
+        if parsed.tzinfo is None:
+            raise ValueError('PI_BENCHMARK_HOST_DEADLINE_REQUIRES_TIMEZONE')
+        deadline_epoch = parsed.timestamp()
+    if timeout_seconds is not None:
+        seconds = float(timeout_seconds)
+        if math.isnan(seconds):
+            raise ValueError('PI_BENCHMARK_TIMEOUT_INVALID')
+        # Preserve None/+infinity as no new limit, and zero/negative as an
+        # immediately expired budget rather than accidentally disabling it.
+        if seconds != math.inf:
+            requested = started_epoch + max(0., seconds)
+            deadline_epoch = min(deadline_epoch, requested) if deadline_epoch is not None else requested
+    deadline_monotonic = None
+    task_deadline_at = None
+    if deadline_epoch is not None:
+        task_deadline_at = datetime.fromtimestamp(deadline_epoch, timezone.utc).isoformat()
+        child_environment['BIOMIND_PI_TASK_DEADLINE_AT'] = task_deadline_at
+        deadline_monotonic = started_monotonic + deadline_epoch - started_epoch
     run_output_dir.mkdir(parents=True, exist_ok=True)
     audit: dict[str, Any] = {
         "schema_version": "biomind.ask-continuation-record.v3",
@@ -34,11 +64,12 @@ async def run_with_pi(*, command: Sequence[str], task_id: str, prompt: dict[str,
         "execution_facts": [], "model_conclusion": None,
         "scientific_success": None, "evaluator_status": "NOT_RUN",
         "settled_events": 0,
+        "task_deadline_at": task_deadline_at,
         "requested_slot_evidence": [], "question_text_evaluator": "NOT_RUN",
     }
     process = await asyncio.create_subprocess_exec(*command, cwd=project_dir,
         stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE, limit=1024 * 1024)
+        stderr=asyncio.subprocess.PIPE, limit=1024 * 1024, env=child_environment)
     assert process.stdin and process.stdout and process.stderr
     stderr_path = run_output_dir / "pi_host_stderr.log"
     event_path = run_output_dir / "pi_host_events.jsonl"
@@ -136,13 +167,15 @@ async def run_with_pi(*, command: Sequence[str], task_id: str, prompt: dict[str,
 
     stderr_task = asyncio.create_task(drain_stderr())
     try:
-        await send({"type": "prompt", "id": "benchmark:" + task_id, "requestId": task_id,
-                    "taskId": task_id, "text": prompt["copy_paste_prompt"],
-                    "structured_source": structured_source})
-        if timeout_seconds is None:
+        async def exchange():
+            await send({"type": "prompt", "id": "benchmark:" + task_id, "requestId": task_id,
+                        "taskId": task_id, "text": prompt["copy_paste_prompt"],
+                        "structured_source": structured_source})
             await consume()
+        if deadline_monotonic is None:
+            await exchange()
         else:
-            await asyncio.wait_for(consume(), timeout_seconds)
+            await asyncio.wait_for(exchange(), max(0., deadline_monotonic-time.monotonic()))
         return audit
     except BaseException as error:
         failed = True
