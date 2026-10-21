@@ -1,0 +1,36 @@
+--- /public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/delivery/service/plugin-lifecycle/59f269bcd8027d40b8685feffd14a656176d5817/server/rebind-managed-services.py
++++ /public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/scripts/rebind-managed-services.py
+@@ -253,0 +254,18 @@
++def session_binding(path, root):
++    """Verify the existing session alias against the explicit canonical root."""
++    p = Path(path)
++    require(p.is_absolute() and not any(c in str(p) for c in '\n\r\x00'), 'ABSOLUTE_PATH_REQUIRED')
++    absolute(p.parent, directory=True)
++    root = absolute(root, directory=True)
++    alias = p.lstat()
++    require(alias.st_uid == os.getuid(), 'PATH_OWNER_MISMATCH')
++    if not p.is_symlink():
++        absolute(p, directory=True)
++    require(p.resolve(strict=True) == root, 'SESSION_ROOT_MISMATCH')
++    target = root.stat()
++    return {'path': p, 'root': root,
++            'identity': (alias.st_dev, alias.st_ino, alias.st_mode,
++                         os.readlink(p) if p.is_symlink() else None,
++                         target.st_dev, target.st_ino)}
++
++
+@@ -277,3 +295,3 @@
+-    sessions = (absolute(runtime['value']['sessionDir'], directory=True)
+-                if runtime['value'].get('sessionDir') else absolute(agent / 'sessions', directory=True))
+-    require(absolute(env.get('BIOMIND_SESSION_ROOT'), directory=True) == sessions, 'SESSION_ROOT_MISMATCH')
++    binding = session_binding(runtime['value'].get('sessionDir') or agent / 'sessions',
++                              env.get('BIOMIND_SESSION_ROOT'))
++    sessions = binding['root']
+@@ -322 +340 @@
+-            'checked_entries': checked, 'service_release': service_release,
++            'checked_entries': checked, 'session_binding': binding, 'service_release': service_release,
+@@ -345,0 +364,2 @@
++        binding = plan['session_binding']
++        require(session_binding(binding['path'], binding['root']) == binding, 'SESSION_BINDING_CHANGED')
+@@ -387,0 +408 @@
++            require(session_binding(binding['path'], binding['root']) == binding, 'SESSION_BINDING_CHANGED')

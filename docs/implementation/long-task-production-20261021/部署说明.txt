@@ -29,3 +29,12 @@ Studio 仅在 studio-rebind.json 存在且状态 APPLIED 时可回退：在真�
 部署期间曾受执行环境限制：会话看不到宿主 PID，本机网络 socket 返回 EPERM，申请提升权限及用户切换权限后复检仍如此。没有绕过 backend/configure/service 锁。当前是否已解除，以 DEPLOYMENT.json 的 Studio 实际 owner 验证为准。
 Studio已在真实宿主完成重绑定及实际Main加载验证。
 Git：仅本地提交；本次未请求远端推送。Windows 桌面 GUI 未验收。
+
+Windows Codex 宿主验收补充 — 2026-10-21
+首次切换在原生空闲关闭后，被重绑定工具的 SYMLINK_OR_NONCANONICAL_PATH_REFUSED 拒绝；原脚本已恢复旧服务，失败证据保存在 evidence/windows-codex-attempt-1。
+原因是既有共享 agentDir/sessions 使用符号链接。交付脚本副本已修正为核对该链接与明确的 sessionRoot，并在原有三类锁内复核路径身份；17项隔离回归测试通过。没有修改固定服务包、共享配置或符号链接。
+第二次 complete_on_host.sh 成功，真实 Main loaded_build 与完整目标构建一致，4个长任务工具与3个指定共享联网工具已注册。测试 owner 原生关闭；零模型请求的加载会话未产生持久 JSONL，验收项目已归档。
+最终服务健康身份匹配，原有33个会话文件元数据及共享目录顶层元数据不变，原配置精确备份、旧发布包及固定服务文件清单已核验。
+Windows GUI 为 NOT_RUN：当前没有可访问的现有 Studio 窗口；这不影响服务器 Main 加载验收，但不能视为桌面交互已通过。
+N1、N2 保持 PARTIAL，N3、N4 为 PASS。生产加载验收没有发起模型请求或正式生信分析，不能替代真实长任务或生物学验收。
+本次补充证据见 WINDOWS_CODEX_ACCEPTANCE.json。最终提交号回写共享交接目录的 WINDOWS_CODEX_RESULT.json；未推送 Git。

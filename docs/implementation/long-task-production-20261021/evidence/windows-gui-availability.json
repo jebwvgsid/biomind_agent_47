@@ -1,0 +1,12 @@
+{
+  "status": "NOT_RUN",
+  "checkedAt": "2026-10-21T04:50:49.207247+00:00",
+  "reason": "No existing BioMind/Studio process or window was found by the local process query. Computer-use inventory exposes no native apps and both available browser surfaces have zero tabs; Windows Studio rediscovery/session loading could not be exercised.",
+  "nativeApps": 0,
+  "availableBrowserTabCounts": {
+    "iab": 0,
+    "mcpapps": 0
+  },
+  "newFrontendInstalled": false,
+  "windowsSettingsChanged": false
+}

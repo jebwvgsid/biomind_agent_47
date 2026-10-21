@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "checkedAt": "2026-10-21T04:54:48.341915+00:00",
+  "agentDir": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020",
+  "sessionRoot": "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.biomind/pi-agent/sessions",
+  "originalSessionFiles": 33,
+  "currentSessionFiles": 33,
+  "originalSessionFilesMetadataUnchanged": true,
+  "sharedTopLevelMetadataUnchanged": true,
+  "runtimeResourceSettingsPreserved": true,
+  "oldRuntimeBytesPreserved": true,
+  "exactServiceConfigBackupVerified": true,
+  "oldReleasePreserved": true,
+  "fixedServiceReleaseHashesVerified": true,
+  "finalHealth": {
+    "schema": "BioMindStudioHealthV1",
+    "instanceId": "7036581efb414b259343c0d1f57a06de",
+    "serverId": "biomind-c8b9c760c4064a40bdae3a717785e2b3",
+    "status": "ready",
+    "profile": "biomind",
+    "ownerStatus": "not_checked",
+    "idleStopProtocol": 1
+  },
+  "baselineEvidence": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/evidence/windows-codex-before.json"
+}

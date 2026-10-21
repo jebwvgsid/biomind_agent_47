@@ -1,0 +1,158 @@
+{
+  "schema": "BioMindWindowsCodexResultV1",
+  "status": "DEPLOYED_AND_VERIFIED",
+  "checkedAt": "2026-10-21T04:54:48.341915+00:00",
+  "host": "ln02",
+  "serverId": "biomind-c8b9c760c4064a40bdae3a717785e2b3",
+  "instanceId": "7036581efb414b259343c0d1f57a06de",
+  "buildId": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+  "sourceCommit": "fbe9355632f9447726d8d566ab737c16974c4b83",
+  "scriptCompletionCommit": "eaf955b925c9ef5d929147352be73ddf4238aeb0",
+  "ownerVerification": {
+    "status": "PASS",
+    "verifiedInstanceId": "211e4ce49c8545f8b889396fabb6c8f3",
+    "sessionId": "01a15ccc-c71c-70cb-ac7d-51f9d1e61b25",
+    "ownerGeneration": "cbd6bd3f-aa97-423a-98fc-9ebc67a1a014",
+    "loadedBuildId": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+    "releaseRoot": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-94ddac30b6803e12",
+    "requiredTools": [
+      "cancel_run",
+      "fetch_content",
+      "get_search_content",
+      "inspect_run",
+      "run_command",
+      "wait_run",
+      "web_search"
+    ],
+    "registeredTools": [
+      "ask_user",
+      "bash",
+      "cancel_run",
+      "edit",
+      "fetch_content",
+      "file_stat",
+      "find",
+      "get_search_content",
+      "grep",
+      "inspect_run",
+      "install_tool",
+      "ls",
+      "maintenance_submit",
+      "memory_read",
+      "memory_search",
+      "memory_write",
+      "probe_command",
+      "read",
+      "read_run_log",
+      "register_environment",
+      "run_command",
+      "select_environment",
+      "source_check",
+      "update_plan",
+      "wait_run",
+      "web_enable",
+      "web_search",
+      "write"
+    ],
+    "modelRequests": 0,
+    "formalAnalysisRuns": 0,
+    "evidence": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/studio-owner-verification.json"
+  },
+  "testSessionCleanup": {
+    "status": "PASS",
+    "sessionId": "01a15ccc-c71c-70cb-ac7d-51f9d1e61b25",
+    "ownerClosedByNativeIdleShutdown": true,
+    "sessionFileAbsent": true,
+    "persistedTestSessionCreated": false,
+    "sessionArchiveCreated": false,
+    "testProjectArchived": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/evidence/studio-load-project",
+    "activeTestProjectAbsent": true,
+    "originalSessionsPreserved": 33,
+    "evidence": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/evidence/studio-owner-test-idle-stop.stdout",
+    "note": "Load-only initialization reported a session path but did not persist a JSONL file; no session JSONL needed moving. The test project was archived and its owner closed natively."
+  },
+  "WindowsGUI": {
+    "status": "NOT_RUN",
+    "checkedAt": "2026-10-21T04:50:49.207247+00:00",
+    "reason": "No existing BioMind/Studio process or window was found by the local process query. Computer-use inventory exposes no native apps and both available browser surfaces have zero tabs; Windows Studio rediscovery/session loading could not be exercised.",
+    "nativeApps": 0,
+    "availableBrowserTabCounts": {
+      "iab": 0,
+      "mcpapps": 0
+    },
+    "newFrontendInstalled": false,
+    "windowsSettingsChanged": false
+  },
+  "resourcePreservation": {
+    "status": "PASS",
+    "checkedAt": "2026-10-21T04:54:48.341915+00:00",
+    "agentDir": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/production/shared-agent-20261020",
+    "sessionRoot": "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.biomind/pi-agent/sessions",
+    "originalSessionFiles": 33,
+    "currentSessionFiles": 33,
+    "originalSessionFilesMetadataUnchanged": true,
+    "sharedTopLevelMetadataUnchanged": true,
+    "runtimeResourceSettingsPreserved": true,
+    "oldRuntimeBytesPreserved": true,
+    "exactServiceConfigBackupVerified": true,
+    "oldReleasePreserved": true,
+    "fixedServiceReleaseHashesVerified": true,
+    "finalHealth": {
+      "schema": "BioMindStudioHealthV1",
+      "instanceId": "7036581efb414b259343c0d1f57a06de",
+      "serverId": "biomind-c8b9c760c4064a40bdae3a717785e2b3",
+      "status": "ready",
+      "profile": "biomind",
+      "ownerStatus": "not_checked",
+      "idleStopProtocol": 1
+    },
+    "baselineEvidence": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/evidence/windows-codex-before.json"
+  },
+  "resolvedIssues": [
+    {
+      "code": "SYMLINK_OR_NONCANONICAL_PATH_REFUSED",
+      "resolution": "The reviewed native rebind script now validates the existing session alias against the configured canonical session root and rechecks its identity under the original locks. Fixed service bundle, shared config, and alias were retained.",
+      "testsPassed": 17,
+      "evidence": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/evidence/rebind-session-path-fix.json"
+    }
+  ],
+  "remainingIssues": [
+    {
+      "code": "WINDOWS_GUI_NOT_RUN",
+      "detail": "No accessible existing Windows Studio window; reconnect/discovery and desktop session loading remain unverified."
+    },
+    {
+      "code": "N1_PARTIAL",
+      "detail": "Candidate real-model lookup scope deviation remains PARTIAL."
+    },
+    {
+      "code": "N2_PARTIAL",
+      "detail": "Candidate real-model elapsed-time explanation evidence remains insufficient; PARTIAL."
+    },
+    {
+      "code": "INITIAL_OFFICIAL_CLI_FAILURE_ROOT_CAUSE_UNRESOLVED",
+      "detail": "Earlier PI_INITIALIZATION_FAILED remains recorded; unchanged serial retry passed."
+    }
+  ],
+  "candidateAcceptance": {
+    "targetedChecksPassed": 69,
+    "N1": "PARTIAL",
+    "N2": "PARTIAL",
+    "N3": "PASS",
+    "N4": "PASS"
+  },
+  "remotePushed": false,
+  "apiKeysFileRead": false,
+  "userTasksCancelled": false,
+  "evidenceFiles": [
+    "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/DEPLOYMENT.json",
+    "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/DEPLOYMENT_REPORT.txt",
+    "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/studio-rebind.json",
+    "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/studio-owner-verification.json",
+    "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/evidence/windows-codex-preservation.json",
+    "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/evidence/rebind-session-path-tests.log",
+    "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/evidence/windows-codex-attempt-1/studio-rebind-check.stdout",
+    "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/evidence/windows-codex-execution-attempt-2.json",
+    "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/evidence/windows-gui-availability.json"
+  ]
+}

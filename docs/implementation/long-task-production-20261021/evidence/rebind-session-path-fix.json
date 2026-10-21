@@ -1,0 +1,10 @@
+{
+  "reason": "Existing shared agent sessions symlink resolves to the configured canonical session root. Verify that binding and recheck it under all original locks.",
+  "upstreamScript": "/public/home/liusiqi/03.\u6bd5\u8bbe/BioMind_Unified_Core_20261009/delivery/service/plugin-lifecycle/59f269bcd8027d40b8685feffd14a656176d5817/server/rebind-managed-services.py",
+  "upstreamSha256": "2c5a38fc5d7f6274bf5c9c5d4e3648579b0baafbd71c1bc9d6f62595b0340229",
+  "patchedScript": "/public/home/liusiqi/03.\u6bd5\u8bbe/BioMind_Production_LongTask_20261021/scripts/rebind-managed-services.py",
+  "patchedSha256": "0d3770bb0874a2a2cea4016f0d5a05058573709433b8b6de8bf8c1fcff77a684",
+  "fixedServiceReleaseModified": false,
+  "sessionAliasModified": false,
+  "sharedRuntimeModified": false
+}

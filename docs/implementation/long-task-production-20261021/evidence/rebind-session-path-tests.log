@@ -1,0 +1,22 @@
+test_apply_preserves_data_credentials_identity_and_exact_backups (__main__.RebindTests.test_apply_preserves_data_credentials_identity_and_exact_backups) ... ok
+test_default_check_leaves_production_bytes_and_state_untouched (__main__.RebindTests.test_default_check_leaves_production_bytes_and_state_untouched) ... ok
+test_each_busy_lock_rejects_without_any_new_file (__main__.RebindTests.test_each_busy_lock_rejects_without_any_new_file) ... ok
+test_failed_lifecycle_retirement_keeps_stopped_record_and_backup (__main__.RebindTests.test_failed_lifecycle_retirement_keeps_stopped_record_and_backup) ... ok
+test_inline_password_refused_before_any_write (__main__.RebindTests.test_inline_password_refused_before_any_write) ... ok
+test_manifest_tampered_entry_refused (__main__.RebindTests.test_manifest_tampered_entry_refused) ... ok
+test_missing_lock_refused_without_creating_it (__main__.RebindTests.test_missing_lock_refused_without_creating_it) ... ok
+test_ready_service_refused_without_lock_or_config_changes (__main__.RebindTests.test_ready_service_refused_without_lock_or_config_changes) ... ok
+test_runtime_cas_change_refused_before_backup_or_mutation (__main__.RebindTests.test_runtime_cas_change_refused_before_backup_or_mutation) ... ok
+test_runtime_output_existing_refused_without_overwrite (__main__.RebindTests.test_runtime_output_existing_refused_without_overwrite) ... ok
+test_runtime_pointing_at_credentials_refused_before_read (__main__.RebindTests.test_runtime_pointing_at_credentials_refused_before_read) ... ok
+test_scope_mismatch_refused (__main__.RebindTests.test_scope_mismatch_refused) ... ok
+test_shared_alias_replacement_refused_under_locks (__main__.RebindTests.test_shared_alias_replacement_refused_under_locks) ... ok
+test_shared_alias_wrong_target_refused (__main__.RebindTests.test_shared_alias_wrong_target_refused) ... ok
+test_shared_session_alias_preserved_on_apply (__main__.RebindTests.test_shared_session_alias_preserved_on_apply) ... ok
+test_symlink_runtime_output_refused (__main__.RebindTests.test_symlink_runtime_output_refused) ... ok
+test_unknown_environment_refused (__main__.RebindTests.test_unknown_environment_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 17 tests in 0.130s
+
+OK
