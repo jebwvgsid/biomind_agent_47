@@ -2372,6 +2372,7 @@ export const useStore = create<PiStore>()((set, get) => ({
           : state.threads,
         expandedProjects: { ...state.expandedProjects, [cwd]: true },
       }));
+      if (get().connectionStatus === "ready" && !get().threads[file]?.connected) await get().ensureConnected(file);
       return;
     }
     await s.openThread(cwd, file);

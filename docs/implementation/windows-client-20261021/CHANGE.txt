@@ -1,0 +1,7 @@
+Windows 恢复会话点击加载修复（rc7）
+
+已恢复到侧栏且尚未连接的会话，显式点击时现在会复用 ensureConnected 加载对应 Main。仅在连接状态 ready 时调用；活动 owner、离线行为、被动历史恢复和重复点击去重沿用现有逻辑。没有自动发送提示词、重放任务或关闭 owner。
+
+修复针对 Windows 已部署 rc6 的实际源码。父提交仅保存既有 rc6 desktop/tests/packaging 源码，便于单独审阅本次变更；该保存动作不是对所有历史差异的重新实现或维护主分支合并。当前分支为 release/windows-client-20261021，原 main 与服务发布分支保持原位。
+
+验证：新增测试在 rc6 源码上复现 0 次加载调用；rc7 的 44 项界面状态测试与 37 项桥接测试通过，类型检查通过。候选的 133 个 desktop/tests/packaging 源文件与此工作树逐项一致；最终 Windows 安装与 GUI/Main 验收见 BioMind_Production_LongTask_20261021/WINDOWS_GUI_RESULT.json。

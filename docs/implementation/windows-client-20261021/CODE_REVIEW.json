@@ -1,0 +1,30 @@
+{
+  "schema": "BioMindWindowsClientCodeReviewV1",
+  "checkedAt": "2026-10-21T05:33:38.440945+00:00",
+  "status": "CODE_REVIEW_PASS_GUI_PENDING",
+  "sourceFile": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/windows-client-v7/source/desktop/src/renderer/src/store.ts",
+  "sourceSha256": "e9a5fd241dabf148f034642190f293c5b5ceb2733a38b02f2f92dff6d29d9f6e",
+  "baselineSha256": "7362f3b01216a00c782c8d7ea304461cdf440e212d52fcd458998cd38d52d87b",
+  "functionalSourceDelta": "One guarded call to existing ensureConnected in the already-open goToThread path",
+  "checks": [
+    "Existing source differs by exactly one functional statement",
+    "Explicit selection loads a restored idle session once; existing in-flight connect deduplicates concurrent clicks",
+    "Passive history restoration remains unchanged",
+    "Connection-ready gate prevents offline loading; connected owners are reused",
+    "No prompt replay or close/cancel operation added"
+  ],
+  "tests": {
+    "regressionBeforeFix": "FAIL_EXPECTED_0_OPEN_CALLS",
+    "renderer": {
+      "pass": 44,
+      "fail": 0
+    },
+    "bridge": {
+      "pass": 37,
+      "fail": 0
+    }
+  },
+  "guiAcceptance": "PENDING",
+  "newTestsRunByReviewer": 0,
+  "productionMutationsByReviewer": 0
+}

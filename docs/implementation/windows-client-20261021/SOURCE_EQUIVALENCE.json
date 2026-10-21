@@ -1,0 +1,550 @@
+{
+  "schema": "BioMindWindowsClientSourceEquivalenceV1",
+  "checkedAt": "2026-10-21T05:40:14.063203+00:00",
+  "candidateSource": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/windows-client-v7/source",
+  "version": "1.2.0-rc.20261009.7",
+  "baselineCommit": "1a370464c8bf4e4c716f34cefbb90bfbf14f4a16",
+  "changedPaths": [
+    "desktop/package-lock.json",
+    "desktop/package.json",
+    "desktop/src/renderer/src/store.ts",
+    "tests/renderer-state.test.cjs"
+  ],
+  "sourceFilesMatched": 133,
+  "gitSourceRecordedAfterBuild": true,
+  "validation": "Candidate source bytes are copied exactly; existing candidate regression/typecheck/build results apply to these same files. No binary build identity is rewritten.",
+  "files": [
+    {
+      "path": "desktop/LICENSE",
+      "sha256": "6b9d422b1d66ae2b9f5550166d8b711bace83b67270ba379b4ed59d1cea888e0"
+    },
+    {
+      "path": "desktop/THIRD_PARTY_NOTICES.md",
+      "sha256": "d59c79138df1ee950e97dcf2c9c31da9e4acc55ed040a8ff50c47a9d8ae07c19"
+    },
+    {
+      "path": "desktop/electron.vite.config.ts",
+      "sha256": "494acd1d0159f690ac8de9a3a908d546d92dd2646b811b535479c02364aa47ea"
+    },
+    {
+      "path": "desktop/electron/biomind-bridge.cjs",
+      "sha256": "208b6c44e1b74f9f31d496da357be5ea4b0fdf2bd88e7375e2b1a2f2da72ce3d"
+    },
+    {
+      "path": "desktop/electron/biomind-bridge.test.cjs",
+      "sha256": "57b70d9a5a3b117f363d4de9f2a7618fbc1b48b7c112bab344e75dcc0232731b"
+    },
+    {
+      "path": "desktop/electron/connection-store.cjs",
+      "sha256": "13b9361ee32f338b4360187e307edd41edda5f9600efcb3b26a3b96c34c42508"
+    },
+    {
+      "path": "desktop/electron/connection-store.test.cjs",
+      "sha256": "cf9678de4b4fb36c2ea4031b116f3fcd594fded17264f5d540cede8474334518"
+    },
+    {
+      "path": "desktop/electron/diagnostics.cjs",
+      "sha256": "b2c0e5169749da41cc37868b64dae163ab66d0eb23248b52817fe403ab87c299"
+    },
+    {
+      "path": "desktop/electron/main-store.test.cjs",
+      "sha256": "366d0e05920fea94d3c7c31fb2f976fd7a32c2c35a9ac829214f08a743d7b210"
+    },
+    {
+      "path": "desktop/electron/remote-connection.css",
+      "sha256": "7f76a7a4c3e39346cf8ce047354626d7ddf9f5aeb5c873d3cb62c34c1e040e05"
+    },
+    {
+      "path": "desktop/electron/remote-connection.html",
+      "sha256": "c6307c36e3dc2e5963cb793fe48e0bfcdb79e534ff3c4ba1bba534b852170f62"
+    },
+    {
+      "path": "desktop/electron/remote-connection.js",
+      "sha256": "fdc537405e456fafd94309108c11c19420a4d47b50ec6325bcc74fe3135a77ce"
+    },
+    {
+      "path": "desktop/electron/remote-connection.test.cjs",
+      "sha256": "6967b548b909dcdfef5c8b5feab01087889b7137df7ef13470d12635eefc166e"
+    },
+    {
+      "path": "desktop/electron/remote-controller.cjs",
+      "sha256": "a761b2783d6ee44e0184d14af921330c98818899daea7a2dcf4469d1fa02dbd0"
+    },
+    {
+      "path": "desktop/electron/remote-controller.test.cjs",
+      "sha256": "7c85af471a7fd198447cb228b388f8919f4f3824d55c0d291ef2caa208cdd1b9"
+    },
+    {
+      "path": "desktop/electron/remote-main.cjs",
+      "sha256": "bb3be878af7db8f2793cf2c43162a509c6fbb2356c19a05c7a30d10678c056de"
+    },
+    {
+      "path": "desktop/electron/remote-preload.cjs",
+      "sha256": "fc62f17a869b41d243ec27948f50c66996539be7c7e0e05332f3c0ddb164c1b9"
+    },
+    {
+      "path": "desktop/electron/service-installer.cjs",
+      "sha256": "8ad6aec018d070e5c0994b90dc4422141b64b9974d85634546eadb039f0f311a"
+    },
+    {
+      "path": "desktop/electron/service-installer.test.cjs",
+      "sha256": "6f4a7498905d56a1dbe213edfc9b1e31d36f7f861994d36d4260ca960fe2efa8"
+    },
+    {
+      "path": "desktop/package-lock.json",
+      "sha256": "0c436b768d480426e07e37959f8727834200021a3308e9a9b4f6f5cffe4176e4"
+    },
+    {
+      "path": "desktop/package.json",
+      "sha256": "6283c9892a0fa37c97f8a4a114f1e7e30329dc4d7e0c15e56bd5fd65f57b5665"
+    },
+    {
+      "path": "desktop/resources/biomind.svg",
+      "sha256": "5c28ceb6f705b0a9bd5f1c493d9a2c6435bbe9bc274d10c79501e7719cf18e34"
+    },
+    {
+      "path": "desktop/resources/icon.icns",
+      "sha256": "634b9e6e013a032858adbc5270ab2d5bb5933e5ac22bdb37d0cff100d040090f"
+    },
+    {
+      "path": "desktop/resources/icon.ico",
+      "sha256": "f791e8c54a88648032baa6c42074ebedd6abca27aa09530b4d863e09af4b350d"
+    },
+    {
+      "path": "desktop/resources/icon.png",
+      "sha256": "18df7832bb5c8625d3b4bac7d17a09bc1a60a55cb09272016f268d4fd8a071e4"
+    },
+    {
+      "path": "desktop/src/main/app-updater.ts",
+      "sha256": "32ff17c85138f8be13242831f46e804ff2180dce2a6082222323c019a777655c"
+    },
+    {
+      "path": "desktop/src/main/automation.ts",
+      "sha256": "6ac74e0eba50ae6d3441ca4c7c99e899b8b9766b33d7c08357a80d597813edbe"
+    },
+    {
+      "path": "desktop/src/main/biomind-client.ts",
+      "sha256": "dc7b64bfc11ecb6148a892754164d6552632997dbe946ea2c0e51f6380352030"
+    },
+    {
+      "path": "desktop/src/main/config.ts",
+      "sha256": "87d0560d1fff9b15f35d31042090b07a16bcf0625defebc63691eedf30cca818"
+    },
+    {
+      "path": "desktop/src/main/core-updater.ts",
+      "sha256": "0ae39d5fbf568f9e55de2394ca92bb531aec935c8a98464b68ae528fe18c6757"
+    },
+    {
+      "path": "desktop/src/main/fs-service.ts",
+      "sha256": "1d6b24b4433be00023646775bc3afc53711463410444cbc1be6cf29d74d1e173"
+    },
+    {
+      "path": "desktop/src/main/html-preview-protocol.ts",
+      "sha256": "20fd2a0ff3966449c650d836323f8cabd670f9b57a68a565bf7245fec018719e"
+    },
+    {
+      "path": "desktop/src/main/index.ts",
+      "sha256": "6e7e67ef0c9d6673ffa743ae7a252152385adfdb29d11affb118a81ebe9b45d2"
+    },
+    {
+      "path": "desktop/src/main/ipc.ts",
+      "sha256": "f8180e4d231b1ce169e0a9105a4555050380d52694ec7c2502dbe5739a9e3ef0"
+    },
+    {
+      "path": "desktop/src/main/mcp-service.ts",
+      "sha256": "8706333c21f36183127c66391a883822b517c3f792de068b70381011b0740759"
+    },
+    {
+      "path": "desktop/src/main/model-url-compat.ts",
+      "sha256": "8c8d633357353bccb621620716007e9039cfa65dfea687964c9caca636b7a187"
+    },
+    {
+      "path": "desktop/src/main/model-visibility.ts",
+      "sha256": "54b248349d55d232cfe70528abbc551bd0fb34431fd45fc0bb9ff15c66c0fbe4"
+    },
+    {
+      "path": "desktop/src/main/models-service.ts",
+      "sha256": "11e250d151a8ee07cb4e6af9d43671c6c24266271933ba6449aa0a0fd79bc893"
+    },
+    {
+      "path": "desktop/src/main/permission-gate-ext.ts",
+      "sha256": "77e03d5283f007ab06596d16822bd0e1ae3b108aba734c9b84116d4ac9a6fc2d"
+    },
+    {
+      "path": "desktop/src/main/permission-gate.ts",
+      "sha256": "f5a92901b68f30b831880c957c8b62a050c2691fd794b7a30f8008c15a20ccb3"
+    },
+    {
+      "path": "desktop/src/main/pi-bridge.ts",
+      "sha256": "8b262538eafbaed86c51555efaa8725d73a19522ae6cb465f673ae7bfb1a11bd"
+    },
+    {
+      "path": "desktop/src/main/plan-quotas.ts",
+      "sha256": "ab03fa0adfe21a93d68f926fd3f3b77f2329b6279325c93d91ac76b081d322ed"
+    },
+    {
+      "path": "desktop/src/main/plugins.ts",
+      "sha256": "d5edf048af8d10da9cdfa3fd917d8f7061d71d4e1a734d3620d08a08f56d2bf1"
+    },
+    {
+      "path": "desktop/src/main/preview-service.ts",
+      "sha256": "3f991f255abd0ddd6ba1d3921f3ef4586d664b4ec8bd1c48dba84d5c765f0cf5"
+    },
+    {
+      "path": "desktop/src/main/raw.d.ts",
+      "sha256": "82ebe6532c2b217d581a4940e280dcd526a7b1f88b339f486ba18368a5583d11"
+    },
+    {
+      "path": "desktop/src/main/remote/host.ts",
+      "sha256": "7ac313d3fa0af1161930fdb1a755078bcf656e7c6e988e2ed92b779675c8004a"
+    },
+    {
+      "path": "desktop/src/main/remote/identity.ts",
+      "sha256": "e417febcc9967fed24a85ad64404ab75cf11ba831ae7fc053d47f924efd31df9"
+    },
+    {
+      "path": "desktop/src/main/remote/protocol.ts",
+      "sha256": "fdb78d4d10de8ced054035a718508e30acb3b87116fe13abf666e4f84fff01cf"
+    },
+    {
+      "path": "desktop/src/main/remote/service.ts",
+      "sha256": "fe686365be884220299e073dae6b622a660d7cbd1a1f04f9e0162d8dfc51b78a"
+    },
+    {
+      "path": "desktop/src/main/remote/services.ts",
+      "sha256": "3fa16c5c535cd71b90eab47fffc863ad1ffbf22ea7de6541753fbf3b3503723d"
+    },
+    {
+      "path": "desktop/src/main/reply-timing.ts",
+      "sha256": "e104390e92aa4ecc3485488cd0b0b140893938ad7ec73d59de74e8a3e3f2afc7"
+    },
+    {
+      "path": "desktop/src/main/runtime-package.ts",
+      "sha256": "ae8d69104331e8887d0843cbe233d22b1efae13312fc7c8bce46d3d3d6d39fa7"
+    },
+    {
+      "path": "desktop/src/main/session-store.ts",
+      "sha256": "cb43545b7218fd2711ca408cb9b72a6aa6f6c7c9ef7c0064d28b2f65a4e7bc7c"
+    },
+    {
+      "path": "desktop/src/main/skills-cli-path.ts",
+      "sha256": "557650030290615b9be1370a8a2a45d1f8dd4f3a1b69648f599da84cc3da69ec"
+    },
+    {
+      "path": "desktop/src/main/skills-hub.ts",
+      "sha256": "a31489569624907cfcfb3376fe9d986257da850d0c581825a300b9e7976423f0"
+    },
+    {
+      "path": "desktop/src/main/system-notifications.ts",
+      "sha256": "22af220e763867f4dd01a462978915a10172ec7a8675b66c73dea66766d41a8e"
+    },
+    {
+      "path": "desktop/src/main/usage-pricing.ts",
+      "sha256": "8f0ff2d880cd522cc44a00084a076cffc918c38321ccb6830422690a52035305"
+    },
+    {
+      "path": "desktop/src/main/usage-service.ts",
+      "sha256": "741941301ed5b59cba9a77f6da39785ca1ebc8eb4f3bc2f76f1355280c472535"
+    },
+    {
+      "path": "desktop/src/main/vendor/README.md",
+      "sha256": "4b2815c5456c485d32eac1e92c9846c348565a26e7ed5c432eeb2317f38f0469"
+    },
+    {
+      "path": "desktop/src/main/vendor/dsh-coding-plans.d.mts",
+      "sha256": "d61a1b2255c39d6519f3361f57edf70784e194a1b1f70e1fdf477221ba658667"
+    },
+    {
+      "path": "desktop/src/main/vendor/dsh-coding-plans.mjs",
+      "sha256": "6d53bd15a2b7dc6b7f21fd633681c4c078d2245924e5a1e825c1d046d04f32d0"
+    },
+    {
+      "path": "desktop/src/main/vendor/dsh-cost-meter-LICENSE",
+      "sha256": "ed6b8056b839e90e46fe185a75fd83a6d687f22a846f68137bfa1ef0f2b233c1"
+    },
+    {
+      "path": "desktop/src/main/vendor/dsh-net.mjs",
+      "sha256": "be640fb982264f5bf1e9c9b71188bc498c55fe9f51eadc277661ae5b662faa41"
+    },
+    {
+      "path": "desktop/src/main/vendor/dsh-pricing.d.mts",
+      "sha256": "9d5f52d5b26fb2fed85a7a905602742883b50156395b35807994aaa257e35be6"
+    },
+    {
+      "path": "desktop/src/main/vendor/dsh-pricing.mjs",
+      "sha256": "bf0f6fb2afe6cad89b2a85cd5815e0f09b06579d013865c74d9427f32601ba6c"
+    },
+    {
+      "path": "desktop/src/preload/index.d.ts",
+      "sha256": "8a3ec377c2b2064e6b33f224c813a29e8f3e1fd059511f268c1976cbc1cd8227"
+    },
+    {
+      "path": "desktop/src/preload/index.ts",
+      "sha256": "013453c046d76a73db5da525d7370cad5a050e3be756b88dc306242720ef52bb"
+    },
+    {
+      "path": "desktop/src/renderer/index.html",
+      "sha256": "792edaf22d7f56ee8e927864a043405e94aa6e8686ea1a69b1f0ab22a8fdbfbc"
+    },
+    {
+      "path": "desktop/src/renderer/src/App.tsx",
+      "sha256": "fd360d713a9222170e219c72ae55046dd140a89c7ffc4acf5372b2983d6b8c45"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/AutomationPanel.tsx",
+      "sha256": "f6893bb315650966f6db39dcbeb7adc0631d2b4cb047914b94e808c0d01c5517"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/BioMindConnectionStatus.tsx",
+      "sha256": "ae355076d916ac6c98980cce6e20f143129ea509ec2ada148bd054c994b3f29c"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/BioMindSettings.tsx",
+      "sha256": "c1f8f0bec104da9dffb897cb910b6755f5b187080d13ec536192f7aebdd32e4a"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/BioMindUIStatus.tsx",
+      "sha256": "cc491a6bf8f3890b03242426d0476ed079829803f579a1e6adcadc23b6dcebbc"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/Chat.tsx",
+      "sha256": "930ceb8541fcdd04a83135c4eb30b9a903a14c1b99c2a60f87d3e8c709143be8"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/Composer.tsx",
+      "sha256": "6d681bf83736cece28e3aeb7f1920f5308594ce081953eb3c967ecf647ff3606"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/DocumentPreview.tsx",
+      "sha256": "315b8f690ee0352ff3fe66ba5a81a33503eabe69ab8f864741113e52ff31bf65"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/ExtUiModal.tsx",
+      "sha256": "d637e5f19a98a4b511e39c8ff4cc23841ad904afe7e4d705bcbc9336da38be3c"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/ExtUiPromptCard.tsx",
+      "sha256": "12ee901fffd2470ef918cd1ac19256d2b3d7767cb82b6595b4cd72ae801a8c5b"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/LanguageBridge.tsx",
+      "sha256": "6351469522996a3e653680c9ed2675295aaca33f56ac1cdae385a12f7e447dc1"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/McpSettings.tsx",
+      "sha256": "7bbb573c2c127c95db7f22d8c40ed4e79c9714b1c32bb4b1d9c53f4801449006"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/PluginsPanel.tsx",
+      "sha256": "e8fe8a518eada50cd067f0f239c3378b17ae9663ef329f3e80129252370e3b45"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/Preview.tsx",
+      "sha256": "8d7e1186693f41ec8151ef954e1026379a3af8feada5f08af97c9c5940b1d3b9"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/RemoteFolderPicker.tsx",
+      "sha256": "e82da7c9a0ad9ebf43abf2d26f11fd1578af30982c57ec3df4034fe00bbe40ec"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/RemotePanel.tsx",
+      "sha256": "38e483d4f250911b11a1104e10410c2076552c838ec69739bda93e3351027429"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/ReplyDuration.tsx",
+      "sha256": "ae90ad00132f3d722d9e2e29094ba29631dd69168450b1b083555bd81368c06d"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/SearchModal.tsx",
+      "sha256": "66b98e4bbe9506b82e5fa85046b23aee421139fad6d4d405b4a878731c4a08fa"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/Settings.tsx",
+      "sha256": "5ed7f4644df522684f745041b316e0a030cbc975d11ca75ed79df214e7db94e3"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/Sidebar.tsx",
+      "sha256": "e07ba026a1bf0609cb63ab081a4ad2d7bfdeaa67fe72a3c47cc8fa081f4d8a2f"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/SpreadsheetPreview.tsx",
+      "sha256": "d2fed0933c174d95cbab8f6c67a59775dce93fbe2fb3b1f1a552b3db0485424a"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/TitleBar.tsx",
+      "sha256": "4214f760871a1b669d3a6e3fb5d6934c2e42c767b318015903ede5b995d11caf"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/Toasts.tsx",
+      "sha256": "20f3e28202b3f9a43676fbb57158ca1059b9b573c0409d6c5f2346e6d49e91db"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/UsageCostDetails.tsx",
+      "sha256": "4c570705388c98ea4c051824018b8903a70e199f9931c81a9abca6785f791b0c"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/UsageSettings.tsx",
+      "sha256": "e6e5683dd30ec3d3ad79d127a3840abf94c48cfeb01e22715e56a69dbdb5a254"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/WorkbenchErrorBoundary.tsx",
+      "sha256": "e732bb4480b5fe541bd2dd53587fedff37e6741d9d1cbd52b3259868c1162b6b"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/icons.tsx",
+      "sha256": "e5c809ceb5a468df80718caff3b24b270a40236fb5160c73504ec14b5b46b7b7"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/office-preview.css",
+      "sha256": "3015fdbd6d22978e146f1c5e8e1e50ec7f9b2148780230323820980083a7c4a7"
+    },
+    {
+      "path": "desktop/src/renderer/src/components/usage-settings.css",
+      "sha256": "9ba7ea7da69a266072cbdda6a8e6a0d7fae60ed2d9db72fe6fcc3f3892c84a79"
+    },
+    {
+      "path": "desktop/src/renderer/src/lib/artifacts.ts",
+      "sha256": "47352e19da7070c4282deacb39b90d772ba0dfdd341299e47b541f1821bd6b7c"
+    },
+    {
+      "path": "desktop/src/renderer/src/lib/chat-scroll.ts",
+      "sha256": "1a6be034a0f6678d82e0dc6dacab230441bf0a121dffba7106a654460e08998b"
+    },
+    {
+      "path": "desktop/src/renderer/src/lib/code-languages.ts",
+      "sha256": "bdac62c5639ddc54c5166710f23d4fa9a1df10852c5f05c43539ed7a4ee8002d"
+    },
+    {
+      "path": "desktop/src/renderer/src/lib/format.ts",
+      "sha256": "82551759e31db62fdd56156f46966f8b3891d3a677a2ffba80e944360b287903"
+    },
+    {
+      "path": "desktop/src/renderer/src/lib/html-reference.ts",
+      "sha256": "08a672dec5542eb4631282d16721d4b451d0f2e2556609c4972cc355ced8aa39"
+    },
+    {
+      "path": "desktop/src/renderer/src/lib/i18n.ts",
+      "sha256": "6c70103a147073a27b5d980be185f0fd3366257640001b3e8a33e577d0fa281b"
+    },
+    {
+      "path": "desktop/src/renderer/src/lib/markdown.tsx",
+      "sha256": "214e08fa0a40981eec500a216f8ee3085e099f38db64f022dc62e73b05f75c26"
+    },
+    {
+      "path": "desktop/src/renderer/src/lib/office-workbook.ts",
+      "sha256": "0fd0078ec54c8e0d37dbf20af50d86c2e582871acea6b7a70b6dee724fceb71d"
+    },
+    {
+      "path": "desktop/src/renderer/src/lib/reasoning.ts",
+      "sha256": "0afcb496a04f4d519a51df8df69d07dacf1d7974f0938cac3ab45b0ef0559c8d"
+    },
+    {
+      "path": "desktop/src/renderer/src/lib/remoteData.ts",
+      "sha256": "d9d26ea95ab7c679bfba7580319234fb974fb6799b9da32894a7f714eeb54010"
+    },
+    {
+      "path": "desktop/src/renderer/src/lib/rendererSafety.ts",
+      "sha256": "54d0eac4a15486ce3d48cb048e8a758061f292a77a7b7d33b6cfc5a53623cde0"
+    },
+    {
+      "path": "desktop/src/renderer/src/lib/token-format.ts",
+      "sha256": "5cddaf0aeee01d73e3dc962807e2f90d3ff4690b49b32b536c5f5f4b3b7c2e19"
+    },
+    {
+      "path": "desktop/src/renderer/src/lib/types.ts",
+      "sha256": "b2b4d790ffd4a467d01fe94fe7e62e52ba55ead1403d63ea97ec85b9430ea3f2"
+    },
+    {
+      "path": "desktop/src/renderer/src/lib/update.ts",
+      "sha256": "fd3a500e31e237281a12984e64b532874dd7fc914db4b0186d711e55763f62a5"
+    },
+    {
+      "path": "desktop/src/renderer/src/lib/useOutsideClose.ts",
+      "sha256": "c3b1d6356f20ef8a4695a9e90987867ee011b1bb30125d44f6337a2a7da9d13a"
+    },
+    {
+      "path": "desktop/src/renderer/src/lib/usePiEvents.ts",
+      "sha256": "ae99c673c7708f9f1cbc61e6724d871336006a0b5fe2086cf66c9867aa9e6928"
+    },
+    {
+      "path": "desktop/src/renderer/src/main.tsx",
+      "sha256": "91d8b376f9a341482c7fe67a4f6d3c68642b578ef52bc88734976461052a25a6"
+    },
+    {
+      "path": "desktop/src/renderer/src/remote/transport.ts",
+      "sha256": "d03cc0b4ea77a7bde7e7560ad573dcbbdf450fecdf0b331ef90a19c4a568fd7e"
+    },
+    {
+      "path": "desktop/src/renderer/src/store.ts",
+      "sha256": "e9a5fd241dabf148f034642190f293c5b5ceb2733a38b02f2f92dff6d29d9f6e"
+    },
+    {
+      "path": "desktop/src/renderer/src/styles.css",
+      "sha256": "c61dc05d842fce1b26375502512a4f46ee71bbeea8a1cfdda44926c67507a9fe"
+    },
+    {
+      "path": "desktop/tsconfig.json",
+      "sha256": "91aa4da32934710df6b67cc896da314daf13db57046ee5ede0ec6b782314d19a"
+    },
+    {
+      "path": "desktop/tsconfig.node.json",
+      "sha256": "e5f564d0e5bff20b56cdc3d971f1e53e60342c379b3715530e93175ddeb0ef24"
+    },
+    {
+      "path": "packaging/README-WINDOWS.template.txt",
+      "sha256": "6e78160abc8ccb8fea219911885bb84d6996677934aba819bc341bfd597a4ee0"
+    },
+    {
+      "path": "packaging/assemble-windows-dir.cjs",
+      "sha256": "3f5800d60a9edad124439ae2f8bfa14c3bcfaaa79eb0e2720d8c00a58c3365f7"
+    },
+    {
+      "path": "packaging/build-installer.py",
+      "sha256": "945550cf15f299a7b10121947d45d49bf12d7222c13e02cf6f06e83753ec1418"
+    },
+    {
+      "path": "packaging/builder-config.json",
+      "sha256": "6cd8dac3e07bf0be42193864307da63014230529e97cdbcac19cd574d831fd6f"
+    },
+    {
+      "path": "packaging/make-portable.py",
+      "sha256": "bdcfa505ae34c7e54548076977f849adbca38ac3d1f86567a280b2eb4d2752a0"
+    },
+    {
+      "path": "packaging/prepare-windows.py",
+      "sha256": "5e8240d914b201078928193bf491616a527694d8718322835e5ffc4ebe3390c4"
+    },
+    {
+      "path": "packaging/run-windows-dir.py",
+      "sha256": "6146d2792780c78934b145d31ae61ab2c185c6ac298ab231eae70937f0243fdd"
+    },
+    {
+      "path": "packaging/source-archive.py",
+      "sha256": "9181327f981d8c01aca99cc94cdf4b106877c7fe56d86917068234e40226ac27"
+    },
+    {
+      "path": "packaging/verify-installer.py",
+      "sha256": "888844326ca4bfe9eb2b918799e71a997471a3112abd4a0eb49b680d72ccc37c"
+    },
+    {
+      "path": "packaging/verify-windows-dir.cjs",
+      "sha256": "e9b042841af867d35537f7db10a81a464816e6161ceb95fca7170795c984f82f"
+    },
+    {
+      "path": "tests/renderer-chat-lifecycle.test.cjs",
+      "sha256": "ba3bcfd47166c533e6026f7a0433240e1838b15e9791640b3a240ce592f2dba2"
+    },
+    {
+      "path": "tests/renderer-recovery.test.cjs",
+      "sha256": "93837b0320f48bc938dc8ad28e02441fe5d1483afb5bf8e67d69e488fd79ecd7"
+    },
+    {
+      "path": "tests/renderer-state.test.cjs",
+      "sha256": "e93104c4a476a3dc3a342e510e7fde418f48d9d0c4f93083fdaa6c45f7f909bb"
+    },
+    {
+      "path": "tests/workbench-layout-browser.mjs",
+      "sha256": "d692723d287833688efcfab4499acc69eb5954c404f9bb0b06a100f090a8705f"
+    }
+  ]
+}

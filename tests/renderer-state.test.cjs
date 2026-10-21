@@ -467,3 +467,32 @@ test("focus EPERM retains A/B native identity, active project, history, and runn
   assert.deepEqual(useStore.getState().openThreadIds, ["A", "B"]);
   assert.deepEqual(calls.prompts, []); assert.deepEqual(calls.closed, []); assert.deepEqual(calls.opened, []);
 });
+
+
+test("explicit sidebar selection loads a restored idle session once without replay", async () => {
+  const previousOpen = window.pi.thread.open;
+  window.pi.thread.open = async args => { calls.opened.push(args); await new Promise(setImmediate); return snapshot(args.sessionFile, args.cwd); };
+  try {
+    await useStore.getState().applyRemoteSnapshot(snapshot("restored-idle", "/remote/Project", { connected: false, messages: [{ role: "user", content: "existing history" }] }));
+    useStore.setState({ openThreadIds: ["restored-idle"] });
+    assert.equal(calls.opened.length, 0, "passive restoration must remain read-only");
+    await Promise.all([useStore.getState().goToThread("/remote/Project", "restored-idle"), useStore.getState().goToThread("/remote/Project", "restored-idle")]);
+    assert.equal(calls.opened.length, 1);
+    assert.equal(calls.opened[0].sessionFile, "restored-idle");
+    assert.equal(calls.opened[0].cwd, "/remote/Project");
+    assert.equal(useStore.getState().activeThreadId, "restored-idle");
+    assert.equal(useStore.getState().threads["restored-idle"].connected, true);
+    assert.deepEqual(calls.prompts, []); assert.deepEqual(calls.closed, []);
+  } finally { window.pi.thread.open = previousOpen; }
+});
+
+test("sidebar selection preserves a live busy owner and does not load offline", async () => {
+  await useStore.getState().applyRemoteSnapshot(snapshot("busy", "/remote/Project", { isStreaming: true }));
+  useStore.setState({ openThreadIds: ["busy"] });
+  await useStore.getState().goToThread("/remote/Project", "busy");
+  assert.equal(useStore.getState().threads.busy.isStreaming, true);
+  await useStore.getState().applyRemoteSnapshot(snapshot("offline", "/remote/Project", { connected: false }));
+  useStore.setState({ connectionStatus: "disconnected", openThreadIds: ["busy", "offline"] });
+  await useStore.getState().goToThread("/remote/Project", "offline");
+  assert.deepEqual(calls.opened, []); assert.deepEqual(calls.prompts, []); assert.deepEqual(calls.closed, []);
+});
