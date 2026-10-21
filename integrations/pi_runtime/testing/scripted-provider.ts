@@ -1,6 +1,6 @@
 /** Test dependency only: Pi and the production BioMind extension remain real. */
 import fs from 'node:fs';
-import { createAssistantMessageEventStream } from '@earendil-works/pi-ai';
+import { createAssistantMessageEventStream } from '@earendil-works/pi-ai/utils/event-stream';
 export function scriptedProvider(filename: string) {
   const steps = JSON.parse(fs.readFileSync(filename, 'utf8')) as any[];
   if (!Array.isArray(steps) || !steps.length) throw new Error('Fixture must be a nonempty list');

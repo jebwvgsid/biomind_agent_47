@@ -278,7 +278,7 @@ def launch_pi(argv: Sequence[str], *, execute: Callable = os.execv) -> int:
             prepare_deepseek_runtime_credentials(os.environ)
         # Host receives the scientific cwd explicitly. No chdir into the
         # software installation tree and no shell quoting or shell execution.
-        execute(command[0], command)
+        execute(command[0], [command[0], '--import', str(RUNTIME / 'dist/startup-preload.js'), *command[1:]])
         return 0
     except (PiEntryError, OSError) as error:
         print(f"BioMind Pi: {error}", file=sys.stderr)

@@ -1,5 +1,6 @@
 /** A transport/UI host around Pi. Contains no model/tool continuation loop. */
 import fs from 'node:fs';
+import { startup } from './startup-diagnostics.js';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawn, execFile } from 'node:child_process';
@@ -217,7 +218,9 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
     additionalSkillPaths: [process.env.BIOMIND_PI_SKILLS_ROOT ?? path.join(process.env.BIOMIND_PI_INSTALL_ROOT!, 'skills')],
     skillsOverride: resourceSelection.override,
     agentsFilesOverride: ({ agentsFiles }) => ({ agentsFiles: filterNativeContextFiles(agentsFiles, cwd, agentDir) }) });
+  startup.mark('resources', 'begin');
   await resources.reload();
+  startup.mark('resources', 'end');
   if (resources.getExtensions().errors.length) throw new Error('BioMind extension failed to load');
   if (!resources.getExtensions().extensions.some(extension=>path.resolve(extension.path)===extensionPath)) throw new Error('BioMind extension was not loaded');
   // Use Pi's same saved credential store as native mode. Synthetic fixtures
@@ -227,11 +230,14 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
     async modify() { throw new Error('Credential writes are unavailable'); },
     async delete() { throw new Error('Credential writes are unavailable'); },
   } : undefined;
+  startup.mark('model', 'begin');
   const modelRuntime = await ModelRuntime.create({ ...(credentials ? { credentials } : { authPath: path.join(agentDir, 'auth.json') }),
     modelsPath: config.providerFixture ? null : path.join(agentDir, 'models.json'), allowModelNetwork: false, refreshOnCreate: false });
   let provider = config.provider ?? settings.getDefaultProvider(), modelId = config.model ?? settings.getDefaultModel();
   if (config.providerFixture) {
+    startup.mark('fixture', 'begin');
     const fixture = await import('./testing/scripted-provider.js');
+    startup.mark('fixture', 'end');
     modelRuntime.registerProvider('biomind-fixture', fixture.scriptedProvider(config.providerFixture));
     provider = 'biomind-fixture'; modelId = 'scripted';
   }
@@ -244,6 +250,8 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
   if (!restoring && (!provider || !modelId)) throw new Error('Headless mode requires explicit existing provider/model or a synthetic providerFixture');
   const model = restoring ? restoredModel : config.modelSelection ? selectConfiguredModel(modelRuntime, config.modelSelection) : modelRuntime.getModel(provider!, modelId!);
   if (!restoring && !model) throw new Error('Requested model is unavailable in this pinned runtime');
+  startup.mark('model', 'end');
+  startup.mark('session', 'begin');
   const { session } = await createAgentSession({ cwd, agentDir, modelRuntime,
     ...(!restoring ? {model,...(config.thinkingLevel!==undefined?{thinkingLevel:config.thinkingLevel}:{})}
       // Native SDK restoration also consults its auth snapshot. Supplying the
@@ -253,6 +261,7 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
     sessionManager: manager,
     tools: [...new Set([...(config.executionProfile === 'native' ? ['read','write','edit','bash','ls','find','grep'] : []),
       ...resources.getExtensions().extensions.flatMap(extension => [...extension.tools.keys()])])] });
+  startup.mark('session', 'end');
   session.agent.toolExecution = 'sequential';
   let detached = false; let active: Promise<void> | undefined;
   let exitCode = 0; let usageAccountingFailed = false; let profileBindingFailed = false; let backendReady = false;
@@ -411,6 +420,7 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
       if (details?.execution_facts && Object.keys(details.execution_facts).length) executionFacts.push(details.execution_facts);
     }
   });
+  startup.mark('extensions', 'begin');
   await session.bindExtensions({ mode: 'json', onError: error => {
     write({ type: 'extension_error', event: error });
   } });
@@ -419,11 +429,15 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
     studio.dispose(); session.dispose(); await output.flush().catch(() => {}); return 2;
   }
   // Read the current Domain policy before exposing settings capability; no model or settings write.
+  startup.mark('extensions', 'end');
+  startup.mark('memory', 'begin');
   await studio.refreshMemory();
+  startup.mark('memory', 'end');
   if (!backendReady) {
     await session.extensionRunner?.emit({type:'session_shutdown',reason:'quit'});
     studio.dispose(); session.dispose(); await output.flush().catch(()=>{}); return 2;
   }
+  startup.mark('ready', 'emit', { sessionId: identity.sessionId, ownerGeneration, build: config.loadedBuild?.buildId });
   write({ type: 'ready', engine: 'pi', version: runtimeObservationLabel(), protocolVersion: 1, ownerGeneration, model: modelIdentity(), inputLimits: IMAGE_LIMITS, outputLimits, cwd,
     sessionDir: manager.getSessionDir(), projectTrusted: settings.isProjectTrusted(),
     resources: { contextFiles: resources.getAgentsFiles().agentsFiles.map(file => ({ path: file.path })),
@@ -703,6 +717,7 @@ async function startJson(config: Config, cwd: string, initialPrompt?: string): P
 }
 
 export async function main(): Promise<number> {
+  startup.mark('main', 'end');
   const { values } = parseArgs({ options: { mode: { type: 'string', default: 'interactive' },
     'project-dir': { type: 'string' }, 'project-source': { type: 'string' }, config: { type: 'string' },
     'execution-profile': { type: 'string' }, 'migrate-execution-profile': { type: 'boolean' },
@@ -722,6 +737,7 @@ export async function main(): Promise<number> {
   locatePackage('@earendil-works/pi-coding-agent'); locatePackage('@earendil-works/pi-ai'); locatePackage('@earendil-works/pi-agent-core');
   // Verify the actual SDK and published CLI bundle bytes before any session can send.
   // Extension-load errors alone are not fail-closed in upstream Pi.
+  startup.mark('compat', 'begin');
   assertObservationMode();
   const compat = JSON.parse(fs.readFileSync(path.join(runtime, 'compat/pi-0.87.1-observer.patch.json'), 'utf8'));
   const packageRoot = locatePackage('@earendil-works/pi-coding-agent');
@@ -735,10 +751,13 @@ export async function main(): Promise<number> {
     if(createHash('sha256').update(fs.readFileSync(path.join(packageRoot,target.path))).digest('hex')!==target.patchedSha256)
       throw new Error('BIOMIND_PI_PLUGIN_GUARD_PATCH_REQUIRED');
   }
+  startup.mark('compat', 'end');
   const config = readConfig(values.config);
+  startup.mark('build', 'begin');
   config.loadedBuild = loadBuildIdentity(runtime, values.mode === 'interactive' ? 'native' : 'json');
   if (config.installRoot && fs.realpathSync(config.installRoot) !== fs.realpathSync(config.loadedBuild.releaseRoot)) throw new Error('BIOMIND_BUILD_INSTALL_ROOT_MISMATCH');
   config.installRoot = config.loadedBuild.releaseRoot;
+  startup.mark('build', 'end', { build: config.loadedBuild.buildId });
   if (values['project-open']) { delete config.session; delete config.continueSession; }
   config.launcherPython = values['entry-python'];
   if (config.launcherPython) process.env.BIOMIND_PI_LAUNCHER_PYTHON = config.launcherPython;
@@ -879,7 +898,9 @@ export async function main(): Promise<number> {
     }
   }
   config.writerLeases=[];config.ownerGeneration=randomUUID();config.writerClean=false;
+  startup.mark('lease', 'begin');
   const resourceLease = acquirePluginLease({cwd,agentDir:config.agentDir!,python:config.python ?? process.env.BIOMIND_PI_PYTHON ?? config.launcherPython,mode:'shared'});
+  startup.mark('lease', 'end');
   config.resourceOwnership={protocol:'linux_flock_v1',mode:'shared',roots:resourceLease.plan.resources.map(row=>row.root),releaseOn:'last_actual_process_exit'};
   try {
   let previousProfile: ExecutionProfile | undefined;
@@ -922,6 +943,7 @@ export async function main(): Promise<number> {
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try { process.exitCode = await main(); } catch (error) {
+    startup.mark('failure', 'error', { code: 'PI_INITIALIZATION_FAILED' });
     // Never print unfiltered settings/provider exceptions (they can contain URLs
     // with credentials). Full typed fixture assertions live in test evidence.
     if (error instanceof PluginLeaseBusyError) process.stderr.write(error.stage === 'resource_admission'

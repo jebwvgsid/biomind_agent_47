@@ -4,6 +4,7 @@ import { EventEmitter } from 'node:events';
 import { StringDecoder } from 'node:string_decoder';
 import path from 'node:path';
 import fs from 'node:fs';
+import { startup } from './startup-diagnostics.js';
 import { pluginChildOptions } from './plugin-lease.js';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
@@ -232,6 +233,7 @@ export class DomainClient extends EventEmitter {
   }
 
   async #handshake(): Promise<void> {
+    startup.mark('domain', 'begin');
     try {
       const value = await this.#request('hello', {}, {}, false) as Record<string, unknown>;
       if (value.protocol !== 'biomind-domain-v1' || typeof value.host_token !== 'string' || !value.host_token) {
@@ -242,6 +244,7 @@ export class DomainClient extends EventEmitter {
       this.#token = value.host_token; this.#handshakeDone = true;
       clearTimeout(this.#failureTimer); this.#failureTimer = undefined;
       this.#setLifecycle('ready');
+      startup.mark('domain', 'end');
     } catch (error) {
       if (this.#closed) throw error;
       this.#startupFailed = true;
