@@ -13,13 +13,16 @@ type Pending = {
   command: string;
   clientMessageId?: string;
 };
+type StartupLockFailure = { stage: "resource_admission" | "resource_lock"; waitMs: number };
 export class BioMindTransportError extends Error {
-  constructor(readonly code: string, readonly rejected = false) { super(code); }
+  constructor(readonly code: string, readonly rejected = false, readonly startupLock?: StartupLockFailure) { super(code); }
 }
 export function bioMindErrorBody(error: unknown) {
   const known = error instanceof BioMindTransportError;
   return { error: known ? error.code : "BIOMIND_REQUEST_FAILED", code: known ? error.code : "BIOMIND_REQUEST_FAILED",
-    rejected: known && error.rejected, ...(!(known && error.rejected) ? { admission: "unknown" } : {}) };
+    rejected: known && error.rejected, ...(!(known && error.rejected) ? { admission: "unknown" } : {}),
+    ...(known && error.code === "BUSY" && error.startupLock
+      ? { stage: error.startupLock.stage, waitMs: error.startupLock.waitMs } : {}) };
 }
 
 export interface BioMindLaunch {
@@ -172,9 +175,23 @@ export class BioMindChildSession {
       catch { this.fail("BIOMIND_INVALID_OUTPUT"); return; }
       if (!frame || typeof frame !== "object" || typeof frame.type !== "string") { this.fail("BIOMIND_INVALID_OUTPUT"); return; }
       this.receive(frame);
+      if (!this.alive) return;
     }
   }
   private receive(frame: BioMindFrame): void {
+    if (!this.readyFrame && frame.type === "error") {
+      // Startup has admitted no user input. Preserve only public host codes and
+      // bounded lock diagnostics; never forward raw messages, paths or stacks.
+      const code = frame.code === "BUSY" || frame.code === "PI_INITIALIZATION_FAILED"
+        ? frame.code : "BIOMIND_START_FAILED";
+      const startupLock: StartupLockFailure | undefined = code === "BUSY"
+        && (frame.stage === "resource_admission" || frame.stage === "resource_lock")
+        && typeof frame.waitMs === "number" && Number.isInteger(frame.waitMs) && frame.waitMs >= 0 && frame.waitMs <= 5000
+        ? { stage: frame.stage, waitMs: frame.waitMs } : undefined;
+      this.finish(code, new BioMindTransportError(code, true, startupLock));
+      this.child.stdin.end();
+      return;
+    }
     if (frame.type === "ready") {
       if (this.readyFrame || frame.protocolVersion !== 1 || typeof frame.sessionId !== "string" || !frame.sessionId ||
           typeof frame.ownerGeneration !== "string" || !frame.ownerGeneration || frame.cwd !== this.cwd) { this.fail("BIOMIND_READY_IDENTITY_MISMATCH"); return; }
@@ -391,15 +408,16 @@ export class BioMindChildSession {
     this.finish(code);
     this.child.stdin.end();
   }
-  private finish(code: string): void {
+  private finish(code: string, error = new BioMindTransportError(code)): void {
     if (!this.alive) return;
     this.alive = false; this.active = false; clearTimeout(this.startupTimer);
-    const error = new BioMindTransportError(code);
     this.readyReject(error);
     for (const pending of this.pending.values()) { clearTimeout(pending.timer); pending.reject(error); }
     this.pending.clear(); this.questions.clear(); this.output = Buffer.alloc(0); this.clearLiveSnapshot();
     this.emit({ type: "owner_unavailable", code, sessionId: this.sessionId, ownerGeneration: this.ownerGeneration,
-      admission: "unknown", jobs: { status: "unknown" }, automaticReplay: false });
+      ...(error.rejected ? { rejected: true, ...(error.startupLock
+        ? { stage: error.startupLock.stage, waitMs: error.startupLock.waitMs } : {}) } : { admission: "unknown" }),
+      jobs: { status: "unknown" }, automaticReplay: false });
     this.listeners.clear(); this.destroyCallback?.(); this.launch.changed?.();
   }
 }

@@ -1,0 +1,146 @@
+{
+  "schema": "BioMindStudioStartupAdmissionValidationV1",
+  "status": "PASS",
+  "verifiedAtUTC": "2026-10-21T08:12:51.340789+00:00",
+  "baseCommit": "573432a7e5f7d1099aacd2b29fcb5e2385be8793",
+  "branch": "release/studio-startup-20261021",
+  "sourceChecks": {
+    "baseCommit": "573432a7e5f7d1099aacd2b29fcb5e2385be8793",
+    "productionBackendMatchesServiceBranch": true,
+    "modifiedSources": [
+      {
+        "path": "backend/pi-studio/lib/biomind-session-adapter.ts",
+        "sha256": "a0610e845d0676ecbdf5c680a18464e0d267707b06f623de0a880d1deb5c9441"
+      },
+      {
+        "path": "backend/pi-studio/lib/biomind-session-adapter.test.mjs",
+        "sha256": "2ee8d4c2e1c9f72f1d05f6a07c7a8e96f556eecf49d31f6032d4c97f2512752c"
+      },
+      {
+        "path": "backend/pi-studio/lib/biomind-resume.test.mjs",
+        "sha256": "071828af98c1fd756fc1b37e60808a44aa8e8badbf3026caa27970632c80ad02"
+      }
+    ],
+    "tests": {
+      "adapter": {
+        "passed": 32,
+        "log": "/public/home/liusiqi/03.毕设/BioMind-worktrees/studio-startup-20261021/evidence/startup-admission/adapter-tests-terminal-final.log"
+      },
+      "adjacent": {
+        "passed": 35,
+        "log": "/public/home/liusiqi/03.毕设/BioMind-worktrees/studio-startup-20261021/evidence/startup-admission/adjacent-tests-final.log"
+      }
+    },
+    "fullLint": {
+      "exitCode": 0,
+      "errors": 0,
+      "warnings": 21,
+      "log": "/public/home/liusiqi/03.毕设/BioMind-worktrees/studio-startup-20261021/evidence/startup-admission/lint.log"
+    },
+    "standaloneTypecheck": {
+      "exitCode": 0,
+      "log": "/public/home/liusiqi/03.毕设/BioMind-worktrees/studio-startup-20261021/evidence/startup-admission/typecheck.log"
+    },
+    "liveServiceModified": false,
+    "apiKeysFileRead": false,
+    "modelRequests": 0,
+    "finalChangedFileLint": {
+      "exitCode": 0,
+      "errors": 0,
+      "warnings": 1,
+      "log": "/public/home/liusiqi/03.毕设/BioMind-worktrees/studio-startup-20261021/evidence/startup-admission/lint-final-changes.log"
+    }
+  },
+  "testsPassed": 67,
+  "testCommands": [
+    "node --test lib/biomind-session-adapter.test.mjs",
+    "node --test --test-concurrency=1 lib/biomind-resume.test.mjs lib/biomind-controls.test.mjs lib/biomind-packages.test.mjs lib/rpc-manager.test.mjs"
+  ],
+  "staticCommands": [
+    "node node_modules/eslint/bin/eslint.js .",
+    "node node_modules/typescript/bin/tsc --noEmit",
+    "node node_modules/eslint/bin/eslint.js lib/biomind-session-adapter.ts lib/biomind-session-adapter.test.mjs lib/biomind-resume.test.mjs"
+  ],
+  "finalBuild": {
+    "status": "PASS",
+    "exitCode": 0,
+    "elapsedSeconds": 422.8621564824134,
+    "command": [
+      "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.runtime/node/bin/node",
+      "/public/home/liusiqi/03.毕设/BioMind-worktrees/studio-startup-20261021/backend/pi-studio/node_modules/next/dist/bin/next",
+      "build",
+      "--webpack"
+    ],
+    "cwd": "/public/home/liusiqi/03.毕设/BioMind-worktrees/studio-startup-20261021/backend/pi-studio",
+    "distDir": ".next-pkg",
+    "maxOldSpaceSizeMb": 3072,
+    "existingBuildPreload": true,
+    "noModelRequests": true,
+    "adapterSha256": "a0610e845d0676ecbdf5c680a18464e0d267707b06f623de0a880d1deb5c9441",
+    "sourceUnchangedDuringBuild": true,
+    "buildId": "G6ChSLwETBW_siXT1tOHG",
+    "artifactCount": 1680,
+    "requiredRoutesPresent": [
+      "BUILD_ID",
+      "server/app/api/agent/profile/route.js",
+      "server/app/api/agent/new/route.js",
+      "server/app/api/agent/[id]/route.js",
+      "server/app/api/agent/[id]/events/route.js"
+    ],
+    "artifactInventory": "/public/home/liusiqi/03.毕设/BioMind-worktrees/studio-startup-20261021/evidence/startup-admission/backend-artifacts.json",
+    "artifactInventorySha256": "fc974a1b3d131e6d4a89b5658efa3b5509b749c2d5df8183a4c7fbe51dcacac4"
+  },
+  "dependencies": {
+    "installationChanged": false,
+    "packageVersionsChanged": false,
+    "nodeModulesRealpath": "/public/home/liusiqi/03.毕设/BioMind_Studio_S2_S3_Implementation_20261008/candidate/pi-studio/node_modules",
+    "sameDependencyBoundaryAsCurrentProduction": true
+  },
+  "evidence": [
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind-worktrees/studio-startup-20261021/evidence/startup-admission/adapter-tests-terminal-final.log",
+      "sha256": "c8c98845975455393faa2dd2e5c411bb9e7092a8a3fc926bcaa881b40f939952"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind-worktrees/studio-startup-20261021/evidence/startup-admission/adjacent-tests-final.log",
+      "sha256": "8cb3fbff7b200b32b447e57a7f04ab4adfb1e288bb13edf5cd1fa7be533cc4ed"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind-worktrees/studio-startup-20261021/evidence/startup-admission/lint.log",
+      "sha256": "47d8346440b827db85d61c676df5d7384c98c38c6eb3f227e29f923fafeb8310"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind-worktrees/studio-startup-20261021/evidence/startup-admission/lint-final-changes.log",
+      "sha256": "46934900c7c634056e8d641fc6dfb808cf122ca5d1152c60ee71cf87dabde1b6"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind-worktrees/studio-startup-20261021/evidence/startup-admission/typecheck.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind-worktrees/studio-startup-20261021/evidence/startup-admission/build-final.log",
+      "sha256": "032b1964a63b36517cc797dc2d73bf1dd86e9e0668f66a9544da66cb7144dcda"
+    }
+  ],
+  "preservedAttempts": [
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind-worktrees/studio-startup-20261021/evidence/startup-admission/adapter-tests.log",
+      "outcome": "FAIL: new fixture called subscribe instead of the actual onEvent API; corrected and rerun."
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind-worktrees/studio-startup-20261021/evidence/startup-admission/adjacent-tests.log",
+      "outcome": "FAIL: pre-existing resume fixture omitted the package-management gate mock; supplied the false mock and retained all original assertions."
+    },
+    {
+      "path": "/public/home/liusiqi/03.毕设/BioMind-worktrees/studio-startup-20261021/evidence/startup-admission/build.json",
+      "outcome": "PASS: superseded by final build after independent review added the same-chunk terminal-state guard."
+    }
+  ],
+  "deployment": {
+    "performedByThisSourceStep": false,
+    "nextStep": "Freeze this committed backend and .next-pkg, then native idle-stop, locked rebind, ensure, and actual Main loaded_build acceptance."
+  },
+  "modelRequests": 0,
+  "apiKeysFileRead": false,
+  "productionConfigurationChangedByThisSourceStep": false
+}

@@ -32,11 +32,83 @@ function fixture(options = {}) {
   const session = new BioMindChildSession({ python: "/fixture/python", entrypoint: "/fixture/BioMind entry.py", config: "/fixture/runtime.json", cwd: scope.project, serverId: scope.serverId, pipeLauncher: options.pipeLauncher,
     sessionFile: options.sessionFile, spawnChild: (...values) => { args = values; return child; }, timeoutMs: 1000 });
   const frame = value => child.stdout.write(JSON.stringify(value) + "\n");
-  frame({ type: "ready", protocolVersion: 1, sessionId: scope.sessionId, ownerGeneration: scope.ownerGeneration, cwd: scope.project, sessionFile: "/fixture/session.jsonl",
+  if (!options.deferReady) frame({ type: "ready", protocolVersion: 1, sessionId: scope.sessionId, ownerGeneration: scope.ownerGeneration, cwd: scope.project, sessionFile: "/fixture/session.jsonl",
     model: { provider: "fixture", id: "fixture-vision", input: ["text", "image"] }, inputLimits: { maxImages: 4 }, capabilities: { getState: true, automaticReplay: false }, ...options.readyPatch });
   return { child, session, writes, frame, args };
 }
 const tick = () => new Promise(resolve => setImmediate(resolve));
+
+test("startup lock errors survive child exit and retain only bounded public diagnostics", async () => {
+  for (const details of [{ stage: "resource_admission", waitMs: 5000 }, { stage: "resource_lock", waitMs: 0 }]) {
+    const f = fixture({ deferReady: true });
+    const events = [];
+    f.session.onEvent(event => events.push(event));
+    const pending = f.session.waitUntilReady();
+    f.frame({ type: "error", code: "BUSY", ...details, message: "/private/config", stack: "secret-stack", credential: "private-token" });
+    f.child.emit("close", 2);
+    await assert.rejects(pending, error => {
+      assert.deepEqual(bioMindErrorBody(error), { error: "BUSY", code: "BUSY", rejected: true, ...details });
+      return true;
+    });
+    assert.equal(f.session.isAlive(), false);
+    assert.equal(f.writes.length, 0);
+    assert.equal(events.length, 1);
+    assert.equal(events[0].code, "BUSY");
+    assert.equal(events[0].automaticReplay, false);
+    assert.doesNotMatch(JSON.stringify(events), /private|secret-stack/);
+  }
+});
+
+test("startup errors redact unknown codes and malformed lock diagnostics", async () => {
+  const cases = [
+    [{ code: "PI_INITIALIZATION_FAILED", message: "private-token" }, "PI_INITIALIZATION_FAILED"],
+    [{ code: "SECRET_TOKEN", stage: "resource_admission", waitMs: 1 }, "BIOMIND_START_FAILED"],
+    [{ code: "BUSY", stage: "/private/path", waitMs: 5000 }, "BUSY"],
+    ...[-1, 5001, 0.5, "5000", null].map(waitMs => [{ code: "BUSY", stage: "resource_admission", waitMs }, "BUSY"]),
+  ];
+  for (const [frame, code] of cases) {
+    const f = fixture({ deferReady: true });
+    const pending = f.session.waitUntilReady();
+    f.frame({ type: "error", ...frame });
+    await assert.rejects(pending, error => {
+      assert.deepEqual(bioMindErrorBody(error), { error: code, code, rejected: true });
+      return true;
+    });
+    f.child.emit("close", 2);
+    assert.equal(f.writes.length, 0);
+  }
+});
+
+test("startup errors reject a waiting send without forwarding or replaying its prompt", async () => {
+  const f = fixture({ deferReady: true });
+  const pending = f.session.send({ type: "prompt", message: "must not run", ...scope, clientMessageId: "start-pending" });
+  f.frame({ type: "error", code: "BUSY", stage: "resource_admission", waitMs: 5000 });
+  await assert.rejects(pending, error => error.code === "BUSY" && error.rejected);
+  f.child.emit("close", 2);
+  assert.equal(f.writes.length, 0);
+});
+
+test("a terminal startup error ignores later ready and event frames in the same chunk", async () => {
+  const f = fixture({ deferReady: true });
+  const events = [];
+  f.session.onEvent(event => events.push(event));
+  const pending = f.session.send({ type: "prompt", message: "must stay unsent", ...scope, clientMessageId: "terminal-start" });
+  f.child.stdout.write([
+    { type: "error", code: "BUSY", stage: "resource_admission", waitMs: 5000 },
+    { type: "ready", protocolVersion: 1, sessionId: scope.sessionId, ownerGeneration: scope.ownerGeneration, cwd: scope.project },
+    { type: "event", event: { type: "agent_start" } },
+  ].map(frame => JSON.stringify(frame) + "\n").join(""));
+  f.child.emit("close", 2);
+  await assert.rejects(pending, error => error.code === "BUSY" && error.rejected);
+  assert.equal(f.session.isAlive(), false);
+  assert.equal(f.session.isRunning(), false);
+  assert.equal(f.session.sessionId, "");
+  assert.equal(f.session.ownerGeneration, "");
+  assert.equal(f.session.liveSnapshot().active, false);
+  assert.equal(events.length, 1);
+  assert.equal(events[0].code, "BUSY");
+  assert.equal(f.writes.length, 0);
+});
 
 test("formal Python argv and no fallback; acceptance requires actual host receipt", async () => {
   const f = fixture();

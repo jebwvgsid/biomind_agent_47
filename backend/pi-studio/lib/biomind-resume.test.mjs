@@ -48,6 +48,7 @@ test('registry serializes simultaneous explicit resumes and never constructs an 
     '@earendil-works/pi-tui': { KeybindingsManager: class {}, TUI_KEYBINDINGS: {} },
     './biomind-session-adapter': { BioMindChildSession: Child, BioMindTransportError: TransportError },
     './biomind-profile': { isBioMindRemoteProfile: () => true, getBioMindLaunchConfig: () => ({}) },
+    './biomind-package-gate': { packageManagementActive: () => false },
     './remote-security': { isBioMindProjectAllowed: cwd => cwd === project },
     './biomind-resume': { inspectBioMindResume: async () => { scans++; await inspecting; return { resumable: true, sessionFile: project + '/synthetic.jsonl' }; } },
     './session-reader': { cacheSessionPath() {}, invalidateSessionListCache() {} },
