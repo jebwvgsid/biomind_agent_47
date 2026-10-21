@@ -12,8 +12,11 @@ import os
 from pathlib import Path
 import stat
 import sys
+import time
 
 SCHEMA = 'BioMindResourceGuardV1'
+MAX_LOCK_WAIT_MS = 5000
+LOCK_RETRY_SECONDS = 0.01
 
 
 class GuardError(RuntimeError):
@@ -161,17 +164,33 @@ def validate_fd(fd, filename, mode=None):
 
 
 def lock_fds(request):
+    wait_ms = request.get('wait_ms', 0)
+    if isinstance(wait_ms, bool) or not isinstance(wait_ms, int) or not 0 <= wait_ms <= MAX_LOCK_WAIT_MS:
+        raise GuardError('INVALID_RESOURCE_LOCK_WAIT')
     rows = request['files']
     # Validate every descriptor before taking any locks. Parent owns all open
     # descriptions and closes all of them on partial acquisition failure.
     for row in rows:
         validate_fd(row['fd'], row['path'])
+    # The caller opts in only for short admission-gate contention. A single
+    # deadline bounds the entire acquisition, rather than resetting per file.
+    deadline = time.monotonic() + wait_ms / 1000
     for row in rows:
         mode = fcntl.LOCK_EX if row['mode'] == 'exclusive' else fcntl.LOCK_SH
-        try:
-            fcntl.flock(int(row['fd']), mode | fcntl.LOCK_NB)
-        except BlockingIOError:
-            raise GuardError('BUSY') from None
+        while True:
+            # Check before every attempt, including each next file: scheduling
+            # or sleep() can consume the remaining total acquisition budget.
+            # Zero wait still permits one immediate nonblocking try per file.
+            if wait_ms > 0 and time.monotonic() >= deadline:
+                raise GuardError('BUSY')
+            try:
+                fcntl.flock(int(row['fd']), mode | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise GuardError('BUSY') from None
+                time.sleep(min(LOCK_RETRY_SECONDS, remaining))
     return {'status': 'locked'}
 
 

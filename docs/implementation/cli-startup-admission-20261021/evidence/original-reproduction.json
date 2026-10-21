@@ -1,0 +1,25 @@
+{
+  "status": "PASS_REPRODUCED",
+  "atUTC": "2026-10-21T06:34:06.966798+00:00",
+  "scope": "Isolated local gate; actual fixed-release plugin lease and host, no production agent resources or sessions used.",
+  "releaseId": "94ddac30b6803e125eeb88a058fa49e397591d0c36936f44314cca214226758e",
+  "underlyingLeaseError": {
+    "exitCode": 2,
+    "stdout": "{\"status\":\"FAIL\",\"code\":\"BUSY\",\"message\":\"BUSY\"}\n",
+    "stderr": ""
+  },
+  "hostError": {
+    "exitCode": 2,
+    "stdout": "{\"type\":\"error\",\"code\":\"PI_INITIALIZATION_FAILED\"}\n",
+    "stderr": "BioMind Pi host failed to initialize or run; no legacy fallback was attempted.\n"
+  },
+  "projectGuardMarkerExistsBeforeRelease": false,
+  "sameLeaseAfterGateRelease": {
+    "exitCode": 0,
+    "stdout": "{\"status\":\"PASS\"}\n",
+    "stderr": ""
+  },
+  "modelRequests": 0,
+  "productionModified": false,
+  "conclusion": "Admission gate BUSY is converted to PI_INITIALIZATION_FAILED by the host. Original incident has no underlying exception record; this reproduces its precise error and filesystem signature but cannot prove retrospective uniqueness."
+}

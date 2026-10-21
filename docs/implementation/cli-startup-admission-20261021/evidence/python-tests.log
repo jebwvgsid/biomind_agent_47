@@ -1,0 +1,43 @@
+{"command": ["/usr/bin/python3", "-B", "-m", "unittest", "discover", "-s", "tests", "-p", "test_pi_plugin_guard.py", "-v"]}
+test_default_contention_returns_busy_without_waiting (test_pi_plugin_guard.ResourceGuardTests) ... ok
+test_existing_scope_is_not_claimed_even_if_empty (test_pi_plugin_guard.ResourceGuardTests) ... ok
+test_invalid_wait_values_are_rejected_before_locking (test_pi_plugin_guard.ResourceGuardTests) ... ok
+test_new_scope_initializes_only_with_actual_gate_lease (test_pi_plugin_guard.ResourceGuardTests) ... ok
+test_pidfile_or_environment_is_not_lock_proof (test_pi_plugin_guard.ResourceGuardTests) ... ok
+test_plan_readonly_does_not_create_scope_or_lock (test_pi_plugin_guard.ResourceGuardTests) ... ok
+test_shared_helper_exit_retains_flock_in_parent_descriptor (test_pi_plugin_guard.ResourceGuardTests) ... ok
+test_symlinked_install_root_has_same_canonical_lock_identity (test_pi_plugin_guard.ResourceGuardTests) ... ok
+test_unsafe_lock_directory_and_replaced_descriptor_refused (test_pi_plugin_guard.ResourceGuardTests) ... ok
+test_wait_acquires_after_short_contention_without_releasing_the_lease (test_pi_plugin_guard.ResourceGuardTests) ... ok
+test_wait_deadline_also_blocks_first_attempt_on_the_next_free_fd (test_pi_plugin_guard.ResourceGuardTests) ... ok
+test_wait_deadline_is_shared_across_fds_and_partial_leases_stay_held (test_pi_plugin_guard.ResourceGuardTests) ... ok
+test_wait_expires_with_busy_on_a_real_contended_lock (test_pi_plugin_guard.ResourceGuardTests) ... ok
+test_wait_refuses_retry_when_lock_released_after_deadline (test_pi_plugin_guard.ResourceGuardTests) ... ok
+test_wait_still_validates_every_fd_before_acquiring_any_lock (test_pi_plugin_guard.ResourceGuardTests) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.430s
+
+OK
+
+{"command": ["/usr/bin/python3", "-B", "-m", "unittest", "discover", "-s", "tests", "-p", "test_pi_plugin_adoption.py", "-v"]}
+test_adopt_preserves_settings_filters_trust_versions_and_packages (test_pi_plugin_adoption.AdoptionTests) ... ok
+test_commit_save_failure_recovers_without_permanent_busy (test_pi_plugin_adoption.AdoptionTests) ... ok
+test_existing_shared_worker_blocks_adoption_before_marker_write (test_pi_plugin_adoption.AdoptionTests) ... ok
+test_fence_failure_is_recoverable_and_never_changes_target_source (test_pi_plugin_adoption.AdoptionTests) ... ok
+test_fenced_only_rollback_leaves_existing_marker_unchanged (test_pi_plugin_adoption.AdoptionTests) ... ok
+test_interrupted_multiscope_commit_blocks_new_worker_then_repairs (test_pi_plugin_adoption.AdoptionTests) ... ok
+test_new_arrival_cannot_acquire_admission_gate_during_audit (test_pi_plugin_adoption.AdoptionTests) ... ok
+test_old_process_without_any_guard_blocks_before_resource_write (test_pi_plugin_adoption.AdoptionTests) ... ok
+test_private_plan_review_and_no_cli_namespace_bypass (test_pi_plugin_adoption.AdoptionTests) ... ok
+test_repair_refuses_concurrent_marker_replacement (test_pi_plugin_adoption.AdoptionTests) ... ok
+test_resource_symlink_changed_after_audit_refused (test_pi_plugin_adoption.AdoptionTests) ... ok
+test_settings_change_is_not_overwritten_by_repair_or_rollback (test_pi_plugin_adoption.AdoptionTests) ... ok
+test_unknown_host_or_stale_evidence_never_adopts (test_pi_plugin_adoption.AdoptionTests) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.341s
+
+OK
+
+git diff --check: 0

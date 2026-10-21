@@ -18,6 +18,14 @@ const key = Symbol.for('biomind.pi.package-write-guard.v1');
 const childKey = Symbol.for('biomind.pi.package-child-options.v1');
 let current: PluginLease | undefined;
 
+export class PluginLeaseBusyError extends Error {
+  readonly code = 'BUSY';
+  constructor(readonly stage: 'resource_admission' | 'resource_lock', readonly waitMs: number) {
+    super('BUSY');
+    this.name = 'PluginLeaseBusyError';
+  }
+}
+
 function fail(code: string): never { throw Object.assign(new Error(code), { code }); }
 function helper(request: object, python: string, files: GuardFile[] = []): any {
   const mapped = files.map((file, index) => ({ ...file, fd: index + 3 }));
@@ -38,6 +46,13 @@ function helper(request: object, python: string, files: GuardFile[] = []): any {
     if (result.error || result.status || parsed.status === 'error') fail(parsed.code ?? 'RESOURCE_GUARD_FAILED');
     return parsed;
   } finally { for (const fd of owned) fs.closeSync(fd); fs.rmSync(temporary, { recursive: true, force: true }); }
+}
+function lockFiles(python: string, files: GuardFile[], stage: PluginLeaseBusyError['stage'], waitMs = 0): void {
+  try { helper({ action: 'lock', wait_ms: waitMs }, python, files); }
+  catch (error) {
+    if (error instanceof Error && error.message === 'BUSY') throw new PluginLeaseBusyError(stage, waitMs);
+    throw error;
+  }
 }
 function interpreter(explicit?: string) {
   const value = explicit ?? process.env.BIOMIND_PI_PYTHON ?? process.env.BIOMIND_PI_LAUNCHER_PYTHON;
@@ -112,7 +127,10 @@ export function acquirePluginLease(options: LeaseOptions): PluginLease {
   const gates = openFiles(plan.scopes.map(s => ({ root: s.root, path: s.gate })), 'exclusive');
   let files: GuardFile[] = [];
   try {
-    helper({ action: 'lock' }, python, gates);
+    // Shared workers serialize only this short admission phase. One total
+    // 5-second budget covers every gate, below the helper's 15-second timeout.
+    // Management admission and actual resource conflicts remain nonblocking.
+    lockFiles(python, gates, 'resource_admission', mode === 'shared' ? 5000 : 0);
     plan = helper({ action: 'initialize', ...request }, python, gates);
     if (mode !== 'shared' && plan.scopes.some(s => s.legacyUnverified)) fail('LEGACY_OCCUPANCY_UNVERIFIED');
     helper({ action: 'prepare', resources: true, ...request }, python);
@@ -123,7 +141,7 @@ export function acquirePluginLease(options: LeaseOptions): PluginLease {
     if (!options.allowRepair && plan.resources.some(r => fs.existsSync(r.repair))) fail('PACKAGE_REPAIR_REQUIRED');
     if (mode !== 'settings') {
       files = openFiles(plan.resources.map(r => ({ root: r.root, path: r.lock })), mode);
-      helper({ action: 'lock' }, python, files);
+      lockFiles(python, files, 'resource_lock');
     }
     const retainedGates = mode === 'shared' ? [] : gates;
     if (mode === 'shared') close(gates);

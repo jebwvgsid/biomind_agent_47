@@ -6,7 +6,7 @@ import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { DefaultPackageManager, DefaultResourceLoader, SettingsManager } from '@earendil-works/pi-coding-agent';
-import { acquirePluginLease, inspectPluginScopes, pluginChildOptions } from '../plugin-lease.js';
+import { acquirePluginLease, inspectPluginScopes, pluginChildOptions, PluginLeaseBusyError } from '../plugin-lease.js';
 import { managePlugins } from '../plugin-cli.js';
 
 const python = '/usr/bin/python3';
@@ -35,6 +35,139 @@ function childManage(f: ReturnType<typeof fixture>, request: object) {
     assert.equal(out.status, 0, text); assert.equal(out.error, undefined);
     return JSON.parse(text.trim().split('\n').at(-1)!);
   } finally { fs.closeSync(fd); }
+}
+
+/** The holder is a separate process: acquirePluginLease blocks this Node event loop. */
+async function holdAdmission(f: ReturnType<typeof fixture>, releaseOn?: string) {
+  const gate = inspectPluginScopes(f).scopes[0]!.gate;
+  const ready = path.join(f.root, 'gate-ready'), release = path.join(f.root, 'gate-release');
+  const output = fs.openSync(path.join(f.root, 'gate-holder-output'), 'wx', 0o600);
+  const child = spawn(python, ['-B', '-c', `
+import fcntl,os,sys,time
+from pathlib import Path
+gate,ready,release,observed=sys.argv[1:]
+fd=os.open(gate,os.O_RDWR|os.O_CREAT|os.O_NOFOLLOW,0o600)
+fcntl.flock(fd,fcntl.LOCK_EX)
+Path(ready).write_text('held')
+deadline=time.monotonic()+20
+while not Path(release).exists() and not (observed and Path(observed).exists()):
+    if time.monotonic()>deadline: sys.exit(3)
+    time.sleep(.01)
+os.close(fd)
+`, gate, ready, release, releaseOn ?? ''], { stdio: ['ignore', output, output] });
+  fs.closeSync(output);
+  const ended = new Promise<number | null>((resolve, reject) => { child.once('error', reject); child.once('exit', resolve); });
+  const deadline = Date.now() + 10000;
+  while (!fs.existsSync(ready) && Date.now() < deadline && child.exitCode === null)
+    await new Promise(resolve => setTimeout(resolve, 10));
+  if (!fs.existsSync(ready)) { child.kill(); await ended; assert.fail('private admission holder did not start'); }
+  return async () => {
+    fs.writeFileSync(release, 'release', { mode: 0o600 });
+    assert.equal(await ended, 0, fs.readFileSync(path.join(f.root, 'gate-holder-output'), 'utf8'));
+  };
+}
+
+test('shared startup retries a proven admission collision and retains its actual resource lease', async t => {
+  const f = fixture(t); initialScope(f);
+  const contended = path.join(f.root, 'actual-flock-contention'), wrapper = path.join(f.root, 'observed-python');
+  // Observe the kernel rejection without changing acquisition/retry behavior.
+  // The holder cannot release before the contender has really hit EWOULDBLOCK.
+  fs.writeFileSync(wrapper, `#!/usr/bin/python3
+import fcntl,runpy,sys
+from pathlib import Path
+original=fcntl.flock
+def observed(fd,mode):
+    try: return original(fd,mode)
+    except BlockingIOError:
+        Path(${JSON.stringify(contended)}).write_text('contended')
+        raise
+fcntl.flock=observed
+script=sys.argv[-1]
+sys.argv=[script]
+runpy.run_path(script,run_name='__main__')
+`, { mode: 0o700 });
+  const release = await holdAdmission(f, contended);
+  let lease: ReturnType<typeof acquirePluginLease> | undefined;
+  try {
+    lease = acquirePluginLease({ ...f, python: wrapper });
+    assert.equal(fs.readFileSync(contended, 'utf8'), 'contended');
+    assert.equal(childManage(f, { action: 'check', scope: 'user' }).status, 'BUSY', 'startup keeps resource protection after its gate is released');
+  } finally { lease?.close(); await release(); }
+  const exclusive = acquirePluginLease({ ...f, mode: 'exclusive' }); exclusive.close();
+});
+
+test('two independent shared startups for different projects retain overlapping user resource leases', async t => {
+  const f = fixture(t); initialScope(f);
+  const otherProject = path.join(f.root, 'other-project'); fs.mkdirSync(otherProject);
+  const barrier = path.join(f.root, 'start-both-workers');
+  const script = `
+import fs from 'node:fs';
+import {acquirePluginLease} from ${JSON.stringify(pathToFileURL(path.join(runtime, 'dist/plugin-lease.js')).href)};
+const [options,started,ready,release,barrier]=process.argv.slice(1);
+// Test supervision includes cold SDK imports in the parent's management probes;
+// this is not a resource-admission retry budget.
+const deadline=Date.now()+180000;
+async function waitFor(file){while(!fs.existsSync(file)){if(Date.now()>deadline)throw new Error('PRIVATE_WORKER_DEADLINE');await new Promise(resolve=>setTimeout(resolve,10));}}
+fs.writeFileSync(started,'started',{mode:0o600});
+await waitFor(barrier);
+const lease=acquirePluginLease(JSON.parse(options));
+try{fs.writeFileSync(ready,'holding',{mode:0o600});await waitFor(release);}finally{lease.close();}
+`;
+  const workers = [f.cwd, otherProject].map((cwd, index) => {
+    const started = path.join(f.root, `worker-${index}-started`), ready = path.join(f.root, `worker-${index}-ready`);
+    const release = path.join(f.root, `worker-${index}-release`), log = path.join(f.root, `worker-${index}.log`);
+    const fd = fs.openSync(log, 'wx', 0o600);
+    const child = spawn(process.execPath, ['--input-type=module', '-e', script,
+      JSON.stringify({ ...f, cwd }), started, ready, release, barrier],
+      { stdio: ['ignore', fd, fd], env: { PATH: '/usr/bin:/bin', PYTHONDONTWRITEBYTECODE: '1' } });
+    fs.closeSync(fd);
+    const ended = new Promise<number | null>((resolve, reject) => { child.once('error', reject); child.once('exit', resolve); });
+    return { child, started, ready, release, log, ended };
+  });
+  async function waitBoth(field: 'started' | 'ready') {
+    const deadline = Date.now() + 120000;
+    while (!workers.every(worker => fs.existsSync(worker[field]))) {
+      for (const worker of workers) assert.equal(worker.child.exitCode, null, fs.readFileSync(worker.log, 'utf8'));
+      assert(Date.now() < deadline, `both independent workers must reach ${field}`);
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+  }
+  try {
+    await waitBoth('started');
+    fs.writeFileSync(barrier, 'start', { mode: 0o600 });
+    await waitBoth('ready');
+    assert(workers.every(worker => worker.child.exitCode === null && !fs.existsSync(worker.release)),
+      'both workers must hold leases simultaneously before either is released');
+    assert.equal(childManage(f, { action: 'check', scope: 'user' }).status, 'BUSY');
+    fs.writeFileSync(workers[0]!.release, 'release', { mode: 0o600 });
+    assert.equal(await workers[0]!.ended, 0, fs.readFileSync(workers[0]!.log, 'utf8'));
+    assert.equal(workers[1]!.child.exitCode, null);
+    assert.equal(childManage(f, { action: 'check', scope: 'user' }).status, 'BUSY',
+      'the second independent reader retains protection after the first exits');
+    fs.writeFileSync(workers[1]!.release, 'release', { mode: 0o600 });
+    assert.equal(await workers[1]!.ended, 0, fs.readFileSync(workers[1]!.log, 'utf8'));
+  } finally {
+    for (const worker of workers) {
+      if (worker.child.exitCode === null) worker.child.kill('SIGKILL');
+      await worker.ended;
+    }
+  }
+  const exclusive = acquirePluginLease({ ...f, mode: 'exclusive' }); exclusive.close();
+});
+
+for (const mode of ['exclusive', 'settings'] as const) {
+  test(`${mode} management still refuses an occupied admission gate without a retry budget`, async t => {
+    const f = fixture(t); initialScope(f);
+    const release = await holdAdmission(f);
+    try {
+      assert.throws(() => acquirePluginLease({ ...f, mode }), error => {
+        assert(error instanceof PluginLeaseBusyError);
+        assert.equal(error.code, 'BUSY'); assert.equal(error.stage, 'resource_admission'); assert.equal(error.waitMs, 0);
+        return true;
+      });
+    } finally { await release(); }
+    const lease = acquirePluginLease({ ...f, mode }); lease.close();
+  });
 }
 
 test('fresh CLI-equivalent local install uses native manager and does not initialize models', async t => {

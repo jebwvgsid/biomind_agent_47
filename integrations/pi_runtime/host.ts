@@ -22,7 +22,7 @@ import { createStudioControls } from './studio-controls.js';
 import { acquireSessionWriter, SessionWriterError, type SessionWriterLease } from './session-writer.js';
 import { attachNativeWriter, writerHeader } from './session-writer-host.js';
 import { validateProjectRoot, ProjectDirectoryError } from './project-launcher.js';
-import { acquirePluginLease, pluginChildOptions } from './plugin-lease.js';
+import { acquirePluginLease, pluginChildOptions, PluginLeaseBusyError } from './plugin-lease.js';
 import { StudioPackageShutdown } from './studio-package-shutdown.js';
 import { verifyObserverBytes } from './compatibility-check.js';
 
@@ -924,6 +924,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   try { process.exitCode = await main(); } catch (error) {
     // Never print unfiltered settings/provider exceptions (they can contain URLs
     // with credentials). Full typed fixture assertions live in test evidence.
+    if (error instanceof PluginLeaseBusyError) process.stderr.write(error.stage === 'resource_admission'
+      ? 'BUSY: 等待启动资源入场超时，请稍后重试。\n'
+      : 'BUSY: 启动所需资源正被占用，请等待占用结束后重试。\n');
     if (error instanceof SessionWriterError) process.stderr.write(error.code + '\n');
     if (error instanceof ProductSessionError) {
       process.stderr.write(`BioMind 会话错误: ${error.message}. No temporary fallback was used.\n`);
@@ -935,7 +938,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     if (error instanceof ProjectDirectoryError) process.stderr.write(`BioMind: ${error.message}\n`);
     if (error instanceof TerminalInputError) process.stderr.write(`${error.message}\n${error.inputError.stack ?? ''}\n`);
     if (process.argv.includes('json')) process.stdout.write(JSON.stringify({ type: 'error',
-      code: error instanceof ProductSessionError || error instanceof ProjectDirectoryError || error instanceof TerminalInputError || error instanceof SessionWriterError ? error.code : error instanceof Error && /^(?:BIOMIND_BUILD|BIOMIND_PI|RESOURCE|PACKAGE|PACKAGES)_[A-Z_]+$/.test(error.message) ? error.message : 'PI_INITIALIZATION_FAILED',
+      code: error instanceof ProductSessionError || error instanceof ProjectDirectoryError || error instanceof TerminalInputError || error instanceof SessionWriterError || error instanceof PluginLeaseBusyError ? error.code : error instanceof Error && /^(?:BIOMIND_BUILD|BIOMIND_PI|RESOURCE|PACKAGE|PACKAGES)_[A-Z_]+$/.test(error.message) ? error.message : 'PI_INITIALIZATION_FAILED',
+      ...(error instanceof PluginLeaseBusyError ? { stage: error.stage, waitMs: error.waitMs } : {}),
       ...(error instanceof ProjectDirectoryError || error instanceof ProductSessionError ? { message: error.message } : {}) }) + '\n');
     process.stderr.write('BioMind Pi host failed to initialize or run; no legacy fallback was attempted.\n');
     process.exitCode = 2;

@@ -1,0 +1,22 @@
+{
+  "code": 2,
+  "signal": null,
+  "elapsedMs": 30580.227776,
+  "hostSupervisionTimeoutMs": 120000,
+  "stdout": "{\"type\":\"error\",\"code\":\"BUSY\",\"stage\":\"resource_lock\",\"waitMs\":0}\n",
+  "frames": [
+    {
+      "type": "error",
+      "code": "BUSY",
+      "stage": "resource_lock",
+      "waitMs": 0
+    }
+  ],
+  "stderr": "BUSY: 启动所需资源正被占用，请等待占用结束后重试。\nBioMind Pi host failed to initialize or run; no legacy fallback was attempted.\n",
+  "stage": "resource_lock",
+  "expectedWaitMs": 0,
+  "isolatedFixture": true,
+  "sessionDirectoryEntries": [],
+  "domainArtifactsPresent": [],
+  "authFilePresent": false
+}

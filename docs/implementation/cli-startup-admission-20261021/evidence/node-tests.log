@@ -1,0 +1,168 @@
+TAP version 13
+# Subtest: actual JSON host preserves BUSY at resource_admission without exposing paths or starting a session
+ok 1 - actual JSON host preserves BUSY at resource_admission without exposing paths or starting a session
+  ---
+  duration_ms: 36516.840713
+  type: 'test'
+  ...
+# Subtest: actual JSON host preserves BUSY at resource_lock without exposing paths or starting a session
+ok 2 - actual JSON host preserves BUSY at resource_lock without exposing paths or starting a session
+  ---
+  duration_ms: 31057.199039
+  type: 'test'
+  ...
+# Subtest: native progress, static list, project override/delta, disabled and hook-only loader agree
+ok 3 - native progress, static list, project override/delta, disabled and hook-only loader agree
+  ---
+  duration_ms: 2961.773684
+  type: 'test'
+  ...
+# Subtest: original output-limits source is preserved and adapter collision blocks before writes
+ok 4 - original output-limits source is preserved and adapter collision blocks before writes
+  ---
+  duration_ms: 1152.892465
+  type: 'test'
+  ...
+# Subtest: list never imports an extension, starts npm, or traverses ambient resource directories
+ok 5 - list never imports an extension, starts npm, or traverses ambient resource directories
+  ---
+  duration_ms: 264.421933
+  type: 'test'
+  ...
+# Subtest: shared startup retries a proven admission collision and retains its actual resource lease
+ok 6 - shared startup retries a proven admission collision and retains its actual resource lease
+  ---
+  duration_ms: 31143.030952
+  type: 'test'
+  ...
+# Subtest: two independent shared startups for different projects retain overlapping user resource leases
+ok 7 - two independent shared startups for different projects retain overlapping user resource leases
+  ---
+  duration_ms: 60504.090629
+  type: 'test'
+  ...
+# Subtest: exclusive management still refuses an occupied admission gate without a retry budget
+ok 8 - exclusive management still refuses an occupied admission gate without a retry budget
+  ---
+  duration_ms: 496.868888
+  type: 'test'
+  ...
+# Subtest: settings management still refuses an occupied admission gate without a retry budget
+ok 9 - settings management still refuses an occupied admission gate without a retry budget
+  ---
+  duration_ms: 524.288864
+  type: 'test'
+  ...
+# Subtest: fresh CLI-equivalent local install uses native manager and does not initialize models
+ok 10 - fresh CLI-equivalent local install uses native manager and does not initialize models
+  ---
+  duration_ms: 229.418094
+  type: 'test'
+  ...
+# Subtest: read-only list reports missing package without creating install roots or guard markers
+ok 11 - read-only list reports missing package without creating install roots or guard markers
+  ---
+  duration_ms: 47.325768
+  type: 'test'
+  ...
+# Subtest: fresh read-only list does not mkdir an agent directory through native trust lookup
+ok 12 - fresh read-only list does not mkdir an agent directory through native trust lookup
+  ---
+  duration_ms: 31.808072
+  type: 'test'
+  ...
+# Subtest: legacy scopes fail closed before package or native settings changes
+ok 13 - legacy scopes fail closed before package or native settings changes
+  ---
+  duration_ms: 121.163311
+  type: 'test'
+  ...
+# Subtest: maintenance-adopted legacy scopes rejoin the actual native manager with filters and trust intact
+ok 14 - maintenance-adopted legacy scopes rejoin the actual native manager with filters and trust intact
+  ---
+  duration_ms: 31226.045041
+  type: 'test'
+  ...
+# Subtest: actual DefaultResourceLoader missing auto-install is blocked while shared, even noExtensions
+ok 15 - actual DefaultResourceLoader missing auto-install is blocked while shared, even noExtensions
+  ---
+  duration_ms: 2249.952919
+  type: 'test'
+  ...
+# Subtest: the actual pinned native CLI bundle also guards hidden loader installs
+ok 16 - the actual pinned native CLI bundle also guards hidden loader installs
+  ---
+  duration_ms: 1066.710039
+  type: 'test'
+  ...
+# Subtest: actual loader discovers explicit local extension without mutating temporary install cache
+ok 17 - actual loader discovers explicit local extension without mutating temporary install cache
+  ---
+  duration_ms: 471.862367
+  type: 'test'
+  ...
+# Subtest: worker shared lock blocks install/update/remove before modifying v1 files or settings
+ok 18 - worker shared lock blocks install/update/remove before modifying v1 files or settings
+  ---
+  duration_ms: 90098.417929
+  type: 'test'
+  ...
+# Subtest: settings filters can change with shared worker without upgrading its lifetime lease
+ok 19 - settings filters can change with shared worker without upgrading its lifetime lease
+  ---
+  duration_ms: 30783.838664
+  type: 'test'
+  ...
+# Subtest: inherited descriptor keeps lease after original worker closes, then permits mutation on child exit
+ok 20 - inherited descriptor keeps lease after original worker closes, then permits mutation on child exit
+  ---
+  duration_ms: 64695.056639
+  type: 'test'
+  ...
+# Subtest: failed install leaves repair marker and subsequent writes/worker loads cannot claim healthy
+ok 21 - failed install leaves repair marker and subsequent writes/worker loads cannot claim healthy
+  ---
+  duration_ms: 1265.378619
+  type: 'test'
+  ...
+# Subtest: source pin changes retain native autoload/filters; self update never reaches package manager
+ok 22 - source pin changes retain native autoload/filters; self update never reaches package manager
+  ---
+  duration_ms: 265.62206
+  type: 'test'
+  ...
+# Subtest: exclusive management cannot overlap another independent management process
+ok 23 - exclusive management cannot overlap another independent management process
+  ---
+  duration_ms: 35480.0105
+  type: 'test'
+  ...
+
+added 1 package in 17s
+
+removed 1 package in 15s
+# Subtest: actual native npm installs and removes an offline tarball in the managed scope
+ok 24 - actual native npm installs and removes an offline tarball in the managed scope
+  ---
+  duration_ms: 38877.299968
+  type: 'test'
+  ...
+
+added 1 package in 16s
+
+up to date in 14s
+# Subtest: native npm success followed by settings-save failure remains repair_required until explicit reconciliation
+ok 25 - native npm success followed by settings-save failure remains repair_required until explicit reconciliation
+  ---
+  duration_ms: 36457.359437
+  type: 'test'
+  ...
+1..25
+# tests 25
+# suites 0
+# pass 25
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 529062.522512

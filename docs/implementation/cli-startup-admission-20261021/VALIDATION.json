@@ -1,0 +1,136 @@
+{
+  "status": "PASS",
+  "atUTC": "2026-10-21T07:13:47.482139+00:00",
+  "scope": "Source fix, isolated validation and Git commit only",
+  "sourceSha256": {
+    "agent_core/pi_plugin_guard.py": "3baadb67e61bb2888f3e14199653221bbc37716ba684e47f8170cb407a4dc8c5",
+    "integrations/pi_runtime/plugin-lease.ts": "c8773b0953f6dd1768604d9e9e9e9f57f7ac45310e4edd8a959a8af2d31bc3f7",
+    "integrations/pi_runtime/host.ts": "4499984f103518255dea4a265a6a74ba813db369553f1ea2476ffdf649202274",
+    "tests/test_pi_plugin_guard.py": "d6e73e3d5876436d99f9eb1b3b1add75bd24510bcec146b03fb05d4c51bf6e7e",
+    "integrations/pi_runtime/tests/plugin-management.test.ts": "86f80046c0efeb542baf1e3a715b640cc1a9ed3c7838446309d9a973d7c7a243",
+    "integrations/pi_runtime/tests/plugin-admission-host.test.ts": "5b9e5a7cd027d3b7757de95af1bfe495fb9c8d5bdd4baaeb663ddd1ef388ccd3"
+  },
+  "checks": {
+    "totalTests": 53,
+    "pythonGuard": 15,
+    "pythonAdoption": 13,
+    "nodeTests": 25,
+    "failed": 0,
+    "skipped": 0
+  },
+  "pythonCommands": [
+    [
+      "/usr/bin/python3",
+      "-B",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-p",
+      "test_pi_plugin_guard.py",
+      "-v"
+    ],
+    [
+      "/usr/bin/python3",
+      "-B",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-p",
+      "test_pi_plugin_adoption.py",
+      "-v"
+    ]
+  ],
+  "nodeCommand": [
+    "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.runtime/node/bin/node",
+    "--max-old-space-size=1024",
+    "--test",
+    "--experimental-test-isolation=none",
+    "--test-concurrency=1",
+    "dist/tests/plugin-management.test.js",
+    "dist/tests/plugin-install-experience.test.js",
+    "dist/tests/plugin-admission-host.test.js"
+  ],
+  "buildCommand": [
+    "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.runtime/node/bin/node",
+    "/public/home/liusiqi/03.毕设/Biomind_v1/integrations/pi_runtime/.runtime/node/lib/node_modules/npm/bin/npm-cli.js",
+    "run",
+    "build"
+  ],
+  "testEnvironment": {
+    "PI_OFFLINE": "unset for the aggregate suite; set only in the early-failing host fixtures",
+    "npm_config_offline": "true",
+    "modelRequests": 0,
+    "isolatedFixtures": true
+  },
+  "build": {
+    "status": "PASS",
+    "buildId": "6571d9a851a4c38fa8aff28555faf34445363060b04daee2237c6ab3f23bd5da",
+    "sourceFingerprint": "e995c14a5d5147a78022e08dc308c232fca19a968859fac3ad0a26492b235300",
+    "dependencyFingerprint": "363ca233976e9593f32d8175fc450e4dfa1a03394ce691e2b8bab610ee8400f4",
+    "sourceCommitAtBuild": "3a8df49e38d1fc25291633734150bb49b5804e56",
+    "note": "Built from the reviewed working tree before its Git commit; source hashes identify the change. This is not a published release.",
+    "artifactConsistency": {
+      "status": "PASS",
+      "artifactCount": 270,
+      "statement": "Every JavaScript/build artifact matches the preceding full Node test run; final Python source matches its 28-test receipt."
+    }
+  },
+  "initialAttempt": {
+    "status": "FAIL",
+    "passed": 20,
+    "failed": 5,
+    "evidenceDirectory": "/public/home/liusiqi/03.毕设/BioMind_CLI_Startup_Diagnosis_20261021/fix-validation",
+    "causes": [
+      "Three fixtures expired during cold SDK imports; SDK import alone measured 29.5 seconds. Only test supervision limits were adjusted.",
+      "PI_OFFLINE=1 bypassed missing-package install attempts in two existing guard tests. Aggregate runner now uses npm offline mode so the guard branch executes."
+    ],
+    "productionAdmissionBudgetMs": 5000,
+    "originalLogsRetained": true
+  },
+  "review": {
+    "status": "PASS",
+    "boundary": "Positive budget is checked before every flock, including the first attempt on each subsequent descriptor."
+  },
+  "production": {
+    "status": "UNCHANGED",
+    "checkedFiles": 4,
+    "currentRelease": "94ddac30b6803e12",
+    "deploymentPerformed": false,
+    "windowsClientChanged": false,
+    "gitPushPerformed": false
+  },
+  "limitations": [
+    "The historical failure suppressed its underlying exception; the reproduced matching defect is fixed, without claiming retrospective certainty.",
+    "No new production deployment, Windows GUI acceptance or real-model behavior acceptance is claimed."
+  ],
+  "evidence": [
+    {
+      "path": "evidence/python-tests.log",
+      "sha256": "6d522896cd16d1d1e5e3b7641c8ca312ece3be3c7e694eb7c0df6f49b51b6c5c"
+    },
+    {
+      "path": "evidence/node-tests.log",
+      "sha256": "182602dcf14791d8911cff8a6a12f8e38fa5a8594c27cd6d292d6043e94e79fa"
+    },
+    {
+      "path": "evidence/build.log",
+      "sha256": "7e0756afb13c3a10e1d3c2050962173e2e03757f0820bb733ecc4e6abe902c21"
+    },
+    {
+      "path": "evidence/host-resource-admission.json",
+      "sha256": "c40abe84f6ef6994c18368bb4ead64d16f6a7a684dac0f27310f6ee4eb271e77"
+    },
+    {
+      "path": "evidence/host-resource-lock.json",
+      "sha256": "4f605b0f06e10451d20d794ebcef51c9c98d47628a3d199301a18a9075e6cb1e"
+    },
+    {
+      "path": "evidence/original-reproduction.json",
+      "sha256": "b91004243eea4e25ebd6ccd372f3242e48dac85b1b2f5dd25c0f9c6248f1c5c3"
+    }
+  ]
+}
