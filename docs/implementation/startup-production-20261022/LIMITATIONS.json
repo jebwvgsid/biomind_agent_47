@@ -1,0 +1,14 @@
+{
+  "items": [
+    "The pre-existing unsent empty session had no JSONL file before or after switching and still returns HISTORY_SESSION_NOT_FOUND. Its Windows draft is preserved; persisted history recovery passed.",
+    "One real Windows new-session sample after verification and one restore: 49.1 ms editor / 12525.1 ms ready; not a cold-cache benchmark or SLA.",
+    "No real model request was sent; production accepted and first output timing remain NOT_RUN. Prior synthetic accepted timing is not presented as production.",
+    "Backend cold start retried PROFILE_REQUEST_TIMEOUT once at 103874 ms and then became ready.",
+    "Production retains the existing core testing/posix-pipe-relay.py binding. This run observed server/worker diagnostics; backend lib relay instrumentation was not exercised.",
+    "Existing candidate Python baseline failure and prior isolated startup timeout remain documented in the candidate delivery."
+  ],
+  "auxiliaryFailures": [
+    "verify_studio_existing.py: stale previous-report main key; failed before owner resume. Replaced for acceptance with exact observed Windows owner ID.",
+    "collect_diagnostics.py: main marker is end, not begin; corrected reporting script and collected original unchanged log."
+  ]
+}

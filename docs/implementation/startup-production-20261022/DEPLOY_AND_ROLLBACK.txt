@@ -1,0 +1,15 @@
+当前服务使用新的后端与核心配对版本；禁止单独覆盖 chunk 或 host。
+
+若需回退，先确认没有活动任务。使用现有 server-service.py stop --config CONFIG --instance 当前实际 instance。
+必须得到 nativeIdleShutdown=true 和 stopped；若 busy，则等待任务自然完成，不强杀。
+然后调用以下已审阅工具（先省略 --apply 检查，再显式 --apply）：
+/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/delivery/service/plugin-lifecycle/59f269bcd8027d40b8685feffd14a656176d5817/server/rollback-managed-service-rebind.py
+  --receipt /public/home/liusiqi/03.毕设/BioMind_Startup_Production_20261022/studio-rebind.json
+  --output-receipt 一个新的收据路径
+该工具检查当前配置哈希、备份哈希及三个锁，恢复旧配置与 stopped 生命周期。
+随后用原 server-service.py ensure/discover，Windows 用已保存连接重新发现。
+CONFIG=/public/home/liusiqi/03.毕设/BioMind_Studio_Workbench_20261009/deployment/private/service.json
+旧后端=/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/delivery/backend/startup-production-20261021/aad973863840a9a8319574113326b4bf2f91cff8/pi-studio
+旧核心入口=/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-735bacc48c20ff8b/bio_agents.py
+本轮收据和私有备份均保留。不要删除共享设置、历史、草稿或新旧发布包；不要自动重放消息。
+回退未执行。重新发现不会使没有落盘的旧空会话变成可恢复历史。

@@ -1,0 +1,37 @@
+BioMind Studio 生产切换与推送结果（2026-10-22）
+
+生产已切换并就绪。核心与后端均以独立不可变目录部署，旧版本及精确回退备份保留。
+核心构建：03da1120c543be3db67e0c1b8768f309012cb3c4e78d3537158de37961e72713
+核心代码提交：081069e4bc38030d4e8f1a0554f63c5e8a8267f9
+后端构建：_otzO3isD85tLjsBJbOKv
+后端代码提交：e26235a188957f88f5b5ae3c5d7abc6085fe46d5
+Windows 沿用 1.2.0-rc.20261021.3 / 0122fb20，Pi 沿用 0.87.1，未更新或重启客户端。
+生产 instance：664c2003651d44c3b4c0a7cbbdcc89c2，ln02:127.0.0.1:40729（SSH 发现）。
+
+实际 Windows 验收：有落盘历史会话精确恢复 PASS；新建及工具目录 PASS；测试草稿输入/清除 PASS。
+新建单次：输入框 49.1 ms，完整 ready 12.525 s；bridge create 12.363 s。
+这是上线后的 N=1，在完整文件校验及一次历史恢复后测得；不是冷缓存对照，不能承诺稳定 10 秒。
+已有历史样本为 64.5 ms / 49.544 s，仅作背景，不能与本次样本组成正式统计。
+本轮真实模型请求为 0，因此生产发送 accepted 和模型首输出未测，不以此前合成结果替代。
+分阶段见 PHASE_TIMINGS.csv；domain 时间包含在 extensions 内，不重复相加。
+
+保全：30 份原有历史 SHA/大小全部一致；共享设置元数据、agent/session 根路径一致；CLI 启动器未变。
+原来的“你好”未发送草稿已在重连、切换会话后再次目视确认保留；10 个原有打开线程记录全部保留。
+已有连接配置通过原按钮复用，重连正常保存过配置文件，故不宣称连接文件字节完全相同；没有修改连接字段。
+本轮空测试 owner 和其进程树已确认退出，无新历史文件；仅向它自己的 relay 发 SIGTERM，让 worker 收到 EOF。
+生产后端及用户 owner 未被发送信号。测试侧栏条目已归档，本地恢复元数据保留。
+
+需明确保留的限制：
+1. 旧的未发送空会话切换前就没有落盘 JSONL，仍报 HISTORY_SESSION_NOT_FOUND；不是此次丢失历史。草稿未丢。有真实消息的历史恢复成功。
+2. 后端冷启动在 103874 ms 出现一次 PROFILE_REQUEST_TIMEOUT，原机制重试后正常 ready。它与逐会话 12.53 秒不是同一指标。
+3. 当前生产沿用 core/testing/posix-pipe-relay.py，实际观测到 server/worker 诊断；不能宣称 backend lib 中的 relay 诊断/截止路径已在生产触发。
+4. 候选交付中既有 Python 导出 fixture 失败和首次隔离超时仍保留，不由本次部署验收抹去。
+5. 两个旧验收辅助脚本有报告字段/阶段事件名问题：前者因缺少 main 字段在恢复前停止，后者已按 main=end 修正；未因此改生产逻辑。
+
+Git：
+https://github.com/jebwvgsid/biomind_agent_47/tree/codex/startup-minimal-fix-20261021
+https://github.com/jebwvgsid/biomind-studio （本轮按用户授权新建，私有）
+Studio 已推送 main 573432a7、codex/startup-diagnostics-20261021 e26235a1、release/windows-client-20261021 0122fb20。
+未合并分支、未强推、未创建 tag。部署记录提交号另见 GIT_FINAL.json。
+
+未读取 .env.api_keys；未改 Pi/Main 提示词；未取消或重放原任务；未覆盖旧运行 release。

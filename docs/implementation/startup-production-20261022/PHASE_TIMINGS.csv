@@ -1,0 +1,23 @@
+﻿sample,phase,milliseconds,note
+windows-history-restore,compat,448.691,
+windows-history-restore,build,72.717,
+windows-history-restore,lease,830.423,
+windows-history-restore,resources,4135.68,
+windows-history-restore,model,56.942,
+windows-history-restore,session,3.668,
+windows-history-restore,extensions,6149.925,
+windows-history-restore,domain,6079.09,subset of extensions
+windows-history-restore,memory,48.165,
+windows-history-restore,preMain,843.4,
+windows-history-restore,server_spawn_to_ready,18664.785,
+windows-new,compat,327.189,
+windows-new,build,47.195,
+windows-new,lease,427.427,
+windows-new,resources,1964.567,
+windows-new,model,42.679,
+windows-new,session,3.7,
+windows-new,extensions,3749.67,
+windows-new,domain,3726.197,subset of extensions
+windows-new,memory,12.928,
+windows-new,preMain,720.045,
+windows-new,server_spawn_to_ready,12169.725,

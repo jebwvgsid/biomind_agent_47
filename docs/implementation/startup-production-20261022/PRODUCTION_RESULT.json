@@ -1,0 +1,131 @@
+{
+  "status": "DEPLOYED_AND_PUSHED_WITH_DOCUMENTED_LIMITATIONS",
+  "atUTC": "2026-10-22T03:35:21.519588+00:00",
+  "core": {
+    "releaseId": "03da1120c543be3db67e0c1b8768f309012cb3c4e78d3537158de37961e72713",
+    "root": "/public/home/liusiqi/03.毕设/BioMind_Production_LongTask_20261021/startup-minimal-fix-20261021/releases/biomind-03da1120c543be3d",
+    "sourceCommit": "081069e4bc38030d4e8f1a0554f63c5e8a8267f9",
+    "sourceFiles": 795,
+    "artifactFiles": 278,
+    "dependencyEntries": 25916
+  },
+  "backend": {
+    "sourceCommit": "e26235a188957f88f5b5ae3c5d7abc6085fe46d5",
+    "root": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/delivery/backend/startup-production-20261022/e26235a188957f88f5b5ae3c5d7abc6085fe46d5/pi-studio",
+    "buildId": "_otzO3isD85tLjsBJbOKv",
+    "nodeModules": "/public/home/liusiqi/03.毕设/BioMind_Studio_S2_S3_Implementation_20261008/candidate/pi-studio/node_modules"
+  },
+  "client": {
+    "version": "1.2.0-rc.20261021.3",
+    "sourceCommit": "0122fb201844daafeeede8305b9ab6f2e49471ea",
+    "asarSha256": "75771af23684cb6bf846559ac5058af095d7fc142e704a52c4fa0088d5806335",
+    "updatedOrRestarted": false
+  },
+  "production": {
+    "instanceId": "664c2003651d44c3b4c0a7cbbdcc89c2",
+    "host": "ln02",
+    "port": 40729,
+    "nativeIdleStop": true,
+    "ready": true
+  },
+  "acceptance": {
+    "historyRestore": "PASS",
+    "actualWindowsNew": "PASS",
+    "actualWindowsEditable": "PASS",
+    "loadedBuildAndTools": "PASS",
+    "editorMs": 49.10000002384186,
+    "readyMs": 12525.100000023842,
+    "bridge": {
+      "createMs": 12362.932400003076,
+      "subscribeMs": 31.594700001180172,
+      "stateMs": 28.795999996364117,
+      "historyMs": 71.37939999997616,
+      "snapshotMs": 131.79690000414848
+    },
+    "sampleCount": 1,
+    "modelRequests": 0,
+    "productionSubmitAckMs": null,
+    "productionFirstModelOutputMs": null,
+    "historicalComparisonOnly": {
+      "editorMs": 64.5,
+      "readyMs": 49543.9
+    },
+    "stableUnder10Seconds": "NOT_MET"
+  },
+  "preservation": {
+    "originalHistories": 30,
+    "changedOrMissingOriginalHistories": [],
+    "sharedMetadataUnchanged": true,
+    "sameAgentDir": true,
+    "sameHistoryRoot": true,
+    "newHistoryFiles": [],
+    "cliLaunchersUnchanged": true,
+    "originalWindowsDraftPreserved": true,
+    "allOriginalWindowsOpenThreadsPreserved": true,
+    "connectionProfileReused": true,
+    "connectionFileByteIdentical": false,
+    "connectionNote": "Existing profile saved again by normal reconnect; fields were not edited. No secret values exported."
+  },
+  "cleanup": {
+    "testOwnerStopped": true,
+    "testProcessTreeGone": true,
+    "testHistoryFilesCreated": 0,
+    "testHistoryFilesDeleted": 0,
+    "localTestEntryArchived": true,
+    "localRestoreMetadataRetained": true,
+    "productionOrUserOwnerSignals": 0,
+    "testRelaySignals": 1
+  },
+  "limitations": [
+    "The pre-existing unsent empty session had no JSONL file before or after switching and still returns HISTORY_SESSION_NOT_FOUND. Its Windows draft is preserved; persisted history recovery passed.",
+    "One real Windows new-session sample after verification and one restore: 49.1 ms editor / 12525.1 ms ready; not a cold-cache benchmark or SLA.",
+    "No real model request was sent; production accepted and first output timing remain NOT_RUN. Prior synthetic accepted timing is not presented as production.",
+    "Backend cold start retried PROFILE_REQUEST_TIMEOUT once at 103874 ms and then became ready.",
+    "Production retains the existing core testing/posix-pipe-relay.py binding. This run observed server/worker diagnostics; backend lib relay instrumentation was not exercised.",
+    "Existing candidate Python baseline failure and prior isolated startup timeout remain documented in the candidate delivery."
+  ],
+  "git": {
+    "atUTC": "2026-10-22T03:07:06.768155+00:00",
+    "studioRepositoryPrivate": true,
+    "refs": [
+      {
+        "repository": "jebwvgsid/biomind_agent_47",
+        "branch": "codex/startup-minimal-fix-20261021",
+        "commit": "081069e4bc38030d4e8f1a0554f63c5e8a8267f9",
+        "remoteVerified": true
+      },
+      {
+        "repository": "jebwvgsid/biomind-studio",
+        "branch": "main",
+        "commit": "573432a7e5f7d1099aacd2b29fcb5e2385be8793",
+        "remoteVerified": true
+      },
+      {
+        "repository": "jebwvgsid/biomind-studio",
+        "branch": "codex/startup-diagnostics-20261021",
+        "commit": "e26235a188957f88f5b5ae3c5d7abc6085fe46d5",
+        "remoteVerified": true
+      },
+      {
+        "repository": "jebwvgsid/biomind-studio",
+        "branch": "release/windows-client-20261021",
+        "commit": "0122fb201844daafeeede8305b9ab6f2e49471ea",
+        "remoteVerified": true
+      }
+    ]
+  },
+  "rollback": {
+    "rebindReceipt": "/public/home/liusiqi/03.毕设/BioMind_Startup_Production_20261022/studio-rebind.json",
+    "oldBackend": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/delivery/backend/startup-production-20261021/aad973863840a9a8319574113326b4bf2f91cff8/pi-studio",
+    "oldEntrypoint": "/public/home/liusiqi/03.毕设/BioMind_Unified_Core_20261009/local-core-releases/biomind-735bacc48c20ff8b/bio_agents.py",
+    "requiresNativeIdleStop": true
+  },
+  "constraints": {
+    "envApiKeysRead": false,
+    "piUpgraded": false,
+    "mainPromptModified": false,
+    "existingTasksAborted": false,
+    "runningReleaseEdited": false,
+    "branchesMergedOrForcePushed": false
+  }
+}
